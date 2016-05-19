@@ -23,6 +23,11 @@ func TestZooKeeperRegisterPlugin_Register(t *testing.T) {
 	plugin.Conn.Create(plugin.BasePath, []byte("services"), flags, acl)
 
 	err = plugin.Register("ABC", "aService")
+
+	if err == zk.ErrNoServer {
+		t.Log("must start a zookeeper at 127.0.0.1:2181 for this test")
+		return
+	}
 	if err != nil {
 		t.Errorf("can't start this plugin: %v", err)
 	}

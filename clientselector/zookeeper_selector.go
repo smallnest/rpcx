@@ -19,17 +19,19 @@ type ZooKeeperClientSelector struct {
 	BasePath       string //should endwith serviceName
 	Servers        []string
 	SelectMode     betterrpc.SelectMode
+	timeout        time.Duration
 	rnd            *rand.Rand
 	currentServer  int
 	len            int
 }
 
 // NewZooKeeperClientSelector creates a ZooKeeperClientSelector
-func NewZooKeeperClientSelector(zkServers []string, timeout time.Duration, sm betterrpc.SelectMode) *ZooKeeperClientSelector {
+func NewZooKeeperClientSelector(zkServers []string, sessionTimeout time.Duration, sm betterrpc.SelectMode, timeout time.Duration) *ZooKeeperClientSelector {
 	selector := &ZooKeeperClientSelector{
 		ZKServers:      zkServers,
-		sessionTimeout: timeout,
+		sessionTimeout: sessionTimeout,
 		SelectMode:     sm,
+		timeout:        timeout,
 		rnd:            rand.New(rand.NewSource(time.Now().UnixNano()))}
 
 	selector.start()
@@ -68,13 +70,13 @@ func (s *ZooKeeperClientSelector) Select(clientCodecFunc betterrpc.ClientCodecFu
 	if s.SelectMode == betterrpc.RandomSelect {
 		server := s.Servers[s.rnd.Intn(s.len)]
 		ss := strings.Split(server, "@") //tcp@ip , tcp4@ip or tcp6@ip
-		return betterrpc.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1])
+		return betterrpc.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
 
 	} else if s.SelectMode == betterrpc.RandomSelect {
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server, "@") //
-		return betterrpc.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1])
+		return betterrpc.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
 
 	} else {
 		return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())

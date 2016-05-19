@@ -4,6 +4,7 @@ import (
 	"io"
 	"net"
 	"net/rpc"
+	"time"
 
 	msgpackrpc "github.com/hashicorp/net-rpc-msgpackrpc"
 )
@@ -37,16 +38,17 @@ type ClientSelector interface {
 // It don't select a node from service cluster but a specific rpc server.
 type DirectClientSelector struct {
 	Network, Address string
+	timeout          time.Duration
 }
 
 //Select returns a rpc client
 func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc) (*rpc.Client, error) {
-	return NewDirectRPCClient(clientCodecFunc, s.Network, s.Address)
+	return NewDirectRPCClient(clientCodecFunc, s.Network, s.Address, s.timeout)
 }
 
 // NewDirectRPCClient creates a rpc client
-func NewDirectRPCClient(clientCodecFunc ClientCodecFunc, network, address string) (*rpc.Client, error) {
-	conn, err := net.Dial(network, address)
+func NewDirectRPCClient(clientCodecFunc ClientCodecFunc, network, address string, timeout time.Duration) (*rpc.Client, error) {
+	conn, err := net.DialTimeout(network, address, timeout)
 	if err != nil {
 		return nil, err
 	}

@@ -1,11 +1,14 @@
 package betterrpc
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestDirectSelector_Call(t *testing.T) {
 	once.Do(startServer)
 
-	s := &DirectClientSelector{Network: "tcp", Address: serverAddr}
+	s := &DirectClientSelector{Network: "tcp", Address: serverAddr, timeout: 10 * time.Second}
 	client := NewClient(s)
 	err := client.Start()
 	if err != nil {
@@ -25,7 +28,7 @@ func TestDirectSelector_Call(t *testing.T) {
 func TestDirectSelector_Go(t *testing.T) {
 	once.Do(startServer)
 
-	s := &DirectClientSelector{Network: "tcp", Address: serverAddr}
+	s := &DirectClientSelector{Network: "tcp", Address: serverAddr, timeout: 10 * time.Second}
 	client := NewClient(s)
 	err := client.Start()
 	if err != nil {
