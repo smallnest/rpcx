@@ -8,8 +8,8 @@ import (
 
 func TestZooKeeperRegisterPlugin_Register(t *testing.T) {
 	plugin := &ZooKeeperRegisterPlugin{
-		ServiceAddress:   "tcp://127.0.0.1:1234",
-		ZooKeeperServers: []string{"127.0.0.1"},
+		ServiceAddress:   "tcp@127.0.0.1:1234",
+		ZooKeeperServers: []string{"127.0.0.1:2181"},
 		BasePath:         "/betterrpc",
 	}
 
@@ -27,18 +27,15 @@ func TestZooKeeperRegisterPlugin_Register(t *testing.T) {
 		t.Errorf("can't start this plugin: %v", err)
 	}
 
-	data, _, err := plugin.Conn.Get(plugin.BasePath + "/ABC")
+	_, _, err = plugin.Conn.Get(plugin.BasePath + "/ABC/tcp@127.0.0.1:1234")
 	if err != nil {
 		t.Errorf("service has not been registered on zookeeper: %v", err)
 	}
-	if string(data) != plugin.ServiceAddress {
-		t.Errorf("registered address of services is not right. Got: %v, Expected: %v", data, plugin.ServiceAddress)
-	}
 
 	plugin.Unregister("ABC")
-	data, _, _ = plugin.Conn.Get(plugin.BasePath + "/ABC")
-	if data != nil {
-		t.Errorf("service has not been unregistered on zookeeper. Got: %v", string(data))
+	_, _, err = plugin.Conn.Get(plugin.BasePath + "/ABC")
+	if err != nil {
+		t.Error("service has not been registered on zookeeper.")
 	}
 
 }
