@@ -3,6 +3,7 @@ package plugin
 import (
 	"net"
 	"net/rpc"
+	"time"
 
 	"github.com/rcrowley/go-metrics"
 )
@@ -10,6 +11,7 @@ import (
 //MetricsPlugin collects metrics of a rpc server
 type MetricsPlugin struct {
 	Registry metrics.Registry
+	seqs     map[uint64]int64
 }
 
 //NewMetricsPlugin creates a new MetricsPlugirn
@@ -31,6 +33,11 @@ func (plugin *MetricsPlugin) Handle(net.Conn) bool {
 	return true
 }
 
+// PreReadRequestHeader marks start time of calling service
+func (plugin *MetricsPlugin) PreReadRequestHeader(r *rpc.Request) {
+	plugin.seqs[r.Seq] = time.Now().UnixNano()
+}
+
 // PostReadRequestHeader counts read
 func (plugin *MetricsPlugin) PostReadRequestHeader(r *rpc.Request) {
 	if r.ServiceMethod == "" {
@@ -49,6 +56,17 @@ func (plugin *MetricsPlugin) PostWriteResponse(r *rpc.Response, body interface{}
 
 	m := metrics.GetOrRegisterMeter("service_"+r.ServiceMethod+"_Write_Counter", plugin.Registry)
 	m.Mark(1)
+
+	t := plugin.seqs[r.Seq]
+	if t > 0 {
+		t = time.Now().UnixNano() - t
+		if t < 30*time.Minute.Nanoseconds() { //it is impossible that calltime exceeds 30 minute
+			//Historgram
+			h := metrics.GetOrRegisterHistogram("service_"+r.ServiceMethod+"_CallTime", plugin.Registry,
+				metrics.NewExpDecaySample(1028, 0.015))
+			h.Update(t)
+		}
+	}
 }
 
 // Name return name of this plugin.
