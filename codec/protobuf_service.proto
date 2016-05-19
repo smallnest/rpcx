@@ -1,0 +1,13 @@
+// protoc --gogofaster_out=. protobuf_service.proto
+// mv protobuf_service.pb.go protobuf_service_test.go 
+package codec;
+
+
+message ProtoArgs { 
+    required int32 A = 1;
+    required int32 B = 2;
+}
+
+message ProtoReply { 
+    required int32 C = 1;
+}

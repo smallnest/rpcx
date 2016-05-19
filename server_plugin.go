@@ -181,6 +181,16 @@ type (
 		Handle(net.Conn) bool
 	}
 
+	//IServerCodecPlugin represents .
+	IServerCodecPlugin interface {
+		IPreReadRequestHeaderPlugin
+		IPostReadRequestHeaderPlugin
+		IPreReadRequestBodyPlugin
+		IPostReadRequestBodyPlugin
+		IPreWriteResponsePlugin
+		IPostWriteResponsePlugin
+	}
+
 	//IPreReadRequestHeaderPlugin represents .
 	IPreReadRequestHeaderPlugin interface {
 		PreReadRequestHeader(r *rpc.Request)

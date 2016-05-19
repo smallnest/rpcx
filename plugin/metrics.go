@@ -16,7 +16,7 @@ type MetricsPlugin struct {
 
 //NewMetricsPlugin creates a new MetricsPlugirn
 func NewMetricsPlugin() *MetricsPlugin {
-	return &MetricsPlugin{Registry: metrics.NewRegistry()}
+	return &MetricsPlugin{Registry: metrics.NewRegistry(), seqs: make(map[uint64]int64, 100)}
 }
 
 // Register handles registering event.
