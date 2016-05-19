@@ -104,7 +104,7 @@ func (p *ServerPluginContainer) DoRegister(name string, rcvr interface{}) error 
 func (p *ServerPluginContainer) DoPostConnAccept(conn net.Conn) bool {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPostConnAcceptPlugin); ok {
-			flag := plugin.Handle(conn)
+			flag := plugin.HandleConnAccept(conn)
 			if !flag { //interrupt
 				conn.Close()
 				return false
@@ -178,7 +178,7 @@ type (
 	// if returns false, it means subsequent IPostConnAcceptPlugins should not contiune to handle this conn
 	// and this conn has been closed.
 	IPostConnAcceptPlugin interface {
-		Handle(net.Conn) bool
+		HandleConnAccept(net.Conn) bool
 	}
 
 	//IServerCodecPlugin represents .
