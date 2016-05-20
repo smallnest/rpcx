@@ -29,6 +29,16 @@ func (s SelectMode) String() string {
 	return selectModeStrs[s]
 }
 
+//FailMode is a feature to decide client actions when clients fail to invoke services
+type FailMode int
+
+const (
+	//Failover selects another server automaticaly
+	Failover FailMode = iota
+	//Failfast returns error immediately
+	Failfast
+)
+
 //ClientSelector defines an interface to create a rpc.Client from cluster or standalone.
 type ClientSelector interface {
 	Select(clientCodecFunc ClientCodecFunc) (*rpc.Client, error)
@@ -64,6 +74,8 @@ type Client struct {
 	ClientSelector  ClientSelector
 	ClientCodecFunc ClientCodecFunc
 	PluginContainer IClientPluginContainer
+	FailMode        FailMode
+	Retries         int
 }
 
 //NewClient create a client.
@@ -71,7 +83,9 @@ func NewClient(s ClientSelector) *Client {
 	return &Client{
 		PluginContainer: &ClientPluginContainer{plugins: make([]IPlugin, 0)},
 		ClientCodecFunc: msgpackrpc.NewClientCodec,
-		ClientSelector:  s}
+		ClientSelector:  s,
+		FailMode:        Failfast,
+		Retries:         3}
 }
 
 // Start starts a rpc clent.
@@ -87,8 +101,25 @@ func (c *Client) Close() error {
 }
 
 //Call invokes the named function, waits for it to complete, and returns its error status.
-func (c *Client) Call(serviceMethod string, args interface{}, reply interface{}) error {
-	return c.rpcClient.Call(serviceMethod, args, reply)
+func (c *Client) Call(serviceMethod string, args interface{}, reply interface{}) (err error) {
+	err = c.rpcClient.Call(serviceMethod, args, reply)
+
+	if c.FailMode == Failover {
+		for retries := 0; retries < c.Retries; retries++ {
+			rpcClient, err := c.ClientSelector.Select(c.ClientCodecFunc)
+			if err != nil {
+				continue
+			}
+			c.rpcClient.Close()
+			c.rpcClient = rpcClient
+			err = c.rpcClient.Call(serviceMethod, args, reply)
+			if err == nil {
+				return nil
+			}
+		}
+	}
+
+	return
 }
 
 //Go invokes the function asynchronously. It returns the Call structure representing the invocation.
