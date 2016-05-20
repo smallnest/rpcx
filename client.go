@@ -1,4 +1,4 @@
-package betterrpc
+package rpcx
 
 import (
 	"io"

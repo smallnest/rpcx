@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/rcrowley/go-metrics"
-	"github.com/smallnest/betterrpc"
+	"github.com/smallnest/rpcx"
 )
 
 var (
@@ -34,7 +34,7 @@ func (t *Arith) Error(args *Args, reply *Reply) error {
 }
 
 func TestMetrics(t *testing.T) {
-	server := betterrpc.NewServer()
+	server := rpcx.NewServer()
 	plugin := NewMetricsPlugin()
 	server.PluginContainer.Add(plugin)
 
@@ -42,8 +42,8 @@ func TestMetrics(t *testing.T) {
 	server.Start("tcp", "127.0.0.1:0")
 	serverAddr := server.Address()
 
-	s := &betterrpc.DirectClientSelector{Network: "tcp", Address: serverAddr}
-	client := betterrpc.NewClient(s)
+	s := &rpcx.DirectClientSelector{Network: "tcp", Address: serverAddr}
+	client := rpcx.NewClient(s)
 	err := client.Start()
 	if err != nil {
 		t.Errorf("can't connect to %s because of %v \n", serverAddr, err)

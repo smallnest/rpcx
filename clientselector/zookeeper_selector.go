@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/samuel/go-zookeeper/zk"
-	"github.com/smallnest/betterrpc"
+	"github.com/smallnest/rpcx"
 )
 
 // ZooKeeperClientSelector is used to select a rpc server from zookeeper.
@@ -18,7 +18,7 @@ type ZooKeeperClientSelector struct {
 	sessionTimeout time.Duration
 	BasePath       string //should endwith serviceName
 	Servers        []string
-	SelectMode     betterrpc.SelectMode
+	SelectMode     rpcx.SelectMode
 	timeout        time.Duration
 	rnd            *rand.Rand
 	currentServer  int
@@ -26,7 +26,7 @@ type ZooKeeperClientSelector struct {
 }
 
 // NewZooKeeperClientSelector creates a ZooKeeperClientSelector
-func NewZooKeeperClientSelector(zkServers []string, sessionTimeout time.Duration, sm betterrpc.SelectMode, timeout time.Duration) *ZooKeeperClientSelector {
+func NewZooKeeperClientSelector(zkServers []string, sessionTimeout time.Duration, sm rpcx.SelectMode, timeout time.Duration) *ZooKeeperClientSelector {
 	selector := &ZooKeeperClientSelector{
 		ZKServers:      zkServers,
 		sessionTimeout: sessionTimeout,
@@ -66,17 +66,17 @@ func (s *ZooKeeperClientSelector) watchPath() {
 }
 
 //Select returns a rpc client
-func (s *ZooKeeperClientSelector) Select(clientCodecFunc betterrpc.ClientCodecFunc) (*rpc.Client, error) {
-	if s.SelectMode == betterrpc.RandomSelect {
+func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
+	if s.SelectMode == rpcx.RandomSelect {
 		server := s.Servers[s.rnd.Intn(s.len)]
 		ss := strings.Split(server, "@") //tcp@ip , tcp4@ip or tcp6@ip
-		return betterrpc.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
+		return rpcx.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
 
-	} else if s.SelectMode == betterrpc.RandomSelect {
+	} else if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server, "@") //
-		return betterrpc.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
+		return rpcx.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
 
 	} else {
 		return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())
