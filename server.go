@@ -140,6 +140,18 @@ func (s *Server) Serve(network, address string) {
 	}
 }
 
+// ServeListener starts
+func (s *Server) ServeListener(ln net.Listener) {
+	s.listener = ln
+	for {
+		c, err := ln.Accept()
+		if err != nil {
+			continue
+		}
+		go s.rpcServer.ServeCodec(newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c)))
+	}
+}
+
 // Start starts and listens RCP requests without blocking.
 func (s *Server) Start(network, address string) {
 	ln, err := net.Listen(network, address)
