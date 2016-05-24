@@ -102,6 +102,16 @@ func Start(n, address string) {
 	defaultServer.Start(n, address)
 }
 
+// ServeListener serve with a listener
+func ServeListener(ln net.Listener) {
+	defaultServer.ServeListener(ln)
+}
+
+// SetServerCodecFunc sets a ServerCodecFunc
+func SetServerCodecFunc(fn ServerCodecFunc) {
+	defaultServer.ServerCodecFunc = fn
+}
+
 // Close closes RPC server.
 func Close() error {
 	return defaultServer.Close()

@@ -3,9 +3,12 @@ package plugin
 import (
 	"errors"
 	"fmt"
+	"net"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/rcrowley/go-metrics"
 	"github.com/samuel/go-zookeeper/zk"
 )
 
@@ -15,13 +18,46 @@ type ZooKeeperRegisterPlugin struct {
 	ZooKeeperServers []string
 	BasePath         string
 	Conn             *zk.Conn
+	metrics          metrics.Registry
+	Services         []string
+	updateInterval   time.Duration
 }
 
 // Start starts to connect zookeeper cluster
 func (plugin *ZooKeeperRegisterPlugin) Start() (err error) {
 	conn, _, err := zk.Connect(plugin.ZooKeeperServers, time.Second)
 	plugin.Conn = conn
+
+	if plugin.updateInterval > 0 {
+		ticker := time.NewTicker(plugin.updateInterval)
+		go func() {
+			for _ = range ticker.C {
+				clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.metrics)
+				data := []byte(strconv.FormatInt(clientMeter.Count(), 10))
+				//set this same metrics for all services at this server
+				for _, name := range plugin.Services {
+					nodePath := plugin.BasePath + "/" + name + "/" + plugin.ServiceAddress
+					conn.Set(nodePath, data, -1)
+				}
+
+			}
+		}()
+	}
+
 	return
+}
+
+func updateServerInfo(conn *zk.Conn) {
+
+}
+
+// HandleConnAccept handles connections from clients
+func (plugin *ZooKeeperRegisterPlugin) HandleConnAccept(net.Conn) bool {
+	if plugin.metrics != nil {
+		clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.metrics)
+		clientMeter.Mark(1)
+	}
+	return true
 }
 
 //Close closes zookeeper connection.
@@ -83,13 +119,14 @@ func (plugin *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}) (
 	exists, _, err := plugin.Conn.Exists(nodePath)
 	if exists {
 		err = plugin.Conn.Delete(nodePath, -1)
-		fmt.Printf("delete: ok\n")
 	}
 
 	//create Ephemeral node
 	flags := int32(zk.FlagEphemeral)
 	acl := zk.WorldACL(zk.PermAll)
 	_, err = plugin.Conn.Create(nodePath, []byte(""), flags, acl)
+
+	plugin.Services = append(plugin.Services, name)
 	return
 }
 

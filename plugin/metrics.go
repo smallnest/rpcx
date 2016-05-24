@@ -26,8 +26,8 @@ func (plugin *MetricsPlugin) Register(name string, rcvr interface{}) error {
 	return nil
 }
 
-// Handle connections from clients
-func (plugin *MetricsPlugin) Handle(net.Conn) bool {
+// HandleConnAccept handles connections from clients
+func (plugin *MetricsPlugin) HandleConnAccept(net.Conn) bool {
 	clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Registry)
 	clientMeter.Mark(1)
 	return true

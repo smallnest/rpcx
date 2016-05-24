@@ -2,7 +2,9 @@ package plugin
 
 import (
 	"testing"
+	"time"
 
+	"github.com/rcrowley/go-metrics"
 	"github.com/samuel/go-zookeeper/zk"
 )
 
@@ -11,6 +13,9 @@ func TestZooKeeperRegisterPlugin_Register(t *testing.T) {
 		ServiceAddress:   "tcp@127.0.0.1:1234",
 		ZooKeeperServers: []string{"127.0.0.1:2181"},
 		BasePath:         "/betterrpc",
+		metrics:          metrics.NewRegistry(),
+		Services:         make([]string, 1),
+		updateInterval:   time.Minute,
 	}
 
 	err := plugin.Start()
