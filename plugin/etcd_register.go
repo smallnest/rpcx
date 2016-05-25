@@ -21,6 +21,7 @@ type EtcdRegisterPlugin struct {
 	Services       []string
 	updateInterval time.Duration
 	KeysAPI        client.KeysAPI
+	ticker         *time.Ticker
 }
 
 // Start starts to connect etcd cluster
@@ -38,9 +39,9 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 	plugin.mkdirs(plugin.BasePath)
 
 	if plugin.updateInterval > 0 {
-		ticker := time.NewTicker(plugin.updateInterval)
+		plugin.ticker = time.NewTicker(plugin.updateInterval)
 		go func() {
-			for _ = range ticker.C {
+			for _ = range plugin.ticker.C {
 				clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.metrics)
 				data := strconv.FormatInt(clientMeter.Count(), 10)
 				//set this same metrics for all services at this server
@@ -77,7 +78,7 @@ func (plugin *EtcdRegisterPlugin) HandleConnAccept(net.Conn) bool {
 
 //Close closes zookeeper connection.
 func (plugin *EtcdRegisterPlugin) Close() {
-
+	plugin.ticker.Stop()
 }
 
 func (plugin *EtcdRegisterPlugin) mkdirs(path string) (err error) {
