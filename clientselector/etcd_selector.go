@@ -52,25 +52,32 @@ func (s *EtcdClientSelector) start() {
 		return
 	}
 	s.KeysAPI = client.NewKeysAPI(cli)
+	pullServers(s)
 
 	s.ticker = time.NewTicker(s.sessionTimeout)
 	go func() {
 		for _ = range s.ticker.C {
-			resp, err := s.KeysAPI.Get(context.TODO(), s.BasePath, &client.GetOptions{
-				Recursive: true,
-				Sort:      true,
-			})
-			if err == nil && resp.Node != nil {
-				if len(resp.Node.Nodes) > 0 {
-					servers := make([]string, len(resp.Node.Nodes))
-					for _, n := range resp.Node.Nodes {
-						servers = append(servers, n.Value)
-					}
-					s.Servers = servers
-				}
-			}
+			pullServers(s)
 		}
 	}()
+}
+
+func pullServers(s *EtcdClientSelector) {
+	resp, err := s.KeysAPI.Get(context.TODO(), s.BasePath, &client.GetOptions{
+		Recursive: true,
+		Sort:      true,
+	})
+	if err == nil && resp.Node != nil {
+		if len(resp.Node.Nodes) > 0 {
+			servers := make([]string, len(resp.Node.Nodes))
+			for _, n := range resp.Node.Nodes {
+				servers = append(servers, n.Value)
+			}
+			s.Servers = servers
+			s.len = len(servers)
+			s.currentServer = s.currentServer % s.len
+		}
+	}
 }
 
 //Select returns a rpc client

@@ -57,6 +57,8 @@ func (s *ZooKeeperClientSelector) watchPath() {
 	servers, _, ch, _ := s.zkConn.ChildrenW(s.BasePath)
 	s.Servers = servers
 	s.len = len(servers)
+
+	s.currentServer = s.currentServer % s.len
 	// e := <-ch
 	// if e.Type == zk.EventNodeChildrenChanged {
 
