@@ -73,7 +73,7 @@ rpcx中有服务提供者 RPC Server，服务调用者 RPC Client 和服务注�
 * 当 Server 发生宕机时，Registry 会监测到服务者不可用(zookeeper session机制或者手工心跳)，Client 感知后会对本地的服务列表作相应调整。client可能被动感知(zookeeper)或者主动定时拉取。
 * 可选地，Server可以定期向Registry汇报调用统计信息，Client可以根据调用次数选择压力最小的Server
 
-![](documents/images/component.png)
+![](https://raw.githubusercontent.com/smallnest/rpcx/master/_documents/images/component.png)
 
 当前rpcx支持zookeeper, etcd等注册中心，Consul注册中心正在开发中。
 
@@ -568,5 +568,3 @@ BenchmarkRPCX_protobuf-16         100000             17234 ns/op             733
 5. [Twitter的RPC框架Finagle简介](http://www.infoq.com/cn/news/2014/05/twitter-finagle-intro)
 6. [armeria: Netty的作者正在开发的一个RPC库](https://github.com/line/armeria)
 7. [wikipedia RPC](https://en.wikipedia.org/wiki/Remote_procedure_call)
-8. []()
-9. []()
