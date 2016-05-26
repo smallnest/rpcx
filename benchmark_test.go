@@ -246,13 +246,9 @@ func BenchmarkRPCX_gob(b *testing.B) {
 	server := startRPCXWithGob()
 	time.Sleep(5 * time.Second) //waiting for starting server
 
-	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), timeout: 10 * time.Second}
+	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), Timeout: 10 * time.Second}
 	client := NewClient(s)
 	client.ClientCodecFunc = codec.NewGobClientCodec
-	err := client.Start()
-	if err != nil {
-		b.Errorf("can't connect to %s because of %v \n", server.Address(), err)
-	}
 	defer client.Close()
 
 	benchmarkRPCXClient(client, b)
@@ -273,13 +269,9 @@ func BenchmarkRPCX_json(b *testing.B) {
 	server := startRPCXWithJson()
 	time.Sleep(5 * time.Second) //waiting for starting server
 
-	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), timeout: 10 * time.Second}
+	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), Timeout: 10 * time.Second}
 	client := NewClient(s)
 	client.ClientCodecFunc = jsonrpc.NewClientCodec
-	err := client.Start()
-	if err != nil {
-		b.Errorf("can't connect to %s because of %v \n", server.Address(), err)
-	}
 	defer client.Close()
 
 	benchmarkRPCXClient(client, b)
@@ -301,12 +293,8 @@ func BenchmarkRPCX_msgp(b *testing.B) {
 	server := startRPCXWithMsgP()
 	time.Sleep(5 * time.Second) //waiting for starting server
 
-	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), timeout: 10 * time.Second}
+	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), Timeout: 10 * time.Second}
 	client := NewClient(s)
-	err := client.Start()
-	if err != nil {
-		b.Errorf("can't connect to %s because of %v \n", server.Address(), err)
-	}
 	defer client.Close()
 
 	benchmarkRPCXClient(client, b)
@@ -338,13 +326,9 @@ func BenchmarkRPCX_gencodec(b *testing.B) {
 	server := startRPCXWithGencodec()
 	time.Sleep(5 * time.Second) //waiting for starting server
 
-	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), timeout: 10 * time.Second}
+	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), Timeout: 10 * time.Second}
 	client := NewClient(s)
 	client.ClientCodecFunc = codec.NewGencodeClientCodec
-	err := client.Start()
-	if err != nil {
-		b.Errorf("can't connect to %s because of %v \n", server.Address(), err)
-	}
 	defer client.Close()
 
 	benchmarkRPCXGencodeClient(client, b)
@@ -376,13 +360,9 @@ func BenchmarkRPCX_protobuf(b *testing.B) {
 	server := startRPCXWithProtobuf()
 	time.Sleep(5 * time.Second) //waiting for starting server
 
-	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), timeout: 10 * time.Second}
+	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), Timeout: 10 * time.Second}
 	client := NewClient(s)
 	client.ClientCodecFunc = codec.NewProtobufClientCodec
-	err := client.Start()
-	if err != nil {
-		b.Errorf("can't connect to %s because of %v \n", server.Address(), err)
-	}
 	defer client.Close()
 
 	benchmarkRPCXProtobufClient(client, b)

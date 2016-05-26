@@ -27,14 +27,10 @@ func TestProtobufCodec(t *testing.T) {
 	s := &rpcx.DirectClientSelector{Network: "tcp", Address: serverAddr}
 	client := rpcx.NewClient(s)
 	client.ClientCodecFunc = NewProtobufClientCodec
-	err := client.Start()
-	if err != nil {
-		t.Errorf("can't connect to %s because of %v \n", serverAddr, err)
-	}
 
 	args := &ProtoArgs{7, 8}
 	var reply ProtoReply
-	err = client.Call(serviceMethodName, args, &reply)
+	err := client.Call(serviceMethodName, args, &reply)
 	if err != nil {
 		t.Errorf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
 	} else {

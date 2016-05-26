@@ -173,6 +173,7 @@ func sovProtobufService(x uint64) (n int) {
 	}
 	return n
 }
+
 func sozProtobufService(x uint64) (n int) {
 	return sovProtobufService(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }

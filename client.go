@@ -48,12 +48,12 @@ type ClientSelector interface {
 // It don't select a node from service cluster but a specific rpc server.
 type DirectClientSelector struct {
 	Network, Address string
-	timeout          time.Duration
+	Timeout          time.Duration
 }
 
 //Select returns a rpc client
 func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc) (*rpc.Client, error) {
-	return NewDirectRPCClient(clientCodecFunc, s.Network, s.Address, s.timeout)
+	return NewDirectRPCClient(clientCodecFunc, s.Network, s.Address, s.Timeout)
 }
 
 // NewDirectRPCClient creates a rpc client
@@ -88,33 +88,40 @@ func NewClient(s ClientSelector) *Client {
 		Retries:         3}
 }
 
-// Start starts a rpc clent.
-func (c *Client) Start() error {
-	rpcClient, err := c.ClientSelector.Select(c.ClientCodecFunc)
-	c.rpcClient = rpcClient
-	return err
-}
-
 // Close closes the connection
 func (c *Client) Close() error {
-	return c.rpcClient.Close()
+	if c.rpcClient != nil {
+		return c.rpcClient.Close()
+	}
+	return nil
 }
 
 //Call invokes the named function, waits for it to complete, and returns its error status.
 func (c *Client) Call(serviceMethod string, args interface{}, reply interface{}) (err error) {
-	err = c.rpcClient.Call(serviceMethod, args, reply)
+	var rpcClient *rpc.Client
+	if c.rpcClient == nil {
+		rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc)
+		c.rpcClient = rpcClient
 
-	if c.FailMode == Failover {
-		for retries := 0; retries < c.Retries; retries++ {
-			rpcClient, err := c.ClientSelector.Select(c.ClientCodecFunc)
-			if err != nil {
-				continue
-			}
-			c.rpcClient.Close()
-			c.rpcClient = rpcClient
-			err = c.rpcClient.Call(serviceMethod, args, reply)
-			if err == nil {
-				return nil
+	}
+	if err == nil && c.rpcClient != nil {
+		err = c.rpcClient.Call(serviceMethod, args, reply)
+	}
+
+	if err != nil || c.rpcClient == nil {
+		if c.FailMode == Failover {
+			for retries := 0; retries < c.Retries; retries++ {
+				rpcClient, err := c.ClientSelector.Select(c.ClientCodecFunc)
+				if err != nil || rpcClient == nil {
+					continue
+				}
+				c.Close()
+
+				c.rpcClient = rpcClient
+				err = c.rpcClient.Call(serviceMethod, args, reply)
+				if err == nil {
+					return nil
+				}
 			}
 		}
 	}
@@ -125,6 +132,11 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 //Go invokes the function asynchronously. It returns the Call structure representing the invocation.
 //The done channel will signal when the call is complete by returning the same Call object. If done is nil, Go will allocate a new channel. If non-nil, done must be buffered or Go will deliberately crash.
 func (c *Client) Go(serviceMethod string, args interface{}, reply interface{}, done chan *rpc.Call) *rpc.Call {
+	if c.rpcClient == nil {
+		rpcClient, _ := c.ClientSelector.Select(c.ClientCodecFunc)
+		c.rpcClient = rpcClient
+
+	}
 	return c.rpcClient.Go(serviceMethod, args, reply, done)
 }
 

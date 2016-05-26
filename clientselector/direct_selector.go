@@ -26,21 +26,25 @@ type MultiClientSelector struct {
 
 // NewMultiClientSelector creates a MultiClientSelector
 func NewMultiClientSelector(servers []ServerPair, sm rpcx.SelectMode, timeout time.Duration) *MultiClientSelector {
-	return &MultiClientSelector{
+	s := &MultiClientSelector{
 		Servers:    servers,
 		SelectMode: sm,
 		timeout:    timeout,
 		rnd:        rand.New(rand.NewSource(time.Now().UnixNano())),
 		len:        len(servers)}
+
+	s.currentServer = s.rnd.Intn(s.len)
+	return s
 }
 
 //Select returns a rpc client
 func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
 	if s.SelectMode == rpcx.RandomSelect {
-		pair := s.Servers[s.rnd.Intn(s.len)]
+		s.currentServer = s.rnd.Intn(s.len)
+		pair := s.Servers[s.currentServer]
 		return rpcx.NewDirectRPCClient(clientCodecFunc, pair.Network, pair.Address, s.timeout)
 
-	} else if s.SelectMode == rpcx.RandomSelect {
+	} else if s.SelectMode == rpcx.RoundRobin {
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		pair := s.Servers[s.currentServer]
 		return rpcx.NewDirectRPCClient(clientCodecFunc, pair.Network, pair.Address, s.timeout)
