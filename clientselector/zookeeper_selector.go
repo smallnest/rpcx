@@ -13,16 +13,17 @@ import (
 
 // ZooKeeperClientSelector is used to select a rpc server from zookeeper.
 type ZooKeeperClientSelector struct {
-	ZKServers      []string
-	zkConn         *zk.Conn
-	sessionTimeout time.Duration
-	BasePath       string //should endwith serviceName
-	Servers        []string
-	SelectMode     rpcx.SelectMode
-	timeout        time.Duration
-	rnd            *rand.Rand
-	currentServer  int
-	len            int
+	ZKServers          []string
+	zkConn             *zk.Conn
+	sessionTimeout     time.Duration
+	BasePath           string //should endwith serviceName
+	Servers            []string
+	SelectMode         rpcx.SelectMode
+	timeout            time.Duration
+	rnd                *rand.Rand
+	currentServer      int
+	len                int
+	HashServiceAndArgs HashServiceAndArgs
 }
 
 // NewZooKeeperClientSelector creates a ZooKeeperClientSelector
@@ -68,7 +69,7 @@ func (s *ZooKeeperClientSelector) watchPath() {
 }
 
 //Select returns a rpc client
-func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
+func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]
@@ -80,10 +81,17 @@ func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc) (
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server, "@") //
 		return rpcx.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
-
-	} else {
-		return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())
+	} else if s.SelectMode == rpcx.ConsistentHash {
+		if s.HashServiceAndArgs == nil {
+			s.HashServiceAndArgs = JumpConsistentHash
+		}
+		s.currentServer = s.HashServiceAndArgs(s.len, options)
+		server := s.Servers[s.currentServer]
+		ss := strings.Split(server, "@") //
+		return rpcx.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
 	}
+	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())
+
 }
 
 func mkdirs(conn *zk.Conn, path string) (err error) {

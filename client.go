@@ -43,7 +43,7 @@ const (
 
 //ClientSelector defines an interface to create a rpc.Client from cluster or standalone.
 type ClientSelector interface {
-	Select(clientCodecFunc ClientCodecFunc) (*rpc.Client, error)
+	Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*rpc.Client, error)
 }
 
 // DirectClientSelector is used to a direct rpc server.
@@ -54,7 +54,7 @@ type DirectClientSelector struct {
 }
 
 //Select returns a rpc client
-func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc) (*rpc.Client, error) {
+func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	return NewDirectRPCClient(clientCodecFunc, s.Network, s.Address, s.Timeout)
 }
 
@@ -102,7 +102,7 @@ func (c *Client) Close() error {
 func (c *Client) Call(serviceMethod string, args interface{}, reply interface{}) (err error) {
 	var rpcClient *rpc.Client
 	if c.rpcClient == nil {
-		rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc)
+		rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
 		c.rpcClient = rpcClient
 
 	}
@@ -113,7 +113,7 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 	if err != nil || c.rpcClient == nil {
 		if c.FailMode == Failover {
 			for retries := 0; retries < c.Retries; retries++ {
-				rpcClient, err := c.ClientSelector.Select(c.ClientCodecFunc)
+				rpcClient, err := c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
 				if err != nil || rpcClient == nil {
 					continue
 				}
@@ -128,7 +128,7 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 		} else if c.FailMode == Failtry {
 			for retries := 0; retries < c.Retries; retries++ {
 				if c.rpcClient == nil {
-					rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc)
+					rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
 					c.rpcClient = rpcClient
 
 				}
