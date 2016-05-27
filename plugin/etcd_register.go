@@ -76,7 +76,7 @@ func (plugin *EtcdRegisterPlugin) HandleConnAccept(net.Conn) bool {
 	return true
 }
 
-//Close closes zookeeper connection.
+//Close closes this plugin
 func (plugin *EtcdRegisterPlugin) Close() {
 	plugin.ticker.Stop()
 }
