@@ -37,6 +37,8 @@ const (
 	Failover FailMode = iota
 	//Failfast returns error immediately
 	Failfast
+	//Failtry use current client again
+	Failtry
 )
 
 //ClientSelector defines an interface to create a rpc.Client from cluster or standalone.
@@ -121,6 +123,20 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 				err = c.rpcClient.Call(serviceMethod, args, reply)
 				if err == nil {
 					return nil
+				}
+			}
+		} else if c.FailMode == Failtry {
+			for retries := 0; retries < c.Retries; retries++ {
+				if c.rpcClient == nil {
+					rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc)
+					c.rpcClient = rpcClient
+
+				}
+				if c.rpcClient != nil {
+					err = c.rpcClient.Call(serviceMethod, args, reply)
+					if err == nil {
+						return nil
+					}
 				}
 			}
 		}

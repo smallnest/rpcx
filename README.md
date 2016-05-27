@@ -36,7 +36,7 @@ Load balancing, fault tolerance.
 So I created rpcx and expect it could become a RPC framework like Dubbo.
 
 
-The similar project is [go-micro](https://github.com/micro/go-micro). I don't learn it more and  it looks using HTTP as transport. It is not what my want.
+The similar project is [go-micro](https://github.com/micro/go-micro). 
 
 
 ## What's RPC
