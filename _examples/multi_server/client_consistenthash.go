@@ -24,13 +24,14 @@ func main() {
 
 	s := clientselector.NewMultiClientSelector(servers, rpcx.ConsistentHash, 10*time.Second)
 
-	for i := 0; i < 10; i++ {
-		callServer(s)
+	client := rpcx.NewClient(s)
+	for i := 0; i < 10000; i++ {
+		callServer(client)
 	}
+	client.Close()
 }
 
-func callServer(s rpcx.ClientSelector) {
-	client := rpcx.NewClient(s)
+func callServer(client *rpcx.Client) {	
 	client.FailMode = rpcx.Failover
 	args := &Args{7, 8}
 	var reply Reply
@@ -41,5 +42,5 @@ func callServer(s rpcx.ClientSelector) {
 		fmt.Printf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
 	}
 
-	client.Close()
+	
 }
