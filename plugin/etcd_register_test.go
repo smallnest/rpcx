@@ -14,9 +14,9 @@ func TestEtcdRegisterPlugin_Register(t *testing.T) {
 		ServiceAddress: "tcp@127.0.0.1:1234",
 		EtcdServers:    []string{"http://127.0.0.1:2379"},
 		BasePath:       "/rpcx",
-		metrics:        metrics.NewRegistry(),
+		Metrics:        metrics.NewRegistry(),
 		Services:       make([]string, 1),
-		updateInterval: time.Minute,
+		UpdateInterval: time.Minute,
 	}
 
 	err := plugin.Start()

@@ -2,6 +2,7 @@ package clientselector
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"net/rpc"
 	"strings"
@@ -69,11 +70,14 @@ func (s *EtcdClientSelector) pullServers() {
 		Recursive: true,
 		Sort:      true,
 	})
+
+	fmt.Printf("%#v\n\n%d\n\n", resp, len(resp.Node.Nodes))
+
 	if err == nil && resp.Node != nil {
 		if len(resp.Node.Nodes) > 0 {
-			servers := make([]string, len(resp.Node.Nodes))
+			var servers []string
 			for _, n := range resp.Node.Nodes {
-				servers = append(servers, n.Value)
+				servers = append(servers, strings.TrimPrefix(n.Key, s.BasePath+"/"))
 			}
 			s.Servers = servers
 			s.len = len(servers)
@@ -87,6 +91,7 @@ func (s *EtcdClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, option
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]
+		fmt.Printf("server: %s\n\n", server)
 		ss := strings.Split(server, "@") //tcp@ip , tcp4@ip or tcp6@ip
 		return rpcx.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
 

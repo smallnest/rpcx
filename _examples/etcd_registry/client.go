@@ -19,7 +19,7 @@ type Reply struct {
 
 func main() {
 	//basePath = "/rpcx/" + serviceName
-	s := clientselector.NewZooKeeperClientSelector([]string{"127.0.0.1:2181"}, "/rpcx/Arith", 2*time.Minute, rpcx.RandomSelect, time.Minute)
+	s := clientselector.NewEtcdClientSelector([]string{"http://127.0.0.1:2379"}, "/rpcx/Arith", time.Minute, rpcx.RandomSelect, time.Minute)
 	client := rpcx.NewClient(s)
 
 	args := &Args{7, 8}

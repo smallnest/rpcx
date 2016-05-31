@@ -17,9 +17,9 @@ type EtcdRegisterPlugin struct {
 	ServiceAddress string
 	EtcdServers    []string
 	BasePath       string
-	metrics        metrics.Registry
+	Metrics        metrics.Registry
 	Services       []string
-	updateInterval time.Duration
+	UpdateInterval time.Duration
 	KeysAPI        client.KeysAPI
 	ticker         *time.Ticker
 }
@@ -38,11 +38,11 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 	plugin.KeysAPI = client.NewKeysAPI(cli)
 	plugin.mkdirs(plugin.BasePath)
 
-	if plugin.updateInterval > 0 {
-		plugin.ticker = time.NewTicker(plugin.updateInterval)
+	if plugin.UpdateInterval > 0 {
+		plugin.ticker = time.NewTicker(plugin.UpdateInterval)
 		go func() {
 			for _ = range plugin.ticker.C {
-				clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.metrics)
+				clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Metrics)
 				data := strconv.FormatInt(clientMeter.Count(), 10)
 				//set this same metrics for all services at this server
 
@@ -52,7 +52,7 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 					nodePath := plugin.BasePath + "/" + name + "/" + plugin.ServiceAddress
 					_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, data, &client.SetOptions{
 						PrevExist: client.PrevIgnore,
-						TTL:       plugin.updateInterval + 10*time.Second,
+						TTL:       plugin.UpdateInterval,
 					})
 
 					if err != nil {
@@ -69,8 +69,8 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 
 // HandleConnAccept handles connections from clients
 func (plugin *EtcdRegisterPlugin) HandleConnAccept(net.Conn) bool {
-	if plugin.metrics != nil {
-		clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.metrics)
+	if plugin.Metrics != nil {
+		clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Metrics)
 		clientMeter.Mark(1)
 	}
 	return true
@@ -105,10 +105,14 @@ func (plugin *EtcdRegisterPlugin) forceMkdirs(path string) (err error) {
 // this service is registered at BASE/serviceName/thisIpAddress node
 func (plugin *EtcdRegisterPlugin) Register(name string, rcvr interface{}) (err error) {
 	nodePath := plugin.BasePath + "/" + name
-	plugin.mkdirs(nodePath)
+	err = plugin.mkdirs(nodePath)
 
 	nodePath = nodePath + "/" + plugin.ServiceAddress
-	err = plugin.forceMkdirs(nodePath)
+
+	_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, "",
+		&client.SetOptions{
+			PrevExist: client.PrevIgnore,
+		})
 
 	plugin.Services = append(plugin.Services, name)
 	return
