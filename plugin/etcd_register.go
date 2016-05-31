@@ -52,7 +52,7 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 					nodePath := plugin.BasePath + "/" + name + "/" + plugin.ServiceAddress
 					_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, data, &client.SetOptions{
 						PrevExist: client.PrevIgnore,
-						TTL:       plugin.UpdateInterval,
+						TTL:       plugin.UpdateInterval + 10*time.Second,
 					})
 
 					if err != nil {
@@ -112,6 +112,7 @@ func (plugin *EtcdRegisterPlugin) Register(name string, rcvr interface{}) (err e
 	_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, "",
 		&client.SetOptions{
 			PrevExist: client.PrevIgnore,
+			TTL:       plugin.UpdateInterval + 10*time.Second,
 		})
 
 	plugin.Services = append(plugin.Services, name)
