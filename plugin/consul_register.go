@@ -10,6 +10,7 @@ import (
 )
 
 //ConsulRegisterPlugin a register plugin which can register services into consul for cluster
+//This registry is experimental and has not been test.
 type ConsulRegisterPlugin struct {
 	ServiceAddress string
 	ConsulAddress  string

@@ -31,7 +31,7 @@ func main() {
 			return rpcx.NewClient(s)
 		},
 	}
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 10000; i++ {
 		callServer(clientPool, s)
 	}
 }

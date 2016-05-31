@@ -12,6 +12,7 @@ import (
 )
 
 // ConsulClientSelector is used to select a rpc server from consul.
+//This registry is experimental and has not been test.
 type ConsulClientSelector struct {
 	ConsulAddress      string
 	consulConfig       *api.Config
