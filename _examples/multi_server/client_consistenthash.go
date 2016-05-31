@@ -30,7 +30,7 @@ func main() {
 }
 
 func callServer(s rpcx.ClientSelector) {
-	client := rpcx.NewClient(s)
+	client := rpcx.NewClient(s) //it always uses the same client
 	client.FailMode = rpcx.Failover
 	args := &Args{7, 8}
 	var reply Reply
