@@ -55,7 +55,7 @@ func (s *ConsulClientSelector) start() {
 
 	s.ticker = time.NewTicker(s.sessionTimeout)
 	go func() {
-		for _ = range s.ticker.C {
+		for range s.ticker.C {
 			s.pullServers()
 		}
 	}()

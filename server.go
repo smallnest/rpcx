@@ -2,7 +2,9 @@ package rpcx
 
 import (
 	"io"
+	"log"
 	"net"
+	"net/http"
 	"net/rpc"
 
 	"github.com/hashicorp/net-rpc-msgpackrpc"
@@ -24,7 +26,6 @@ func newServerCodecWrapper(pc IServerPluginContainer, c rpc.ServerCodec) *server
 }
 
 func (w *serverCodecWrapper) ReadRequestHeader(r *rpc.Request) error {
-
 	//pre
 	w.PluginContainer.DoPreReadRequestHeader(r)
 
@@ -32,7 +33,6 @@ func (w *serverCodecWrapper) ReadRequestHeader(r *rpc.Request) error {
 
 	//post
 	w.PluginContainer.DoPostReadRequestHeader(r)
-
 	return err
 }
 
@@ -107,6 +107,11 @@ func ServeListener(ln net.Listener) {
 	defaultServer.ServeListener(ln)
 }
 
+//ServeByHTTP implements RPC via HTTP
+func ServeByHTTP(ln net.Listener, rpcPath, debugPath string) {
+	defaultServer.ServeByHTTP(ln, rpc.DefaultRPCPath)
+}
+
 // SetServerCodecFunc sets a ServerCodecFunc
 func SetServerCodecFunc(fn ServerCodecFunc) {
 	defaultServer.ServerCodecFunc = fn
@@ -160,6 +165,32 @@ func (s *Server) ServeListener(ln net.Listener) {
 		}
 		go s.rpcServer.ServeCodec(newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c)))
 	}
+}
+
+// ServeByHTTP starts
+func (s *Server) ServeByHTTP(ln net.Listener, rpcPath string) {
+	http.Handle(rpcPath, s)
+	srv := &http.Server{Handler: nil}
+	srv.Serve(ln)
+}
+
+var connected = "200 Connected to Go RPC"
+
+//ServeHTTP implements net handler interface
+func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if req.Method != "CONNECT" {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		io.WriteString(w, "405 must CONNECT\n")
+		return
+	}
+	conn, _, err := w.(http.Hijacker).Hijack()
+	if err != nil {
+		log.Print("rpc hijacking ", req.RemoteAddr, ": ", err.Error())
+		return
+	}
+	io.WriteString(conn, "HTTP/1.0 "+connected+"\n\n")
+	s.rpcServer.ServeCodec(newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(conn)))
 }
 
 // Start starts and listens RCP requests without blocking.

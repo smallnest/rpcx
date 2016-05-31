@@ -1,8 +1,11 @@
 package rpcx
 
 import (
+	"bufio"
+	"errors"
 	"io"
 	"net"
+	"net/http"
 	"net/rpc"
 	"time"
 
@@ -60,11 +63,46 @@ func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc, options .
 
 // NewDirectRPCClient creates a rpc client
 func NewDirectRPCClient(clientCodecFunc ClientCodecFunc, network, address string, timeout time.Duration) (*rpc.Client, error) {
+	//if network == "http" || network == "https" {
+	if network == "http" {
+		return NewDirectHTTPRPCClient(clientCodecFunc, network, address, "", timeout)
+	}
 	conn, err := net.DialTimeout(network, address, timeout)
 	if err != nil {
 		return nil, err
 	}
 	return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
+}
+
+// NewDirectHTTPRPCClient creates a rpc http client
+func NewDirectHTTPRPCClient(clientCodecFunc ClientCodecFunc, network, address string, path string, timeout time.Duration) (*rpc.Client, error) {
+	if path == "" {
+		path = rpc.DefaultRPCPath
+	}
+
+	var err error
+	conn, err := net.DialTimeout("tcp", address, timeout)
+	if err != nil {
+		return nil, err
+	}
+	io.WriteString(conn, "CONNECT "+path+" HTTP/1.0\n\n")
+
+	// Require successful HTTP response
+	// before switching to RPC protocol.
+	resp, err := http.ReadResponse(bufio.NewReader(conn), &http.Request{Method: "CONNECT"})
+	if err == nil && resp.Status == connected {
+		return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
+	}
+	if err == nil {
+		err = errors.New("unexpected HTTP response: " + resp.Status)
+	}
+	conn.Close()
+	return nil, &net.OpError{
+		Op:   "dial-http",
+		Net:  network + " " + address,
+		Addr: nil,
+		Err:  err,
+	}
 }
 
 // ClientCodecFunc is used to create a rpc.ClientCodecFunc from net.Conn.

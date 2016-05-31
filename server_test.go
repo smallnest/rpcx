@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/net-rpc-msgpackrpc"
+	"github.com/smallnest/rpcx/codec"
 )
 
 var (
@@ -46,6 +47,10 @@ func startServer() {
 	serverAddr = server.Address()
 }
 
+func startHTTPServer() {
+
+}
+
 func startClient(t *testing.T) {
 	conn, err := net.DialTimeout("tcp", serverAddr, time.Minute)
 	if err != nil {
@@ -66,10 +71,41 @@ func startClient(t *testing.T) {
 	}
 }
 
+func startHTTPClient(t *testing.T, addr string) {
+	//client, err := rpc.DialHTTPPath("tcp", addr, "foo")
+	client, err := NewDirectHTTPRPCClient(codec.NewGobClientCodec, "http", addr, "foo", time.Minute)
+	if err != nil {
+		t.Errorf("dialing: %v", err)
+	}
+	defer client.Close()
+
+	args := &Args{7, 8}
+	var reply Reply
+	divCall := client.Go(serviceMethodName, args, &reply, nil)
+	replyCall := <-divCall.Done // will be equal to divCall
+	if replyCall.Error != nil {
+		t.Errorf("error for Arith: %d*%d, %v \n", args.A, args.B, replyCall.Error)
+	} else {
+		t.Logf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
+	}
+
+}
+
 func TestServe(t *testing.T) {
 	once.Do(startServer)
 
 	startClient(t)
+}
+
+func TestServeByHTTP(t *testing.T) {
+	s := NewServer()
+	s.ServerCodecFunc = codec.NewGobServerCodec
+	s.RegisterName(serviceName, service)
+	ln, _ := net.Listen("tcp", "127.0.0.1:0")
+	go s.ServeByHTTP(ln, "foo")
+	addr := ln.Addr().String()
+
+	startHTTPClient(t, addr)
 }
 
 // Test RegisterPlugin

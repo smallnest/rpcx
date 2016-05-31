@@ -41,7 +41,7 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 	if plugin.UpdateInterval > 0 {
 		plugin.ticker = time.NewTicker(plugin.UpdateInterval)
 		go func() {
-			for _ = range plugin.ticker.C {
+			for range plugin.ticker.C {
 				clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Metrics)
 				data := strconv.FormatInt(clientMeter.Count(), 10)
 				//set this same metrics for all services at this server

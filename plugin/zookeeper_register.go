@@ -31,7 +31,7 @@ func (plugin *ZooKeeperRegisterPlugin) Start() (err error) {
 	if plugin.UpdateInterval > 0 {
 		ticker := time.NewTicker(plugin.UpdateInterval)
 		go func() {
-			for _ = range ticker.C {
+			for range ticker.C {
 				clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Metrics)
 				data := []byte(strconv.FormatInt(clientMeter.Count(), 10))
 				//set this same metrics for all services at this server
