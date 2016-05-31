@@ -1,4 +1,7 @@
 # rpcx
+
+[中文介绍](README-CN.md)
+
 rpcx is a distributed RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).
 It is developed based on Go net/rpc and provides extra governance features.
 
@@ -72,12 +75,12 @@ rpcx is a RPC framework of service governance.
 * bases on net/rpc. a Go net/prc project can be converted rpcx project whit few changes.
 * Plugable. Features are implemented by Plugins such as service discovery.
 * Commnuicates with TCP long connections.
-* support many codec. for example, Gob、Json、MessagePack、gencode、ProtoBuf等
+* support many codec. for example, Gob、Json、MessagePack、gencode、ProtoBuf.
 * Service dicovery. support ZooKeeper、Etcd.
-* Fault tolerance：Failover、Failfast、Failtry
+* Fault tolerance：Failover、Failfast、Failtry.
 * Load banlancer：support randomSelecter, RoundRobin, consistent hash etc.
-* scalable
-* Other: metrics、log
+* scalable.
+* Other: metrics、log.
 
 ## Architecture
 rpcx contains three roles : RPC Server，RPC Client and Registry.
