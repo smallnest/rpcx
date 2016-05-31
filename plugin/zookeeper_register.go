@@ -18,9 +18,9 @@ type ZooKeeperRegisterPlugin struct {
 	ZooKeeperServers []string
 	BasePath         string
 	Conn             *zk.Conn
-	metrics          metrics.Registry
+	Metrics          metrics.Registry
 	Services         []string
-	updateInterval   time.Duration
+	UpdateInterval   time.Duration
 }
 
 // Start starts to connect zookeeper cluster
@@ -28,11 +28,11 @@ func (plugin *ZooKeeperRegisterPlugin) Start() (err error) {
 	conn, _, err := zk.Connect(plugin.ZooKeeperServers, time.Second)
 	plugin.Conn = conn
 
-	if plugin.updateInterval > 0 {
-		ticker := time.NewTicker(plugin.updateInterval)
+	if plugin.UpdateInterval > 0 {
+		ticker := time.NewTicker(plugin.UpdateInterval)
 		go func() {
 			for _ = range ticker.C {
-				clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.metrics)
+				clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Metrics)
 				data := []byte(strconv.FormatInt(clientMeter.Count(), 10))
 				//set this same metrics for all services at this server
 				for _, name := range plugin.Services {
@@ -53,8 +53,8 @@ func updateServerInfo(conn *zk.Conn) {
 
 // HandleConnAccept handles connections from clients
 func (plugin *ZooKeeperRegisterPlugin) HandleConnAccept(net.Conn) bool {
-	if plugin.metrics != nil {
-		clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.metrics)
+	if plugin.Metrics != nil {
+		clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Metrics)
 		clientMeter.Mark(1)
 	}
 	return true

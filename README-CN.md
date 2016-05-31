@@ -129,7 +129,7 @@ func NewXXXXXClientCodec(conn io.ReadWriteCloser) rpc.ClientCodec {
 	plugin := &ZooKeeperRegisterPlugin{
 		ServiceAddress:   "tcp@127.0.0.1:1234",
 		ZooKeeperServers: []string{"127.0.0.1:2181"},
-		BasePath:         "/betterrpc",
+		BasePath:         "/rpcx",
 		metrics:          metrics.NewRegistry(),
 		Services:         make([]string, 1),
 		updateInterval:   time.Minute,
@@ -155,7 +155,7 @@ etcd可以通过TTL判断服务器的存活，另外此插件也会定时把调�
 	plugin := &EtcdRegisterPlugin{
 		ServiceAddress: "tcp@127.0.0.1:1234",
 		EtcdServers:    []string{"http://127.0.0.1:2379"},
-		BasePath:       "/betterrpc",
+		BasePath:       "/rpcx",
 		metrics:        metrics.NewRegistry(),
 		Services:       make([]string, 1),
 		updateInterval: time.Minute,

@@ -13,7 +13,7 @@ func TestEtcdRegisterPlugin_Register(t *testing.T) {
 	plugin := &EtcdRegisterPlugin{
 		ServiceAddress: "tcp@127.0.0.1:1234",
 		EtcdServers:    []string{"http://127.0.0.1:2379"},
-		BasePath:       "/betterrpc",
+		BasePath:       "/rpcx",
 		metrics:        metrics.NewRegistry(),
 		Services:       make([]string, 1),
 		updateInterval: time.Minute,

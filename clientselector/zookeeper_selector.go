@@ -27,6 +27,8 @@ type ZooKeeperClientSelector struct {
 }
 
 // NewZooKeeperClientSelector creates a ZooKeeperClientSelector
+// sessionTimeout is timeout configuration for zookeeper.
+// timeout is timeout configuration for TCP connection to RPC servers.
 func NewZooKeeperClientSelector(zkServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, timeout time.Duration) *ZooKeeperClientSelector {
 	selector := &ZooKeeperClientSelector{
 		ZKServers:      zkServers,
@@ -51,6 +53,10 @@ func (s *ZooKeeperClientSelector) start() {
 	if !exist {
 		mkdirs(c, s.BasePath)
 	}
+
+	servers, _, _ := s.zkConn.Children(s.BasePath)
+	s.Servers = servers
+	s.len = len(servers)
 
 	go s.watchPath()
 }

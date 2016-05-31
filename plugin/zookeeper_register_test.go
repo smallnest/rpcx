@@ -12,10 +12,10 @@ func TestZooKeeperRegisterPlugin_Register(t *testing.T) {
 	plugin := &ZooKeeperRegisterPlugin{
 		ServiceAddress:   "tcp@127.0.0.1:1234",
 		ZooKeeperServers: []string{"127.0.0.1:2181"},
-		BasePath:         "/betterrpc",
-		metrics:          metrics.NewRegistry(),
+		BasePath:         "/rpcx",
+		Metrics:          metrics.NewRegistry(),
 		Services:         make([]string, 1),
-		updateInterval:   time.Minute,
+		UpdateInterval:   time.Minute,
 	}
 
 	err := plugin.Start()
