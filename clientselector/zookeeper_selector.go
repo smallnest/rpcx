@@ -27,9 +27,10 @@ type ZooKeeperClientSelector struct {
 }
 
 // NewZooKeeperClientSelector creates a ZooKeeperClientSelector
-func NewZooKeeperClientSelector(zkServers []string, sessionTimeout time.Duration, sm rpcx.SelectMode, timeout time.Duration) *ZooKeeperClientSelector {
+func NewZooKeeperClientSelector(zkServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, timeout time.Duration) *ZooKeeperClientSelector {
 	selector := &ZooKeeperClientSelector{
 		ZKServers:      zkServers,
+		BasePath:       basePath,
 		sessionTimeout: sessionTimeout,
 		SelectMode:     sm,
 		timeout:        timeout,

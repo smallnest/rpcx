@@ -30,9 +30,10 @@ type EtcdClientSelector struct {
 }
 
 // NewEtcdClientSelector creates a EtcdClientSelector
-func NewEtcdClientSelector(etcdServers []string, sessionTimeout time.Duration, sm rpcx.SelectMode, timeout time.Duration) *EtcdClientSelector {
+func NewEtcdClientSelector(etcdServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, timeout time.Duration) *EtcdClientSelector {
 	selector := &EtcdClientSelector{
 		EtcdServers:    etcdServers,
+		BasePath:       basePath,
 		sessionTimeout: sessionTimeout,
 		SelectMode:     sm,
 		timeout:        timeout,
@@ -53,17 +54,17 @@ func (s *EtcdClientSelector) start() {
 		return
 	}
 	s.KeysAPI = client.NewKeysAPI(cli)
-	pullServers(s)
+	s.pullServers()
 
 	s.ticker = time.NewTicker(s.sessionTimeout)
 	go func() {
 		for _ = range s.ticker.C {
-			pullServers(s)
+			s.pullServers()
 		}
 	}()
 }
 
-func pullServers(s *EtcdClientSelector) {
+func (s *EtcdClientSelector) pullServers() {
 	resp, err := s.KeysAPI.Get(context.TODO(), s.BasePath, &client.GetOptions{
 		Recursive: true,
 		Sort:      true,
