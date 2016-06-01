@@ -27,34 +27,52 @@ func newServerCodecWrapper(pc IServerPluginContainer, c rpc.ServerCodec) *server
 
 func (w *serverCodecWrapper) ReadRequestHeader(r *rpc.Request) error {
 	//pre
-	w.PluginContainer.DoPreReadRequestHeader(r)
+	err := w.PluginContainer.DoPreReadRequestHeader(r)
+	if err != nil {
+		return err
+	}
+	err = w.ServerCodec.ReadRequestHeader(r)
 
-	err := w.ServerCodec.ReadRequestHeader(r)
+	if err != nil {
+		return err
+	}
 
 	//post
-	w.PluginContainer.DoPostReadRequestHeader(r)
+	err = w.PluginContainer.DoPostReadRequestHeader(r)
 	return err
 }
 
 func (w *serverCodecWrapper) ReadRequestBody(body interface{}) error {
 	//pre
-	w.PluginContainer.DoPreReadRequestBody(body)
+	err := w.PluginContainer.DoPreReadRequestBody(body)
+	if err != nil {
+		return err
+	}
 
-	err := w.ServerCodec.ReadRequestBody(body)
+	err = w.ServerCodec.ReadRequestBody(body)
+	if err != nil {
+		return err
+	}
 
 	//post
-	w.PluginContainer.DoPostReadRequestBody(body)
+	err = w.PluginContainer.DoPostReadRequestBody(body)
 	return err
 }
 
 func (w *serverCodecWrapper) WriteResponse(resp *rpc.Response, body interface{}) error {
 	//pre
-	w.PluginContainer.DoPreWriteResponse(resp, body)
+	err := w.PluginContainer.DoPreWriteResponse(resp, body)
+	if err != nil {
+		return err
+	}
 
-	err := w.ServerCodec.WriteResponse(resp, body)
+	err = w.ServerCodec.WriteResponse(resp, body)
+	if err != nil {
+		return err
+	}
 
 	//post
-	w.PluginContainer.DoPostWriteResponse(resp, body)
+	err = w.PluginContainer.DoPostWriteResponse(resp, body)
 
 	return err
 }
@@ -242,3 +260,11 @@ func (s *Server) RegisterName(name string, service interface{}) {
 	s.rpcServer.RegisterName(name, service)
 	s.PluginContainer.DoRegister(name, service)
 }
+
+//import cycle
+//
+// Auth sets authorization function
+// func (s *Server) Auth(fn plugin.AuthorizationFunc) error {
+// 	p := &plugin.AuthorizationServerPlugin{AuthorizationFunc: fn}
+// 	return s.PluginContainer.Add(p)
+// }

@@ -34,24 +34,26 @@ func (plugin *MetricsPlugin) HandleConnAccept(net.Conn) bool {
 }
 
 // PreReadRequestHeader marks start time of calling service
-func (plugin *MetricsPlugin) PreReadRequestHeader(r *rpc.Request) {
+func (plugin *MetricsPlugin) PreReadRequestHeader(r *rpc.Request) error {
 	plugin.seqs[r.Seq] = time.Now().UnixNano()
+	return nil
 }
 
 // PostReadRequestHeader counts read
-func (plugin *MetricsPlugin) PostReadRequestHeader(r *rpc.Request) {
+func (plugin *MetricsPlugin) PostReadRequestHeader(r *rpc.Request) error {
 	if r.ServiceMethod == "" {
-		return
+		return nil
 	}
 
 	m := metrics.GetOrRegisterMeter("service_"+r.ServiceMethod+"_Read_Counter", plugin.Registry)
 	m.Mark(1)
+	return nil
 }
 
 // PostWriteResponse count write
-func (plugin *MetricsPlugin) PostWriteResponse(r *rpc.Response, body interface{}) {
+func (plugin *MetricsPlugin) PostWriteResponse(r *rpc.Response, body interface{}) error {
 	if r.ServiceMethod == "" {
-		return
+		return nil
 	}
 
 	m := metrics.GetOrRegisterMeter("service_"+r.ServiceMethod+"_Write_Counter", plugin.Registry)
@@ -67,6 +69,8 @@ func (plugin *MetricsPlugin) PostWriteResponse(r *rpc.Response, body interface{}
 			h.Update(t)
 		}
 	}
+
+	return nil
 }
 
 // Name return name of this plugin.

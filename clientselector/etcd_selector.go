@@ -28,6 +28,7 @@ type EtcdClientSelector struct {
 	currentServer      int
 	len                int
 	HashServiceAndArgs HashServiceAndArgs
+	Client             *rpcx.Client
 }
 
 // NewEtcdClientSelector creates a EtcdClientSelector
@@ -42,6 +43,10 @@ func NewEtcdClientSelector(etcdServers []string, basePath string, sessionTimeout
 
 	selector.start()
 	return selector
+}
+
+func (s *EtcdClientSelector) SetClient(c *rpcx.Client) {
+	s.Client = c
 }
 
 func (s *EtcdClientSelector) start() {
@@ -93,13 +98,13 @@ func (s *EtcdClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, option
 		server := s.Servers[s.currentServer]
 		fmt.Printf("server: %s\n\n", server)
 		ss := strings.Split(server, "@") //tcp@ip , tcp4@ip or tcp6@ip
-		return rpcx.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
 
 	} else if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server, "@") //
-		return rpcx.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
 
 	} else if s.SelectMode == rpcx.ConsistentHash {
 		if s.HashServiceAndArgs == nil {
@@ -108,7 +113,7 @@ func (s *EtcdClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, option
 		s.currentServer = s.HashServiceAndArgs(s.len, options)
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server, "@") //
-		return rpcx.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
 	}
 
 	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())

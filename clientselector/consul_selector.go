@@ -27,6 +27,7 @@ type ConsulClientSelector struct {
 	currentServer      int
 	len                int
 	HashServiceAndArgs HashServiceAndArgs
+	Client             *rpcx.Client
 }
 
 // NewConsulClientSelector creates a ConsulClientSelector
@@ -42,6 +43,10 @@ func NewConsulClientSelector(consulAddress string, serviceName string, sessionTi
 
 	selector.start()
 	return selector
+}
+
+func (s *ConsulClientSelector) SetClient(c *rpcx.Client) {
+	s.Client = c
 }
 
 func (s *ConsulClientSelector) start() {
@@ -84,13 +89,13 @@ func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, opti
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server.Address, "@") //tcp@ip , tcp4@ip or tcp6@ip
-		return rpcx.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
 
 	} else if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server.Address, "@") //
-		return rpcx.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
 
 	} else if s.SelectMode == rpcx.ConsistentHash {
 		if s.HashServiceAndArgs == nil {
@@ -99,7 +104,7 @@ func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, opti
 		s.currentServer = s.HashServiceAndArgs(s.len, options)
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server.Address, "@") //
-		return rpcx.NewDirectRPCClient(clientCodecFunc, ss[0], ss[1], s.timeout)
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
 	}
 
 	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())

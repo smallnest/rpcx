@@ -73,7 +73,8 @@ func startClient(t *testing.T) {
 
 func startHTTPClient(t *testing.T, addr string) {
 	//client, err := rpc.DialHTTPPath("tcp", addr, "foo")
-	client, err := NewDirectHTTPRPCClient(codec.NewGobClientCodec, "http", addr, "foo", time.Minute)
+
+	client, err := NewDirectHTTPRPCClient(nil, codec.NewGobClientCodec, "http", addr, "foo", time.Minute)
 	if err != nil {
 		t.Errorf("dialing: %v", err)
 	}
@@ -157,26 +158,32 @@ type logCodecPlugin struct {
 	preWriteResponse, postWriteResponse         int
 }
 
-func (plugin *logCodecPlugin) PreReadRequestHeader(r *rpc.Request) {
+func (plugin *logCodecPlugin) PreReadRequestHeader(r *rpc.Request) error {
 	plugin.preReadRequestHeader++
+	return nil
 }
-func (plugin *logCodecPlugin) PostReadRequestHeader(r *rpc.Request) {
+func (plugin *logCodecPlugin) PostReadRequestHeader(r *rpc.Request) error {
 	plugin.postReadRequestHeader++
 	//fmt.Printf("Received Header: %#v\n", r)
+	return nil
 }
-func (plugin *logCodecPlugin) PreReadRequestBody(body interface{}) {
+func (plugin *logCodecPlugin) PreReadRequestBody(body interface{}) error {
 	plugin.preReadRequestBody++
+	return nil
 }
-func (plugin *logCodecPlugin) PostReadRequestBody(body interface{}) {
+func (plugin *logCodecPlugin) PostReadRequestBody(body interface{}) error {
 	//fmt.Printf("Received Body: %#v\n", body)
 	plugin.postReadRequestBody++
+	return nil
 }
-func (plugin *logCodecPlugin) PreWriteResponse(resp *rpc.Response, body interface{}) {
+func (plugin *logCodecPlugin) PreWriteResponse(resp *rpc.Response, body interface{}) error {
 	//fmt.Printf("Sent Header: %#v\nSent Body: %#v\n", resp, body)
 	plugin.preWriteResponse++
+	return nil
 }
-func (plugin *logCodecPlugin) PostWriteResponse(resp *rpc.Response, body interface{}) {
+func (plugin *logCodecPlugin) PostWriteResponse(resp *rpc.Response, body interface{}) error {
 	plugin.postWriteResponse++
+	return nil
 }
 
 func (plugin *logCodecPlugin) Name() string {
