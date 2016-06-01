@@ -22,7 +22,7 @@ func main() {
 	client := rpcx.NewClient(s)
 
 	//add Authorization info
-	p := plugin.NewAuthorizationClientPlugin("0b79bab50daca910b000d4f1a2b675d604257e42", "Bearer")
+	p := plugin.NewAuthorizationClientPlugin("0b79bab50daca910b000d4f1a2b675d604257e42_ABC", "Bearer")
 	err := client.PluginContainer.Add(p)
 	if err != nil {
 		fmt.Printf("can't add auth plugin: %#v\n", err)

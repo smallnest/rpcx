@@ -83,6 +83,7 @@ rpcx is a RPC framework of service governance.
 * Load banlancer：support randomSelecter, RoundRobin, consistent hash etc.
 * scalable.
 * Other: metrics、log.
+* Authorization.
 
 ## Architecture
 rpcx contains three roles : RPC Server，RPC Client and Registry.

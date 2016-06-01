@@ -226,6 +226,67 @@ Client的扩展点如下：
 * 读取Response Body的前后
 * 写Request的前后
 
+
+#### 身份授权
+rpcx提供了身份授权的功能。服务提供者可以提供身份验证的功能，只有授权的客户端才允许调用服务。
+
+服务授权的具体实现有服务提供者实现。可以实现OAuth2、数据库验证、Session或者授权码等任意的方式。
+比如OAuth2方式，客户端可以先在OAuth2进行身份验证，获得一个access token,比如"Bearer 0b79bab50daca910b000d4f1a2b675d604257e42",
+然后将这个acccess token加入到请求中即可。 服务端得到这个access token，可以进行身份验证，检查是否是授权的access token,
+如果不是授权的access token,则拒绝服务。
+
+同理，客户端可以采用用户名+密码的方式进行验证，将用户名和密码发送给服务器。<br/>
+客户端也可以使用应用码的方式，让服务器预先分配好一个应用码，以后客户端只要将这个应用码发给服务器即可。
+
+服务器的例子:
+```go
+func main() {
+	server := rpcx.NewServer()
+
+	fn := func(p *plugin.AuthorizationAndServiceMethod) error {
+		if p.Authorization != "0b79bab50daca910b000d4f1a2b675d604257e42" || p.Tag != "Bearer" {
+			fmt.Printf("error: wrong Authorization: %s, %s\n", p.Authorization, p.Tag)
+			return errors.New("Authorization failed ")
+		}
+
+		fmt.Println("Authorization success")
+		return nil
+	}
+
+	p := &plugin.AuthorizationServerPlugin{AuthorizationFunc: fn}
+	server.PluginContainer.Add(p)
+
+	server.RegisterName("Arith", new(Arith))
+	server.Serve("tcp", "127.0.0.1:8972")
+}
+```
+
+客户端的例子：
+```go
+func main() {
+	s := &rpcx.DirectClientSelector{Network: "tcp", Address: "127.0.0.1:8972", Timeout: 10 * time.Second}
+	client := rpcx.NewClient(s)
+
+	//add Authorization info
+	p := plugin.NewAuthorizationClientPlugin("0b79bab50daca910b000d4f1a2b675d604257e42", "Bearer")
+	err := client.PluginContainer.Add(p)
+	if err != nil {
+		fmt.Printf("can't add auth plugin: %#v\n", err)
+	}
+
+	args := &Args{7, 8}
+	var reply Reply
+	err = client.Call("Arith.Mul", args, &reply)
+	if err != nil {
+		fmt.Printf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
+	} else {
+		fmt.Printf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
+	}
+
+	client.Close()
+}
+```
+
 ## RPCX例子
 
 ### 点对点 
