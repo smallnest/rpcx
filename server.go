@@ -155,6 +155,12 @@ func RegisterName(name string, service interface{}) {
 	defaultServer.RegisterName(name, service)
 }
 
+// Auth sets authorization handler
+func Auth(fn AuthorizationFunc) error {
+	p := &AuthorizationServerPlugin{AuthorizationFunc: fn}
+	return defaultServer.PluginContainer.Add(p)
+}
+
 // Serve starts and listens RCP requests.
 //It is blocked until receiving connectings from clients.
 func (s *Server) Serve(network, address string) {
@@ -261,10 +267,8 @@ func (s *Server) RegisterName(name string, service interface{}) {
 	s.PluginContainer.DoRegister(name, service)
 }
 
-//import cycle
-//
-// Auth sets authorization function
-// func (s *Server) Auth(fn plugin.AuthorizationFunc) error {
-// 	p := &plugin.AuthorizationServerPlugin{AuthorizationFunc: fn}
-// 	return s.PluginContainer.Add(p)
-// }
+//Auth sets authorization function
+func (s *Server) Auth(fn AuthorizationFunc) error {
+	p := &AuthorizationServerPlugin{AuthorizationFunc: fn}
+	return s.PluginContainer.Add(p)
+}

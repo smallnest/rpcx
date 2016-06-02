@@ -209,13 +209,11 @@ func (c *Client) Go(serviceMethod string, args interface{}, reply interface{}, d
 	return c.rpcClient.Go(serviceMethod, args, reply, done)
 }
 
-// //import cycle
-//
 // Auth sets Authorization info
-// func (c *Client) Auth(authorization, tag string) error {
-// 	p := plugin.NewAuthorizationClientPlugin(authorization, tag)
-// 	return c.PluginContainer.Add(p)
-// }
+func (c *Client) Auth(authorization, tag string) error {
+	p := NewAuthorizationClientPlugin(authorization, tag)
+	return c.PluginContainer.Add(p)
+}
 
 type clientCodecWrapper struct {
 	rpc.ClientCodec
