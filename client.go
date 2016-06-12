@@ -2,6 +2,7 @@ package rpcx
 
 import (
 	"bufio"
+	"crypto/tls"
 	"errors"
 	"io"
 	"net"
@@ -74,7 +75,23 @@ func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, add
 	if network == "http" {
 		return NewDirectHTTPRPCClient(c, clientCodecFunc, network, address, "", timeout)
 	}
-	conn, err := net.DialTimeout(network, address, timeout)
+
+	var conn net.Conn
+	var tlsConn *tls.Conn
+	var err error
+
+	if c != nil && c.TLSConfig != nil {
+		dialer := &net.Dialer{
+			Timeout: timeout,
+		}
+		tlsConn, err = tls.DialWithDialer(dialer, network, address, c.TLSConfig)
+		//or conn:= tls.Client(netConn, &config)
+
+		conn = net.Conn(tlsConn)
+	} else {
+		conn, err = net.DialTimeout(network, address, timeout)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -91,11 +108,25 @@ func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network,
 		path = rpc.DefaultRPCPath
 	}
 
+	var conn net.Conn
+	var tlsConn *tls.Conn
 	var err error
-	conn, err := net.DialTimeout("tcp", address, timeout)
+
+	if c != nil && c.TLSConfig != nil {
+		dialer := &net.Dialer{
+			Timeout: timeout,
+		}
+		tlsConn, err = tls.DialWithDialer(dialer, "tcp", address, c.TLSConfig)
+		//or conn:= tls.Client(netConn, &config)
+
+		conn = net.Conn(tlsConn)
+	} else {
+		conn, err = net.DialTimeout("tcp", address, timeout)
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	io.WriteString(conn, "CONNECT "+path+" HTTP/1.0\n\n")
 
 	// Require successful HTTP response
@@ -129,6 +160,7 @@ type Client struct {
 	ClientCodecFunc ClientCodecFunc
 	PluginContainer IClientPluginContainer
 	FailMode        FailMode
+	TLSConfig       *tls.Config
 	Retries         int
 }
 

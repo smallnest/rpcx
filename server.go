@@ -1,6 +1,7 @@
 package rpcx
 
 import (
+	"crypto/tls"
 	"io"
 	"log"
 	"net"
@@ -115,9 +116,20 @@ func Serve(n, address string) {
 	defaultServer.Serve(n, address)
 }
 
+// ServeTLS starts and listens RCP requests.
+//It is blocked until receiving connectings from clients.
+func ServeTLS(n, address string, config *tls.Config) {
+	defaultServer.ServeTLS(n, address, config)
+}
+
 // Start starts and listens RCP requests without blocking.
 func Start(n, address string) {
 	defaultServer.Start(n, address)
+}
+
+// StartTLS starts and listens RCP requests without blocking.
+func StartTLS(n, address string, config *tls.Config) {
+	defaultServer.StartTLS(n, address, config)
 }
 
 // ServeListener serve with a listener
@@ -179,6 +191,24 @@ func (s *Server) Serve(network, address string) {
 	}
 }
 
+// ServeTLS starts and listens RCP requests.
+//It is blocked until receiving connectings from clients.
+func (s *Server) ServeTLS(network, address string, config *tls.Config) {
+	ln, err := tls.Listen(network, address, config)
+	if err != nil {
+		return
+	}
+
+	s.listener = ln
+	for {
+		c, err := ln.Accept()
+		if err != nil {
+			continue
+		}
+		go s.rpcServer.ServeCodec(newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c)))
+	}
+}
+
 // ServeListener starts
 func (s *Server) ServeListener(ln net.Listener) {
 	s.listener = ln
@@ -220,6 +250,31 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // Start starts and listens RCP requests without blocking.
 func (s *Server) Start(network, address string) {
 	ln, err := net.Listen(network, address)
+	if err != nil {
+		return
+	}
+
+	s.listener = ln
+
+	go func() {
+		for {
+			c, err := ln.Accept()
+			if err != nil {
+				continue
+			}
+
+			if !s.PluginContainer.DoPostConnAccept(c) {
+				continue
+			}
+
+			go s.rpcServer.ServeCodec(newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c)))
+		}
+	}()
+}
+
+// StartTLS starts and listens RCP requests without blocking.
+func (s *Server) StartTLS(network, address string, config *tls.Config) {
+	ln, err := tls.Listen(network, address, config)
 	if err != nil {
 		return
 	}
