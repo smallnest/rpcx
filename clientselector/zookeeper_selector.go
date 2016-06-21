@@ -54,7 +54,7 @@ func (s *ZooKeeperClientSelector) start() {
 	}
 
 	s.zkConn = c
-	exist, _, err := c.Exists(s.BasePath)
+	exist, _, _ := c.Exists(s.BasePath)
 	if !exist {
 		mkdirs(c, s.BasePath)
 	}
@@ -134,7 +134,7 @@ func mkdirs(conn *zk.Conn, path string) (err error) {
 	createdPath := ""
 	for _, p := range paths {
 		createdPath = createdPath + "/" + p
-		exist, _, err = conn.Exists(createdPath)
+		exist, _, _ = conn.Exists(createdPath)
 		if !exist {
 			path, err = conn.Create(createdPath, []byte(""), flags, acl)
 			if err != nil {
