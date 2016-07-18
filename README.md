@@ -8,6 +8,9 @@ rpcx is a distributed RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [
 It is developed based on Go net/rpc and provides extra governance features.
 
 
+![Benchmark](_documents/benchmark.png)
+
+
 When we talk about RPC frameworks, Dubbo is first framework we should introduced, and there is also Dubbox mantained by dangdang.
 Dubbo has been widely used in e-commerce companies in China, for example, Alibaba, Jingdong and Dangdang.
 
@@ -96,6 +99,36 @@ rpcx contains three roles : RPC Server，RPC Client and Registry.
 So far rpcx support zookeeper, etcd as Registry，Consul support is developing。
 
 ## Benchmark
+
+**Test Environment**
+* CPU:    Intel(R) Xeon(R) CPU E5-2620 v2 @ 2.10GHz, 24 cores
+* Memory: 16G
+* OS:     Linux Server-3 2.6.32-358.el6.x86_64, CentOS 6.4
+* Go:     1.6.2
+
+Test request is copied from protobuf and encoded to a proto message. Its size is 581 bytes.
+The response is same to test request but server has handled the decoding and encoding processing.
+
+The concurrent clients are 100, 1000,2000 and 5000. Count of the total requests for all clients are 1,000,000.
+
+**Test Result**
+
+|concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)| 
+||||||
+|100|1|0|96|0|
+|1000|3|2|151|0|
+|2000|6|4|167|0|
+|5000|27|24|442|0|
+
+
+When you use clients, clients should be shared as possible.
+
+you can use test code in `_benchmark` to test.
+`server` is used to start a server and `client` is used as clients via protobuf.
+
+
+
+The below lists benchmarks of serialization libraries:
 
 ```
 [root@localhost rpcx]# go test -bench . -test.benchmem

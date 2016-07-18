@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"reflect"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -14,16 +15,21 @@ import (
 
 var concurrency = flag.Int("c", 1, "concurrency")
 var total = flag.Int("n", 1, "total requests for all clients")
+var host = flag.String("h", "127.0.0.1:8972", "server ip and port")
 
 func main() {
 	flag.Parse()
 	n := *concurrency
 	m := *total / n
 
-	fmt.Printf("concurrency: %d\n requests per client: %d\n\n", n, m)
+	fmt.Printf("concurrency: %d\nrequests per client: %d\n\n", n, m)
 
 	serviceMethodName := "Hello.Say"
 	args := prepareArgs()
+
+	b := make([]byte, 1024*1024)
+	i, _ := args.MarshalTo(b)
+	fmt.Printf("message size: %d bytes\n\n", i)
 
 	var wg sync.WaitGroup
 	wg.Add(n * m)
@@ -38,7 +44,7 @@ func main() {
 		d = append(d, dt)
 
 		go func() {
-			s := &rpcx.DirectClientSelector{Network: "tcp", Address: "127.0.0.1:8972"}
+			s := &rpcx.DirectClientSelector{Network: "tcp", Address: *host}
 			client := rpcx.NewClient(s)
 			client.ClientCodecFunc = codec.NewProtobufClientCodec
 
@@ -96,50 +102,35 @@ func main() {
 
 func prepareArgs() *BenchmarkMessage {
 	b := true
-	var i int32 = 100032
-	var j int64 = 10000064
+	var i int32 = 100000
 	var s = "许多往事在眼前一幕一幕，变的那麼模糊"
 
 	var args BenchmarkMessage
-	args.Field1 = s
-	args.Field100 = &i
-	args.Field101 = &i
-	args.Field102 = s
-	args.Field104 = &i
-	args.Field12 = &b
-	args.Field128 = &i
-	args.Field129 = &s
-	args.Field13 = &b
-	args.Field130 = &i
-	args.Field131 = &i
-	args.Field14 = &b
-	args.Field150 = i
-	args.Field16 = i
-	args.Field17 = &b
-	args.Field18 = s
 
-	args.Field2 = i
-	args.Field22 = j
-	args.Field23 = &i
-	args.Field24 = &b
-	args.Field25 = &i
-	args.Field271 = &i
-	args.Field272 = &i
-	args.Field280 = i
+	v := reflect.ValueOf(&args).Elem()
+	num := v.NumField()
+	for k := 0; k < num; k++ {
+		field := v.Field(k)
+		if field.Type().Kind() == reflect.Ptr {
+			switch v.Field(k).Type().Elem().Kind() {
+			case reflect.Int, reflect.Int32, reflect.Int64:
+				field.Set(reflect.ValueOf(&i))
+			case reflect.Bool:
+				field.Set(reflect.ValueOf(&b))
+			case reflect.String:
+				field.Set(reflect.ValueOf(&s))
+			}
+		} else {
+			switch field.Kind() {
+			case reflect.Int, reflect.Int32, reflect.Int64:
+				field.SetInt(100000)
+			case reflect.Bool:
+				field.SetBool(true)
+			case reflect.String:
+				field.SetString(s)
+			}
+		}
 
-	args.Field3 = i
-	args.Field30 = &b
-	args.Field4 = s
-	args.Field6 = &i
-	args.Field60 = &i
-	args.Field67 = &i
-	args.Field68 = i
-
-	args.Field7 = s
-	args.Field78 = b
-	args.Field80 = &b
-	args.Field81 = &b
-	args.Field9 = s
-
+	}
 	return &args
 }

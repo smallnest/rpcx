@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+
 	"github.com/smallnest/rpcx"
 	"github.com/smallnest/rpcx/codec"
 )
@@ -14,9 +16,11 @@ func (t *Hello) Say(args *BenchmarkMessage, reply *BenchmarkMessage) error {
 	return nil
 }
 
+var host = flag.String("h", "127.0.0.1:8972", "listened ip and port")
+
 func main() {
 	server := rpcx.NewServer()
 	server.ServerCodecFunc = codec.NewProtobufServerCodec
 	server.RegisterName("Hello", new(Hello))
-	server.Serve("tcp", "127.0.0.1:8972")
+	server.Serve("tcp", *host)
 }

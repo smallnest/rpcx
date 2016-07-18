@@ -136,7 +136,7 @@ func mkdirs(conn *zk.Conn, path string) (err error) {
 		createdPath = createdPath + "/" + p
 		exist, _, _ = conn.Exists(createdPath)
 		if !exist {
-			path, err = conn.Create(createdPath, []byte(""), flags, acl)
+			_, err = conn.Create(createdPath, []byte(""), flags, acl)
 			if err != nil {
 				return
 			}

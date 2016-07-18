@@ -1,6 +1,9 @@
 # rpcx
 rpcx是一个类似阿里巴巴 [Dubbo](http://dubbo.io/) 和微博 [Motan](https://github.com/weibocom/motan) 的分布式的RPC服务框架，基于Golang net/rpc实现。 
 
+
+![性能](_documents/benchmark.png)
+
 谈起分布式的RPC框架，比较出名的是阿里巴巴的dubbo,包括由当当网维护的dubbox。
 不知道dubbo在阿里的内部竞争中败给了HSF，还是阿里有意将其闭源了，官方的代码使用的spring还停留在2.5.6.SEC03的版本，dubbox的spring也只升级到3.2.9.RELEASE。
 不管怎样，dubbo还是在电商企业得到广泛的应用，京东也有部分在使用dubbo开发。
@@ -603,8 +606,34 @@ func callServer(s rpcx.ClientSelector) {
 ```
 
 ## Benchmark
-rpcx基于Go net/rpc框架实现，它的插件机制并不会带来多少性能的损失，如下面的测试，rpcx性能和官方的Go net/rpc持平。
 
+**测试环境**
+* CPU:    Intel(R) Xeon(R) CPU E5-2620 v2 @ 2.10GHz, 24 cores
+* Memory: 16G
+* OS:     Linux Server-3 2.6.32-358.el6.x86_64, CentOS 6.4
+* Go:     1.6.2
+
+测试代码client是通过protobuf编解码和server通讯的。
+请求发送给server, server解码、更新两个字段、编码再发送给client。
+
+测试的并发client是 100, 1000,2000 and 5000。总请求数一百万。
+
+**测试结果**
+
+|并发client|平均值(ms)|中位数(ms)|最大值(ms)|最小值(ms)| 
+||||||
+|100|1|0|96|0|
+|1000|3|2|151|0|
+|2000|6|4|167|0|
+|5000|27|24|442|0|
+
+可以看出平均值和中位数值相差不大，说明没有太多的离谱的延迟。
+
+随着并发数的增大，服务器延迟也越长，这是正常的。
+
+我们实际使用client的时候，尽可能的重用client,这样会避免建立太多的连接。
+
+以下的代码是测试rpcx使用的序列化框架的性能。
 ```
 [root@localhost rpcx]# go test -bench . -test.benchmem
 PASS
