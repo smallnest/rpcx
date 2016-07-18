@@ -10,6 +10,7 @@ It is developed based on Go net/rpc and provides extra governance features.
 
 ![Benchmark](_documents/benchmark.png)
 
+![Throughput](_documents/throughput.png)
 
 When we talk about RPC frameworks, Dubbo is first framework we should introduced, and there is also Dubbox mantained by dangdang.
 Dubbo has been widely used in e-commerce companies in China, for example, Alibaba, Jingdong and Dangdang.
@@ -116,7 +117,7 @@ The concurrent clients are 100, 1000,2000 and 5000. Count of the total requests 
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
 100|1|0|96|0|100694
-500|3|2|151|0|12121212
+500|3|2|151|0|121212
 1000|6|4|167|0|119146
 2000|11|10|472|0|32047
 5000|27|24|442|0|15799
