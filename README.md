@@ -113,12 +113,12 @@ The concurrent clients are 100, 1000,2000 and 5000. Count of the total requests 
 
 **Test Result**
 
-|concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)| 
-||||||
-|100|1|0|96|0|
-|1000|3|2|151|0|
-|2000|6|4|167|0|
-|5000|27|24|442|0|
+concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)
+-------------|-------------|-------------|-------------|-------------
+100|1|0|96|0
+1000|3|2|151|0
+2000|6|4|167|0
+5000|27|24|442|0
 
 
 When you use clients, clients should be shared as possible.
