@@ -39,6 +39,8 @@ func main() {
 
 	d := make([][]int64, n, n)
 
+	//it contains warmup time but we can ignore it
+	totalT := time.Now().UnixNano()
 	for i := 0; i < n; i++ {
 		dt := make([]int64, 0, m)
 		d = append(d, dt)
@@ -77,6 +79,9 @@ func main() {
 	}
 
 	wg.Wait()
+	totalT = time.Now().UnixNano() - totalT
+	totalT = totalT / 1000000
+	fmt.Printf("took %d ms for %d requests", totalT, n*m)
 
 	totalD := make([]int64, 0, n*m)
 	for _, k := range d {
@@ -95,6 +100,7 @@ func main() {
 	fmt.Printf("sent     requests    : %d\n", n*m)
 	fmt.Printf("received requests    : %d\n", atomic.LoadUint64(&trans))
 	fmt.Printf("received requests_OK : %d\n", atomic.LoadUint64(&transOK))
+	fmt.Printf("throughput  (TPS)    : %d\n", int64(n*m)*1000/totalT)
 	fmt.Printf("mean: %.f ns, median: %.f ns, max: %.f ns, min: %.f ns\n", mean, median, max, min)
 	fmt.Printf("mean: %d ms, median: %d ms, max: %d ms, min: %d ms\n", int64(mean/1000000), int64(median/1000000), int64(max/1000000), int64(min/1000000))
 

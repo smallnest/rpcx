@@ -113,15 +113,18 @@ The concurrent clients are 100, 1000,2000 and 5000. Count of the total requests 
 
 **Test Result**
 
-concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)
--------------|-------------|-------------|-------------|-------------
-100|1|0|96|0
-1000|3|2|151|0
-2000|6|4|167|0
-5000|27|24|442|0
+concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
+-------------|-------------|-------------|-------------|-------------|-------------
+100|1|0|96|0|100694
+500|3|2|151|0|12121212
+1000|6|4|167|0|119146
+2000|11|10|472|0|32047
+5000|27|24|442|0|15799
 
+If you use too many clients, the throughput (transations per second) will be worse. It looks 1000 clients is feasible.
 
 When you use clients, clients should be shared as possible.
+
 
 you can use test code in `_benchmark` to test.
 `server` is used to start a server and `client` is used as clients via protobuf.
