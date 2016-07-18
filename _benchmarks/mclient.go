@@ -4,12 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/montanaflynn/stats"
 	"github.com/smallnest/rpcx"
+	"github.com/smallnest/rpcx/clientselector"
 	"github.com/smallnest/rpcx/codec"
 )
 
@@ -21,6 +23,14 @@ func main() {
 	flag.Parse()
 	n := *concurrency
 	m := *total / n
+
+	servers := strings.Split(*host, ",")
+	var serverPairs []clientselector.ServerPair
+	for _, server := range servers {
+		serverPairs = append(serverPairs, clientselector.ServerPair{Network: "tcp", Address: server})
+	}
+
+	fmt.Printf("Servers: %+v\n\n", serverPairs)
 
 	fmt.Printf("concurrency: %d\nrequests per client: %d\n\n", n, m)
 
@@ -46,7 +56,7 @@ func main() {
 		d = append(d, dt)
 
 		go func(i int) {
-			s := &rpcx.DirectClientSelector{Network: "tcp", Address: *host}
+			s := clientselector.NewMultiClientSelector(serverPairs, rpcx.RoundRobin, 10*time.Second)
 			client := rpcx.NewClient(s)
 			client.ClientCodecFunc = codec.NewProtobufClientCodec
 

@@ -132,6 +132,34 @@ you can use test code in `_benchmark` to test.
 
 
 
+The above test is that client and server are running on the same mechine.
+If I run them on separate servers, test results are:
+
+
+concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
+-------------|-------------|-------------|-------------|-------------|-------------
+100|1|0|18|0|91066
+500|4|1|1230|0|103241
+1000|5|1|1420|0|95219
+2000|12|2|3092|0|97323
+5000|26|2|12726|0|69454
+
+
+If they are running on cluster mode, one is for the client and two are for two servers, test results are:
+
+concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
+-------------|-------------|-------------|-------------|-------------|-------------
+100|0|0|10|0|13644
+500|2|1|808|0|157927
+1000|5|2|7275|0|114916
+2000|8|1|7584|0|96627
+5000|21|1|6387|0|97096
+
+Basically its throughput is greater than throughput of single node and less than 2 times of throughput of single node.
+
+
+
+
 The below lists benchmarks of serialization libraries:
 
 ```

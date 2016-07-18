@@ -16,9 +16,10 @@ func (t *Hello) Say(args *BenchmarkMessage, reply *BenchmarkMessage) error {
 	return nil
 }
 
-var host = flag.String("h", "127.0.0.1:8972", "listened ip and port")
+var host = flag.String("s", "127.0.0.1:8972", "listened ip and port")
 
 func main() {
+	flag.Parse()
 	server := rpcx.NewServer()
 	server.ServerCodecFunc = codec.NewProtobufServerCodec
 	server.RegisterName("Hello", new(Hello))
