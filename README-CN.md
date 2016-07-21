@@ -700,7 +700,7 @@ rpcx的测试结果如上，下面事gRPC的测试结果。
 2000|30|26|115|0|62367
 5000|73|67|349|0|59421 
 
-![](_documents/rpcx-grpc-1.png)
+![](_documents/images/rpcx-grpc-1.png)
 
 ### 客户端在一台机器上，服务器在一台机器上
 
@@ -712,7 +712,7 @@ rpcx的测试结果如上，下面事gRPC的测试结果。
 2000|17|2|9735|0|49185
 5000|44|2|12788|0|52770 
 
-![](_documents/rpcx-grpc-2.png)
+![](_documents/images/rpcx-grpc-2.png)
 
 ### 客户端在一台机器上，三个服务器在三台机器上
 
@@ -724,7 +724,7 @@ rpcx的测试结果如上，下面事gRPC的测试结果。
 2000|19|12|2465|0|86169
 5000|51|40|6358|0|82243 
 
-![](_documents/rpcx-grpc-2.png)
+![](_documents/images/rpcx-grpc-2.png)
 
 ## 参考文档
 1. [谁能用通俗的语言解释一下什么是RPC框架？](https://www.zhihu.com/question/25536695)

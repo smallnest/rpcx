@@ -190,7 +190,7 @@ concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 2000|30|26|115|0|62367
 5000|73|67|349|0|59421 
 
-![](_documents/rpcx-grpc-1.png)
+![](_documents/images/rpcx-grpc-1.png)
 
 ### one client and one server in two machines
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
@@ -201,7 +201,7 @@ concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 2000|17|2|9735|0|49185
 5000|44|2|12788|0|52770 
 
-![](_documents/rpcx-grpc-2.png)
+![](_documents/images/rpcx-grpc-2.png)
 
 ### one client on a machine and three servers in three machines
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
@@ -212,4 +212,4 @@ concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 2000|19|12|2465|0|86169
 5000|51|40|6358|0|82243 
 
-![](_documents/rpcx-grpc-2.png)
+![](_documents/images/rpcx-grpc-2.png)
