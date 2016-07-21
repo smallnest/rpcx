@@ -149,7 +149,7 @@ If they are running on cluster mode, one is for the client and two are for two s
 
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
-100|0|0|10|0|13644
+100|0|0|10|0|136440
 500|2|1|808|0|157927
 1000|5|2|7275|0|114916
 2000|8|1|7584|0|96627
@@ -174,3 +174,42 @@ BenchmarkRPCX_msgp-16             100000             18635 ns/op             776
 BenchmarkRPCX_gencodec-16         100000             18454 ns/op            4485 B/op         17 allocs/op
 BenchmarkRPCX_protobuf-16         100000             17234 ns/op             733 B/op         13 allocs/op
 ```
+
+## Comparision with gRPC
+[gRPC](https://github.com/grpc/grpc-go) is the RPC framework by Google. It support multiple programming lanaguage.
+I have compared three cases for prcx and gRPC. It shows rpcx is much better than gRPC.
+
+Test results of rpcx has been listed on the above. Here is test results of gRPC.
+
+### one client and one server in a same machine
+concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
+-------------|-------------|-------------|-------------|-------------|-------------
+100|1|1|25|0|50040
+500|8|7|63|0|57313
+1000|16|13|115|0|60488
+2000|30|26|115|0|62367
+5000|73|67|349|0|59421 
+
+![](_documents/rpcx-grpc-1.png)
+
+### one client and one server in two machines
+concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
+-------------|-------------|-------------|-------------|-------------|-------------
+100|1|1|20|0|59168
+500|5|1|4350|0|73524
+1000|10|2|3233|0|79974
+2000|17|2|9735|0|49185
+5000|44|2|12788|0|52770 
+
+![](_documents/rpcx-grpc-2.png)
+
+### one client on a machine and three servers in three machines
+concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
+-------------|-------------|-------------|-------------|-------------|-------------
+100|1|0|17|0|71895
+500|5|3|670|0|88347
+1000|10|5|2456|0|85273
+2000|19|12|2465|0|86169
+5000|51|40|6358|0|82243 
+
+![](_documents/rpcx-grpc-2.png)
