@@ -46,6 +46,8 @@ const (
 	Failtry
 	//Broadcast sends requests to all servers and Success only when all servers return OK
 	Broadcast
+	//Forking sends requests to all servers and Success once one server returns OK
+	Forking
 )
 
 //ClientSelector defines an interface to create a rpc.Client from cluster or standalone.
@@ -212,6 +214,9 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 	if c.FailMode == Broadcast {
 		return c.clientBroadCast(serviceMethod, args, reply)
 	}
+	if c.FailMode == Forking {
+		return c.clientForking(serviceMethod, args, reply)
+	}
 
 	if err == nil && c.rpcClient != nil {
 		err = c.rpcClient.Call(serviceMethod, args, reply)
@@ -273,6 +278,33 @@ func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply i
 	}
 
 	return nil
+}
+
+func (c *Client) clientForking(serviceMethod string, args interface{}, reply interface{}) (err error) {
+	rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
+	if rpcClients == nil || len(rpcClients) == 0 {
+		return nil
+	}
+
+	l := len(rpcClients)
+	done := make(chan *rpc.Call, l)
+	for _, rpcClient := range rpcClients {
+		rpcClient.Go(serviceMethod, args, reply, done)
+	}
+
+	for l > 0 {
+		call := <-done
+		if call != nil && call.Error == nil {
+			reply = call.Reply
+			return nil
+		}
+		if call == nil {
+			break
+		}
+		l--
+	}
+
+	return errors.New("all clients return Error")
 }
 
 //Go invokes the function asynchronously. It returns the Call structure representing the invocation.
