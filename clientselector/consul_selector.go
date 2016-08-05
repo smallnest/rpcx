@@ -49,6 +49,24 @@ func (s *ConsulClientSelector) SetClient(c *rpcx.Client) {
 	s.Client = c
 }
 
+func (s *ConsulClientSelector) SetSelectMode(sm rpcx.SelectMode) {
+	s.SelectMode = sm
+}
+
+func (s *ConsulClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
+	var clients []*rpc.Client
+
+	for _, sv := range s.Servers {
+		ss := strings.Split(sv.Address, "@")
+		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
+		if err == nil {
+			clients = append(clients, c)
+		}
+	}
+
+	return clients
+}
+
 func (s *ConsulClientSelector) start() {
 	if s.consulConfig == nil {
 		s.consulConfig = api.DefaultConfig()

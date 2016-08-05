@@ -44,12 +44,19 @@ const (
 	Failfast
 	//Failtry use current client again
 	Failtry
+	//Broadcast sends requests to all servers and Success only when all servers return OK
+	Broadcast
 )
 
 //ClientSelector defines an interface to create a rpc.Client from cluster or standalone.
 type ClientSelector interface {
+	//Select returns a new client and it also update current client
 	Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*rpc.Client, error)
+	//SetClient set current client
 	SetClient(*Client)
+	SetSelectMode(SelectMode)
+	//AllClients returns all Clients
+	AllClients(clientCodecFunc ClientCodecFunc) []*rpc.Client
 }
 
 // DirectClientSelector is used to a direct rpc server.
@@ -60,13 +67,23 @@ type DirectClientSelector struct {
 	Client           *Client
 }
 
-//Select returns a rpc client
+//Select returns a rpc client.
 func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	return NewDirectRPCClient(s.Client, clientCodecFunc, s.Network, s.Address, s.Timeout)
 }
 
+//SetClient sets the unique client.
 func (s *DirectClientSelector) SetClient(c *Client) {
 	s.Client = c
+}
+
+//SetSelectMode is meaningless for DirectClientSelector because there is only one client.
+func (s *DirectClientSelector) SetSelectMode(sm SelectMode) {
+
+}
+
+func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*rpc.Client {
+	return []*rpc.Client{s.Client.rpcClient}
 }
 
 // NewDirectRPCClient creates a rpc client
@@ -192,6 +209,10 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 		c.rpcClient = rpcClient
 
 	}
+	if c.FailMode == Broadcast {
+		return c.clientBroadCast(serviceMethod, args, reply)
+	}
+
 	if err == nil && c.rpcClient != nil {
 		err = c.rpcClient.Call(serviceMethod, args, reply)
 	}
@@ -228,6 +249,30 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 	}
 
 	return
+}
+
+func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply interface{}) (err error) {
+	rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
+	if rpcClients == nil || len(rpcClients) == 0 {
+		return nil
+	}
+
+	l := len(rpcClients)
+	done := make(chan *rpc.Call, l)
+	for _, rpcClient := range rpcClients {
+		rpcClient.Go(serviceMethod, args, reply, done)
+	}
+
+	for l > 0 {
+		call := <-done
+		if call == nil || call.Error != nil {
+			return errors.New("some clients return Error")
+		}
+		reply = call.Reply
+		l--
+	}
+
+	return nil
 }
 
 //Go invokes the function asynchronously. It returns the Call structure representing the invocation.

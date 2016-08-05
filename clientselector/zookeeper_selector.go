@@ -47,6 +47,24 @@ func (s *ZooKeeperClientSelector) SetClient(c *rpcx.Client) {
 	s.Client = c
 }
 
+func (s *ZooKeeperClientSelector) SetSelectMode(sm rpcx.SelectMode) {
+	s.SelectMode = sm
+}
+
+func (s *ZooKeeperClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
+	var clients []*rpc.Client
+
+	for _, sv := range s.Servers {
+		ss := strings.Split(sv, "@")
+		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
+		if err == nil {
+			clients = append(clients, c)
+		}
+	}
+
+	return clients
+}
+
 func (s *ZooKeeperClientSelector) start() {
 	c, _, err := zk.Connect(s.ZKServers, s.sessionTimeout)
 	if err != nil {

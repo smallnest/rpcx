@@ -2,7 +2,6 @@ package clientselector
 
 import (
 	"errors"
-	"fmt"
 	"math/rand"
 	"net/rpc"
 	"strings"
@@ -49,6 +48,24 @@ func (s *EtcdClientSelector) SetClient(c *rpcx.Client) {
 	s.Client = c
 }
 
+func (s *EtcdClientSelector) SetSelectMode(sm rpcx.SelectMode) {
+	s.SelectMode = sm
+}
+
+func (s *EtcdClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
+	var clients []*rpc.Client
+
+	for _, sv := range s.Servers {
+		ss := strings.Split(sv, "@")
+		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
+		if err == nil {
+			clients = append(clients, c)
+		}
+	}
+
+	return clients
+}
+
 func (s *EtcdClientSelector) start() {
 	cli, err := client.New(client.Config{
 		Endpoints:               s.EtcdServers,
@@ -76,8 +93,6 @@ func (s *EtcdClientSelector) pullServers() {
 		Sort:      true,
 	})
 
-	fmt.Printf("%#v\n\n%d\n\n", resp, len(resp.Node.Nodes))
-
 	if err == nil && resp.Node != nil {
 		if len(resp.Node.Nodes) > 0 {
 			var servers []string
@@ -96,7 +111,6 @@ func (s *EtcdClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, option
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]
-		fmt.Printf("server: %s\n\n", server)
 		ss := strings.Split(server, "@") //tcp@ip , tcp4@ip or tcp6@ip
 		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
 

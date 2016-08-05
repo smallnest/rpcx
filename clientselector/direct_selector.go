@@ -43,6 +43,23 @@ func (s *MultiClientSelector) SetClient(c *rpcx.Client) {
 	s.Client = c
 }
 
+func (s *MultiClientSelector) SetSelectMode(sm rpcx.SelectMode) {
+	s.SelectMode = sm
+}
+
+func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
+	var clients []*rpc.Client
+
+	for _, sv := range s.Servers {
+		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, sv.Network, sv.Address, s.timeout)
+		if err == nil {
+			clients = append(clients, c)
+		}
+	}
+
+	return clients
+}
+
 //Select returns a rpc client
 func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	if s.SelectMode == rpcx.RandomSelect {
