@@ -175,6 +175,7 @@ type ClientCodecFunc func(conn io.ReadWriteCloser) rpc.ClientCodec
 // Client represents a RPC client.
 type Client struct {
 	rpcClient       *rpc.Client
+	rpcClients      []*rpc.Client
 	ClientSelector  ClientSelector
 	ClientCodecFunc ClientCodecFunc
 	PluginContainer IClientPluginContainer
@@ -198,8 +199,15 @@ func NewClient(s ClientSelector) *Client {
 // Close closes the connection
 func (c *Client) Close() error {
 	if c.rpcClient != nil {
-		return c.rpcClient.Close()
+		c.rpcClient.Close()
 	}
+
+	if c.rpcClients != nil {
+		for _, rpcClient := range c.rpcClients {
+			rpcClient.Close()
+		}
+	}
+
 	return nil
 }
 
@@ -257,14 +265,20 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 }
 
 func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply interface{}) (err error) {
-	rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
-	if rpcClients == nil || len(rpcClients) == 0 {
+	if c.rpcClients == nil {
+		rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
+
+		c.rpcClients = rpcClients
+
+	}
+
+	if c.rpcClients == nil || len(c.rpcClients) == 0 {
 		return nil
 	}
 
-	l := len(rpcClients)
+	l := len(c.rpcClients)
 	done := make(chan *rpc.Call, l)
-	for _, rpcClient := range rpcClients {
+	for _, rpcClient := range c.rpcClients {
 		rpcClient.Go(serviceMethod, args, reply, done)
 	}
 
@@ -281,14 +295,18 @@ func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply i
 }
 
 func (c *Client) clientForking(serviceMethod string, args interface{}, reply interface{}) (err error) {
-	rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
-	if rpcClients == nil || len(rpcClients) == 0 {
+	if c.rpcClients == nil {
+		rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
+		c.rpcClients = rpcClients
+	}
+
+	if c.rpcClients == nil || len(c.rpcClients) == 0 {
 		return nil
 	}
 
-	l := len(rpcClients)
+	l := len(c.rpcClients)
 	done := make(chan *rpc.Call, l)
-	for _, rpcClient := range rpcClients {
+	for _, rpcClient := range c.rpcClients {
 		rpcClient.Go(serviceMethod, args, reply, done)
 	}
 
