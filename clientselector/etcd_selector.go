@@ -114,7 +114,7 @@ func (s *EtcdClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, option
 		ss := strings.Split(server, "@") //tcp@ip , tcp4@ip or tcp6@ip
 		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
 
-	} else if s.SelectMode == rpcx.RoundRobinMode {
+	} else if s.SelectMode == rpcx.RoundRobin {
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server, "@") //
