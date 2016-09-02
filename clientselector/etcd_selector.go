@@ -79,12 +79,36 @@ func (s *EtcdClientSelector) start() {
 	s.KeysAPI = client.NewKeysAPI(cli)
 	s.pullServers()
 
-	s.ticker = time.NewTicker(s.sessionTimeout)
-	go func() {
-		for range s.ticker.C {
+	// s.ticker = time.NewTicker(s.sessionTimeout)
+	// go func() {
+	// 	for range s.ticker.C {
+	// 		s.pullServers()
+	// 	}
+	// }()
+
+	go s.watch()
+}
+
+func (s *EtcdClientSelector) watch() {
+	watcher := s.KeysAPI.Watcher(s.BasePath, &client.WatcherOptions{
+		Recursive: true,
+	})
+
+	for {
+		res, err := watcher.Next(context.Background())
+		if err != nil {
+			break
+		}
+
+		//services are changed, we pull service again instead of processing single node
+		if res.Action == "expire" {
+			s.pullServers()
+		} else if res.Action == "set" || res.Action == "update" {
+			s.pullServers()
+		} else if res.Action == "delete" {
 			s.pullServers()
 		}
-	}()
+	}
 }
 
 func (s *EtcdClientSelector) pullServers() {
