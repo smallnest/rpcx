@@ -173,6 +173,8 @@ BenchmarkRPCX_protobuf-16         100000             17234 ns/op             733
 [gRPC](https://github.com/grpc/grpc-go) is the RPC framework by Google. It support multiple programming lanaguage.
 I have compared three cases for prcx and gRPC. It shows rpcx is much better than gRPC.
 
+current gRPC version is 1.0 .
+
 Test results of rpcx has been listed on the above. Here is test results of gRPC.
 
 ### gRPC: one client and one server in a same machine
