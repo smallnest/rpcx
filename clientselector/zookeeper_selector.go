@@ -3,7 +3,6 @@ package clientselector
 import (
 	"errors"
 	"math/rand"
-	"net/rpc"
 	"strings"
 	"time"
 
@@ -19,7 +18,7 @@ type ZooKeeperClientSelector struct {
 	BasePath           string //should endwith serviceName
 	Servers            []string
 	SelectMode         rpcx.SelectMode
-	timeout            time.Duration
+	dailTimeout        time.Duration
 	rnd                *rand.Rand
 	currentServer      int
 	len                int
@@ -30,13 +29,13 @@ type ZooKeeperClientSelector struct {
 // NewZooKeeperClientSelector creates a ZooKeeperClientSelector
 // sessionTimeout is timeout configuration for zookeeper.
 // timeout is timeout configuration for TCP connection to RPC servers.
-func NewZooKeeperClientSelector(zkServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, timeout time.Duration) *ZooKeeperClientSelector {
+func NewZooKeeperClientSelector(zkServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration) *ZooKeeperClientSelector {
 	selector := &ZooKeeperClientSelector{
 		ZKServers:      zkServers,
 		BasePath:       basePath,
 		sessionTimeout: sessionTimeout,
 		SelectMode:     sm,
-		timeout:        timeout,
+		dailTimeout:    dailTimeout,
 		rnd:            rand.New(rand.NewSource(time.Now().UnixNano()))}
 
 	selector.start()
@@ -51,12 +50,12 @@ func (s *ZooKeeperClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
-func (s *ZooKeeperClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
-	var clients []*rpc.Client
+func (s *ZooKeeperClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpcx.ClientConn {
+	var clients []*rpcx.ClientConn
 
 	for _, sv := range s.Servers {
 		ss := strings.Split(sv, "@")
-		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
+		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
 		if err == nil {
 			clients = append(clients, c)
 		}
@@ -99,18 +98,18 @@ func (s *ZooKeeperClientSelector) watchPath() {
 }
 
 //Select returns a rpc client
-func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
+func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpcx.ClientConn, error) {
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server, "@") //tcp@ip , tcp4@ip or tcp6@ip
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
 
 	} else if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server, "@") //
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
 	} else if s.SelectMode == rpcx.ConsistentHash {
 		if s.HashServiceAndArgs == nil {
 			s.HashServiceAndArgs = JumpConsistentHash
@@ -118,7 +117,7 @@ func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, o
 		s.currentServer = s.HashServiceAndArgs(s.len, options)
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server, "@") //
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.timeout)
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
 	}
 	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())
 

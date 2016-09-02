@@ -3,7 +3,6 @@ package clientselector
 import (
 	"errors"
 	"math/rand"
-	"net/rpc"
 	"time"
 
 	"github.com/smallnest/rpcx"
@@ -18,7 +17,7 @@ type ServerPair struct {
 type MultiClientSelector struct {
 	Servers            []ServerPair
 	SelectMode         rpcx.SelectMode
-	timeout            time.Duration
+	dailTimeout        time.Duration
 	rnd                *rand.Rand
 	currentServer      int
 	len                int
@@ -27,13 +26,13 @@ type MultiClientSelector struct {
 }
 
 // NewMultiClientSelector creates a MultiClientSelector
-func NewMultiClientSelector(servers []ServerPair, sm rpcx.SelectMode, timeout time.Duration) *MultiClientSelector {
+func NewMultiClientSelector(servers []ServerPair, sm rpcx.SelectMode, dailTimeout time.Duration) *MultiClientSelector {
 	s := &MultiClientSelector{
-		Servers:    servers,
-		SelectMode: sm,
-		timeout:    timeout,
-		rnd:        rand.New(rand.NewSource(time.Now().UnixNano())),
-		len:        len(servers)}
+		Servers:     servers,
+		SelectMode:  sm,
+		dailTimeout: dailTimeout,
+		rnd:         rand.New(rand.NewSource(time.Now().UnixNano())),
+		len:         len(servers)}
 
 	s.currentServer = s.rnd.Intn(s.len)
 	return s
@@ -47,11 +46,11 @@ func (s *MultiClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
-func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
-	var clients []*rpc.Client
+func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpcx.ClientConn {
+	var clients []*rpcx.ClientConn
 
 	for _, sv := range s.Servers {
-		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, sv.Network, sv.Address, s.timeout)
+		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, sv.Network, sv.Address, s.dailTimeout)
 		if err == nil {
 			clients = append(clients, c)
 		}
@@ -61,23 +60,23 @@ func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) [
 }
 
 //Select returns a rpc client
-func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
+func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpcx.ClientConn, error) {
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		pair := s.Servers[s.currentServer]
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, pair.Network, pair.Address, s.timeout)
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, pair.Network, pair.Address, s.dailTimeout)
 
 	} else if s.SelectMode == rpcx.RoundRobin {
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		pair := s.Servers[s.currentServer]
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, pair.Network, pair.Address, s.timeout)
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, pair.Network, pair.Address, s.dailTimeout)
 	} else if s.SelectMode == rpcx.ConsistentHash {
 		if s.HashServiceAndArgs == nil {
 			s.HashServiceAndArgs = JumpConsistentHash
 		}
 		s.currentServer = s.HashServiceAndArgs(s.len, options...)
 		pair := s.Servers[s.currentServer]
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, pair.Network, pair.Address, s.timeout)
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, pair.Network, pair.Address, s.dailTimeout)
 	}
 
 	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())

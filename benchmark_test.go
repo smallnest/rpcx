@@ -246,7 +246,7 @@ func BenchmarkRPCX_gob(b *testing.B) {
 	server := startRPCXWithGob()
 	time.Sleep(5 * time.Second) //waiting for starting server
 
-	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), Timeout: 10 * time.Second}
+	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), DialTimeout: 10 * time.Second}
 	client := NewClient(s)
 	client.ClientCodecFunc = codec.NewGobClientCodec
 	defer client.Close()
@@ -269,7 +269,7 @@ func BenchmarkRPCX_json(b *testing.B) {
 	server := startRPCXWithJson()
 	time.Sleep(5 * time.Second) //waiting for starting server
 
-	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), Timeout: 10 * time.Second}
+	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), DialTimeout: 10 * time.Second}
 	client := NewClient(s)
 	client.ClientCodecFunc = jsonrpc.NewClientCodec
 	defer client.Close()
@@ -293,7 +293,7 @@ func BenchmarkRPCX_msgp(b *testing.B) {
 	server := startRPCXWithMsgP()
 	time.Sleep(5 * time.Second) //waiting for starting server
 
-	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), Timeout: 10 * time.Second}
+	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), DialTimeout: 10 * time.Second}
 	client := NewClient(s)
 	defer client.Close()
 
@@ -326,7 +326,7 @@ func BenchmarkRPCX_gencodec(b *testing.B) {
 	server := startRPCXWithGencodec()
 	time.Sleep(5 * time.Second) //waiting for starting server
 
-	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), Timeout: 10 * time.Second}
+	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), DialTimeout: 10 * time.Second}
 	client := NewClient(s)
 	client.ClientCodecFunc = codec.NewGencodeClientCodec
 	defer client.Close()
@@ -360,7 +360,7 @@ func BenchmarkRPCX_protobuf(b *testing.B) {
 	server := startRPCXWithProtobuf()
 	time.Sleep(5 * time.Second) //waiting for starting server
 
-	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), Timeout: 10 * time.Second}
+	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), DialTimeout: 10 * time.Second}
 	client := NewClient(s)
 	client.ClientCodecFunc = codec.NewProtobufClientCodec
 	defer client.Close()

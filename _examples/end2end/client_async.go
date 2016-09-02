@@ -17,7 +17,7 @@ type Reply struct {
 }
 
 func main() {
-	s := &rpcx.DirectClientSelector{Network: "tcp", Address: "127.0.0.1:8972", Timeout: 10 * time.Second}
+	s := &rpcx.DirectClientSelector{Network: "tcp", Address: "127.0.0.1:8972", DailTimeout: 10 * time.Second}
 	client := rpcx.NewClient(s)
 
 	args := &Args{7, 8}

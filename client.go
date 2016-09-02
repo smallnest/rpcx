@@ -53,25 +53,25 @@ const (
 //ClientSelector defines an interface to create a rpc.Client from cluster or standalone.
 type ClientSelector interface {
 	//Select returns a new client and it also update current client
-	Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*rpc.Client, error)
+	Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*ClientConn, error)
 	//SetClient set current client
 	SetClient(*Client)
 	SetSelectMode(SelectMode)
 	//AllClients returns all Clients
-	AllClients(clientCodecFunc ClientCodecFunc) []*rpc.Client
+	AllClients(clientCodecFunc ClientCodecFunc) []*ClientConn
 }
 
 // DirectClientSelector is used to a direct rpc server.
 // It don't select a node from service cluster but a specific rpc server.
 type DirectClientSelector struct {
 	Network, Address string
-	Timeout          time.Duration
+	DialTimeout      time.Duration
 	Client           *Client
 }
 
 //Select returns a rpc client.
-func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
-	return NewDirectRPCClient(s.Client, clientCodecFunc, s.Network, s.Address, s.Timeout)
+func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*ClientConn, error) {
+	return NewDirectRPCClient(s.Client, clientCodecFunc, s.Network, s.Address, s.DialTimeout)
 }
 
 //SetClient sets the unique client.
@@ -84,12 +84,12 @@ func (s *DirectClientSelector) SetSelectMode(sm SelectMode) {
 
 }
 
-func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*rpc.Client {
-	return []*rpc.Client{s.Client.rpcClient}
+func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*ClientConn {
+	return []*ClientConn{s.Client.rpcClient}
 }
 
 // NewDirectRPCClient creates a rpc client
-func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, timeout time.Duration) (*rpc.Client, error) {
+func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, timeout time.Duration) (*ClientConn, error) {
 	//if network == "http" || network == "https" {
 	if network == "http" {
 		return NewDirectHTTPRPCClient(c, clientCodecFunc, network, address, "", timeout)
@@ -116,13 +116,13 @@ func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, add
 	}
 
 	if c == nil || c.PluginContainer == nil {
-		return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
+		return NewClientWithCodecAndConn(clientCodecFunc(conn), conn), nil
 	}
-	return rpc.NewClientWithCodec(newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn))), nil
+	return NewClientWithCodecAndConn(newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn)), conn), nil
 }
 
 // NewDirectHTTPRPCClient creates a rpc http client
-func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, path string, timeout time.Duration) (*rpc.Client, error) {
+func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, path string, timeout time.Duration) (*ClientConn, error) {
 	if path == "" {
 		path = rpc.DefaultRPCPath
 	}
@@ -153,9 +153,9 @@ func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network,
 	resp, err := http.ReadResponse(bufio.NewReader(conn), &http.Request{Method: "CONNECT"})
 	if err == nil && resp.Status == connected {
 		if c == nil || c.PluginContainer == nil {
-			return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
+			return NewClientWithCodecAndConn(clientCodecFunc(conn), conn), nil
 		}
-		return rpc.NewClientWithCodec(newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn))), nil
+		return NewClientWithCodecAndConn(newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn)), conn), nil
 	}
 	if err == nil {
 		err = errors.New("unexpected HTTP response: " + resp.Status)
@@ -169,13 +169,26 @@ func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network,
 	}
 }
 
+//NewClientWithCodec create a wrapped rpc.Client with net.Conn
+func NewClientWithCodecAndConn(codec rpc.ClientCodec, conn net.Conn) *ClientConn {
+	client := rpc.NewClientWithCodec(codec)
+
+	return &ClientConn{client, conn}
+}
+
+//ClientConn contains a rpc client and the assosiated net.Conn
+type ClientConn struct {
+	*rpc.Client
+	Conn net.Conn
+}
+
 // ClientCodecFunc is used to create a rpc.ClientCodecFunc from net.Conn.
 type ClientCodecFunc func(conn io.ReadWriteCloser) rpc.ClientCodec
 
 // Client represents a RPC client.
 type Client struct {
-	rpcClient       *rpc.Client
-	rpcClients      []*rpc.Client
+	rpcClient       *ClientConn
+	rpcClients      []*ClientConn
 	ClientSelector  ClientSelector
 	ClientCodecFunc ClientCodecFunc
 	PluginContainer IClientPluginContainer
@@ -213,7 +226,7 @@ func (c *Client) Close() error {
 
 //Call invokes the named function, waits for it to complete, and returns its error status.
 func (c *Client) Call(serviceMethod string, args interface{}, reply interface{}) (err error) {
-	var rpcClient *rpc.Client
+	var rpcClient *ClientConn
 	if c.rpcClient == nil {
 		rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
 		c.rpcClient = rpcClient

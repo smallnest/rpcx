@@ -8,7 +8,7 @@ import (
 func TestDirectSelector_Call(t *testing.T) {
 	once.Do(startServer)
 
-	s := &DirectClientSelector{Network: "tcp", Address: serverAddr, Timeout: 10 * time.Second}
+	s := &DirectClientSelector{Network: "tcp", Address: serverAddr, DialTimeout: 10 * time.Second}
 	client := NewClient(s)
 
 	args := &Args{7, 8}
@@ -24,7 +24,7 @@ func TestDirectSelector_Call(t *testing.T) {
 func TestDirectSelector_Go(t *testing.T) {
 	once.Do(startServer)
 
-	s := &DirectClientSelector{Network: "tcp", Address: serverAddr, Timeout: 10 * time.Second}
+	s := &DirectClientSelector{Network: "tcp", Address: serverAddr, DialTimeout: 10 * time.Second}
 	client := NewClient(s)
 
 	args := &Args{7, 8}
