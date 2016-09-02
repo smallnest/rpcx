@@ -182,6 +182,26 @@ type ClientConn struct {
 	Conn net.Conn
 }
 
+func (cc *ClientConn) SetTimeout(timeout, readtimeout, writetimeout time.Duration) {
+	now := time.Now()
+	var t1, t2, t3 time.Time
+
+	if timeout > 0 {
+		t1 = now.Add(timeout)
+	}
+	if readtimeout > 0 {
+		t2 = now.Add(readtimeout)
+	}
+	if writetimeout > 0 {
+		t3 = now.Add(writetimeout)
+	}
+
+	cc.Conn.SetDeadline(t1)
+	cc.Conn.SetReadDeadline(t2)
+	cc.Conn.SetWriteDeadline(t3)
+
+}
+
 // ClientCodecFunc is used to create a rpc.ClientCodecFunc from net.Conn.
 type ClientCodecFunc func(conn io.ReadWriteCloser) rpc.ClientCodec
 
@@ -195,6 +215,12 @@ type Client struct {
 	FailMode        FailMode
 	TLSConfig       *tls.Config
 	Retries         int
+	//Timeout sets deadline for underlying net.Conns
+	Timeout time.Duration
+	//Timeout sets readdeadline for underlying net.Conns
+	ReadTimeout time.Duration
+	//Timeout sets writedeadline for underlying net.Conns
+	WriteTimeout time.Duration
 }
 
 //NewClient create a client.
@@ -240,6 +266,7 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 	}
 
 	if err == nil && c.rpcClient != nil {
+		c.rpcClient.SetTimeout(c.Timeout, c.ReadTimeout, c.WriteTimeout)
 		err = c.rpcClient.Call(serviceMethod, args, reply)
 	}
 	if err != nil || c.rpcClient == nil {
@@ -292,6 +319,7 @@ func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply i
 	l := len(c.rpcClients)
 	done := make(chan *rpc.Call, l)
 	for _, rpcClient := range c.rpcClients {
+		rpcClient.SetTimeout(c.Timeout, c.ReadTimeout, c.WriteTimeout)
 		rpcClient.Go(serviceMethod, args, reply, done)
 	}
 
@@ -320,6 +348,7 @@ func (c *Client) clientForking(serviceMethod string, args interface{}, reply int
 	l := len(c.rpcClients)
 	done := make(chan *rpc.Call, l)
 	for _, rpcClient := range c.rpcClients {
+		rpcClient.SetTimeout(c.Timeout, c.ReadTimeout, c.WriteTimeout)
 		rpcClient.Go(serviceMethod, args, reply, done)
 	}
 
