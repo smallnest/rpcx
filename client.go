@@ -53,12 +53,12 @@ const (
 //ClientSelector defines an interface to create a rpc.Client from cluster or standalone.
 type ClientSelector interface {
 	//Select returns a new client and it also update current client
-	Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*ClientConn, error)
+	Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*rpc.Client, error)
 	//SetClient set current client
 	SetClient(*Client)
 	SetSelectMode(SelectMode)
 	//AllClients returns all Clients
-	AllClients(clientCodecFunc ClientCodecFunc) []*ClientConn
+	AllClients(clientCodecFunc ClientCodecFunc) []*rpc.Client
 }
 
 // DirectClientSelector is used to a direct rpc server.
@@ -70,7 +70,7 @@ type DirectClientSelector struct {
 }
 
 //Select returns a rpc client.
-func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*ClientConn, error) {
+func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	return NewDirectRPCClient(s.Client, clientCodecFunc, s.Network, s.Address, s.DialTimeout)
 }
 
@@ -84,12 +84,12 @@ func (s *DirectClientSelector) SetSelectMode(sm SelectMode) {
 
 }
 
-func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*ClientConn {
-	return []*ClientConn{s.Client.rpcClient}
+func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*rpc.Client {
+	return []*rpc.Client{s.Client.rpcClient}
 }
 
 // NewDirectRPCClient creates a rpc client
-func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, timeout time.Duration) (*ClientConn, error) {
+func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, timeout time.Duration) (*rpc.Client, error) {
 	//if network == "http" || network == "https" {
 	if network == "http" {
 		return NewDirectHTTPRPCClient(c, clientCodecFunc, network, address, "", timeout)
@@ -116,13 +116,19 @@ func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, add
 	}
 
 	if c == nil || c.PluginContainer == nil {
-		return NewClientWithCodecAndConn(clientCodecFunc(conn), conn), nil
+		return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
 	}
-	return NewClientWithCodecAndConn(newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn)), conn), nil
+
+	wrapper := newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn), conn)
+	wrapper.Timeout = c.Timeout
+	wrapper.ReadTimeout = c.ReadTimeout
+	wrapper.WriteTimeout = c.WriteTimeout
+
+	return rpc.NewClientWithCodec(wrapper), nil
 }
 
 // NewDirectHTTPRPCClient creates a rpc http client
-func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, path string, timeout time.Duration) (*ClientConn, error) {
+func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, path string, timeout time.Duration) (*rpc.Client, error) {
 	if path == "" {
 		path = rpc.DefaultRPCPath
 	}
@@ -153,9 +159,14 @@ func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network,
 	resp, err := http.ReadResponse(bufio.NewReader(conn), &http.Request{Method: "CONNECT"})
 	if err == nil && resp.Status == connected {
 		if c == nil || c.PluginContainer == nil {
-			return NewClientWithCodecAndConn(clientCodecFunc(conn), conn), nil
+			return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
 		}
-		return NewClientWithCodecAndConn(newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn)), conn), nil
+		wrapper := newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn), conn)
+		wrapper.Timeout = c.Timeout
+		wrapper.ReadTimeout = c.ReadTimeout
+		wrapper.WriteTimeout = c.WriteTimeout
+
+		return rpc.NewClientWithCodec(wrapper), nil
 	}
 	if err == nil {
 		err = errors.New("unexpected HTTP response: " + resp.Status)
@@ -169,46 +180,13 @@ func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network,
 	}
 }
 
-//NewClientWithCodec create a wrapped rpc.Client with net.Conn
-func NewClientWithCodecAndConn(codec rpc.ClientCodec, conn net.Conn) *ClientConn {
-	client := rpc.NewClientWithCodec(codec)
-
-	return &ClientConn{client, conn}
-}
-
-//ClientConn contains a rpc client and the assosiated net.Conn
-type ClientConn struct {
-	*rpc.Client
-	Conn net.Conn
-}
-
-func (cc *ClientConn) SetTimeout(timeout, readtimeout, writetimeout time.Duration) {
-	now := time.Now()
-	var t1, t2, t3 time.Time
-
-	if timeout > 0 {
-		t1 = now.Add(timeout)
-	}
-	if readtimeout > 0 {
-		t2 = now.Add(readtimeout)
-	}
-	if writetimeout > 0 {
-		t3 = now.Add(writetimeout)
-	}
-
-	cc.Conn.SetDeadline(t1)
-	cc.Conn.SetReadDeadline(t2)
-	cc.Conn.SetWriteDeadline(t3)
-
-}
-
 // ClientCodecFunc is used to create a rpc.ClientCodecFunc from net.Conn.
 type ClientCodecFunc func(conn io.ReadWriteCloser) rpc.ClientCodec
 
 // Client represents a RPC client.
 type Client struct {
-	rpcClient       *ClientConn
-	rpcClients      []*ClientConn
+	rpcClient       *rpc.Client
+	rpcClients      []*rpc.Client
 	ClientSelector  ClientSelector
 	ClientCodecFunc ClientCodecFunc
 	PluginContainer IClientPluginContainer
@@ -252,7 +230,7 @@ func (c *Client) Close() error {
 
 //Call invokes the named function, waits for it to complete, and returns its error status.
 func (c *Client) Call(serviceMethod string, args interface{}, reply interface{}) (err error) {
-	var rpcClient *ClientConn
+	var rpcClient *rpc.Client
 	if c.rpcClient == nil {
 		rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
 		c.rpcClient = rpcClient
@@ -266,7 +244,6 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 	}
 
 	if err == nil && c.rpcClient != nil {
-		c.rpcClient.SetTimeout(c.Timeout, c.ReadTimeout, c.WriteTimeout)
 		err = c.rpcClient.Call(serviceMethod, args, reply)
 	}
 	if err != nil || c.rpcClient == nil {
@@ -319,7 +296,6 @@ func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply i
 	l := len(c.rpcClients)
 	done := make(chan *rpc.Call, l)
 	for _, rpcClient := range c.rpcClients {
-		rpcClient.SetTimeout(c.Timeout, c.ReadTimeout, c.WriteTimeout)
 		rpcClient.Go(serviceMethod, args, reply, done)
 	}
 
@@ -348,7 +324,6 @@ func (c *Client) clientForking(serviceMethod string, args interface{}, reply int
 	l := len(c.rpcClients)
 	done := make(chan *rpc.Call, l)
 	for _, rpcClient := range c.rpcClients {
-		rpcClient.SetTimeout(c.Timeout, c.ReadTimeout, c.WriteTimeout)
 		rpcClient.Go(serviceMethod, args, reply, done)
 	}
 
@@ -387,14 +362,25 @@ func (c *Client) Auth(authorization, tag string) error {
 type clientCodecWrapper struct {
 	rpc.ClientCodec
 	PluginContainer IClientPluginContainer
+	Timeout         time.Duration
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
+	Conn            net.Conn
 }
 
 // newClientCodecWrapper wraps a rpc.ServerCodec.
-func newClientCodecWrapper(pc IClientPluginContainer, c rpc.ClientCodec) *clientCodecWrapper {
-	return &clientCodecWrapper{ClientCodec: c, PluginContainer: pc}
+func newClientCodecWrapper(pc IClientPluginContainer, c rpc.ClientCodec, conn net.Conn) *clientCodecWrapper {
+	return &clientCodecWrapper{ClientCodec: c, PluginContainer: pc, Conn: conn}
 }
 
 func (w *clientCodecWrapper) ReadRequestHeader(r *rpc.Response) error {
+	if w.Timeout > 0 {
+		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
+	}
+	if w.ReadTimeout > 0 {
+		w.Conn.SetReadDeadline(time.Now().Add(w.ReadTimeout))
+	}
+
 	//pre
 	err := w.PluginContainer.DoPreReadResponseHeader(r)
 	if err != nil {
@@ -427,6 +413,13 @@ func (w *clientCodecWrapper) ReadRequestBody(body interface{}) error {
 }
 
 func (w *clientCodecWrapper) WriteRequest(r *rpc.Request, body interface{}) error {
+	if w.Timeout > 0 {
+		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
+	}
+	if w.ReadTimeout > 0 {
+		w.Conn.SetWriteDeadline(time.Now().Add(w.WriteTimeout))
+	}
+
 	//pre
 	err := w.PluginContainer.DoPreWriteRequest(r, body)
 	if err != nil {

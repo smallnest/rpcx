@@ -3,6 +3,7 @@ package clientselector
 import (
 	"errors"
 	"math/rand"
+	"net/rpc"
 	"strings"
 	"time"
 
@@ -50,8 +51,8 @@ func (s *ZooKeeperClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
-func (s *ZooKeeperClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpcx.ClientConn {
-	var clients []*rpcx.ClientConn
+func (s *ZooKeeperClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
+	var clients []*rpc.Client
 
 	for _, sv := range s.Servers {
 		ss := strings.Split(sv, "@")
@@ -98,7 +99,7 @@ func (s *ZooKeeperClientSelector) watchPath() {
 }
 
 //Select returns a rpc client
-func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpcx.ClientConn, error) {
+func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]

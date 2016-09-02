@@ -3,6 +3,7 @@ package clientselector
 import (
 	"errors"
 	"math/rand"
+	"net/rpc"
 	"strings"
 	"time"
 
@@ -52,8 +53,8 @@ func (s *ConsulClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
-func (s *ConsulClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpcx.ClientConn {
-	var clients []*rpcx.ClientConn
+func (s *ConsulClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
+	var clients []*rpc.Client
 
 	for _, sv := range s.Servers {
 		ss := strings.Split(sv.Address, "@")
@@ -101,7 +102,7 @@ func (s *ConsulClientSelector) pullServers() {
 }
 
 //Select returns a rpc client
-func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpcx.ClientConn, error) {
+func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]

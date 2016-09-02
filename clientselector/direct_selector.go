@@ -3,6 +3,7 @@ package clientselector
 import (
 	"errors"
 	"math/rand"
+	"net/rpc"
 	"time"
 
 	"github.com/smallnest/rpcx"
@@ -46,8 +47,8 @@ func (s *MultiClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
-func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpcx.ClientConn {
-	var clients []*rpcx.ClientConn
+func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
+	var clients []*rpc.Client
 
 	for _, sv := range s.Servers {
 		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, sv.Network, sv.Address, s.dailTimeout)
@@ -60,7 +61,7 @@ func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) [
 }
 
 //Select returns a rpc client
-func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpcx.ClientConn, error) {
+func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		pair := s.Servers[s.currentServer]
