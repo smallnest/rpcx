@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"time"
 
 	"github.com/hashicorp/net-rpc-msgpackrpc"
 )
@@ -19,14 +20,25 @@ const (
 type serverCodecWrapper struct {
 	rpc.ServerCodec
 	PluginContainer IServerPluginContainer
+	Conn            net.Conn
+	Timeout         time.Duration
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
 }
 
 // newServerCodecWrapper wraps a rpc.ServerCodec.
-func newServerCodecWrapper(pc IServerPluginContainer, c rpc.ServerCodec) *serverCodecWrapper {
-	return &serverCodecWrapper{ServerCodec: c, PluginContainer: pc}
+func newServerCodecWrapper(pc IServerPluginContainer, c rpc.ServerCodec, Conn net.Conn) *serverCodecWrapper {
+	return &serverCodecWrapper{ServerCodec: c, PluginContainer: pc, Conn: Conn}
 }
 
 func (w *serverCodecWrapper) ReadRequestHeader(r *rpc.Request) error {
+	if w.Timeout > 0 {
+		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
+	}
+	if w.ReadTimeout > 0 {
+		w.Conn.SetReadDeadline(time.Now().Add(w.ReadTimeout))
+	}
+
 	//pre
 	err := w.PluginContainer.DoPreReadRequestHeader(r)
 	if err != nil {
@@ -61,6 +73,13 @@ func (w *serverCodecWrapper) ReadRequestBody(body interface{}) error {
 }
 
 func (w *serverCodecWrapper) WriteResponse(resp *rpc.Response, body interface{}) error {
+	if w.Timeout > 0 {
+		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
+	}
+	if w.ReadTimeout > 0 {
+		w.Conn.SetWriteDeadline(time.Now().Add(w.WriteTimeout))
+	}
+
 	//pre
 	err := w.PluginContainer.DoPreWriteResponse(resp, body)
 	if err != nil {
@@ -96,6 +115,9 @@ type Server struct {
 	PluginContainer IServerPluginContainer
 	rpcServer       *rpc.Server
 	listener        net.Listener
+	Timeout         time.Duration
+	ReadTimeout     time.Duration
+	WriteTimeout    time.Duration
 }
 
 // NewServer returns a new Server.
@@ -187,7 +209,11 @@ func (s *Server) Serve(network, address string) {
 		if err != nil {
 			continue
 		}
-		go s.rpcServer.ServeCodec(newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c)))
+		wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)
+		wrapper.Timeout = s.Timeout
+		wrapper.ReadTimeout = s.ReadTimeout
+		wrapper.WriteTimeout = s.WriteTimeout
+		go s.rpcServer.ServeCodec(wrapper)
 	}
 }
 
@@ -205,7 +231,12 @@ func (s *Server) ServeTLS(network, address string, config *tls.Config) {
 		if err != nil {
 			continue
 		}
-		go s.rpcServer.ServeCodec(newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c)))
+
+		wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)
+		wrapper.Timeout = s.Timeout
+		wrapper.ReadTimeout = s.ReadTimeout
+		wrapper.WriteTimeout = s.WriteTimeout
+		go s.rpcServer.ServeCodec(wrapper)
 	}
 }
 
@@ -217,7 +248,12 @@ func (s *Server) ServeListener(ln net.Listener) {
 		if err != nil {
 			continue
 		}
-		go s.rpcServer.ServeCodec(newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c)))
+		wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)
+		wrapper.Timeout = s.Timeout
+		wrapper.ReadTimeout = s.ReadTimeout
+		wrapper.WriteTimeout = s.WriteTimeout
+
+		go s.rpcServer.ServeCodec(wrapper)
 	}
 }
 
@@ -244,7 +280,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	io.WriteString(conn, "HTTP/1.0 "+connected+"\n\n")
-	s.rpcServer.ServeCodec(newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(conn)))
+
+	wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(conn), conn)
+	wrapper.Timeout = s.Timeout
+	wrapper.ReadTimeout = s.ReadTimeout
+	wrapper.WriteTimeout = s.WriteTimeout
+
+	s.rpcServer.ServeCodec(wrapper)
 }
 
 // Start starts and listens RCP requests without blocking.
@@ -266,8 +308,12 @@ func (s *Server) Start(network, address string) {
 			if !s.PluginContainer.DoPostConnAccept(c) {
 				continue
 			}
+			wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)
+			wrapper.Timeout = s.Timeout
+			wrapper.ReadTimeout = s.ReadTimeout
+			wrapper.WriteTimeout = s.WriteTimeout
 
-			go s.rpcServer.ServeCodec(newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c)))
+			go s.rpcServer.ServeCodec(wrapper)
 		}
 	}()
 }
@@ -291,8 +337,12 @@ func (s *Server) StartTLS(network, address string, config *tls.Config) {
 			if !s.PluginContainer.DoPostConnAccept(c) {
 				continue
 			}
+			wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)
+			wrapper.Timeout = s.Timeout
+			wrapper.ReadTimeout = s.ReadTimeout
+			wrapper.WriteTimeout = s.WriteTimeout
 
-			go s.rpcServer.ServeCodec(newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c)))
+			go s.rpcServer.ServeCodec(wrapper)
 		}
 	}()
 }
