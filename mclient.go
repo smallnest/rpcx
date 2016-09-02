@@ -18,7 +18,6 @@ import (
 var concurrency = flag.Int("c", 1, "concurrency")
 var total = flag.Int("n", 1, "total requests for all clients")
 var host = flag.String("s", "127.0.0.1:8972", "server ip and port")
-var sharedClientNum = flag.Int("r", 500, "count of rpcx.Client")
 
 func main() {
 	flag.Parse()
@@ -50,8 +49,6 @@ func main() {
 
 	d := make([][]int64, n, n)
 
-	clients := prepareClients(servers, *sharedClientNum, serviceMethodName, args)
-
 	//it contains warmup time but we can ignore it
 	totalT := time.Now().UnixNano()
 	for i := 0; i < n; i++ {
@@ -71,10 +68,8 @@ func main() {
 			}
 
 			for j := 0; j < m; j++ {
-				clientId := (i*m + j) % *sharedClientNum
-
 				t := time.Now().UnixNano()
-				err := clients[clientId].Call(serviceMethodName, args, &reply)
+				err := client.Call(serviceMethodName, args, &reply)
 				t = time.Now().UnixNano() - t
 
 				d[i] = append(d[i], t)
@@ -119,36 +114,6 @@ func main() {
 	fmt.Printf("mean: %.f ns, median: %.f ns, max: %.f ns, min: %.f ns\n", mean, median, max, min)
 	fmt.Printf("mean: %d ms, median: %d ms, max: %d ms, min: %d ms\n", int64(mean/1000000), int64(median/1000000), int64(max/1000000), int64(min/1000000))
 
-}
-
-func prepareClients(servers []string, sharedClientNum int, serviceMethodName string, args *BenchmarkMessage) []*rpcx.Client {
-
-	r := make([]*rpcx.Client, sharedClientNum, sharedClientNum)
-	var reply BenchmarkMessage
-
-	l := len(servers)
-	j := 0
-	for i := 0; i < sharedClientNum; i++ {
-
-		s := &rpcx.DirectClientSelector{Network: "tcp", Address: servers[j]}
-		j = (j + 1) % l
-		client := rpcx.NewClient(s)
-		client.ClientCodecFunc = codec.NewProtobufClientCodec
-		//warmup
-		for j := 0; j < 5; j++ {
-			client.Call(serviceMethodName, args, &reply)
-		}
-
-		r[i] = client
-	}
-
-	return r
-}
-
-func closeClients(clients []*rpcx.Client) {
-	for _, client := range clients {
-		client.Close()
-	}
 }
 
 func prepareArgs() *BenchmarkMessage {

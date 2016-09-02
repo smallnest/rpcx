@@ -9,9 +9,6 @@ rpcx is a distributed RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [
 It is developed based on Go net/rpc and provides extra governance features.
 
 
-![Benchmark](_documents/benchmark.png)
-
-![Throughput](_documents/throughput.png)
 
 When we talk about RPC frameworks, Dubbo is first framework we should introduced, and there is also Dubbox mantained by dangdang.
 Dubbo has been widely used in e-commerce companies in China, for example, Alibaba, Jingdong and Dangdang.
@@ -115,53 +112,49 @@ The concurrent clients are 100, 1000,2000 and 5000. Count of the total requests 
 
 **Test Result**
 
+### rpcx: one client and one server in a same machine
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
-100|1|0|96|0|100694
-500|3|2|151|0|121212
-1000|6|4|167|0|119146
-2000|11|10|472|0|32047
-5000|27|24|442|0|15799
-
-If you use too many clients, the throughput (transations per second) will be worse. It looks 1000 clients is feasible.
-
-When you use clients, clients should be shared as possible.
+100|0|0|17|0|164338
+500|2|1|40|0|181126
+1000|4|3|56|0|186219
+2000|9|7|105|0|182815
+5000|25|22|200|0|178858
 
 
 you can use test code in `_benchmark` to test.
 `server` is used to start a server and `client` is used as clients via protobuf.
 
-
-
 The above test is that client and server are running on the same mechine.
+
+### rpcx: one client and one server in separated machines
+
 If I run them on separate servers, test results are:
 
 
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
-100|1|0|18|0|91066
-500|4|1|1230|0|103241
-1000|5|1|1420|0|95219
-2000|12|2|3092|0|97323
-5000|26|2|12726|0|69454
+100|1|1|20|0|127975
+500|5|1|4350|0|136407
+1000|10|2|3233|0|155255
+2000|17|2|9735|0|159438
+5000|44|2|12788|0|161917 
 
+### rpcx: one client on a machine and two servers in two machines
 
-If they are running on cluster mode, one is for the client and two are for two servers, test results are:
+If they are running on cluster mode, one is for the client and another two are for servers, test results are:
 
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
-100|0|0|10|0|136440
-500|2|1|808|0|157927
-1000|5|2|7275|0|114916
-2000|8|1|7584|0|96627
-5000|21|1|6387|0|97096
-
-Basically its throughput is greater than throughput of single node and less than 2 times of throughput of single node.
+100|0|0|41|0|128932
+500|3|2|273|0|150285
+1000|5|5|621|0|150152
+2000|10|7|288|0|159974
+5000|23|12|629|0|155279
 
 
 
-
-The below lists benchmarks of serialization libraries:
+### benchmarks of serialization libraries:
 
 ```
 [root@localhost rpcx]# go test -bench . -test.benchmem
@@ -182,35 +175,30 @@ I have compared three cases for prcx and gRPC. It shows rpcx is much better than
 
 Test results of rpcx has been listed on the above. Here is test results of gRPC.
 
-### one client and one server in a same machine
+### gRPC: one client and one server in a same machine
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
-100|1|1|25|0|50040
-500|8|7|63|0|57313
-1000|16|13|115|0|60488
-2000|30|26|115|0|62367
-5000|73|67|349|0|59421 
+100|1|0|21|0|68250
+500|5|1|3059|0|78486
+1000|10|1|6274|0|79980
+2000|19|1|9736|0|58129
+5000|43|2|14224|0|44724
 
-![](_documents/images/rpcx-grpc-1.png)
-
-### one client and one server in two machines
+### gRPC: one client and one server in separated machines
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
-100|1|1|20|0|59168
-500|5|1|4350|0|73524
-1000|10|2|3233|0|79974
-2000|17|2|9735|0|49185
-5000|44|2|12788|0|52770 
+100|1|0|21|0|68250
+500|5|1|3059|0|78486
+1000|10|1|6274|0|79980
+2000|19|1|9736|0|58129
+5000|43|2|14224|0|44724 
 
-![](_documents/images/rpcx-grpc-2.png)
 
-### one client on a machine and three servers in three machines
+### gRPC: one client on a machine and two servers in two machines 
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
-100|1|0|17|0|71895
-500|5|3|670|0|88347
-1000|10|5|2456|0|85273
-2000|19|12|2465|0|86169
-5000|51|40|6358|0|82243 
-
-![](_documents/images/rpcx-grpc-2.png)
+100|1|0|19|0|88082
+500|4|1|1461|0|90334
+1000|9|1|6315|0|62305
+2000|17|1|9736|0|44487
+5000|38|1|25087|0|33198
