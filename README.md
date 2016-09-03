@@ -9,6 +9,13 @@ rpcx is a distributed RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [
 It is developed based on Go net/rpc and provides extra governance features.
 
 
+![Throughput](_documents/throughput.png)
+
+very very good performance. Much better than gRPC.
+
+
+![Comparision of rpcx and gRPC](_documents/images/rpcx-grpc-1.png)
+
 
 When we talk about RPC frameworks, Dubbo is first framework we should introduced, and there is also Dubbox mantained by dangdang.
 Dubbo has been widely used in e-commerce companies in China, for example, Alibaba, Jingdong and Dangdang.
@@ -186,6 +193,9 @@ concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 2000|19|1|9736|0|58129
 5000|43|2|14224|0|44724
 
+
+![](_documents/images/rpcx-grpc-1.png)
+
 ### gRPC: one client and one server in separated machines
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
@@ -196,6 +206,8 @@ concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 5000|43|2|14224|0|44724 
 
 
+![](_documents/images/rpcx-grpc-2.png)
+
 ### gRPC: one client on a machine and two servers in two machines 
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
@@ -204,3 +216,6 @@ concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 1000|9|1|6315|0|62305
 2000|17|1|9736|0|44487
 5000|38|1|25087|0|33198
+
+
+![](_documents/images/rpcx-grpc-3.png)

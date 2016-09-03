@@ -1,10 +1,17 @@
 # rpcx
 rpcx是一个类似阿里巴巴 [Dubbo](http://dubbo.io/) 和微博 [Motan](https://github.com/weibocom/motan) 的分布式的RPC服务框架，基于Golang net/rpc实现。 
 
-
-![性能](_documents/benchmark.png)
-
 ![吞吐率](_documents/throughput.png)
+
+
+![超低的延迟Latency](_documents/benchmark.png)
+
+
+与gRPC比较，完胜gRPC, 更不用说其它的"老"的RPC框架了。
+
+
+![rpcx 和 gRPC 性能比较](_documents/images/rpcx-grpc-1.png)
+
 
 谈起分布式的RPC框架，比较出名的是阿里巴巴的dubbo,包括由当当网维护的dubbox。
 不知道dubbo在阿里的内部竞争中败给了HSF，还是阿里有意将其闭源了，官方的代码使用的spring还停留在2.5.6.SEC03的版本，dubbox的spring也只升级到3.2.9.RELEASE。
