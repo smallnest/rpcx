@@ -620,10 +620,67 @@ func callServer(s rpcx.ClientSelector) {
 * CPU:    Intel(R) Xeon(R) CPU E5-2620 v2 @ 2.10GHz, 24 cores
 * Memory: 16G
 * OS:     Linux Server-3 2.6.32-358.el6.x86_64, CentOS 6.4
-* Go:     1.6.2
+* Go:     1.7
 
 测试代码client是通过protobuf编解码和server通讯的。
-请求发送给server, server解码、更新两个字段、编码再发送给client。
+请求发送给server, server解码、更新两个字段、编码再发送给client，所以整个测试会包含客户端的编解码和服务器端的编解码。
+消息的内容大约为581 byte, 在传输的过程中会增加少许的头信息，所以完整的消息大小在600字节左右。
+
+测试用的proto文件如下：
+
+```proto
+syntax = "proto2";
+
+package main;
+
+option optimize_for = SPEED;
+
+
+message BenchmarkMessage {
+  required string field1 = 1;
+  optional string field9 = 9;
+  optional string field18 = 18;
+  optional bool field80 = 80 [default=false];
+  optional bool field81 = 81 [default=true];
+  required int32 field2 = 2;
+  required int32 field3 = 3;
+  optional int32 field280 = 280;
+  optional int32 field6 = 6 [default=0];
+  optional int64 field22 = 22;
+  optional string field4 = 4;
+  repeated fixed64 field5 = 5;
+  optional bool field59 = 59 [default=false];
+  optional string field7 = 7;
+  optional int32 field16 = 16;
+  optional int32 field130 = 130 [default=0];
+  optional bool field12 = 12 [default=true];
+  optional bool field17 = 17 [default=true];
+  optional bool field13 = 13 [default=true];
+  optional bool field14 = 14 [default=true];
+  optional int32 field104 = 104 [default=0];
+  optional int32 field100 = 100 [default=0];
+  optional int32 field101 = 101 [default=0];
+  optional string field102 = 102;
+  optional string field103 = 103;
+  optional int32 field29 = 29 [default=0];
+  optional bool field30 = 30 [default=false];
+  optional int32 field60 = 60 [default=-1];
+  optional int32 field271 = 271 [default=-1];
+  optional int32 field272 = 272 [default=-1];
+  optional int32 field150 = 150;
+  optional int32 field23 = 23 [default=0];
+  optional bool field24 = 24 [default=false];
+  optional int32 field25 = 25 [default=0];
+  optional bool field78 = 78;
+  optional int32 field67 = 67 [default=0];
+  optional int32 field68 = 68;
+  optional int32 field128 = 128 [default=0];
+  optional string field129 = 129 [default="xxxxxxxxxxxxxxxxxxxxx"];
+  optional int32 field131 = 131 [default=0];
+}
+```
+
+
 
 测试的并发client是 100, 1000,2000 and 5000。总请求数一百万。
 
