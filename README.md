@@ -11,10 +11,9 @@ It is developed based on Go net/rpc and provides extra governance features.
 
 ![Throughput](_documents/throughput.png)
 
-very very good performance. Much better than gRPC.
+very very good performance. Much better than gRPC, Dubbo and weibo Motan.
 
 
-![Comparision of rpcx and gRPC](_documents/images/rpcx-grpc-1.png)
 
 
 When we talk about RPC frameworks, Dubbo is first framework we should introduced, and there is also Dubbox mantained by dangdang.
