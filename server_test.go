@@ -114,7 +114,7 @@ type logRegisterPlugin struct {
 	Services map[string]interface{}
 }
 
-func (plugin *logRegisterPlugin) Register(name string, rcvr interface{}) error {
+func (plugin *logRegisterPlugin) Register(name string, rcvr interface{}, metadata ...string) error {
 	plugin.Services[name] = rcvr
 	return nil
 }
@@ -133,7 +133,7 @@ func TestRegisterPlugin(t *testing.T) {
 	plugin := &logRegisterPlugin{Services: make(map[string]interface{}, 1)}
 	server.PluginContainer.Add(plugin)
 	if _, ok := server.PluginContainer.GetByName(plugin.Name()).(IRegisterPlugin); !ok {
-		t.Errorf("plugin has been added into plugin container")
+		t.Errorf("plugin has not been added into plugin container")
 	}
 
 	server.RegisterName("another"+serviceName, service)
