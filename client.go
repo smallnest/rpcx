@@ -19,6 +19,7 @@ type SelectMode int
 const (
 	RandomSelect SelectMode = iota
 	RoundRobin
+	WeightedRoundRobin
 	LeastActive
 	ConsistentHash
 )
@@ -26,6 +27,7 @@ const (
 var selectModeStrs = [...]string{
 	"RandomSelect",
 	"RoundRobin",
+	"WeightedRoundRobin",
 	"LeastActive",
 	"ConsistentHash",
 }
@@ -230,17 +232,18 @@ func (c *Client) Close() error {
 
 //Call invokes the named function, waits for it to complete, and returns its error status.
 func (c *Client) Call(serviceMethod string, args interface{}, reply interface{}) (err error) {
-	var rpcClient *rpc.Client
-	if c.rpcClient == nil {
-		rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
-		c.rpcClient = rpcClient
-
-	}
 	if c.FailMode == Broadcast {
 		return c.clientBroadCast(serviceMethod, args, reply)
 	}
 	if c.FailMode == Forking {
 		return c.clientForking(serviceMethod, args, reply)
+	}
+
+	var rpcClient *rpc.Client
+	if c.rpcClient == nil {
+		rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
+		c.rpcClient = rpcClient
+
 	}
 
 	if err == nil && c.rpcClient != nil {
