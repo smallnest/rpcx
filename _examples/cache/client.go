@@ -19,10 +19,10 @@ type Reply struct {
 }
 
 func main() {
-	server1 := clientselector.ServerPair{Network: "tcp", Address: "127.0.0.1:8972"}
-	server2 := clientselector.ServerPair{Network: "tcp", Address: "127.0.0.1:8973"}
+	server1 := clientselector.ServerPeer{Network: "tcp", Address: "127.0.0.1:8972"}
+	server2 := clientselector.ServerPeer{Network: "tcp", Address: "127.0.0.1:8973"}
 
-	servers := []clientselector.ServerPair{server1, server2}
+	servers := []clientselector.ServerPeer{server1, server2}
 
 	s := clientselector.NewMultiClientSelector(servers, rpcx.RandomSelect, 10*time.Second)
 

@@ -26,12 +26,12 @@ func main() {
 	m := *total / n
 
 	servers := strings.Split(*host, ",")
-	var serverPairs []clientselector.ServerPair
+	var serverPeers []clientselector.ServerPeer
 	for _, server := range servers {
-		serverPairs = append(serverPairs, clientselector.ServerPair{Network: "tcp", Address: server})
+		serverPeers = append(serverPeers, clientselector.ServerPeer{Network: "tcp", Address: server})
 	}
 
-	fmt.Printf("Servers: %+v\n\n", serverPairs)
+	fmt.Printf("Servers: %+v\n\n", serverPeers)
 
 	fmt.Printf("concurrency: %d\nrequests per client: %d\n\n", n, m)
 
@@ -59,7 +59,7 @@ func main() {
 		d = append(d, dt)
 
 		go func(i int) {
-			s := clientselector.NewMultiClientSelector(serverPairs, rpcx.RoundRobin, 10*time.Second)
+			s := clientselector.NewMultiClientSelector(serverPeers, rpcx.RoundRobin, 10*time.Second)
 			client := rpcx.NewClient(s)
 			client.ClientCodecFunc = codec.NewProtobufClientCodec
 
