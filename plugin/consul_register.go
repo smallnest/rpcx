@@ -41,7 +41,7 @@ func (plugin *ConsulRegisterPlugin) Close() {
 }
 
 // Register handles registering event.
-func (plugin *ConsulRegisterPlugin) Register(name string, rcvr interface{}) (err error) {
+func (plugin *ConsulRegisterPlugin) Register(name string, rcvr interface{}, metadata ...string) (err error) {
 	service := &api.AgentServiceRegistration{
 		ID:      name + "-" + plugin.ServiceAddress,
 		Name:    name,

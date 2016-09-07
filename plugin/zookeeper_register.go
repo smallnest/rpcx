@@ -107,7 +107,7 @@ func mkdirs(conn *zk.Conn, path string) (err error) {
 
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
-func (plugin *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}) (err error) {
+func (plugin *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}, metadata ...string) (err error) {
 	nodePath := plugin.BasePath + "/" + name
 	err = mkdirs(plugin.Conn, nodePath)
 	if err != nil {
@@ -124,7 +124,7 @@ func (plugin *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}) (
 	//create Ephemeral node
 	flags := int32(zk.FlagEphemeral)
 	acl := zk.WorldACL(zk.PermAll)
-	_, err = plugin.Conn.Create(nodePath, []byte(""), flags, acl)
+	_, err = plugin.Conn.Create(nodePath, []byte(strings.Join(metadata, "&")), flags, acl)
 
 	plugin.Services = append(plugin.Services, name)
 	return

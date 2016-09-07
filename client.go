@@ -239,12 +239,8 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 		return c.clientForking(serviceMethod, args, reply)
 	}
 
-	var rpcClient *rpc.Client
-	if c.rpcClient == nil {
-		rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
-		c.rpcClient = rpcClient
-
-	}
+	rpcClient, err := c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
+	c.rpcClient = rpcClient
 
 	if err == nil && c.rpcClient != nil {
 		err = c.rpcClient.Call(serviceMethod, args, reply)

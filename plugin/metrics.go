@@ -20,7 +20,7 @@ func NewMetricsPlugin() *MetricsPlugin {
 }
 
 // Register handles registering event.
-func (plugin *MetricsPlugin) Register(name string, rcvr interface{}) error {
+func (plugin *MetricsPlugin) Register(name string, rcvr interface{}, metadata ...string) error {
 	serviceCounter := metrics.GetOrRegisterCounter("serviceCounter", plugin.Registry)
 	serviceCounter.Inc(1)
 	return nil

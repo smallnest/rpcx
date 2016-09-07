@@ -4,6 +4,8 @@ import (
 	"errors"
 	"math/rand"
 	"net/rpc"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +20,7 @@ type ZooKeeperClientSelector struct {
 	sessionTimeout     time.Duration
 	BasePath           string //should endwith serviceName
 	Servers            []string
+	WeightedServers    []*Weighted
 	SelectMode         rpcx.SelectMode
 	dailTimeout        time.Duration
 	rnd                *rand.Rand
@@ -81,13 +84,42 @@ func (s *ZooKeeperClientSelector) start() {
 	s.Servers = servers
 	s.len = len(servers)
 
+	if s.SelectMode == rpcx.WeightedRoundRobin {
+		s.createWeighted()
+	}
+
 	go s.watchPath()
+}
+
+func (s *ZooKeeperClientSelector) createWeighted() {
+	s.WeightedServers = make([]*Weighted, len(s.Servers))
+	for i, ss := range s.Servers {
+		bytes, _, err := s.zkConn.Get(s.BasePath + "/" + ss)
+		s.WeightedServers[i] = &Weighted{Server: ss, Weight: 1, EffectiveWeight: 1}
+		if err == nil {
+			metadata := string(bytes)
+			if v, err := url.ParseQuery(metadata); err == nil {
+				w := v.Get("weight")
+				if w != "" {
+					weight, err := strconv.Atoi(w)
+					if err != nil {
+						s.WeightedServers[i].Weight = weight
+						s.WeightedServers[i].EffectiveWeight = weight
+					}
+				}
+			}
+		}
+
+	}
 }
 
 func (s *ZooKeeperClientSelector) watchPath() {
 	servers, _, ch, _ := s.zkConn.ChildrenW(s.BasePath)
 	s.Servers = servers
 	s.len = len(servers)
+	if s.SelectMode == rpcx.WeightedRoundRobin {
+		s.createWeighted()
+	}
 
 	s.currentServer = s.currentServer % s.len
 	// e := <-ch
@@ -119,7 +151,12 @@ func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, o
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server, "@") //
 		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+	} else if s.SelectMode == rpcx.WeightedRoundRobin {
+		server := nextWeighted(s.WeightedServers).Server.(string)
+		ss := strings.Split(server, "@")
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
 	}
+
 	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())
 
 }

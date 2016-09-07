@@ -103,7 +103,7 @@ func (plugin *EtcdRegisterPlugin) forceMkdirs(path string) (err error) {
 
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
-func (plugin *EtcdRegisterPlugin) Register(name string, rcvr interface{}) (err error) {
+func (plugin *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata ...string) (err error) {
 	nodePath := plugin.BasePath + "/" + name
 	err = plugin.mkdirs(nodePath)
 

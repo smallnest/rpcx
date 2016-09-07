@@ -113,11 +113,13 @@ type Server struct {
 	ServerCodecFunc ServerCodecFunc
 	//PluginContainer must be configured before starting and Register plugins must be configured before invoking RegisterName method
 	PluginContainer IServerPluginContainer
-	rpcServer       *rpc.Server
-	listener        net.Listener
-	Timeout         time.Duration
-	ReadTimeout     time.Duration
-	WriteTimeout    time.Duration
+	//Metadata describes extra info about this service, for example, weight, active status
+	Metadata     string
+	rpcServer    *rpc.Server
+	listener     net.Listener
+	Timeout      time.Duration
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
 }
 
 // NewServer returns a new Server.
@@ -367,7 +369,7 @@ func (s *Server) Address() string {
 // no suitable methods. It also logs the error using package log.
 // The client accesses each method using a string of the form "Type.Method",
 // where Type is the receiver's concrete type.
-func (s *Server) RegisterName(name string, service interface{}) {
+func (s *Server) RegisterName(name string, service interface{}, metadata ...string) {
 	s.rpcServer.RegisterName(name, service)
 	s.PluginContainer.DoRegister(name, service)
 }

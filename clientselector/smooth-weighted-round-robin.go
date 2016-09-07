@@ -1,5 +1,7 @@
 package clientselector
 
+import "fmt"
+
 // Weighted is a wrapped server with  weight
 type Weighted struct {
 	Server          interface{}
@@ -22,6 +24,9 @@ func nextWeighted(servers []*Weighted) (best *Weighted) {
 	for i := 0; i < len(servers); i++ {
 		w := servers[i]
 
+		if w == nil {
+			continue
+		}
 		//if w is down, continue
 
 		w.CurrentWeight += w.EffectiveWeight
@@ -41,6 +46,8 @@ func nextWeighted(servers []*Weighted) (best *Weighted) {
 	}
 
 	best.CurrentWeight -= total
+
+	fmt.Printf("selected weighted: %+v\n", best)
 
 	return best
 }

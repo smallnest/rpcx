@@ -82,12 +82,12 @@ func (p *ServerPluginContainer) GetAll() []IPlugin {
 }
 
 // DoRegister invokes DoRegister plugin.
-func (p *ServerPluginContainer) DoRegister(name string, rcvr interface{}) error {
+func (p *ServerPluginContainer) DoRegister(name string, rcvr interface{}, metadata ...string) error {
 	var errors []error
 	for i := range p.plugins {
 
 		if plugin, ok := p.plugins[i].(IRegisterPlugin); ok {
-			err := plugin.Register(name, rcvr)
+			err := plugin.Register(name, rcvr, metadata...)
 			if err != nil {
 				errors = append(errors, err)
 			}
@@ -201,7 +201,7 @@ func (p *ServerPluginContainer) DoPostWriteResponse(resp *rpc.Response, body int
 type (
 	//IRegisterPlugin represents register plugin.
 	IRegisterPlugin interface {
-		Register(name string, rcvr interface{}) error
+		Register(name string, rcvr interface{}, metadata ...string) error
 	}
 
 	//IPostConnAcceptPlugin represents connection accept plugin.
@@ -261,7 +261,7 @@ type (
 		GetByName(pluginName string) IPlugin
 		GetAll() []IPlugin
 
-		DoRegister(name string, rcvr interface{}) error
+		DoRegister(name string, rcvr interface{}, metadata ...string) error
 
 		DoPostConnAccept(net.Conn) bool
 

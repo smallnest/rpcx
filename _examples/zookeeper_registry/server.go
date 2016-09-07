@@ -40,6 +40,6 @@ func main() {
 	}
 	plugin.Start()
 	server.PluginContainer.Add(plugin)
-	server.RegisterName("Arith", new(Arith))
+	server.RegisterName("Arith", new(Arith), "weight=5&state=active")
 	server.Serve("tcp", "127.0.0.1:8972")
 }

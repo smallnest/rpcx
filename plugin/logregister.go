@@ -8,7 +8,7 @@ type LogRegisterPlugin struct {
 }
 
 // Register handles registering event.
-func (plugin *LogRegisterPlugin) Register(name string, rcvr interface{}) error {
+func (plugin *LogRegisterPlugin) Register(name string, rcvr interface{}, metadata ...string) error {
 	plugin.Log(fmt.Sprintf("Registered Service %s with %v", name, rcvr))
 	return nil
 }

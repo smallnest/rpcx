@@ -19,13 +19,13 @@ type Reply struct {
 
 func main() {
 	//basePath = "/rpcx/" + serviceName
-	s := clientselector.NewZooKeeperClientSelector([]string{"127.0.0.1:2181"}, "/rpcx/Arith", 2*time.Minute, rpcx.RandomSelect, time.Minute)
+	s := clientselector.NewZooKeeperClientSelector([]string{"127.0.0.1:2181"}, "/rpcx/Arith", 2*time.Minute, rpcx.WeightedRoundRobin, time.Minute)
 	client := rpcx.NewClient(s)
 
 	args := &Args{7, 8}
 	var reply Reply
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 10; i++ {
 		err := client.Call("Arith.Mul", args, &reply)
 		if err != nil {
 			fmt.Printf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
