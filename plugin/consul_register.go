@@ -46,6 +46,7 @@ func (plugin *ConsulRegisterPlugin) Register(name string, rcvr interface{}, meta
 		ID:      name + "-" + plugin.ServiceAddress,
 		Name:    name,
 		Address: plugin.ServiceAddress,
+		Tags:    []string{strings.Join(metadata, "&")},
 		Check: &api.AgentServiceCheck{
 			TTL:    strconv.Itoa(int(plugin.updateInterval.Seconds())) + "s",
 			Status: api.HealthPassing,
