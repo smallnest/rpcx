@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/net/context"
@@ -109,7 +110,7 @@ func (plugin *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metada
 
 	nodePath = nodePath + "/" + plugin.ServiceAddress
 
-	_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, "",
+	_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, strings.Join(metadata, "&"),
 		&client.SetOptions{
 			PrevExist: client.PrevIgnore,
 			TTL:       plugin.UpdateInterval + 10*time.Second,

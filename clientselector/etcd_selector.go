@@ -4,6 +4,8 @@ import (
 	"errors"
 	"math/rand"
 	"net/rpc"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,6 +23,7 @@ type EtcdClientSelector struct {
 	sessionTimeout     time.Duration
 	BasePath           string //should endwith serviceName
 	Servers            []string
+	WeightedServers    []*Weighted
 	SelectMode         rpcx.SelectMode
 	dailTimeout        time.Duration
 	rnd                *rand.Rand
@@ -122,10 +125,34 @@ func (s *EtcdClientSelector) pullServers() {
 			var servers []string
 			for _, n := range resp.Node.Nodes {
 				servers = append(servers, strings.TrimPrefix(n.Key, s.BasePath+"/"))
+
 			}
 			s.Servers = servers
 			s.len = len(servers)
 			s.currentServer = s.currentServer % s.len
+
+			if s.SelectMode == rpcx.WeightedRoundRobin {
+				s.createWeighted(resp.Node.Nodes)
+			}
+		}
+
+	}
+}
+
+func (s *EtcdClientSelector) createWeighted(nodes client.Nodes) {
+	s.WeightedServers = make([]*Weighted, len(s.Servers))
+
+	for i, n := range nodes {
+		s.WeightedServers[i] = &Weighted{Server: strings.TrimPrefix(n.Key, s.BasePath+"/"), Weight: 1, EffectiveWeight: 1}
+		if v, err := url.ParseQuery(n.Value); err == nil {
+			w := v.Get("weight")
+			if w != "" {
+				weight, err := strconv.Atoi(w)
+				if err != nil {
+					s.WeightedServers[i].Weight = weight
+					s.WeightedServers[i].EffectiveWeight = weight
+				}
+			}
 		}
 	}
 }
@@ -151,6 +178,10 @@ func (s *EtcdClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, option
 		s.currentServer = s.HashServiceAndArgs(s.len, options)
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server, "@") //
+		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+	} else if s.SelectMode == rpcx.WeightedRoundRobin {
+		server := nextWeighted(s.WeightedServers).Server.(string)
+		ss := strings.Split(server, "@")
 		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
 	}
 
