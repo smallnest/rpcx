@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -37,7 +38,14 @@ func (plugin *ZooKeeperRegisterPlugin) Start() (err error) {
 				//set this same metrics for all services at this server
 				for _, name := range plugin.Services {
 					nodePath := plugin.BasePath + "/" + name + "/" + plugin.ServiceAddress
-					conn.Set(nodePath, data, -1)
+					bytes, stat, err := conn.Get(nodePath)
+					if err == nil {
+						v, _ := url.ParseQuery(string(bytes))
+						v.Set("clientmeter", string(data))
+
+						conn.Set(nodePath, []byte(v.Encode()), stat.Version)
+					}
+
 				}
 
 			}

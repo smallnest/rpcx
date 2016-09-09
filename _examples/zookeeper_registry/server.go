@@ -43,7 +43,7 @@ func main() {
 		BasePath:         "/rpcx",
 		Metrics:          metrics.NewRegistry(),
 		Services:         make([]string, 1),
-		UpdateInterval:   time.Minute,
+		UpdateInterval:   10 * time.Second,
 	}
 	plugin.Start()
 	server.PluginContainer.Add(plugin)
