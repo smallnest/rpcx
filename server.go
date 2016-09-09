@@ -371,7 +371,7 @@ func (s *Server) Address() string {
 // where Type is the receiver's concrete type.
 func (s *Server) RegisterName(name string, service interface{}, metadata ...string) {
 	s.rpcServer.RegisterName(name, service)
-	s.PluginContainer.DoRegister(name, service)
+	s.PluginContainer.DoRegister(name, service, metadata...)
 }
 
 //Auth sets authorization function
