@@ -100,6 +100,7 @@ func (s *ZooKeeperClientSelector) createWeighted() {
 			metadata := string(bytes)
 			if v, err := url.ParseQuery(metadata); err == nil {
 				w := v.Get("weight")
+
 				if w != "" {
 					weight, err := strconv.Atoi(w)
 					if err != nil {

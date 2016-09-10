@@ -3,6 +3,7 @@ package plugin
 import (
 	"log"
 	"net"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -44,21 +45,31 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 		go func() {
 			for range plugin.ticker.C {
 				clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Metrics)
-				data := strconv.FormatInt(clientMeter.Count(), 10)
+				data := strconv.FormatInt(clientMeter.Count()/60, 10)
 				//set this same metrics for all services at this server
 
 				for _, name := range plugin.Services {
 					plugin.mkdirs(plugin.BasePath + "/" + name)
 
 					nodePath := plugin.BasePath + "/" + name + "/" + plugin.ServiceAddress
-					_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, data, &client.SetOptions{
-						PrevExist: client.PrevIgnore,
-						TTL:       plugin.UpdateInterval + 10*time.Second,
-					})
 
-					if err != nil {
-						log.Fatal(err)
+					resp, err := plugin.KeysAPI.Get(context.TODO(), nodePath, &client.GetOptions{
+						Recursive: false,
+					})
+					if err == nil {
+						v, _ := url.ParseQuery(resp.Node.Value)
+						v.Set("tps", string(data))
+
+						_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, data, &client.SetOptions{
+							PrevExist: client.PrevIgnore,
+							TTL:       plugin.UpdateInterval + 10*time.Second,
+						})
+
+						if err != nil {
+							log.Fatal(err)
+						}
 					}
+
 				}
 
 			}

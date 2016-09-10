@@ -34,14 +34,14 @@ func (plugin *ZooKeeperRegisterPlugin) Start() (err error) {
 		go func() {
 			for range ticker.C {
 				clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Metrics)
-				data := []byte(strconv.FormatInt(clientMeter.Count(), 10))
+				data := []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
 				//set this same metrics for all services at this server
 				for _, name := range plugin.Services {
 					nodePath := plugin.BasePath + "/" + name + "/" + plugin.ServiceAddress
 					bytes, stat, err := conn.Get(nodePath)
 					if err == nil {
 						v, _ := url.ParseQuery(string(bytes))
-						v.Set("clientmeter", string(data))
+						v.Set("tps", string(data))
 
 						conn.Set(nodePath, []byte(v.Encode()), stat.Version)
 					}
