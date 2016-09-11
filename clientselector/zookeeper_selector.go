@@ -93,6 +93,9 @@ func (s *ZooKeeperClientSelector) start() {
 
 func (s *ZooKeeperClientSelector) createWeighted() {
 	s.WeightedServers = make([]*Weighted, len(s.Servers))
+
+	var inactiveServers []int
+
 	for i, ss := range s.Servers {
 		bytes, _, err := s.zkConn.Get(s.BasePath + "/" + ss)
 		s.WeightedServers[i] = &Weighted{Server: ss, Weight: 1, EffectiveWeight: 1}
@@ -100,6 +103,10 @@ func (s *ZooKeeperClientSelector) createWeighted() {
 			metadata := string(bytes)
 			if v, err := url.ParseQuery(metadata); err == nil {
 				w := v.Get("weight")
+				state := v.Get("state")
+				if state != "" && state != "active" {
+					inactiveServers = append(inactiveServers, i)
+				}
 
 				if w != "" {
 					weight, err := strconv.Atoi(w)
@@ -112,6 +119,8 @@ func (s *ZooKeeperClientSelector) createWeighted() {
 		}
 
 	}
+
+	s.removeInactiveServers(inactiveServers)
 }
 
 func (s *ZooKeeperClientSelector) watchPath() {
@@ -129,6 +138,16 @@ func (s *ZooKeeperClientSelector) watchPath() {
 	// }
 	<-ch
 	s.watchPath()
+}
+
+func (s *ZooKeeperClientSelector) removeInactiveServers(inactiveServers []int) {
+	i := len(inactiveServers) - 1
+
+	for ; i > 0; i-- {
+		k := inactiveServers[i]
+		s.Servers = append(s.Servers[0:k], s.Servers[k+1:]...)
+		s.WeightedServers = append(s.WeightedServers[0:k], s.WeightedServers[k+1:]...)
+	}
 }
 
 //Select returns a rpc client
