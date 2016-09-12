@@ -82,11 +82,11 @@ func (s *ZooKeeperClientSelector) start() {
 
 	servers, _, _ := s.zkConn.Children(s.BasePath)
 	s.Servers = servers
-	s.len = len(servers)
 
-	if s.SelectMode == rpcx.WeightedRoundRobin {
-		s.createWeighted()
-	}
+	s.createWeighted()
+
+	s.len = len(s.Servers)
+	s.currentServer = s.currentServer % s.len
 
 	go s.watchPath()
 }

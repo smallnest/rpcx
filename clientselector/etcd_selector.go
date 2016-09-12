@@ -128,12 +128,12 @@ func (s *EtcdClientSelector) pullServers() {
 
 			}
 			s.Servers = servers
-			s.len = len(servers)
+
+			s.createWeighted(resp.Node.Nodes)
+
+			s.len = len(s.Servers)
 			s.currentServer = s.currentServer % s.len
 
-			if s.SelectMode == rpcx.WeightedRoundRobin {
-				s.createWeighted(resp.Node.Nodes)
-			}
 		}
 
 	}
@@ -142,10 +142,17 @@ func (s *EtcdClientSelector) pullServers() {
 func (s *EtcdClientSelector) createWeighted(nodes client.Nodes) {
 	s.WeightedServers = make([]*Weighted, len(s.Servers))
 
+	var inactiveServers []int
+
 	for i, n := range nodes {
 		s.WeightedServers[i] = &Weighted{Server: strings.TrimPrefix(n.Key, s.BasePath+"/"), Weight: 1, EffectiveWeight: 1}
 		if v, err := url.ParseQuery(n.Value); err == nil {
 			w := v.Get("weight")
+			state := v.Get("state")
+			if state != "" && state != "active" {
+				inactiveServers = append(inactiveServers, i)
+			}
+
 			if w != "" {
 				weight, err := strconv.Atoi(w)
 				if err != nil {
@@ -154,6 +161,18 @@ func (s *EtcdClientSelector) createWeighted(nodes client.Nodes) {
 				}
 			}
 		}
+	}
+
+	s.removeInactiveServers(inactiveServers)
+}
+
+func (s *EtcdClientSelector) removeInactiveServers(inactiveServers []int) {
+	i := len(inactiveServers) - 1
+
+	for ; i > 0; i-- {
+		k := inactiveServers[i]
+		s.Servers = append(s.Servers[0:k], s.Servers[k+1:]...)
+		s.WeightedServers = append(s.WeightedServers[0:k], s.WeightedServers[k+1:]...)
 	}
 }
 
