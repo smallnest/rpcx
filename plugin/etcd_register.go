@@ -128,8 +128,9 @@ func (plugin *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metada
 		})
 
 	if err != nil {
-		panic(err)
+		return err
 	}
+
 	plugin.Services = append(plugin.Services, name)
 	return
 }
