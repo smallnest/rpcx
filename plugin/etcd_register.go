@@ -60,7 +60,7 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 						v, _ := url.ParseQuery(resp.Node.Value)
 						v.Set("tps", string(data))
 
-						_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, data, &client.SetOptions{
+						_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, v.Encode(), &client.SetOptions{
 							PrevExist: client.PrevIgnore,
 							TTL:       plugin.UpdateInterval + 10*time.Second,
 						})
