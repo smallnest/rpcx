@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"time"
 
@@ -17,20 +18,25 @@ type Reply struct {
 	C int `msg:"c"`
 }
 
+var zk = flag.String("zk", "127.0.0.1:2181", "zookeeper URL")
+var n = flag.String("n", "127.0.0.1:2181", "Arith")
+
 func main() {
+	flag.Parse()
+
 	//basePath = "/rpcx/" + serviceName
-	s := clientselector.NewZooKeeperClientSelector([]string{"127.0.0.1:2181"}, "/rpcx/Arith", 2*time.Minute, rpcx.WeightedRoundRobin, time.Minute)
+	s := clientselector.NewZooKeeperClientSelector([]string{*zk}, "/rpcx/"+*n, 2*time.Minute, rpcx.WeightedRoundRobin, time.Minute)
 	client := rpcx.NewClient(s)
 
 	args := &Args{7, 8}
 	var reply Reply
 
 	for i := 0; i < 10; i++ {
-		err := client.Call("Arith.Mul", args, &reply)
+		err := client.Call(*n+".Mul", args, &reply)
 		if err != nil {
-			fmt.Printf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
+			fmt.Printf("error for "+*n+": %d*%d, %v \n", args.A, args.B, err)
 		} else {
-			fmt.Printf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
+			fmt.Printf(*n+": %d*%d=%d \n", args.A, args.B, reply.C)
 		}
 	}
 
