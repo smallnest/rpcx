@@ -143,7 +143,7 @@ func (s *ZooKeeperClientSelector) watchPath() {
 func (s *ZooKeeperClientSelector) removeInactiveServers(inactiveServers []int) {
 	i := len(inactiveServers) - 1
 
-	for ; i > 0; i-- {
+	for ; i >= 0; i-- {
 		k := inactiveServers[i]
 		s.Servers = append(s.Servers[0:k], s.Servers[k+1:]...)
 		s.WeightedServers = append(s.WeightedServers[0:k], s.WeightedServers[k+1:]...)
@@ -152,6 +152,10 @@ func (s *ZooKeeperClientSelector) removeInactiveServers(inactiveServers []int) {
 
 //Select returns a rpc client
 func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
+	if s.len == 0 {
+		return nil, errors.New("No available service")
+	}
+
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]

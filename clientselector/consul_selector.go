@@ -132,6 +132,10 @@ func (s *ConsulClientSelector) createWeighted(ass map[string]*api.AgentService) 
 
 //Select returns a rpc client
 func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
+	if s.len == 0 {
+		return nil, errors.New("No available service")
+	}
+
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]

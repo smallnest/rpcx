@@ -127,6 +127,9 @@ func (plugin *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metada
 			TTL:       plugin.UpdateInterval + 10*time.Second,
 		})
 
+	if err != nil {
+		panic(err)
+	}
 	plugin.Services = append(plugin.Services, name)
 	return
 }

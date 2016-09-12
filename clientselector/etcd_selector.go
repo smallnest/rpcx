@@ -133,7 +133,6 @@ func (s *EtcdClientSelector) pullServers() {
 
 			s.len = len(s.Servers)
 			s.currentServer = s.currentServer % s.len
-
 		}
 
 	}
@@ -168,8 +167,7 @@ func (s *EtcdClientSelector) createWeighted(nodes client.Nodes) {
 
 func (s *EtcdClientSelector) removeInactiveServers(inactiveServers []int) {
 	i := len(inactiveServers) - 1
-
-	for ; i > 0; i-- {
+	for ; i >= 0; i-- {
 		k := inactiveServers[i]
 		s.Servers = append(s.Servers[0:k], s.Servers[k+1:]...)
 		s.WeightedServers = append(s.WeightedServers[0:k], s.WeightedServers[k+1:]...)
@@ -178,6 +176,9 @@ func (s *EtcdClientSelector) removeInactiveServers(inactiveServers []int) {
 
 //Select returns a rpc client
 func (s *EtcdClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
+	if s.len == 0 {
+		return nil, errors.New("No available service")
+	}
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]
