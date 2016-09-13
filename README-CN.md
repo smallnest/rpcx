@@ -24,7 +24,7 @@ rpcx是一个类似阿里巴巴 [Dubbo](http://dubbo.io/) 和微博 [Motan](http
 
 > 2013 年微博 RPC 框架 Motan 在前辈大师们（福林、fishermen、小麦、王喆等）的精心设计和辛勤工作中诞生，向各位大师们致敬，也得到了微博各个技术团队的鼎力支持及不断完善，如今 Motan 在微博平台中已经广泛应用，每天为数百个服务完成近千亿次的调用。
 
-这两个个优秀的框架都是使用Java开发的，国外的互联网企业也有非常出名的的RPC框架如[thrift](https://thrift.apache.org/)、[finagle](https://github.com/twitter/finagle)。
+这两个优秀的框架都是使用Java开发的，国外的互联网企业也有非常出名的的RPC框架如[thrift](https://thrift.apache.org/)、[finagle](https://github.com/twitter/finagle)。
 
 本项目[rpcx](https://github.com/smallnest/rpcx)的目标就是实现一个Go生态圈的Dubbo，为Go生态圈提供一个分布式的、多插件的、带有服务治理功能的产品级的RPC框架。
 
@@ -104,7 +104,7 @@ rpcx拥有众多特性。
 rpcx当前支持多种序列化/反序列化的方式，可以根据需求选择合适的编码库。
 
 | 特性 | 功能描述  | 
-| -- | -- |
+| --- | --- |
 | [gob](https://golang.org/pkg/encoding/gob/) |官方提供的序列化方式，基于一个包含元数据的流 |
 | [jsonrpc](https://golang.org/pkg/net/rpc/jsonrpc/)|也是官方提供的编码库，以JSON格式传输 |
 |[msgp](http://msgpack.org/)|类似json格式的编码，但是更小更快，可以直接编码struct |
@@ -206,7 +206,7 @@ etcd可以通过TTL判断服务器的存活，另外此插件也会定时把调�
 
 
 | 负载均衡器 | 功能描述  | 
-| -- | -- |
+| --- | --- |
 |DirectClientSelector|点对点的直连，客户端直接连接一个服务器|
 |MultiClientSelector|多对多的直连，一个客户端可以从一组固定的服务器中选择一个直连，无需注册中心|
 |ZooKeeperClientSelector|从ZK注册中心选择一个服务器连接|
