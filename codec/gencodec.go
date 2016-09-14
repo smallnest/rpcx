@@ -12,7 +12,7 @@ func NewGencodeServerCodec(conn io.ReadWriteCloser) rpc.ServerCodec {
 	return gencodec.NewGencodeServerCodec(conn)
 }
 
-// NewGencodeClientCodec creates a protobuf ClientCodec
+// NewGencodeClientCodec creates a gencode ClientCodec
 func NewGencodeClientCodec(conn io.ReadWriteCloser) rpc.ClientCodec {
 	return gencodec.NewGencodeClientCodec(conn)
 }
