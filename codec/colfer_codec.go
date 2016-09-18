@@ -7,7 +7,20 @@ import (
 	"fmt"
 	"io"
 	"net/rpc"
+	"sync"
 )
+
+var reqHeaderPool = sync.Pool{
+	New: func() interface{} {
+		return &RequestHeader{}
+	},
+}
+
+var respHeaderPool = sync.Pool{
+	New: func() interface{} {
+		return &ResponseHeader{}
+	},
+}
 
 type colferMessage interface {
 	MarshalTo(buf []byte) int
@@ -34,11 +47,17 @@ func NewColferClientCodec(conn io.ReadWriteCloser) rpc.ClientCodec {
 
 func (cc *colferClientCodec) WriteRequest(req *rpc.Request, v interface{}) (err error) {
 	//convert request header
-	rh := &RequestHeader{}
+	rh := reqHeaderPool.Get().(*RequestHeader)
+
 	rh.Method = req.ServiceMethod
 	rh.Seq = req.Seq
 
-	if err = cc.Encoder.Encode(rh); err != nil {
+	err = cc.Encoder.Encode(rh)
+
+	rh.Reset()
+	reqHeaderPool.Put(rh)
+
+	if err != nil {
 		return err
 	}
 
@@ -52,15 +71,19 @@ func (cc *colferClientCodec) WriteRequest(req *rpc.Request, v interface{}) (err 
 
 func (cc *colferClientCodec) ReadResponseHeader(res *rpc.Response) (err error) {
 	//convert response header
-	rh := &ResponseHeader{}
+	rh := respHeaderPool.Get().(*ResponseHeader)
 
 	if err = cc.Decoder.Decode(rh); err != nil {
+		rh.Reset()
+		respHeaderPool.Put(rh)
 		return err
 	}
 
 	res.ServiceMethod = rh.Method
 	res.Seq = rh.Seq
 	res.Error = rh.Error
+	rh.Reset()
+	respHeaderPool.Put(rh)
 
 	return
 }
@@ -93,15 +116,20 @@ func NewColferServerCodec(conn io.ReadWriteCloser) rpc.ServerCodec {
 
 func (sc *colferServerCodec) ReadRequestHeader(rq *rpc.Request) (err error) {
 	//convert  colfer request header
-	rh := &RequestHeader{}
+	rh := reqHeaderPool.Get().(*RequestHeader)
 
 	if err = sc.Decoder.Decode(rh); err != nil {
+		rh.Reset()
+		reqHeaderPool.Put(rh)
+
 		return err
 	}
 
 	rq.ServiceMethod = rh.Method
 	rq.Seq = rh.Seq
 
+	rh.Reset()
+	reqHeaderPool.Put(rh)
 	return
 }
 
@@ -112,12 +140,16 @@ func (sc *colferServerCodec) ReadRequestBody(v interface{}) (err error) {
 
 func (sc *colferServerCodec) WriteResponse(rs *rpc.Response, v interface{}) (err error) {
 	//convert  colfer response header
-	rp := &ResponseHeader{}
+	rp := respHeaderPool.Get().(*ResponseHeader)
 	rp.Method = rs.ServiceMethod
 	rp.Seq = rs.Seq
 	rp.Error = rs.Error
 
 	err = sc.Encoder.Encode(rp)
+
+	rp.Reset()
+	respHeaderPool.Put(rp)
+
 	if err != nil {
 		return
 	}

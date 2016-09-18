@@ -36,8 +36,14 @@ func (i ColferTail) Error() string {
 }
 
 type RequestHeader struct {
-	Method	string
-	Seq	uint64
+	Method string
+	Seq    uint64
+}
+
+// Reset this object
+func (o *RequestHeader) Reset() {
+	o.Method = ""
+	o.Seq = 0
 }
 
 // MarshalTo encodes o as Colfer into buf and returns the number of bytes written.
@@ -215,9 +221,16 @@ func (o *RequestHeader) UnmarshalBinary(data []byte) error {
 }
 
 type ResponseHeader struct {
-	Method	string
-	Seq	uint64
-	Error	string
+	Method string
+	Seq    uint64
+	Error  string
+}
+
+//Reset this object
+func (o *ResponseHeader) Reset() {
+	o.Method = ""
+	o.Seq = 0
+	o.Error = ""
 }
 
 // MarshalTo encodes o as Colfer into buf and returns the number of bytes written.
