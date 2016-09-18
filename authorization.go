@@ -1,9 +1,10 @@
 package rpcx
 
 import (
-	"bytes"
 	"encoding/gob"
+	"errors"
 	"net/rpc"
+	"strings"
 )
 
 // AuthorizationServerPlugin is used to authorize clients.
@@ -21,6 +22,10 @@ type AuthorizationAndServiceMethod struct {
 	Tag           string // extra tag for Authorization
 }
 
+func (aasm *AuthorizationAndServiceMethod) String() string {
+	return aasm.ServiceMethod + "\x1f" + aasm.Authorization + "\x1f" + aasm.Tag
+}
+
 func init() {
 	// This type must match exactly what youre going to be using,
 	// down to whether or not its a pointer
@@ -29,18 +34,20 @@ func init() {
 
 // PostReadRequestHeader extracts Authorization header from ServiceMethod field.
 func (plugin *AuthorizationServerPlugin) PostReadRequestHeader(r *rpc.Request) (err error) {
-	b := bytes.NewBufferString(r.ServiceMethod)
-	var aAndS AuthorizationAndServiceMethod
-	dec := gob.NewDecoder(b)
-	err = dec.Decode(&aAndS)
-	if err == nil {
-		r.ServiceMethod = aAndS.ServiceMethod
+	items := strings.Split(r.ServiceMethod, "\x1f")
 
-		if plugin.AuthorizationFunc != nil {
-			err = plugin.AuthorizationFunc(&aAndS)
-		}
+	if len(items) != 3 {
+		return errors.New("wrong authorization format for " + r.ServiceMethod)
 	}
-	return
+
+	aAndS := &AuthorizationAndServiceMethod{ServiceMethod: items[0], Authorization: items[1], Tag: items[2]}
+
+	r.ServiceMethod = aAndS.ServiceMethod
+
+	if plugin.AuthorizationFunc != nil {
+		err = plugin.AuthorizationFunc(aAndS)
+	}
+	return err
 }
 
 // Name return name of this plugin.
@@ -70,15 +77,9 @@ func NewAuthorizationClientPlugin(authorization, tag string) *AuthorizationClien
 
 // PreWriteRequest adds Authorization info in requests
 func (plugin *AuthorizationClientPlugin) PreWriteRequest(r *rpc.Request, body interface{}) error {
-	var b bytes.Buffer
-	enc := gob.NewEncoder(&b)
 	plugin.AuthorizationAndServiceMethod.ServiceMethod = r.ServiceMethod
-	err := enc.Encode(plugin.AuthorizationAndServiceMethod)
-	if err != nil {
-		return err
-	}
 
-	r.ServiceMethod = b.String()
+	r.ServiceMethod = plugin.AuthorizationAndServiceMethod.String()
 	return nil
 }
 
