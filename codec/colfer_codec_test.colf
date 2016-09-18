@@ -1,0 +1,10 @@
+package codec;
+
+type ColfArgs struct {
+	a int32
+	b int32
+}
+
+type ColfReply struct {
+	c int32
+}
