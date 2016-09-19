@@ -4,14 +4,13 @@ import (
 	"testing"
 
 	"github.com/smallnest/rpcx"
-	"github.com/smallnest/rpcx/codec/testdata"
 )
 
 //go:generate colf go colfer_codec_test.colf
 
 type ColfArith int
 
-func (t *ColfArith) Mul(args *testdata.ColfArgs, reply *testdata.ColfReply) error {
+func (t *ColfArith) Mul(args *ColfArgs, reply *ColfReply) error {
 	reply.C = args.A * args.B
 	return nil
 }
@@ -27,8 +26,8 @@ func TestColferCodec(t *testing.T) {
 	client := rpcx.NewClient(s)
 	client.ClientCodecFunc = NewColferClientCodec
 
-	args := &testdata.ColfArgs{7, 8}
-	var reply testdata.ColfReply
+	args := &ColfArgs{7, 8}
+	var reply ColfReply
 	err := client.Call(serviceMethodName, args, &reply)
 	if err != nil {
 		t.Errorf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
