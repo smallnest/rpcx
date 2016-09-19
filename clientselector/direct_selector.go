@@ -3,7 +3,9 @@ package clientselector
 import (
 	"errors"
 	"math/rand"
+	"net"
 	"net/rpc"
+	"strings"
 	"time"
 
 	"github.com/smallnest/rpcx"
@@ -37,10 +39,23 @@ func NewMultiClientSelector(servers []*ServerPeer, sm rpcx.SelectMode, dailTimeo
 		rnd:         rand.New(rand.NewSource(time.Now().UnixNano())),
 		len:         len(servers)}
 
-	if sm == rpcx.WeightedRoundRobin {
+	if sm == rpcx.WeightedRoundRobin || sm == rpcx.WeightedICMP {
 		s.WeightedServers = make([]*Weighted, len(s.Servers))
 		for i, ss := range s.Servers {
 			s.WeightedServers[i] = &Weighted{Server: ss, Weight: ss.Weight, EffectiveWeight: ss.Weight}
+		}
+	}
+
+	//set weight based on ICMP result
+	if sm == rpcx.WeightedICMP {
+		for _, w := range s.WeightedServers {
+			server := w.Server.(*ServerPeer)
+			ss := strings.Split(server.Address, "@")
+			host, _, _ := net.SplitHostPort(ss[1])
+			rtt, _ := Ping(host)
+			rtt = CalculateWeight(rtt)
+			w.Weight = rtt
+			w.EffectiveWeight = rtt
 		}
 	}
 
@@ -91,7 +106,7 @@ func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, optio
 		s.currentServer = s.HashServiceAndArgs(s.len, options...)
 		peer := s.Servers[s.currentServer]
 		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, peer.Network, peer.Address, s.dailTimeout)
-	} else if s.SelectMode == rpcx.WeightedRoundRobin {
+	} else if s.SelectMode == rpcx.WeightedRoundRobin || s.SelectMode == rpcx.WeightedICMP {
 		best := nextWeighted(s.WeightedServers)
 		peer := best.Server.(*ServerPeer)
 		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, peer.Network, peer.Address, s.dailTimeout)

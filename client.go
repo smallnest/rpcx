@@ -20,7 +20,7 @@ const (
 	RandomSelect SelectMode = iota
 	RoundRobin
 	WeightedRoundRobin
-	LeastActive
+	WeightedICMP
 	ConsistentHash
 )
 
@@ -28,7 +28,7 @@ var selectModeStrs = [...]string{
 	"RandomSelect",
 	"RoundRobin",
 	"WeightedRoundRobin",
-	"LeastActive",
+	"WeightedICMP",
 	"ConsistentHash",
 }
 

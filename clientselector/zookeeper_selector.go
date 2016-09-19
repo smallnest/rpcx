@@ -3,6 +3,7 @@ package clientselector
 import (
 	"errors"
 	"math/rand"
+	"net"
 	"net/rpc"
 	"net/url"
 	"strconv"
@@ -84,6 +85,19 @@ func (s *ZooKeeperClientSelector) start() {
 	s.Servers = servers
 
 	s.createWeighted()
+
+	//set weight based on ICMP result
+	if s.SelectMode == rpcx.WeightedICMP {
+		for _, w := range s.WeightedServers {
+			server := w.Server.(string)
+			ss := strings.Split(server, "@")
+			host, _, _ := net.SplitHostPort(ss[1])
+			rtt, _ := Ping(host)
+			rtt = CalculateWeight(rtt)
+			w.Weight = rtt
+			w.EffectiveWeight = rtt
+		}
+	}
 
 	s.len = len(s.Servers)
 	s.currentServer = s.currentServer % s.len
@@ -175,7 +189,7 @@ func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, o
 		server := s.Servers[s.currentServer]
 		ss := strings.Split(server, "@") //
 		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
-	} else if s.SelectMode == rpcx.WeightedRoundRobin {
+	} else if s.SelectMode == rpcx.WeightedRoundRobin || s.SelectMode == rpcx.WeightedICMP {
 		server := nextWeighted(s.WeightedServers).Server.(string)
 		ss := strings.Split(server, "@")
 		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
