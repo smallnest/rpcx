@@ -48,14 +48,17 @@ func NewEtcdClientSelector(etcdServers []string, basePath string, sessionTimeout
 	return selector
 }
 
+//SetClient set a Client in order that clientSelector can uses it
 func (s *EtcdClientSelector) SetClient(c *rpcx.Client) {
 	s.Client = c
 }
 
+//SetSelectMode sets SelectMode
 func (s *EtcdClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
+//AllClients returns rpc.Clients to all servers
 func (s *EtcdClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
 	var clients []*rpc.Client
 

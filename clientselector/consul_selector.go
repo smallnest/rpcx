@@ -48,14 +48,17 @@ func NewConsulClientSelector(consulAddress string, serviceName string, sessionTi
 	return selector
 }
 
+//SetClient set a Client in order that clientSelector can uses it
 func (s *ConsulClientSelector) SetClient(c *rpcx.Client) {
 	s.Client = c
 }
 
+//SetSelectMode sets SelectMode
 func (s *ConsulClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
+//AllClients returns rpc.Clients to all servers
 func (s *ConsulClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
 	var clients []*rpc.Client
 

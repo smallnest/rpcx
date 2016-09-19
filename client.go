@@ -17,10 +17,15 @@ import (
 type SelectMode int
 
 const (
+	//RandomSelect is selecting randomly
 	RandomSelect SelectMode = iota
+	//RoundRobin is selecting by round robin
 	RoundRobin
+	//WeightedRoundRobin is selecting by weighted round robin
 	WeightedRoundRobin
+	//WeightedICMP is selecting by weighted Ping time
 	WeightedICMP
+	//ConsistentHash is selecting by hashing
 	ConsistentHash
 )
 
@@ -86,6 +91,7 @@ func (s *DirectClientSelector) SetSelectMode(sm SelectMode) {
 
 }
 
+//AllClients returns rpc.Clients to all servers
 func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*rpc.Client {
 	return []*rpc.Client{s.Client.rpcClient}
 }
@@ -239,39 +245,43 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 		return c.clientForking(serviceMethod, args, reply)
 	}
 
+	//select a rpc.Client and call
 	rpcClient, err := c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
 	c.rpcClient = rpcClient
 
 	if err == nil && c.rpcClient != nil {
-		err = c.rpcClient.Call(serviceMethod, args, reply)
+		if err = c.rpcClient.Call(serviceMethod, args, reply); err == nil {
+			return //call successful
+		}
 	}
-	if err != nil || c.rpcClient == nil {
-		if c.FailMode == Failover {
-			for retries := 0; retries < c.Retries; retries++ {
-				rpcClient, err := c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
-				if err != nil || rpcClient == nil {
-					continue
-				}
-				c.Close()
 
+	if c.FailMode == Failover {
+		for retries := 0; retries < c.Retries; retries++ {
+			rpcClient, err := c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
+			if err != nil || rpcClient == nil {
+				continue
+			}
+			c.Close()
+
+			c.rpcClient = rpcClient
+			err = c.rpcClient.Call(serviceMethod, args, reply)
+			if err == nil {
+				return nil
+			}
+		}
+	}
+
+	if c.FailMode == Failtry {
+		for retries := 0; retries < c.Retries; retries++ {
+			if c.rpcClient == nil {
+				rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
 				c.rpcClient = rpcClient
+
+			}
+			if c.rpcClient != nil {
 				err = c.rpcClient.Call(serviceMethod, args, reply)
 				if err == nil {
 					return nil
-				}
-			}
-		} else if c.FailMode == Failtry {
-			for retries := 0; retries < c.Retries; retries++ {
-				if c.rpcClient == nil {
-					rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
-					c.rpcClient = rpcClient
-
-				}
-				if c.rpcClient != nil {
-					err = c.rpcClient.Call(serviceMethod, args, reply)
-					if err == nil {
-						return nil
-					}
 				}
 			}
 		}

@@ -47,14 +47,17 @@ func NewZooKeeperClientSelector(zkServers []string, basePath string, sessionTime
 	return selector
 }
 
+//SetClient sets a Client in order that clientSelector can uses it
 func (s *ZooKeeperClientSelector) SetClient(c *rpcx.Client) {
 	s.Client = c
 }
 
+//SetSelectMode sets SelectMode
 func (s *ZooKeeperClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
+//AllClients returns rpc.Clients to all servers
 func (s *ZooKeeperClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
 	var clients []*rpc.Client
 

@@ -63,14 +63,17 @@ func NewMultiClientSelector(servers []*ServerPeer, sm rpcx.SelectMode, dailTimeo
 	return s
 }
 
+//SetClient set a Client in order that clientSelector can uses it
 func (s *MultiClientSelector) SetClient(c *rpcx.Client) {
 	s.Client = c
 }
 
+//SetSelectMode sets SelectMode
 func (s *MultiClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
+//AllClients returns rpc.Clients to all servers
 func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
 	var clients []*rpc.Client
 
