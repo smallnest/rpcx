@@ -1,0 +1,21 @@
+build:
+  image: golang:1.7
+  environment:
+    - GOOS=linux
+    - GOARCH=amd64
+    - CGO_ENABLED=0
+  commands:
+    - go get golang.org/x/net/context
+    - go get -u github.com/hashicorp/net-rpc-msgpackrpc
+    - go get -u github.com/micro/go-bson
+    - go get -u github.com/smallnest/net-rpc-gencode
+    - go get -u github.com/mars9/codec
+    - go get -u github.com/gogo/protobuf/proto
+    - go get -u github.com/hashicorp/consul/api
+    - go get -u github.com/rcrowley/go-metrics
+    - go get -u github.com/juju/ratelimit
+    - go get -u github.com/samuel/go-zookeeper/zk
+    - go get -u github.com/smallnest/rpc-codec/jsonrpc2
+    - go get -u github.com/pascaldekloe/colfer/...
+    - go build
+    - go test -short
