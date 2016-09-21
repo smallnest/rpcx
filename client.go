@@ -261,7 +261,8 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 			if err != nil || rpcClient == nil {
 				continue
 			}
-			c.Close()
+
+			c.rpcClient.Close()
 
 			c.rpcClient = rpcClient
 			err = c.rpcClient.Call(serviceMethod, args, reply)
