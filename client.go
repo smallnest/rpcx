@@ -199,7 +199,6 @@ type ClientCodecFunc func(conn io.ReadWriteCloser) rpc.ClientCodec
 
 // Client represents a RPC client.
 type Client struct {
-	rpcClients      []*rpc.Client
 	ClientSelector  ClientSelector
 	ClientCodecFunc ClientCodecFunc
 	PluginContainer IClientPluginContainer
@@ -228,9 +227,10 @@ func NewClient(s ClientSelector) *Client {
 
 // Close closes the connection
 func (c *Client) Close() error {
+	clients := c.ClientSelector.AllClients(c.ClientCodecFunc)
 
-	if c.rpcClients != nil {
-		for _, rpcClient := range c.rpcClients {
+	if clients != nil {
+		for _, rpcClient := range clients {
 			rpcClient.Close()
 		}
 	}
@@ -286,20 +286,15 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 }
 
 func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply interface{}) (err error) {
-	if c.rpcClients == nil {
-		rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
+	rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
 
-		c.rpcClients = rpcClients
-
-	}
-
-	if c.rpcClients == nil || len(c.rpcClients) == 0 {
+	if len(rpcClients) == 0 {
 		return nil
 	}
 
-	l := len(c.rpcClients)
+	l := len(rpcClients)
 	done := make(chan *rpc.Call, l)
-	for _, rpcClient := range c.rpcClients {
+	for _, rpcClient := range rpcClients {
 		rpcClient.Go(serviceMethod, args, reply, done)
 	}
 
@@ -316,18 +311,15 @@ func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply i
 }
 
 func (c *Client) clientForking(serviceMethod string, args interface{}, reply interface{}) (err error) {
-	if c.rpcClients == nil {
-		rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
-		c.rpcClients = rpcClients
-	}
+	rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
 
-	if c.rpcClients == nil || len(c.rpcClients) == 0 {
+	if len(rpcClients) == 0 {
 		return nil
 	}
 
-	l := len(c.rpcClients)
+	l := len(rpcClients)
 	done := make(chan *rpc.Call, l)
-	for _, rpcClient := range c.rpcClients {
+	for _, rpcClient := range rpcClients {
 		rpcClient.Go(serviceMethod, args, reply, done)
 	}
 

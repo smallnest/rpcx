@@ -106,7 +106,7 @@ func main() {
 	fmt.Printf("received requests    : %d\n", atomic.LoadUint64(&trans))
 	fmt.Printf("received requests_OK : %d\n", atomic.LoadUint64(&transOK))
 	fmt.Printf("throughput  (TPS)    : %d\n", int64(n*m)*1000/totalT)
-	fmt.Printf("mean: %.f ns, median: %.f ns, max: %.f ns, min: %.f ns, p99: %.f ns\n", mean, median, max, min, p99)
+	fmt.Printf("mean: %.f ns, median: %.f ns, max: %.f ns, min: %.f ns, p99.9: %.f ns\n", mean, median, max, min, p99)
 	fmt.Printf("mean: %d ms, median: %d ms, max: %d ms, min: %d ms, p99: %d ms\n", int64(mean/1000000), int64(median/1000000), int64(max/1000000), int64(min/1000000), int64(p99/1000000))
 
 }
