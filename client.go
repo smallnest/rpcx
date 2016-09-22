@@ -74,11 +74,17 @@ type DirectClientSelector struct {
 	Network, Address string
 	DialTimeout      time.Duration
 	Client           *Client
+	rpcClient        *rpc.Client
 }
 
 //Select returns a rpc client.
 func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
-	return NewDirectRPCClient(s.Client, clientCodecFunc, s.Network, s.Address, s.DialTimeout)
+	if s.rpcClient != nil {
+		return s.rpcClient, nil
+	}
+	c, err := NewDirectRPCClient(s.Client, clientCodecFunc, s.Network, s.Address, s.DialTimeout)
+	s.rpcClient = c
+	return c, err
 }
 
 //SetClient sets the unique client.
@@ -93,7 +99,7 @@ func (s *DirectClientSelector) SetSelectMode(sm SelectMode) {
 
 //AllClients returns rpc.Clients to all servers
 func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*rpc.Client {
-	return []*rpc.Client{s.Client.rpcClient}
+	return []*rpc.Client{s.rpcClient}
 }
 
 // NewDirectRPCClient creates a rpc client
@@ -193,7 +199,6 @@ type ClientCodecFunc func(conn io.ReadWriteCloser) rpc.ClientCodec
 
 // Client represents a RPC client.
 type Client struct {
-	rpcClient       *rpc.Client
 	rpcClients      []*rpc.Client
 	ClientSelector  ClientSelector
 	ClientCodecFunc ClientCodecFunc
@@ -223,9 +228,6 @@ func NewClient(s ClientSelector) *Client {
 
 // Close closes the connection
 func (c *Client) Close() error {
-	if c.rpcClient != nil {
-		c.rpcClient.Close()
-	}
 
 	if c.rpcClients != nil {
 		for _, rpcClient := range c.rpcClients {
@@ -247,10 +249,9 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 
 	//select a rpc.Client and call
 	rpcClient, err := c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
-	c.rpcClient = rpcClient
-
-	if err == nil && c.rpcClient != nil {
-		if err = c.rpcClient.Call(serviceMethod, args, reply); err == nil {
+	//selected
+	if err == nil && rpcClient != nil {
+		if err = rpcClient.Call(serviceMethod, args, reply); err == nil {
 			return //call successful
 		}
 	}
@@ -264,23 +265,18 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 
 			c.rpcClient.Close()
 
-			c.rpcClient = rpcClient
-			err = c.rpcClient.Call(serviceMethod, args, reply)
+			err = rpcClient.Call(serviceMethod, args, reply)
 			if err == nil {
 				return nil
 			}
 		}
-	}
-
-	if c.FailMode == Failtry {
+	} else if c.FailMode == Failtry {
 		for retries := 0; retries < c.Retries; retries++ {
-			if c.rpcClient == nil {
+			if rpcClient == nil {
 				rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
-				c.rpcClient = rpcClient
-
 			}
-			if c.rpcClient != nil {
-				err = c.rpcClient.Call(serviceMethod, args, reply)
+			if rpcClient != nil {
+				err = rpcClient.Call(serviceMethod, args, reply)
 				if err == nil {
 					return nil
 				}
@@ -355,12 +351,9 @@ func (c *Client) clientForking(serviceMethod string, args interface{}, reply int
 //Go invokes the function asynchronously. It returns the Call structure representing the invocation.
 //The done channel will signal when the call is complete by returning the same Call object. If done is nil, Go will allocate a new channel. If non-nil, done must be buffered or Go will deliberately crash.
 func (c *Client) Go(serviceMethod string, args interface{}, reply interface{}, done chan *rpc.Call) *rpc.Call {
-	if c.rpcClient == nil {
-		rpcClient, _ := c.ClientSelector.Select(c.ClientCodecFunc)
-		c.rpcClient = rpcClient
+	rpcClient, _ := c.ClientSelector.Select(c.ClientCodecFunc)
 
-	}
-	return c.rpcClient.Go(serviceMethod, args, reply, done)
+	return rpcClient.Go(serviceMethod, args, reply, done)
 }
 
 // Auth sets Authorization info

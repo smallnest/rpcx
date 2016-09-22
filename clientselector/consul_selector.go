@@ -22,6 +22,7 @@ type ConsulClientSelector struct {
 	ticker             *time.Ticker
 	sessionTimeout     time.Duration
 	Servers            []*api.AgentService
+	clientAndServer    map[string]*rpc.Client
 	WeightedServers    []*Weighted
 	ServiceName        string
 	SelectMode         rpcx.SelectMode
@@ -36,13 +37,14 @@ type ConsulClientSelector struct {
 // NewConsulClientSelector creates a ConsulClientSelector
 func NewConsulClientSelector(consulAddress string, serviceName string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration) *ConsulClientSelector {
 	selector := &ConsulClientSelector{
-		ConsulAddress:  consulAddress,
-		ServiceName:    serviceName,
-		Servers:        make([]*api.AgentService, 1),
-		sessionTimeout: sessionTimeout,
-		SelectMode:     sm,
-		dailTimeout:    dailTimeout,
-		rnd:            rand.New(rand.NewSource(time.Now().UnixNano()))}
+		ConsulAddress:   consulAddress,
+		ServiceName:     serviceName,
+		Servers:         make([]*api.AgentService, 1),
+		clientAndServer: make(map[string]*rpc.Client),
+		sessionTimeout:  sessionTimeout,
+		SelectMode:      sm,
+		dailTimeout:     dailTimeout,
+		rnd:             rand.New(rand.NewSource(time.Now().UnixNano()))}
 
 	selector.start()
 	return selector
@@ -133,6 +135,17 @@ func (s *ConsulClientSelector) createWeighted(ass map[string]*api.AgentService) 
 
 }
 
+func (s *ConsulClientSelector) getCachedClient(server string, clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
+	c := s.clientAndServer[server]
+	if c != nil {
+		return c, nil
+	}
+	ss := strings.Split(server, "@") //
+	c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+	s.clientAndServer[server] = c
+	return c, err
+}
+
 //Select returns a rpc client
 func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	if s.len == 0 {
@@ -142,14 +155,12 @@ func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, opti
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]
-		ss := strings.Split(server.Address, "@") //tcp@ip , tcp4@ip or tcp6@ip
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+		return s.getCachedClient(server.Address, clientCodecFunc)
 
 	} else if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		server := s.Servers[s.currentServer]
-		ss := strings.Split(server.Address, "@")
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+		return s.getCachedClient(server.Address, clientCodecFunc)
 
 	} else if s.SelectMode == rpcx.ConsistentHash {
 		if s.HashServiceAndArgs == nil {
@@ -157,12 +168,10 @@ func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, opti
 		}
 		s.currentServer = s.HashServiceAndArgs(s.len, options)
 		server := s.Servers[s.currentServer]
-		ss := strings.Split(server.Address, "@")
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+		return s.getCachedClient(server.Address, clientCodecFunc)
 	} else if s.SelectMode == rpcx.WeightedRoundRobin {
 		server := nextWeighted(s.WeightedServers).Server.(*api.AgentService)
-		ss := strings.Split(server.Address, "@")
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+		return s.getCachedClient(server.Address, clientCodecFunc)
 	}
 
 	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())

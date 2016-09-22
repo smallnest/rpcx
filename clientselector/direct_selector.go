@@ -20,6 +20,7 @@ type ServerPeer struct {
 // MultiClientSelector is used to select a direct rpc server from a list.
 type MultiClientSelector struct {
 	Servers            []*ServerPeer
+	clientAndServer    map[string]*rpc.Client
 	WeightedServers    []*Weighted
 	SelectMode         rpcx.SelectMode
 	dailTimeout        time.Duration
@@ -33,11 +34,12 @@ type MultiClientSelector struct {
 // NewMultiClientSelector creates a MultiClientSelector
 func NewMultiClientSelector(servers []*ServerPeer, sm rpcx.SelectMode, dailTimeout time.Duration) *MultiClientSelector {
 	s := &MultiClientSelector{
-		Servers:     servers,
-		SelectMode:  sm,
-		dailTimeout: dailTimeout,
-		rnd:         rand.New(rand.NewSource(time.Now().UnixNano())),
-		len:         len(servers)}
+		Servers:         servers,
+		clientAndServer: make(map[string]*rpc.Client),
+		SelectMode:      sm,
+		dailTimeout:     dailTimeout,
+		rnd:             rand.New(rand.NewSource(time.Now().UnixNano())),
+		len:             len(servers)}
 
 	if sm == rpcx.WeightedRoundRobin || sm == rpcx.WeightedICMP {
 		s.WeightedServers = make([]*Weighted, len(s.Servers))
@@ -87,6 +89,18 @@ func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) [
 	return clients
 }
 
+func (s *MultiClientSelector) getCachedClient(network string, address string, clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
+	key := network + "@" + address
+	c := s.clientAndServer[key]
+	if c != nil {
+		return c, nil
+	}
+	c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, network, address, s.dailTimeout)
+
+	s.clientAndServer[key] = c
+	return c, err
+}
+
 //Select returns a rpc client
 func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	if s.len == 0 {
@@ -96,23 +110,23 @@ func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, optio
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		peer := s.Servers[s.currentServer]
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, peer.Network, peer.Address, s.dailTimeout)
+		return s.getCachedClient(peer.Network, peer.Address, clientCodecFunc)
 
 	} else if s.SelectMode == rpcx.RoundRobin {
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		peer := s.Servers[s.currentServer]
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, peer.Network, peer.Address, s.dailTimeout)
+		return s.getCachedClient(peer.Network, peer.Address, clientCodecFunc)
 	} else if s.SelectMode == rpcx.ConsistentHash {
 		if s.HashServiceAndArgs == nil {
 			s.HashServiceAndArgs = JumpConsistentHash
 		}
 		s.currentServer = s.HashServiceAndArgs(s.len, options...)
 		peer := s.Servers[s.currentServer]
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, peer.Network, peer.Address, s.dailTimeout)
+		return s.getCachedClient(peer.Network, peer.Address, clientCodecFunc)
 	} else if s.SelectMode == rpcx.WeightedRoundRobin || s.SelectMode == rpcx.WeightedICMP {
 		best := nextWeighted(s.WeightedServers)
 		peer := best.Server.(*ServerPeer)
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, peer.Network, peer.Address, s.dailTimeout)
+		return s.getCachedClient(peer.Network, peer.Address, clientCodecFunc)
 	}
 
 	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())

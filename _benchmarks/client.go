@@ -68,9 +68,10 @@ func main() {
 					atomic.AddUint64(&transOK, 1)
 				}
 
-				// if err != nil {
-				// 	fmt.Println(err.Error())
-				// }
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+
 				atomic.AddUint64(&trans, 1)
 				wg.Done()
 			}

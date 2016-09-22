@@ -24,6 +24,7 @@ type EtcdClientSelector struct {
 	sessionTimeout     time.Duration
 	BasePath           string //should endwith serviceName
 	Servers            []string
+	clientAndServer    map[string]*rpc.Client
 	WeightedServers    []*Weighted
 	SelectMode         rpcx.SelectMode
 	dailTimeout        time.Duration
@@ -37,12 +38,13 @@ type EtcdClientSelector struct {
 // NewEtcdClientSelector creates a EtcdClientSelector
 func NewEtcdClientSelector(etcdServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration) *EtcdClientSelector {
 	selector := &EtcdClientSelector{
-		EtcdServers:    etcdServers,
-		BasePath:       basePath,
-		sessionTimeout: sessionTimeout,
-		SelectMode:     sm,
-		dailTimeout:    dailTimeout,
-		rnd:            rand.New(rand.NewSource(time.Now().UnixNano()))}
+		EtcdServers:     etcdServers,
+		BasePath:        basePath,
+		sessionTimeout:  sessionTimeout,
+		SelectMode:      sm,
+		dailTimeout:     dailTimeout,
+		clientAndServer: make(map[string]*rpc.Client),
+		rnd:             rand.New(rand.NewSource(time.Now().UnixNano()))}
 
 	selector.start()
 	return selector
@@ -188,7 +190,23 @@ func (s *EtcdClientSelector) removeInactiveServers(inactiveServers []int) {
 		k := inactiveServers[i]
 		s.Servers = append(s.Servers[0:k], s.Servers[k+1:]...)
 		s.WeightedServers = append(s.WeightedServers[0:k], s.WeightedServers[k+1:]...)
+		c := s.clientAndServer[s.Servers[k]]
+		if c != nil {
+			delete(s.clientAndServer, s.Servers[k])
+			c.Close() //close connection to inactive server
+		}
 	}
+}
+
+func (s *EtcdClientSelector) getCachedClient(server string, clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
+	c := s.clientAndServer[server]
+	if c != nil {
+		return c, nil
+	}
+	ss := strings.Split(server, "@") //
+	c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+	s.clientAndServer[server] = c
+	return c, err
 }
 
 //Select returns a rpc client
@@ -199,27 +217,22 @@ func (s *EtcdClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, option
 	if s.SelectMode == rpcx.RandomSelect {
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]
-		ss := strings.Split(server, "@") //tcp@ip , tcp4@ip or tcp6@ip
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+		return s.getCachedClient(server, clientCodecFunc)
 
 	} else if s.SelectMode == rpcx.RoundRobin {
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		server := s.Servers[s.currentServer]
-		ss := strings.Split(server, "@") //
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
-
+		return s.getCachedClient(server, clientCodecFunc)
 	} else if s.SelectMode == rpcx.ConsistentHash {
 		if s.HashServiceAndArgs == nil {
 			s.HashServiceAndArgs = JumpConsistentHash
 		}
 		s.currentServer = s.HashServiceAndArgs(s.len, options)
 		server := s.Servers[s.currentServer]
-		ss := strings.Split(server, "@") //
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+		return s.getCachedClient(server, clientCodecFunc)
 	} else if s.SelectMode == rpcx.WeightedRoundRobin || s.SelectMode == rpcx.WeightedICMP {
 		server := nextWeighted(s.WeightedServers).Server.(string)
-		ss := strings.Split(server, "@")
-		return rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+		return s.getCachedClient(server, clientCodecFunc)
 	}
 
 	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())
