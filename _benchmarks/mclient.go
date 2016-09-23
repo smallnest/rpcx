@@ -25,9 +25,9 @@ func main() {
 	m := *total / n
 
 	servers := strings.Split(*host, ",")
-	var serverPeers []clientselector.ServerPeer
+	var serverPeers []*clientselector.ServerPeer
 	for _, server := range servers {
-		serverPeers = append(serverPeers, clientselector.ServerPeer{Network: "tcp", Address: server})
+		serverPeers = append(serverPeers, &clientselector.ServerPeer{Network: "tcp", Address: server})
 	}
 
 	fmt.Printf("Servers: %+v\n\n", serverPeers)
@@ -43,6 +43,9 @@ func main() {
 
 	var wg sync.WaitGroup
 	wg.Add(n * m)
+
+	var startWg sync.WaitGroup
+	startWg.Add(n)
 
 	var trans uint64
 	var transOK uint64
@@ -66,6 +69,11 @@ func main() {
 			for j := 0; j < 5; j++ {
 				client.Call(serviceMethodName, args, &reply)
 			}
+
+			startWg.Done()
+			startWg.Wait()
+
+			fmt.Printf("goroutine %d started\n", i)
 
 			for j := 0; j < m; j++ {
 				t := time.Now().UnixNano()

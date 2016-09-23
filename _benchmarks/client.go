@@ -3,7 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
 	"reflect"
+	"runtime/pprof"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -16,9 +19,20 @@ import (
 var concurrency = flag.Int("c", 1, "concurrency")
 var total = flag.Int("n", 1, "total requests for all clients")
 var host = flag.String("s", "127.0.0.1:8972", "server ip and port")
+var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
 func main() {
 	flag.Parse()
+
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	n := *concurrency
 	m := *total / n
 
@@ -33,6 +47,9 @@ func main() {
 
 	var wg sync.WaitGroup
 	wg.Add(n * m)
+
+	var startWg sync.WaitGroup
+	startWg.Add(n)
 
 	var trans uint64
 	var transOK uint64
@@ -53,9 +70,13 @@ func main() {
 			var reply BenchmarkMessage
 
 			//warmup
-			for j := 0; j < 5; j++ {
-				client.Call(serviceMethodName, args, &reply)
-			}
+			// for j := 0; j < 5; j++ {
+			// 	client.Call(serviceMethodName, args, &reply)
+			// }
+
+			startWg.Done()
+			startWg.Wait()
+			fmt.Printf("goroutine %d started\n", i)
 
 			for j := 0; j < m; j++ {
 				t := time.Now().UnixNano()
