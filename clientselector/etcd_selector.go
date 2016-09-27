@@ -24,6 +24,7 @@ type EtcdClientSelector struct {
 	sessionTimeout     time.Duration
 	BasePath           string //should endwith serviceName
 	Servers            []string
+	Group              string
 	clientAndServer    map[string]*rpc.Client
 	WeightedServers    []*Weighted
 	SelectMode         rpcx.SelectMode
@@ -151,7 +152,10 @@ func (s *EtcdClientSelector) pullServers() {
 			}
 
 			s.len = len(s.Servers)
-			s.currentServer = s.currentServer % s.len
+
+			if s.len > 0 {
+				s.currentServer = s.currentServer % s.len
+			}
 		}
 
 	}
@@ -167,7 +171,8 @@ func (s *EtcdClientSelector) createWeighted(nodes client.Nodes) {
 		if v, err := url.ParseQuery(n.Value); err == nil {
 			w := v.Get("weight")
 			state := v.Get("state")
-			if state != "" && state != "active" {
+			group := v.Get("group")
+			if (state != "" && state != "active") || (s.Group != group) {
 				inactiveServers = append(inactiveServers, i)
 			}
 
@@ -188,11 +193,12 @@ func (s *EtcdClientSelector) removeInactiveServers(inactiveServers []int) {
 	i := len(inactiveServers) - 1
 	for ; i >= 0; i-- {
 		k := inactiveServers[i]
+		removedServer := s.Servers[k]
 		s.Servers = append(s.Servers[0:k], s.Servers[k+1:]...)
 		s.WeightedServers = append(s.WeightedServers[0:k], s.WeightedServers[k+1:]...)
-		c := s.clientAndServer[s.Servers[k]]
+		c := s.clientAndServer[removedServer]
 		if c != nil {
-			delete(s.clientAndServer, s.Servers[k])
+			delete(s.clientAndServer, removedServer)
 			c.Close() //close connection to inactive server
 		}
 	}

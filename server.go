@@ -187,8 +187,8 @@ func GetPluginContainer() IServerPluginContainer {
 }
 
 // RegisterName publishes in the server the set of methods .
-func RegisterName(name string, service interface{}) {
-	defaultServer.RegisterName(name, service)
+func RegisterName(name string, service interface{}, metadata ...string) {
+	defaultServer.RegisterName(name, service, metadata...)
 }
 
 // Auth sets authorization handler
