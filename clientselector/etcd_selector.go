@@ -26,6 +26,9 @@ type EtcdClientSelector struct {
 	Servers            []string
 	Group              string
 	clientAndServer    map[string]*rpc.Client
+	metadata           map[string]string
+	Latitude           float64
+	Longitude          float64
 	WeightedServers    []*Weighted
 	SelectMode         rpcx.SelectMode
 	dailTimeout        time.Duration
@@ -167,7 +170,9 @@ func (s *EtcdClientSelector) createWeighted(nodes client.Nodes) {
 	var inactiveServers []int
 
 	for i, n := range nodes {
-		s.WeightedServers[i] = &Weighted{Server: strings.TrimPrefix(n.Key, s.BasePath+"/"), Weight: 1, EffectiveWeight: 1}
+		key := strings.TrimPrefix(n.Key, s.BasePath+"/")
+		s.WeightedServers[i] = &Weighted{Server: key, Weight: 1, EffectiveWeight: 1}
+		s.metadata[key] = n.Value
 		if v, err := url.ParseQuery(n.Value); err == nil {
 			w := v.Get("weight")
 			state := v.Get("state")
@@ -239,6 +244,10 @@ func (s *EtcdClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, option
 	} else if s.SelectMode == rpcx.WeightedRoundRobin || s.SelectMode == rpcx.WeightedICMP {
 		server := nextWeighted(s.WeightedServers).Server.(string)
 		return s.getCachedClient(server, clientCodecFunc)
+	} else if s.SelectMode == rpcx.Closest {
+		closestServers := getClosestServer(s.Latitude, s.Longitude, s.metadata)
+		selected := s.rnd.Intn(len(closestServers))
+		return s.getCachedClient(closestServers[selected], clientCodecFunc)
 	}
 
 	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())

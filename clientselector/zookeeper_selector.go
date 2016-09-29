@@ -23,6 +23,9 @@ type ZooKeeperClientSelector struct {
 	Servers            []string
 	Group              string
 	clientAndServer    map[string]*rpc.Client
+	metadata           map[string]string
+	Latitude           float64
+	Longitude          float64
 	WeightedServers    []*Weighted
 	SelectMode         rpcx.SelectMode
 	dailTimeout        time.Duration
@@ -43,6 +46,7 @@ func NewZooKeeperClientSelector(zkServers []string, basePath string, sessionTime
 		sessionTimeout:  sessionTimeout,
 		SelectMode:      sm,
 		clientAndServer: make(map[string]*rpc.Client),
+		metadata:        make(map[string]string),
 		dailTimeout:     dailTimeout,
 		rnd:             rand.New(rand.NewSource(time.Now().UnixNano()))}
 
@@ -122,6 +126,7 @@ func (s *ZooKeeperClientSelector) createWeighted() {
 		s.WeightedServers[i] = &Weighted{Server: ss, Weight: 1, EffectiveWeight: 1}
 		if err == nil {
 			metadata := string(bytes)
+			s.metadata[ss] = metadata
 			if v, err := url.ParseQuery(metadata); err == nil {
 				w := v.Get("weight")
 				state := v.Get("state")
@@ -172,6 +177,7 @@ func (s *ZooKeeperClientSelector) removeInactiveServers(inactiveServers []int) {
 		c := s.clientAndServer[removedServer]
 		if c != nil {
 			delete(s.clientAndServer, removedServer)
+			delete(s.metadata, removedServer)
 			c.Close() //close connection to inactive server
 		}
 	}
@@ -213,6 +219,10 @@ func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, o
 	} else if s.SelectMode == rpcx.WeightedRoundRobin || s.SelectMode == rpcx.WeightedICMP {
 		server := nextWeighted(s.WeightedServers).Server.(string)
 		return s.getCachedClient(server, clientCodecFunc)
+	} else if s.SelectMode == rpcx.Closest {
+		closestServers := getClosestServer(s.Latitude, s.Longitude, s.metadata)
+		selected := s.rnd.Intn(len(closestServers))
+		return s.getCachedClient(closestServers[selected], clientCodecFunc)
 	}
 
 	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())

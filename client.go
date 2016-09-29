@@ -27,6 +27,8 @@ const (
 	WeightedICMP
 	//ConsistentHash is selecting by hashing
 	ConsistentHash
+	//Closest is selecting the closest server
+	Closest
 )
 
 var selectModeStrs = [...]string{

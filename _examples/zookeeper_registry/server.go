@@ -25,10 +25,6 @@ func (t *Arith) Mul(args *Args, reply *Reply) error {
 	return nil
 }
 
-func (t *Arith) Error(args *Args, reply *Reply) error {
-	panic("ERROR")
-}
-
 var addr = flag.String("s", "127.0.0.1:8972", "service address")
 var zk = flag.String("zk", "127.0.0.1:2181", "zookeeper URL")
 var n = flag.String("n", "127.0.0.1:2181", "Arith")

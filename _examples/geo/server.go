@@ -43,6 +43,6 @@ func main() {
 	}
 	rplugin.Start()
 	server.PluginContainer.Add(rplugin)
-	server.RegisterName(*n, new(Arith), "weight=5&state=active&group=g1")
+	server.RegisterName(*n, new(Arith), "latitude=39.9289&longitude=116.3883")
 	server.Serve("tcp", *addr)
 }

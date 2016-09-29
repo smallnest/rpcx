@@ -25,8 +25,9 @@ func main() {
 	flag.Parse()
 
 	//basePath = "/rpcx/" + serviceName
-	s := clientselector.NewZooKeeperClientSelector([]string{*zk}, "/rpcx/"+*n, 2*time.Minute, rpcx.WeightedRoundRobin, time.Minute)
-	s.Group = "g1"
+	s := clientselector.NewZooKeeperClientSelector([]string{*zk}, "/rpcx/"+*n, 2*time.Minute, rpcx.Closest, time.Minute)
+	s.Latitude = 42.3159
+	s.Longitude = -71.0559
 	client := rpcx.NewClient(s)
 
 	args := &Args{7, 8}

@@ -22,10 +22,6 @@ func (t *Arith) Mul(args *Args, reply *Reply) error {
 	return nil
 }
 
-func (t *Arith) Error(args *Args, reply *Reply) error {
-	panic("ERROR")
-}
-
 func main() {
 	server := rpcx.NewServer()
 	server.Timeout = 1 * time.Nanosecond

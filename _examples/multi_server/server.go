@@ -18,10 +18,6 @@ func (t *Arith) Mul(args *Args, reply *Reply) error {
 	return nil
 }
 
-func (t *Arith) Error(args *Args, reply *Reply) error {
-	panic("ERROR")
-}
-
 type Arith2 int
 
 func (t *Arith2) Mul(args *Args, reply *Reply) error {
