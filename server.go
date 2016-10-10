@@ -211,6 +211,11 @@ func (s *Server) Serve(network, address string) {
 		if err != nil {
 			continue
 		}
+
+		if !s.PluginContainer.DoPostConnAccept(c) {
+			continue
+		}
+
 		wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)
 		wrapper.Timeout = s.Timeout
 		wrapper.ReadTimeout = s.ReadTimeout
@@ -234,6 +239,10 @@ func (s *Server) ServeTLS(network, address string, config *tls.Config) {
 			continue
 		}
 
+		if !s.PluginContainer.DoPostConnAccept(c) {
+			continue
+		}
+
 		wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)
 		wrapper.Timeout = s.Timeout
 		wrapper.ReadTimeout = s.ReadTimeout
@@ -250,6 +259,11 @@ func (s *Server) ServeListener(ln net.Listener) {
 		if err != nil {
 			continue
 		}
+
+		if !s.PluginContainer.DoPostConnAccept(c) {
+			continue
+		}
+
 		wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)
 		wrapper.Timeout = s.Timeout
 		wrapper.ReadTimeout = s.ReadTimeout
@@ -282,6 +296,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	io.WriteString(conn, "HTTP/1.0 "+connected+"\n\n")
+
+	if !s.PluginContainer.DoPostConnAccept(conn) {
+		return
+	}
 
 	wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(conn), conn)
 	wrapper.Timeout = s.Timeout

@@ -28,3 +28,13 @@ func NewRateLimitingPlugin(fillInterval time.Duration, capacity int64) *RateLimi
 func (plugin *RateLimitingPlugin) HandleConnAccept(conn net.Conn) bool {
 	return plugin.bucket.TakeAvailable(1) > 0
 }
+
+// Name return name of this plugin.
+func (plugin *RateLimitingPlugin) Name() string {
+	return "RateLimitingPlugin"
+}
+
+// Description return description of this plugin.
+func (plugin *RateLimitingPlugin) Description() string {
+	return "rate limiting"
+}
