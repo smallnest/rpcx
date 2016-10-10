@@ -101,6 +101,9 @@ func (s *DirectClientSelector) SetSelectMode(sm SelectMode) {
 
 //AllClients returns rpc.Clients to all servers
 func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*rpc.Client {
+	if s.rpcClient == nil {
+		return []*rpc.Client{}
+	}
 	return []*rpc.Client{s.rpcClient}
 }
 
