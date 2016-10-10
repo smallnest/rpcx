@@ -51,5 +51,4 @@ func main() {
 	data, _ := json.MarshalIndent(&posts, "", "\t")
 
 	fmt.Printf("Posts: %s \n", string(data))
-
 }
