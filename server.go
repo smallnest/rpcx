@@ -17,6 +17,12 @@ const (
 	DefaultRPCPath = "/_goRPC_"
 )
 
+// ArgsContext contains net.Conn so services can get net.Conn info, for example, remote address.
+type ArgsContext interface {
+	Conn() net.Conn
+	SetConn(conn net.Conn)
+}
+
 type serverCodecWrapper struct {
 	rpc.ServerCodec
 	PluginContainer IServerPluginContainer
@@ -65,6 +71,10 @@ func (w *serverCodecWrapper) ReadRequestBody(body interface{}) error {
 	err = w.ServerCodec.ReadRequestBody(body)
 	if err != nil {
 		return err
+	}
+
+	if args, ok := body.(ArgsContext); ok {
+		args.SetConn(w.Conn)
 	}
 
 	//post
