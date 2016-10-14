@@ -19,8 +19,8 @@ const (
 
 // ArgsContext contains net.Conn so services can get net.Conn info, for example, remote address.
 type ArgsContext interface {
-	Conn() net.Conn
-	SetConn(conn net.Conn)
+	Value(key string) interface{}
+	SetValue(key string, value interface{})
 }
 
 type serverCodecWrapper struct {
@@ -74,7 +74,7 @@ func (w *serverCodecWrapper) ReadRequestBody(body interface{}) error {
 	}
 
 	if args, ok := body.(ArgsContext); ok {
-		args.SetConn(w.Conn)
+		args.SetValue("conn", w.Conn)
 	}
 
 	//post

@@ -8,28 +8,35 @@ import (
 )
 
 type Args struct {
-	A    int `msg:"a"`
-	B    int `msg:"b"`
-	conn net.Conn
+	A   int `msg:"a"`
+	B   int `msg:"b"`
+	ctx map[string]interface{}
 }
 
 type Reply struct {
 	C int `msg:"c"`
 }
 
-func (a *Args) Conn() net.Conn {
-	return a.conn
+func (a *Args) Value(key string) interface{} {
+	if a.ctx != nil {
+		return a.ctx[key]
+	}
+	return nil
 }
 
-func (a *Args) SetConn(c net.Conn) {
-	a.conn = c
+func (a *Args) SetValue(key string, value interface{}) {
+	if a.ctx == nil {
+		a.ctx = make(map[string]interface{})
+	}
+	a.ctx[key] = value
 }
 
 type Arith int
 
 func (t *Arith) Mul(args *Args, reply *Reply) error {
 	reply.C = args.A * args.B
-	fmt.Printf("Client IP: %s \n", args.Conn().RemoteAddr().String())
+	conn := args.Value("conn").(net.Conn)
+	fmt.Printf("Client IP: %s \n", conn.RemoteAddr().String())
 	return nil
 }
 
