@@ -18,7 +18,7 @@ func (p *ServerPluginContainer) Add(plugin IPlugin) error {
 
 	pName := p.GetName(plugin)
 	if pName != "" && p.GetByName(pName) != nil {
-		return ErrPluginAlreadyExists.Format(pName, p.GetDescription(plugin))
+		return ErrPluginAlreadyExists.Format(pName)
 	}
 
 	p.plugins = append(p.plugins, plugin)
@@ -54,11 +54,6 @@ func (p *ServerPluginContainer) Remove(pluginName string) error {
 // GetName returns the name of a plugin, if no GetName() implemented it returns an empty string ""
 func (p *ServerPluginContainer) GetName(plugin IPlugin) string {
 	return plugin.Name()
-}
-
-// GetDescription returns the name of a plugin, if no GetDescription() implemented it returns an empty string ""
-func (p *ServerPluginContainer) GetDescription(plugin IPlugin) string {
-	return plugin.Description()
 }
 
 // GetByName returns a plugin instance by it's name
@@ -257,7 +252,6 @@ type (
 		Add(plugin IPlugin) error
 		Remove(pluginName string) error
 		GetName(plugin IPlugin) string
-		GetDescription(plugin IPlugin) string
 		GetByName(pluginName string) IPlugin
 		GetAll() []IPlugin
 
