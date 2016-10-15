@@ -33,8 +33,3 @@ func (plugin *RateLimitingPlugin) HandleConnAccept(conn net.Conn) bool {
 func (plugin *RateLimitingPlugin) Name() string {
 	return "RateLimitingPlugin"
 }
-
-// Description return description of this plugin.
-func (plugin *RateLimitingPlugin) Description() string {
-	return "rate limiting"
-}

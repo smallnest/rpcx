@@ -17,8 +17,3 @@ func (plugin *LogRegisterPlugin) Register(name string, rcvr interface{}, metadat
 func (plugin *LogRegisterPlugin) Name() string {
 	return "LogRegisterPlugin"
 }
-
-// Description return description of this plugin.
-func (plugin *LogRegisterPlugin) Description() string {
-	return "a register plugin which can log registered services"
-}

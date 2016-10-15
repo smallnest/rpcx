@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	// ErrPluginAlreadyExists returns an error with message: 'Cannot activate the same plugin again, plugin '+plugin name[+plugin description]' is already exists'
-	ErrPluginAlreadyExists = NewRPCError("Cannot use the same plugin again, '%s[%s]' is already exists")
+	// ErrPluginAlreadyExists returns an error with message: 'Cannot activate the same plugin again, plugin '+plugin name' is already exists'
+	ErrPluginAlreadyExists = NewRPCError("Cannot use the same plugin again, '%s' is already exists")
 	// ErrPluginActivate returns an error with message: 'While trying to activate plugin '+plugin name'. Trace: +specific error'
 	ErrPluginActivate = NewRPCError("While trying to activate plugin '%s'. Trace: %s")
 	// ErrPluginRemoveNoPlugins returns an error with message: 'No plugins are registed yet, you cannot remove a plugin from an empty list!'

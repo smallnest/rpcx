@@ -77,8 +77,3 @@ func (plugin *MetricsPlugin) PostWriteResponse(r *rpc.Response, body interface{}
 func (plugin *MetricsPlugin) Name() string {
 	return "MetricsPlugin"
 }
-
-// Description return description of this plugin.
-func (plugin *MetricsPlugin) Description() string {
-	return "a register plugin which collects metrics of a rpc server"
-}

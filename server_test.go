@@ -123,10 +123,6 @@ func (plugin *logRegisterPlugin) Name() string {
 	return "logRegisterPlugin"
 }
 
-func (plugin *logRegisterPlugin) Description() string {
-	return "a register plugin which single function is logging registered services"
-}
-
 func TestRegisterPlugin(t *testing.T) {
 	once.Do(startServer)
 
@@ -188,10 +184,6 @@ func (plugin *logCodecPlugin) PostWriteResponse(resp *rpc.Response, body interfa
 
 func (plugin *logCodecPlugin) Name() string {
 	return "logCodecPlugin"
-}
-
-func (plugin *logCodecPlugin) Description() string {
-	return "a codec plugin which single function is logging services calls"
 }
 
 func TestCodecPlugin(t *testing.T) {

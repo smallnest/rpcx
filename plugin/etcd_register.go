@@ -146,8 +146,3 @@ func (plugin *EtcdRegisterPlugin) Unregister(name string) {
 func (plugin *EtcdRegisterPlugin) Name() string {
 	return "EtcdRegisterPlugin"
 }
-
-// Description return description of this plugin.
-func (plugin *EtcdRegisterPlugin) Description() string {
-	return "a register plugin which can register services into etcd for cluster"
-}

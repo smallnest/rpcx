@@ -55,11 +55,6 @@ func (plugin *AuthorizationServerPlugin) Name() string {
 	return "AuthorizationServerPlugin"
 }
 
-// Description return description of this plugin.
-func (plugin *AuthorizationServerPlugin) Description() string {
-	return "a Authorization plugin"
-}
-
 // AuthorizationClientPlugin is used to set Authorization info at client side.
 type AuthorizationClientPlugin struct {
 	AuthorizationAndServiceMethod *AuthorizationAndServiceMethod
@@ -86,9 +81,4 @@ func (plugin *AuthorizationClientPlugin) PreWriteRequest(r *rpc.Request, body in
 // Name return name of this plugin.
 func (plugin *AuthorizationClientPlugin) Name() string {
 	return "AuthorizationClientPlugin"
-}
-
-// Description return description of this plugin.
-func (plugin *AuthorizationClientPlugin) Description() string {
-	return "a Authorization plugin"
 }

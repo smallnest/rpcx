@@ -101,8 +101,3 @@ func (plugin *ConsulRegisterPlugin) FindServices(name string) []*api.AgentServic
 func (plugin *ConsulRegisterPlugin) Name() string {
 	return "ConsulRegisterPlugin"
 }
-
-// Description return description of this plugin.
-func (plugin *ConsulRegisterPlugin) Description() string {
-	return "a register plugin which can register services into etcd for cluster"
-}

@@ -159,8 +159,3 @@ func (plugin *ZooKeeperRegisterPlugin) Unregister(name string) {
 func (plugin *ZooKeeperRegisterPlugin) Name() string {
 	return "ZooKeeperRegisterPlugin"
 }
-
-// Description return description of this plugin.
-func (plugin *ZooKeeperRegisterPlugin) Description() string {
-	return "a register plugin which can register services into zookeeper for cluster"
-}
