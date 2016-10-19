@@ -6,7 +6,7 @@
 
 
 rpcx is a distributed RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).
-It is developed based on Go net/rpc and provides extra governance features.
+It is based on Go net/rpc and provides extra governance features.
 
 
 ![Throughput](_documents/throughput.png)
@@ -16,40 +16,40 @@ very very good performance. Much better than gRPC, Dubbo and weibo Motan.
 
 
 
-When we talk about RPC frameworks, Dubbo is first framework we should introduced, and there is also Dubbox mantained by dangdang.
+When we talk about RPC frameworks, Dubbo is the first framework we should mention, and also Dubbox mantained by dangdang.
 Dubbo has been widely used in e-commerce companies in China, for example, Alibaba, Jingdong and Dangdang.
 
-Though Dubbo has still used Spring 2.5.6.SEC03 and seems has not been supported by Alibaba no longer, 
-some other companies still use it and maintained their branches.
+Though Dubbo still uses Spring 2.5.6.SEC03, and is no longer supported by Alibaba, 
+some other companies still usea it and maintain their own branches.
 
 > DUBBO is a distributed service framework , provides high performance and transparent RPC remote service call. 
 > It is the core framework of Alibaba SOA service governance programs. 
 > There are 3,000,000,000 calls for 2,000+ services per day, 
 > and it has been widely used in various member sites of Alibaba Group.
 
-Motan is open source now by Weibo. As Zhang Lei said, he is current main developer of Motan:
+Motan is open source now by Weibo. As Zhang Lei said, he is the current main developer of Motan:
 
-> Motan started in 2013. There are 100 billion calls for hundreds of service callsevery day.
+> Motan started in 2013. There are 100 billion calls for hundreds of service calls every day.
 
-Those two RPC frameworks are developed by Java. 
-There are other famous RPC frameworks such as [thrift](https://thrift.apache.org/)、[finagle](https://github.com/twitter/finagle)。
+Those two RPC frameworks are developed in Java. 
+There are other famous RPC frameworks such as [thrift](https://thrift.apache.org/)、and [finagle](https://github.com/twitter/finagle)。
 
-Goal of [rpcx](https://github.com/smallnest/rpcx) is implemented a RPC framework like Dubbo in Go ecosphere.
-It is developed by Go, and for Go. 
+The goal of [rpcx](https://github.com/smallnest/rpcx) is to implement an RPC framework like Dubbo in Go.
+It is developed in Go, and to be used in Go. 
 
-It is a distributed、plugable RPC framework with governance (service discovery、load balancer、fault tolerance、monitor, etc.).
+It is a distributed、pluggable RPC framework with governance (service discovery、load balancer、fault tolerance、monitoring, etc.).
 
-As you know, there are some RPC frameworks, for example, [net/rpc](https://golang.org/pkg/net/rpc/)、[grpc-go](https://github.com/grpc/grpc-go)、[gorilla-rpc](http://www.gorillatoolkit.org/pkg/rpc),
-Then why re-invent a wheel?
+As you know, RPC frameworks already exists, for example, [net/rpc](https://golang.org/pkg/net/rpc/)、[grpc-go](https://github.com/grpc/grpc-go)、[gorilla-rpc](http://www.gorillatoolkit.org/pkg/rpc),
+So why re-invent the wheel?
 
-Although those Go RPC frameworks work well, but their function is relatively simple and only implement end-to end communications.
-Some product features of service management functions are lack, such as service discovery,
-Load balancing, fault tolerance. 
+Although those Go RPC frameworks work well, their function is relatively simple and they only implement end-to-end communication.
+They lack some product features of service management functions like service discovery,
+load balancing, and fault tolerance. 
 
-So I created rpcx and expect it could become a RPC framework like Dubbo.
+So I created rpcx and expect it to become an RPC framework like Dubbo.
 
 
-The similar project is [go-micro](https://github.com/micro/go-micro). 
+A similar project in go is called [go-micro](https://github.com/micro/go-micro). 
 
 
 ## What's RPC
@@ -72,25 +72,25 @@ Sequence of events during an RPC
 There are two ways to implement RPC frameworks. 
 One focusses on cross-language calls and the other focusses on service governance.
 
-Dubbo、DubboX、Motan are RPC framework of service governance .
-Thrift、gRPC、Hessian、Hprose are RPC framework of cross-language calls.
+Dubbo、DubboX、and Motan are RPC frameworks focusing on service governance.
+Thrift、gRPC、Hessian、and Hprose are RPC frameworks focusing on cross-language calls.
 
-rpcx is a RPC framework of service governance.
+rpcx focus in on service governance.
 
 ## Features
 
 [more features](feature)
 
 
-* bases on net/rpc. a Go net/prc project can be converted rpcx project whit few changes.
-* Plugable. Features are implemented by Plugins such as service discovery.
+* Based on net/rpc. a Go net/prc project can be converted to use rpcx with a few changes.
+* Pluggable. Features are implemented by Plugins, such as service discovery.
 * Communicate with TCP long connections.
 * Support GeoLocation
-* support many codec. for example, Gob、Json、MessagePack、gencode、ProtoBuf.
+* Support many codec. for example, Gob、Json、MessagePack、gencode、ProtoBuf.
 * Service dicovery. support ZooKeeper、Etcd.
 * Fault tolerance：Failover、Failfast、Failtry.
-* Load banlancer：support randomSelecter, RoundRobin, consistent hash etc.
-* scalable.
+* Load banlancer：support randomSelecter, RoundRobin, consistent hashing, etc.
+* Scalable.
 * Other: metrics、log、timeout.
 * Authorization.
 
@@ -99,17 +99,17 @@ rpcx is a RPC framework of service governance.
 
 ## Architecture
 rpcx contains three roles : RPC Server，RPC Client and Registry.
-* Server registers services on Registry
-* Client queries service list and select a server from server list returned from Registry.
-* When a Server is down, Registry can remove this server and then client can remove it too.
+* Server registers services on the Registry
+* Client queries the service list and select a server from the server list returned from the Registry.
+* When a Server is down, the Registry can remove the server from the list, and subsequently the client can remove it too.
 
 ![](https://raw.githubusercontent.com/smallnest/rpcx/master/_documents/images/component.png)
 
-So far rpcx support zookeeper, etcd as Registry，Consul support is developing。
+So far rpcx supports ZooKeeper and Etcd as Registry，Consul support is in developement.
 
 ## Examples
 
-There is a client to call Posts service at tr.colobu.com. This service returns a hot tech post list of today:
+There is a client calling the Posts service at tr.colobu.com. This service returns a hot tech post list of the day:
 ```go 
 package main
 
@@ -180,7 +180,7 @@ you can found more examples at [_examples](_examples)
 * Go:     1.7
 
 Test request is copied from protobuf project and encoded to a proto message. Its size is 581 bytes.
-The response update two fields of decoded requests so servers handle the decoding and encoding processing.
+The response update two fields of decoded requests so the server goes through decoding and encoding.
 
 The test proto file is:
 
@@ -237,11 +237,11 @@ message BenchmarkMessage {
 ```
 
 
-The concurrent clients are 100, 1000,2000 and 5000. Count of the total requests for all clients are 1,000,000.
+The test is run with 100, 1000, 2000 and 5000 concurrent clients. The total number of requests per clients is 1,000,000.
 
 **Test Result**
 
-### rpcx: one client and one server in a same machine
+### rpcx: one client and one server on the same machine
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
 100|0|0|17|0|164338
@@ -254,12 +254,11 @@ concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 you can use test code in `_benchmark` to test.
 `server` is used to start a server and `client` is used as clients via protobuf.
 
-The above test is that client and server are running on the same mechine.
+The above test is with a client and a server running on the same mechine.
 
-### rpcx: one client and one server in separated machines
+### rpcx: one client and one server running on different machines
 
-If I run them on separate servers, test results are:
-
+If I run them on separate servers, the test results are:
 
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
@@ -269,9 +268,9 @@ concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 2000|17|2|9735|0|159438
 5000|44|2|12788|0|161917 
 
-### rpcx: one client on a machine and two servers in two machines
+### rpcx: one client on one machine and two servers on two machines
 
-If they are running on cluster mode, one is for the client and another two are for servers, test results are:
+When running in cluster mode, with one machine with one client and another two running as servers, the test results are:
 
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
@@ -299,14 +298,14 @@ BenchmarkRPCX_protobuf-16         100000             17234 ns/op             733
 ```
 
 ## Comparision with gRPC
-[gRPC](https://github.com/grpc/grpc-go) is the RPC framework by Google. It support multiple programming lanaguage.
+[gRPC](https://github.com/grpc/grpc-go) is the RPC framework by Google. It supports multiple programming lanaguage.
 I have compared three cases for prcx and gRPC. It shows rpcx is much better than gRPC.
 
-current gRPC version is 1.0 .
+current gRPC version is 1.0.
 
-Test results of rpcx has been listed on the above. Here is test results of gRPC.
+The test results for rpcx can be found above. Below is the test results for gRPC.
 
-### gRPC: one client and one server in a same machine
+### gRPC: one client and one server on the same machine
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
 100|1|0|21|0|68250
@@ -318,7 +317,7 @@ concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 
 ![](_documents/images/rpcx-grpc-1.png)
 
-### gRPC: one client and one server in separated machines
+### gRPC: one client and one server running on different machines
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
 100|1|0|21|0|68250
@@ -330,7 +329,7 @@ concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 
 ![](_documents/images/rpcx-grpc-2.png)
 
-### gRPC: one client on a machine and two servers in two machines 
+### gRPC: one client on one machine and two servers on two machines
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|-------------
 100|1|0|19|0|88082
