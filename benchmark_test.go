@@ -12,9 +12,10 @@ import (
 	"time"
 
 	"github.com/hashicorp/net-rpc-msgpackrpc"
-	hproserpc "github.com/hprose/hprose-golang/rpc"
 	"github.com/smallnest/rpcx/codec"
 )
+
+// don't use it to test benchmark. It is only used to evaluate libs internally.
 
 func listenTCP() (net.Listener, string) {
 	l, e := net.Listen("tcp", "127.0.0.1:0") // any available address
@@ -22,53 +23,6 @@ func listenTCP() (net.Listener, string) {
 		log.Fatalf("net.Listen tcp :0: %v", e)
 	}
 	return l, l.Addr().String()
-}
-
-func mul(a, b int) int {
-	return a * b
-}
-
-// RO is Reomote object
-type RO struct {
-	Mul func(a, b int) (int, error) `simple:"true"`
-}
-
-func benchmarkHproseClient(client *hproserpc.TCPClient, b *testing.B) {
-	// Synchronous calls
-	var ro *RO
-	client.UseService(&ro)
-	procs := runtime.GOMAXPROCS(-1)
-	N := int32(b.N)
-	var wg sync.WaitGroup
-	wg.Add(procs)
-	b.StartTimer()
-	for p := 0; p < procs; p++ {
-		go func() {
-			for atomic.AddInt32(&N, -1) >= 0 {
-				reply, err := ro.Mul(7, 8)
-				if err != nil {
-					b.Fatalf("rpc error: Mul: expected no error but got string %q", err.Error())
-				}
-				if reply != 7*8 {
-					b.Fatalf("rpc error: Mul: expected %d got %d", reply, 7*8)
-				}
-			}
-			wg.Done()
-		}()
-	}
-	wg.Wait()
-	b.StopTimer()
-}
-
-func BenchmarkHprose(b *testing.B) {
-	b.StopTimer()
-	server := hproserpc.NewTCPServer("")
-	server.AddFunction("mul", mul, hproserpc.Options{Simple: true})
-	server.Handle()
-	client := hproserpc.NewTCPClient(server.URI())
-	defer server.Close()
-	defer client.Close()
-	benchmarkHproseClient(client, b)
 }
 
 func benchmarkClient(client *rpc.Client, b *testing.B) {
