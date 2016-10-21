@@ -56,10 +56,6 @@ func main() {
 	var transOK uint64
 
 	d := make([][]int64, n, n)
-	var ro *RO
-	client := rpc.NewTCPClient("tcp://" + *host)
-	client.SetMaxPoolSize(n)
-	client.UseService(&ro)
 
 	//it contains warmup time but we can ignore it
 	totalT := time.Now().UnixNano()
@@ -69,12 +65,16 @@ func main() {
 
 		go func(i int) {
 			reply := &BenchmarkMessage{}
+			var ro RO
+			client := rpc.NewTCPClient("tcp://" + *host)
+			client.UseService(&ro)
 
 			//warmup
 			ro.Say(b)
 
 			startWg.Done()
 			startWg.Wait()
+			fmt.Printf("goroutine %d started\n", i)
 
 			for j := 0; j < m; j++ {
 				t := time.Now().UnixNano()
@@ -96,13 +96,12 @@ func main() {
 				atomic.AddUint64(&trans, 1)
 				wg.Done()
 			}
-
+			client.Close()
 		}(i)
 
 	}
 
 	wg.Wait()
-	client.Close()
 	totalT = time.Now().UnixNano() - totalT
 	totalT = totalT / 1000000
 	fmt.Printf("took %d ms for %d requests", totalT, n*m)
