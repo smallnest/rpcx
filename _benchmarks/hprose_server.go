@@ -17,7 +17,6 @@ func say(in []byte) ([]byte, error) {
 var host = flag.String("s", "127.0.0.1:8972", "listened ip and port")
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
 	flag.Parse()
 	server := rpc.NewTCPServer("tcp://" + *host)
 	server.ErrorDelay = 0
