@@ -75,7 +75,6 @@ func main() {
 
 			startWg.Done()
 			startWg.Wait()
-			fmt.Printf("goroutine %d started\n", i)
 
 			for j := 0; j < m; j++ {
 				t := time.Now().UnixNano()
