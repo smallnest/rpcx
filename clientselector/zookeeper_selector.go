@@ -200,33 +200,38 @@ func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, o
 		return nil, errors.New("No available service")
 	}
 
-	if s.SelectMode == rpcx.RandomSelect {
+	switch s.SelectMode {
+	case rpcx.RandomSelect:
 		s.currentServer = s.rnd.Intn(s.len)
 		server := s.Servers[s.currentServer]
 		return s.getCachedClient(server, clientCodecFunc)
 
-	} else if s.SelectMode == rpcx.RandomSelect {
+	case rpcx.RoundRobin:
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		server := s.Servers[s.currentServer]
 		return s.getCachedClient(server, clientCodecFunc)
-	} else if s.SelectMode == rpcx.ConsistentHash {
+
+	case rpcx.ConsistentHash:
 		if s.HashServiceAndArgs == nil {
 			s.HashServiceAndArgs = JumpConsistentHash
 		}
 		s.currentServer = s.HashServiceAndArgs(s.len, options)
 		server := s.Servers[s.currentServer]
 		return s.getCachedClient(server, clientCodecFunc)
-	} else if s.SelectMode == rpcx.WeightedRoundRobin || s.SelectMode == rpcx.WeightedICMP {
+
+	case rpcx.WeightedRoundRobin, rpcx.WeightedICMP:
 		server := nextWeighted(s.WeightedServers).Server.(string)
 		return s.getCachedClient(server, clientCodecFunc)
-	} else if s.SelectMode == rpcx.Closest {
+
+	case rpcx.Closest:
 		closestServers := getClosestServer(s.Latitude, s.Longitude, s.metadata)
 		selected := s.rnd.Intn(len(closestServers))
 		return s.getCachedClient(closestServers[selected], clientCodecFunc)
+
+	default:
+		return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())
+
 	}
-
-	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())
-
 }
 
 func mkdirs(conn *zk.Conn, path string) (err error) {

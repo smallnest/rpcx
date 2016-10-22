@@ -101,33 +101,37 @@ func (s *MultiClientSelector) getCachedClient(network string, address string, cl
 	return c, err
 }
 
-//Select returns a rpc client
+// Select returns a rpc client
 func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	if s.len == 0 {
 		return nil, errors.New("No available service")
 	}
 
-	if s.SelectMode == rpcx.RandomSelect {
+	switch s.SelectMode {
+	case rpcx.RandomSelect:
 		s.currentServer = s.rnd.Intn(s.len)
 		peer := s.Servers[s.currentServer]
 		return s.getCachedClient(peer.Network, peer.Address, clientCodecFunc)
 
-	} else if s.SelectMode == rpcx.RoundRobin {
+	case rpcx.RoundRobin:
 		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
 		peer := s.Servers[s.currentServer]
 		return s.getCachedClient(peer.Network, peer.Address, clientCodecFunc)
-	} else if s.SelectMode == rpcx.ConsistentHash {
+
+	case rpcx.ConsistentHash:
 		if s.HashServiceAndArgs == nil {
 			s.HashServiceAndArgs = JumpConsistentHash
 		}
 		s.currentServer = s.HashServiceAndArgs(s.len, options...)
 		peer := s.Servers[s.currentServer]
 		return s.getCachedClient(peer.Network, peer.Address, clientCodecFunc)
-	} else if s.SelectMode == rpcx.WeightedRoundRobin || s.SelectMode == rpcx.WeightedICMP {
+
+	case rpcx.WeightedRoundRobin, rpcx.WeightedICMP:
 		best := nextWeighted(s.WeightedServers)
 		peer := best.Server.(*ServerPeer)
 		return s.getCachedClient(peer.Network, peer.Address, clientCodecFunc)
-	}
 
-	return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())
+	default:
+		return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())
+	}
 }
