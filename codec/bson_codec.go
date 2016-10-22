@@ -24,33 +24,26 @@ func NewBsonClientCodec(conn io.ReadWriteCloser) rpc.ClientCodec {
 }
 
 func (cc *bsonClientCodec) WriteRequest(req *rpc.Request, v interface{}) (err error) {
-	err = cc.Encoder.Encode(req)
-	if err != nil {
+	if err = cc.Encoder.Encode(req); err != nil {
 		cc.Close()
 		return
 	}
-
-	err = cc.Encoder.Encode(v)
-	if err != nil {
+	if err = cc.Encoder.Encode(v); err != nil {
 		return
 	}
-
 	return
 }
 
-func (cc *bsonClientCodec) ReadResponseHeader(res *rpc.Response) (err error) {
-	err = cc.Decoder.Decode(res)
-	return
+func (cc *bsonClientCodec) ReadResponseHeader(res *rpc.Response) error {
+	return cc.Decoder.Decode(res)
 }
 
-func (cc *bsonClientCodec) ReadResponseBody(v interface{}) (err error) {
-	err = cc.Decoder.Decode(v)
-	return
+func (cc *bsonClientCodec) ReadResponseBody(v interface{}) error {
+	return cc.Decoder.Decode(v)
 }
 
-func (cc *bsonClientCodec) Close() (err error) {
-	err = cc.conn.Close()
-	return
+func (cc *bsonClientCodec) Close() error {
+	return cc.conn.Close()
 }
 
 type bsonServerCodec struct {
@@ -69,31 +62,26 @@ func NewBsonServerCodec(conn io.ReadWriteCloser) rpc.ServerCodec {
 
 }
 
-func (sc *bsonServerCodec) ReadRequestHeader(rq *rpc.Request) (err error) {
-	err = sc.Decoder.Decode(rq)
-	return
+func (sc *bsonServerCodec) ReadRequestHeader(rq *rpc.Request) error {
+	return sc.Decoder.Decode(rq)
 }
 
-func (sc *bsonServerCodec) ReadRequestBody(v interface{}) (err error) {
-	err = sc.Decoder.Decode(v)
-	return
+func (sc *bsonServerCodec) ReadRequestBody(v interface{}) error {
+	return sc.Decoder.Decode(v)
 }
 
 func (sc *bsonServerCodec) WriteResponse(rs *rpc.Response, v interface{}) (err error) {
-	err = sc.Encoder.Encode(rs)
-	if err != nil {
+	if err = sc.Encoder.Encode(rs); err != nil {
 		return
 	}
-	err = sc.Encoder.Encode(v)
-	if err != nil {
+	if err = sc.Encoder.Encode(v); err != nil {
 		return
 	}
 	return
 }
 
-func (sc *bsonServerCodec) Close() (err error) {
-	err = sc.conn.Close()
-	return
+func (sc *bsonServerCodec) Close() error {
+	return sc.conn.Close()
 }
 
 type bsonEncoder struct {

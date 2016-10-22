@@ -82,7 +82,7 @@ func (w *serverCodecWrapper) ReadRequestBody(body interface{}) error {
 	return err
 }
 
-func (w *serverCodecWrapper) WriteResponse(resp *rpc.Response, body interface{}) error {
+func (w *serverCodecWrapper) WriteResponse(resp *rpc.Response, body interface{}) (err error) {
 	if w.Timeout > 0 {
 		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
 	}
@@ -90,29 +90,25 @@ func (w *serverCodecWrapper) WriteResponse(resp *rpc.Response, body interface{})
 		w.Conn.SetWriteDeadline(time.Now().Add(w.WriteTimeout))
 	}
 
-	//pre
-	err := w.PluginContainer.DoPreWriteResponse(resp, body)
-	if err != nil {
-		return err
+	// pre
+	if err = w.PluginContainer.DoPreWriteResponse(resp, body); err != nil {
+		return
 	}
 
-	err = w.ServerCodec.WriteResponse(resp, body)
-	if err != nil {
-		return err
+	if err = w.ServerCodec.WriteResponse(resp, body); err != nil {
+		return
 	}
 
-	//post
-	err = w.PluginContainer.DoPostWriteResponse(resp, body)
-
-	return err
+	// post
+	return w.PluginContainer.DoPostWriteResponse(resp, body)
 }
 
-func (w *serverCodecWrapper) Close() error {
+func (w *serverCodecWrapper) Close() (err error) {
 	//pre
-	err := w.ServerCodec.Close()
+	err = w.ServerCodec.Close()
 	//post
 
-	return err
+	return
 }
 
 // ServerCodecFunc is used to create a rpc.ServerCodec from net.Conn.
