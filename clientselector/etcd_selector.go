@@ -48,6 +48,7 @@ func NewEtcdClientSelector(etcdServers []string, basePath string, sessionTimeout
 		SelectMode:      sm,
 		dailTimeout:     dailTimeout,
 		clientAndServer: make(map[string]*rpc.Client),
+		metadata:        make(map[string]string),
 		rnd:             rand.New(rand.NewSource(time.Now().UnixNano()))}
 
 	selector.start()
