@@ -117,6 +117,11 @@ func (s *EtcdClientSelector) watch() {
 		//services are changed, we pull service again instead of processing single node
 		if res.Action == "expire" {
 			s.pullServers()
+			if !res.Node.Dir {
+				// clientAndServer delete the invalid client connection
+				removedServer := strings.TrimPrefix(res.Node.Key, s.BasePath+"/")
+				delete(s.clientAndServer, removedServer)
+			}
 		} else if res.Action == "set" || res.Action == "update" {
 			s.pullServers()
 		} else if res.Action == "delete" {
@@ -160,6 +165,9 @@ func (s *EtcdClientSelector) pullServers() {
 			if s.len > 0 {
 				s.currentServer = s.currentServer % s.len
 			}
+		} else {
+			// when the last instance is down, it should be deleted
+			s.clientAndServer = map[string]*rpc.Client{}
 		}
 
 	}
