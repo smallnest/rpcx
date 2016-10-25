@@ -9,6 +9,8 @@ import (
 	"net/rpc"
 	"time"
 
+	"rsc.io/letsencrypt"
+
 	"github.com/hashicorp/net-rpc-msgpackrpc"
 )
 
@@ -261,6 +263,17 @@ func (s *Server) ServeTLS(network, address string, config *tls.Config) {
 	}
 }
 
+// ServeAutoTLS starts and listens RCP requests with let's encrypt.
+//It is blocked until receiving connectings from clients.
+func (s *Server) ServeAutoTLS(network, address string) {
+	var m letsencrypt.Manager
+	if err := m.CacheFile("lets.cache"); err != nil {
+		return
+	}
+	tlsConfig := &tls.Config{GetCertificate: m.GetCertificate}
+	ServeTLS(network, address, tlsConfig)
+}
+
 // ServeListener starts
 func (s *Server) ServeListener(ln net.Listener) {
 	s.listener = ln
@@ -375,6 +388,16 @@ func (s *Server) StartTLS(network, address string, config *tls.Config) {
 			go s.rpcServer.ServeCodec(wrapper)
 		}
 	}()
+}
+
+// StartTLS starts and listens RCP requests with let's encrypt
+func (s *Server) StartAutoTLS(network, address string) {
+	var m letsencrypt.Manager
+	if err := m.CacheFile("lets.cache"); err != nil {
+		return
+	}
+	tlsConfig := &tls.Config{GetCertificate: m.GetCertificate}
+	StartTLS(network, address, tlsConfig)
 }
 
 // Close closes RPC server.
