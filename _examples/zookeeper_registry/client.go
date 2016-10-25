@@ -19,7 +19,7 @@ type Reply struct {
 }
 
 var zk = flag.String("zk", "127.0.0.1:2181", "zookeeper URL")
-var n = flag.String("n", "127.0.0.1:2181", "Arith")
+var n = flag.String("n", "Arith", "Service Name")
 
 func main() {
 	flag.Parse()

@@ -191,8 +191,7 @@ func (s *EtcdClientSelector) createWeighted(nodes client.Nodes) {
 			}
 
 			if w != "" {
-				weight, err := strconv.Atoi(w)
-				if err == nil {
+				if weight, err := strconv.Atoi(w); err == nil {
 					s.WeightedServers[i].Weight = weight
 					s.WeightedServers[i].EffectiveWeight = weight
 				}
