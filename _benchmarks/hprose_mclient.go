@@ -4,43 +4,56 @@ import (
 	"flag"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/hprose/hprose-golang/rpc"
 	"github.com/montanaflynn/stats"
-	"github.com/smallnest/rpcx"
-	"github.com/smallnest/rpcx/codec"
 )
 
 var concurrency = flag.Int("c", 1, "concurrency")
 var total = flag.Int("n", 1, "total requests for all clients")
 var host = flag.String("s", "127.0.0.1:8972", "server ip and port")
-var sharedClientNum = flag.Int("r", 500, "count of rpcx.Client")
+
+type RO struct {
+	Say func(args []byte) (reply []byte, err error) `simple:"true"`
+}
 
 func main() {
 	flag.Parse()
 	n := *concurrency
 	m := *total / n
 
+	servers := strings.Split(*host, ",")
+	for i, server := range servers {
+		servers[i] = "tcp://" + server
+	}
+
+	fmt.Printf("Servers: %+v\n\n", servers)
+
 	fmt.Printf("concurrency: %d\nrequests per client: %d\n\n", n, m)
 
-	serviceMethodName := "Hello.Say"
 	args := prepareArgs()
 
-	b := make([]byte, 1024*1024)
-	i, _ := args.MarshalTo(b)
-	fmt.Printf("message size: %d bytes\n\n", i)
+	b, _ := args.Marshal()
+	fmt.Printf("message size: %d bytes\n\n", len(b))
 
 	var wg sync.WaitGroup
 	wg.Add(n * m)
+
+	var startWg sync.WaitGroup
+	startWg.Add(n)
 
 	var trans uint64
 	var transOK uint64
 
 	d := make([][]int64, n, n)
-
-	clients := prepareClients(*host, *sharedClientNum, serviceMethodName, args)
+	var ro *RO
+	client := rpc.NewTCPClient(servers...)
+	client.SetMaxPoolSize(n)
+	client.UseService(&ro)
 
 	//it contains warmup time but we can ignore it
 	totalT := time.Now().UnixNano()
@@ -49,13 +62,21 @@ func main() {
 		d = append(d, dt)
 
 		go func(i int) {
+			reply := &BenchmarkMessage{}
 
-			var reply BenchmarkMessage
+			//warmup
+			ro.Say(b)
+
+			startWg.Done()
+			startWg.Wait()
+
+			fmt.Printf("goroutine %d started\n", i)
 
 			for j := 0; j < m; j++ {
-				clientId := (i*m + j) % *sharedClientNum
 				t := time.Now().UnixNano()
-				err := clients[clientId].Call(serviceMethodName, args, &reply)
+				a, _ := args.Marshal()
+				r, err := ro.Say(a)
+				reply.Unmarshal(r)
 				t = time.Now().UnixNano() - t
 
 				d[i] = append(d[i], t)
@@ -72,6 +93,7 @@ func main() {
 	}
 
 	wg.Wait()
+	client.Close()
 	totalT = time.Now().UnixNano() - totalT
 	totalT = totalT / 1000000
 	fmt.Printf("took %d ms for %d requests", totalT, n*m)
@@ -95,36 +117,9 @@ func main() {
 	fmt.Printf("received requests    : %d\n", atomic.LoadUint64(&trans))
 	fmt.Printf("received requests_OK : %d\n", atomic.LoadUint64(&transOK))
 	fmt.Printf("throughput  (TPS)    : %d\n", int64(n*m)*1000/totalT)
-	fmt.Printf("mean: %.f ns, median: %.f ns, max: %.f ns, min: %.f ns, p99: %.f\n", mean, median, max, min, p99)
-	fmt.Printf("mean: %d ms, median: %d ms, max: %d ms, min: %d ms, 99.9%: %d\n",
-		int64(mean/1000000), int64(median/1000000), int64(max/1000000), int64(min/1000000), int64(p99/1000000))
+	fmt.Printf("mean: %.f ns, median: %.f ns, max: %.f ns, min: %.f ns, p99: %.f ns\n", mean, median, max, min, p99)
+	fmt.Printf("mean: %d ms, median: %d ms, max: %d ms, min: %d ms, p99: %d ms\n", int64(mean/1000000), int64(median/1000000), int64(max/1000000), int64(min/1000000), int64(p99/1000000))
 
-	closeClients(clients)
-}
-
-func prepareClients(host string, sharedClientNum int, serviceMethodName string, args *BenchmarkMessage) []*rpcx.Client {
-	s := &rpcx.DirectClientSelector{Network: "tcp", Address: host}
-	r := make([]*rpcx.Client, sharedClientNum, sharedClientNum)
-	var reply BenchmarkMessage
-
-	for i := 0; i < sharedClientNum; i++ {
-		client := rpcx.NewClient(s)
-		client.ClientCodecFunc = codec.NewProtobufClientCodec
-		//warmup
-		for j := 0; j < 5; j++ {
-			client.Call(serviceMethodName, args, &reply)
-		}
-
-		r[i] = client
-	}
-
-	return r
-}
-
-func closeClients(clients []*rpcx.Client) {
-	for _, client := range clients {
-		client.Close()
-	}
 }
 
 func prepareArgs() *BenchmarkMessage {

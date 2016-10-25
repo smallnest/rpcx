@@ -15,6 +15,8 @@ import (
 	"github.com/smallnest/rpcx/codec"
 )
 
+// don't use it to test benchmark. It is only used to evaluate libs internally.
+
 func listenTCP() (net.Listener, string) {
 	l, e := net.Listen("tcp", "127.0.0.1:0") // any available address
 	if e != nil {
