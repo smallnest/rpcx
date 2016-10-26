@@ -217,7 +217,6 @@ func (s *Server) Serve(network, address string) (err error) {
 	for {
 		c, err := ln.Accept()
 		if err != nil {
-			log.Println(err)
 			continue
 		}
 
@@ -245,7 +244,6 @@ func (s *Server) ServeTLS(network, address string, config *tls.Config) (err erro
 	for {
 		c, err := ln.Accept()
 		if err != nil {
-			log.Println(err)
 			continue
 		}
 
@@ -278,7 +276,6 @@ func (s *Server) ServeListener(ln net.Listener) {
 	for {
 		c, err := ln.Accept()
 		if err != nil {
-			log.Println(err)
 			continue
 		}
 
@@ -346,7 +343,6 @@ func (s *Server) Start(network, address string) (err error) {
 		for {
 			c, err := ln.Accept()
 			if err != nil {
-				log.Println(err)
 				continue
 			}
 
@@ -378,7 +374,6 @@ func (s *Server) StartTLS(network, address string, config *tls.Config) (err erro
 		for {
 			c, err := ln.Accept()
 			if err != nil {
-				log.Println(err)
 				continue
 			}
 
