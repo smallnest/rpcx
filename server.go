@@ -144,24 +144,24 @@ var defaultServer = NewServer()
 
 // Serve starts and listens RCP requests.
 //It is blocked until receiving connectings from clients.
-func Serve(n, address string) {
-	defaultServer.Serve(n, address)
+func Serve(n, address string) (err error) {
+	return defaultServer.Serve(n, address)
 }
 
 // ServeTLS starts and listens RCP requests.
 //It is blocked until receiving connectings from clients.
-func ServeTLS(n, address string, config *tls.Config) {
-	defaultServer.ServeTLS(n, address, config)
+func ServeTLS(n, address string, config *tls.Config) (err error) {
+	return defaultServer.ServeTLS(n, address, config)
 }
 
 // Start starts and listens RCP requests without blocking.
-func Start(n, address string) {
-	defaultServer.Start(n, address)
+func Start(n, address string) (err error) {
+	return defaultServer.Start(n, address)
 }
 
 // StartTLS starts and listens RCP requests without blocking.
-func StartTLS(n, address string, config *tls.Config) {
-	defaultServer.StartTLS(n, address, config)
+func StartTLS(n, address string, config *tls.Config) (err error) {
+	return defaultServer.StartTLS(n, address, config)
 }
 
 // ServeListener serve with a listener
@@ -207,10 +207,9 @@ func Auth(fn AuthorizationFunc) error {
 
 // Serve starts and listens RCP requests.
 //It is blocked until receiving connectings from clients.
-func (s *Server) Serve(network, address string) {
+func (s *Server) Serve(network, address string) (err error) {
 	ln, err := net.Listen(network, address)
 	if err != nil {
-		log.Fatal(err)
 		return
 	}
 
@@ -218,7 +217,7 @@ func (s *Server) Serve(network, address string) {
 	for {
 		c, err := ln.Accept()
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			continue
 		}
 
@@ -236,10 +235,9 @@ func (s *Server) Serve(network, address string) {
 
 // ServeTLS starts and listens RCP requests.
 //It is blocked until receiving connectings from clients.
-func (s *Server) ServeTLS(network, address string, config *tls.Config) {
+func (s *Server) ServeTLS(network, address string, config *tls.Config) (err error) {
 	ln, err := tls.Listen(network, address, config)
 	if err != nil {
-		log.Fatal(err)
 		return
 	}
 
@@ -247,7 +245,7 @@ func (s *Server) ServeTLS(network, address string, config *tls.Config) {
 	for {
 		c, err := ln.Accept()
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			continue
 		}
 
@@ -265,14 +263,13 @@ func (s *Server) ServeTLS(network, address string, config *tls.Config) {
 
 // ServeAutoTLS starts and listens RCP requests with let's encrypt.
 //It is blocked until receiving connectings from clients.
-func (s *Server) ServeAutoTLS(network, address string) {
+func (s *Server) ServeAutoTLS(network, address string) (err error) {
 	var m letsencrypt.Manager
-	if err := m.CacheFile("lets.cache"); err != nil {
-		log.Fatal(err)
+	if err = m.CacheFile("lets.cache"); err != nil {
 		return
 	}
 	tlsConfig := &tls.Config{GetCertificate: m.GetCertificate}
-	ServeTLS(network, address, tlsConfig)
+	return ServeTLS(network, address, tlsConfig)
 }
 
 // ServeListener starts
@@ -281,7 +278,7 @@ func (s *Server) ServeListener(ln net.Listener) {
 	for {
 		c, err := ln.Accept()
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 			continue
 		}
 
@@ -317,7 +314,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	conn, _, err := w.(http.Hijacker).Hijack()
 	if err != nil {
-		log.Print("rpc hijacking ", req.RemoteAddr, ": ", err.Error())
+		log.Println("rpc hijacking ", req.RemoteAddr, ": ", err.Error())
 		return
 	}
 	io.WriteString(conn, "HTTP/1.0 "+connected+"\n\n")
@@ -335,10 +332,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // Start starts and listens RCP requests without blocking.
-func (s *Server) Start(network, address string) {
+func (s *Server) Start(network, address string) (err error) {
+
 	ln, err := net.Listen(network, address)
+
 	if err != nil {
-		log.Fatal(err)
 		return
 	}
 
@@ -348,7 +346,7 @@ func (s *Server) Start(network, address string) {
 		for {
 			c, err := ln.Accept()
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 				continue
 			}
 
@@ -363,13 +361,14 @@ func (s *Server) Start(network, address string) {
 			go s.rpcServer.ServeCodec(wrapper)
 		}
 	}()
+
+	return
 }
 
 // StartTLS starts and listens RCP requests without blocking.
-func (s *Server) StartTLS(network, address string, config *tls.Config) {
+func (s *Server) StartTLS(network, address string, config *tls.Config) (err error) {
 	ln, err := tls.Listen(network, address, config)
 	if err != nil {
-		log.Fatal(err)
 		return
 	}
 
@@ -379,7 +378,7 @@ func (s *Server) StartTLS(network, address string, config *tls.Config) {
 		for {
 			c, err := ln.Accept()
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 				continue
 			}
 
@@ -394,16 +393,18 @@ func (s *Server) StartTLS(network, address string, config *tls.Config) {
 			go s.rpcServer.ServeCodec(wrapper)
 		}
 	}()
+
+	return
 }
 
 // StartTLS starts and listens RCP requests with let's encrypt
-func (s *Server) StartAutoTLS(network, address string) {
+func (s *Server) StartAutoTLS(network, address string) (err error) {
 	var m letsencrypt.Manager
-	if err := m.CacheFile("lets.cache"); err != nil {
+	if err = m.CacheFile("lets.cache"); err != nil {
 		return
 	}
 	tlsConfig := &tls.Config{GetCertificate: m.GetCertificate}
-	StartTLS(network, address, tlsConfig)
+	return StartTLS(network, address, tlsConfig)
 }
 
 // Close closes RPC server.
