@@ -210,6 +210,7 @@ func Auth(fn AuthorizationFunc) error {
 func (s *Server) Serve(network, address string) {
 	ln, err := net.Listen(network, address)
 	if err != nil {
+		log.Fatal(err)
 		return
 	}
 
@@ -217,6 +218,7 @@ func (s *Server) Serve(network, address string) {
 	for {
 		c, err := ln.Accept()
 		if err != nil {
+			log.Fatal(err)
 			continue
 		}
 
@@ -237,6 +239,7 @@ func (s *Server) Serve(network, address string) {
 func (s *Server) ServeTLS(network, address string, config *tls.Config) {
 	ln, err := tls.Listen(network, address, config)
 	if err != nil {
+		log.Fatal(err)
 		return
 	}
 
@@ -244,6 +247,7 @@ func (s *Server) ServeTLS(network, address string, config *tls.Config) {
 	for {
 		c, err := ln.Accept()
 		if err != nil {
+			log.Fatal(err)
 			continue
 		}
 
@@ -264,6 +268,7 @@ func (s *Server) ServeTLS(network, address string, config *tls.Config) {
 func (s *Server) ServeAutoTLS(network, address string) {
 	var m letsencrypt.Manager
 	if err := m.CacheFile("lets.cache"); err != nil {
+		log.Fatal(err)
 		return
 	}
 	tlsConfig := &tls.Config{GetCertificate: m.GetCertificate}
@@ -276,6 +281,7 @@ func (s *Server) ServeListener(ln net.Listener) {
 	for {
 		c, err := ln.Accept()
 		if err != nil {
+			log.Fatal(err)
 			continue
 		}
 
@@ -332,6 +338,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (s *Server) Start(network, address string) {
 	ln, err := net.Listen(network, address)
 	if err != nil {
+		log.Fatal(err)
 		return
 	}
 
@@ -341,6 +348,7 @@ func (s *Server) Start(network, address string) {
 		for {
 			c, err := ln.Accept()
 			if err != nil {
+				log.Fatal(err)
 				continue
 			}
 
@@ -361,6 +369,7 @@ func (s *Server) Start(network, address string) {
 func (s *Server) StartTLS(network, address string, config *tls.Config) {
 	ln, err := tls.Listen(network, address, config)
 	if err != nil {
+		log.Fatal(err)
 		return
 	}
 
@@ -370,6 +379,7 @@ func (s *Server) StartTLS(network, address string, config *tls.Config) {
 		for {
 			c, err := ln.Accept()
 			if err != nil {
+				log.Fatal(err)
 				continue
 			}
 

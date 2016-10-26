@@ -18,12 +18,13 @@ type Reply struct {
 }
 
 func main() {
-	s := &rpcx.DirectClientSelector{Network: "tcp", Address: "127.0.0.1:8972", DialTimeout: 10 * time.Second}
+	s := &rpcx.DirectClientSelector{Network: "tcp", Address: "127.0.0.1:443", DialTimeout: 10 * time.Second}
 	client := rpcx.NewClient(s)
 
 	conf := &tls.Config{
 		InsecureSkipVerify: true,
 	}
+
 	client.TLSConfig = conf
 
 	args := &Args{7, 8}
