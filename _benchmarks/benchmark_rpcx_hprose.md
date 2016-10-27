@@ -8,6 +8,9 @@ Two aws c4.4xlarge servers. One is for the client and the other is for the serve
 Intel(R) Xeon(R) CPU E5-2666 v3 @ 2.90GHz, 16 processors
 32G memory
 
+
+hprose-go version: 2016-10-26
+
 ## Test Step
 The client uses the below cmd to test:
 
@@ -36,11 +39,11 @@ concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|p99.9|throughput(TPS)
 ### hprose-go 2.0
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|p99.9|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|------------|-------------
-100|0|0|16|0|4|114246
-500|3|2|1020|0|14|149409
-1000|5|4|1060|0|27|179468
-2000|10|7|3042|0|212|173400
-5000|24|6|9262|0|1268|75688
+100|0|0|8|0|4|126887
+500|2|1|28|0|15|169290
+1000|5|3|1058|0|33|181983
+2000|10|8|1024|0|211|179726
+5000|24|7|7201|0|1060|113726
 
 
 
