@@ -134,6 +134,11 @@ func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, add
 		return nil, err
 	}
 
+	var ok bool
+	if conn, ok = c.PluginContainer.DoPostConnected(conn); !ok {
+		return nil, errors.New("failed to do post connected")
+	}
+
 	if c == nil || c.PluginContainer == nil {
 		return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
 	}

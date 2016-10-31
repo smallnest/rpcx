@@ -14,7 +14,7 @@ type RateLimitingPlugin struct {
 	bucket       *ratelimit.Bucket
 }
 
-// NewRateLimitingPlugin creates a NewRateLimitingPlugin
+// NewRateLimitingPlugin creates a new RateLimitingPlugin
 func NewRateLimitingPlugin(fillInterval time.Duration, capacity int64) *RateLimitingPlugin {
 	tb := ratelimit.NewBucket(fillInterval, capacity)
 

@@ -95,18 +95,19 @@ func (p *ServerPluginContainer) DoRegister(name string, rcvr interface{}, metada
 	return nil
 }
 
-//DoPostConnAccept handle accepted conn
-func (p *ServerPluginContainer) DoPostConnAccept(conn net.Conn) bool {
+//DoPostConnAccept handles accepted conn
+func (p *ServerPluginContainer) DoPostConnAccept(conn net.Conn) (net.Conn, bool) {
+	var flag bool
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPostConnAcceptPlugin); ok {
-			flag := plugin.HandleConnAccept(conn)
+			conn, flag = plugin.HandleConnAccept(conn)
 			if !flag { //interrupt
 				conn.Close()
-				return false
+				return conn, false
 			}
 		}
 	}
-	return true
+	return conn, true
 }
 
 // DoPreReadRequestHeader invokes DoPreReadRequestHeader plugin.
@@ -203,7 +204,7 @@ type (
 	// if returns false, it means subsequent IPostConnAcceptPlugins should not contiune to handle this conn
 	// and this conn has been closed.
 	IPostConnAcceptPlugin interface {
-		HandleConnAccept(net.Conn) bool
+		HandleConnAccept(net.Conn) (net.Conn, bool)
 	}
 
 	//IServerCodecPlugin represents .
@@ -257,7 +258,7 @@ type (
 
 		DoRegister(name string, rcvr interface{}, metadata ...string) error
 
-		DoPostConnAccept(net.Conn) bool
+		DoPostConnAccept(net.Conn) (net.Conn, bool)
 
 		DoPreReadRequestHeader(r *rpc.Request) error
 		DoPostReadRequestHeader(r *rpc.Request) error

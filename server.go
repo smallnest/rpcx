@@ -69,7 +69,6 @@ func (w *serverCodecWrapper) ReadRequestBody(body interface{}) error {
 	if err != nil {
 		return err
 	}
-
 	err = w.ServerCodec.ReadRequestBody(body)
 	if err != nil {
 		return err
@@ -219,8 +218,8 @@ func (s *Server) Serve(network, address string) (err error) {
 		if err != nil {
 			continue
 		}
-
-		if !s.PluginContainer.DoPostConnAccept(c) {
+		var ok bool
+		if c, ok = s.PluginContainer.DoPostConnAccept(c); !ok {
 			continue
 		}
 
@@ -247,7 +246,8 @@ func (s *Server) ServeTLS(network, address string, config *tls.Config) (err erro
 			continue
 		}
 
-		if !s.PluginContainer.DoPostConnAccept(c) {
+		var ok bool
+		if c, ok = s.PluginContainer.DoPostConnAccept(c); !ok {
 			continue
 		}
 
@@ -279,7 +279,8 @@ func (s *Server) ServeListener(ln net.Listener) {
 			continue
 		}
 
-		if !s.PluginContainer.DoPostConnAccept(c) {
+		var ok bool
+		if c, ok = s.PluginContainer.DoPostConnAccept(c); !ok {
 			continue
 		}
 
@@ -309,18 +310,19 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		io.WriteString(w, "405 must CONNECT\n")
 		return
 	}
-	conn, _, err := w.(http.Hijacker).Hijack()
+	c, _, err := w.(http.Hijacker).Hijack()
 	if err != nil {
 		log.Println("rpc hijacking ", req.RemoteAddr, ": ", err.Error())
 		return
 	}
-	io.WriteString(conn, "HTTP/1.0 "+connected+"\n\n")
+	io.WriteString(c, "HTTP/1.0 "+connected+"\n\n")
 
-	if !s.PluginContainer.DoPostConnAccept(conn) {
+	var ok bool
+	if c, ok = s.PluginContainer.DoPostConnAccept(c); !ok {
 		return
 	}
 
-	wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(conn), conn)
+	wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)
 	wrapper.Timeout = s.Timeout
 	wrapper.ReadTimeout = s.ReadTimeout
 	wrapper.WriteTimeout = s.WriteTimeout
@@ -346,7 +348,8 @@ func (s *Server) Start(network, address string) (err error) {
 				continue
 			}
 
-			if !s.PluginContainer.DoPostConnAccept(c) {
+			var ok bool
+			if c, ok = s.PluginContainer.DoPostConnAccept(c); !ok {
 				continue
 			}
 			wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)
@@ -377,7 +380,8 @@ func (s *Server) StartTLS(network, address string, config *tls.Config) (err erro
 				continue
 			}
 
-			if !s.PluginContainer.DoPostConnAccept(c) {
+			var ok bool
+			if c, ok = s.PluginContainer.DoPostConnAccept(c); !ok {
 				continue
 			}
 			wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)

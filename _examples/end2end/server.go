@@ -1,6 +1,11 @@
 package main
 
-import "github.com/smallnest/rpcx"
+import (
+	"time"
+
+	"github.com/smallnest/rpcx"
+	"github.com/smallnest/rpcx/plugin"
+)
 
 type Args struct {
 	A int `msg:"a"`
@@ -25,5 +30,9 @@ func (t *Arith) Error(args *Args, reply *Reply) error {
 func main() {
 	server := rpcx.NewServer()
 	server.RegisterName("Arith", new(Arith))
+
+	p := plugin.NewRateLimitingPlugin(time.Second, 1000)
+	server.PluginContainer.Add(p)
+
 	server.Serve("tcp", "127.0.0.1:8972")
 }

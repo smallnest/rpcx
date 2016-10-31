@@ -1,6 +1,9 @@
 package rpcx
 
-import "net/rpc"
+import (
+	"net"
+	"net/rpc"
+)
 
 // ClientPluginContainer implements IPluginContainer interface.
 type ClientPluginContainer struct {
@@ -154,7 +157,26 @@ func (p *ClientPluginContainer) DoPostWriteRequest(r *rpc.Request, body interfac
 	return nil
 }
 
+//DoPostConnected handles connected
+func (p *ClientPluginContainer) DoPostConnected(conn net.Conn) (net.Conn, bool) {
+	var flag bool
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(IPostConnectedPlugin); ok {
+			conn, flag = plugin.HandleConnected(conn)
+			if !flag { //interrupt
+				conn.Close()
+				return conn, false
+			}
+		}
+	}
+	return conn, true
+}
+
 type (
+	//IPostConnectedPlugin represents connected plugin.
+	IPostConnectedPlugin interface {
+		HandleConnected(net.Conn) (net.Conn, bool)
+	}
 
 	//IPreReadResponseHeaderPlugin represents .
 	IPreReadResponseHeaderPlugin interface {
@@ -194,6 +216,8 @@ type (
 		GetName(plugin IPlugin) string
 		GetByName(pluginName string) IPlugin
 		GetAll() []IPlugin
+
+		DoPostConnected(net.Conn) (net.Conn, bool)
 
 		DoPreReadResponseHeader(*rpc.Response) error
 		DoPostReadResponseHeader(*rpc.Response) error
