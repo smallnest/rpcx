@@ -93,6 +93,7 @@ rpcx focus in on service governance.
 * Scalable.
 * Other: metrics、log、timeout.
 * Authorization.
+* Compression:inflate and snappy.
 
 [rpcx-ui](https://github.com/smallnest/rpcx-ui) provides a web ui for services management.
 ![rpcx-ui](https://github.com/smallnest/rpcx-ui/blob/master/services.png)
