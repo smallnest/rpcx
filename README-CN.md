@@ -79,6 +79,19 @@ rpcx使用Go实现，适合使用Go语言实现RPC的功能。
 * 其他：调用统计、访问日志等
 * 基于地理位置的路由
 * 支持zip 和 snappy 格式的压缩传输
+* 服务别名
+
+ rpcx更正和实现了下列官方库不支持的特性：
+ 
+* [#16449](https://github.com/golang/go/issues/16449): proposal: support custom method names in net/rpc
+* [#15236](https://github.com/golang/go/issues/15236): net/rpc: expected Timeout based alternatives to functions for rpc.Dial, rpc.DialHTTP, rpc.DialHTTPPath [proposal].
+* [#13395](https://github.com/golang/go/issues/13395): **TODO** net/rpc: Server.ServeHTTP assumes default http mux
+* [#10929](https://github.com/golang/go/issues/10929): net/rpc/jsonrpc: Missing support for JSON-RPC 2.0
+* [#7946](https://github.com/golang/go/issues/7946): net/rpc: add client support for RPC over https
+* [#4591](https://github.com/golang/go/issues/4591): Authentication for RPC and HTTP
+* [#4584](https://github.com/golang/go/issues/4584): net/rpc: access to client's IP address
+* [#3615]()https://github.com/golang/go/issues/3615: rpc: allow aliasing methods
+
 
 rpcx目标是轻量级的，小而简单，但是期望所有的功能都可以通过插件的方式搭积木的方式完成。
 
