@@ -26,7 +26,7 @@ I only test end-to-end test case (one client and one server).
 
 ## Test Result
 
-### rpcx
+### rpcx - tcp
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|p99.9|throughput(TPS)
 -------------|-------------|-------------|-------------|-------------|------------|-------------
 100|0|0|13|0|4|153822
@@ -35,6 +35,16 @@ concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|p99.9|throughput(TPS)
 2000|6|3|3013|0|212|253292
 5000|17|3|6266|0|1453|124331
 
+### rpcx - kcp
+concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|p99.9|throughput(TPS)
+-------------|-------------|-------------|-------------|-------------|------------|-------------
+100|1|0|684|0|192|63861
+500|6|0|2694|0|329|72296
+1000|12|2|4284|0|485|59414
+2000|20|13|7085|0|673|86058
+
+It looks performance of kcp is not what we expected. 
+**Don't use rpcx-kcp in production environments.**
 
 ### hprose-go 2.0
 concurrent clients|mean(ms)|median(ms)|max(ms)|min(ms)|p99.9|throughput(TPS)

@@ -105,7 +105,7 @@ func main() {
 	client.Close()
 	totalT = time.Now().UnixNano() - totalT
 	totalT = totalT / 1000000
-	fmt.Printf("took %d ms for %d requests", totalT, n*m)
+	fmt.Printf("took %d ms for %d requests\n", totalT, n*m)
 
 	totalD := make([]int64, 0, n*m)
 	for _, k := range d {

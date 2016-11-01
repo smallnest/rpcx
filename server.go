@@ -12,6 +12,7 @@ import (
 	"rsc.io/letsencrypt"
 
 	"github.com/hashicorp/net-rpc-msgpackrpc"
+	kcp "github.com/xtaci/kcp-go"
 )
 
 const (
@@ -212,7 +213,14 @@ func Auth(fn AuthorizationFunc) error {
 // Serve starts and listens RCP requests.
 //It is blocked until receiving connectings from clients.
 func (s *Server) Serve(network, address string) (err error) {
-	ln, err := net.Listen(network, address)
+	var ln net.Listener
+	switch network {
+	case "kcp":
+		ln, err = kcp.ListenWithOptions(address, nil, 10, 3)
+	default: //tcp
+		ln, err = net.Listen(network, address)
+	}
+
 	if err != nil {
 		return
 	}
@@ -344,8 +352,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // Start starts and listens RCP requests without blocking.
 func (s *Server) Start(network, address string) (err error) {
-
-	ln, err := net.Listen(network, address)
+	var ln net.Listener
+	switch network {
+	case "kcp":
+		ln, err = kcp.ListenWithOptions(address, nil, 10, 3)
+	default: //tcp
+		ln, err = net.Listen(network, address)
+	}
 
 	if err != nil {
 		return

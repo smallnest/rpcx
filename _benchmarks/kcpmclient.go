@@ -3,37 +3,50 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"reflect"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/montanaflynn/stats"
-
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
+	"github.com/smallnest/rpcx"
+	"github.com/smallnest/rpcx/clientselector"
+	"github.com/smallnest/rpcx/codec"
+	"github.com/smallnest/rpcx/plugin"
 )
 
 var concurrency = flag.Int("c", 1, "concurrency")
 var total = flag.Int("n", 1, "total requests for all clients")
-var host = flag.String("s", "127.0.0.1:8972", "listened ip and port")
+var host = flag.String("s", "127.0.0.1:8972", "server ip and port")
 
 func main() {
 	flag.Parse()
 	n := *concurrency
 	m := *total / n
 
+	servers := strings.Split(*host, ",")
+	var serverPeers []*clientselector.ServerPeer
+	for _, server := range servers {
+		serverPeers = append(serverPeers, &clientselector.ServerPeer{Network: "kcp", Address: server})
+	}
+
+	fmt.Printf("Servers: %+v\n\n", serverPeers)
+
 	fmt.Printf("concurrency: %d\nrequests per client: %d\n\n", n, m)
 
+	serviceMethodName := "Hello.Say"
 	args := prepareArgs()
 
-	b, _ := proto.Marshal(args)
-	fmt.Printf("message size: %d bytes\n\n", len(b))
+	b := make([]byte, 1024*1024)
+	i, _ := args.MarshalTo(b)
+	fmt.Printf("message size: %d bytes\n\n", i)
 
 	var wg sync.WaitGroup
 	wg.Add(n * m)
+
+	var startWg sync.WaitGroup
+	startWg.Add(n)
 
 	var trans uint64
 	var transOK uint64
@@ -47,25 +60,31 @@ func main() {
 		d = append(d, dt)
 
 		go func(i int) {
-			conn, err := grpc.Dial(*host, grpc.WithInsecure())
-			if err != nil {
-				log.Fatalf("did not connect: %v", err)
-			}
-			c := NewHelloClient(conn)
+			s := clientselector.NewMultiClientSelector(serverPeers, rpcx.RoundRobin, 10*time.Second)
+			client := rpcx.NewClient(s)
+			client.ClientCodecFunc = codec.NewProtobufClientCodec
+
+			p := plugin.NewCompressionPlugin(rpcx.CompressSnappy)
+			client.PluginContainer.Add(p)
+
+			var reply BenchmarkMessage
 
 			//warmup
 			for j := 0; j < 5; j++ {
-				c.Say(context.Background(), args)
+				client.Call(serviceMethodName, args, &reply)
 			}
+
+			startWg.Done()
+			startWg.Wait()
 
 			for j := 0; j < m; j++ {
 				t := time.Now().UnixNano()
-				reply, err := c.Say(context.Background(), args)
+				err := client.Call(serviceMethodName, args, &reply)
 				t = time.Now().UnixNano() - t
 
 				d[i] = append(d[i], t)
 
-				if err == nil && *(reply.Field1) == "OK" {
+				if err == nil && reply.Field1 == "OK" {
 					atomic.AddUint64(&transOK, 1)
 				}
 
@@ -73,7 +92,7 @@ func main() {
 				wg.Done()
 			}
 
-			conn.Close()
+			client.Close()
 
 		}(i)
 
@@ -111,7 +130,6 @@ func main() {
 func prepareArgs() *BenchmarkMessage {
 	b := true
 	var i int32 = 100000
-	var i64 int64 = 100000
 	var s = "许多往事在眼前一幕一幕，变的那麼模糊"
 
 	var args BenchmarkMessage
@@ -122,10 +140,8 @@ func prepareArgs() *BenchmarkMessage {
 		field := v.Field(k)
 		if field.Type().Kind() == reflect.Ptr {
 			switch v.Field(k).Type().Elem().Kind() {
-			case reflect.Int, reflect.Int32:
+			case reflect.Int, reflect.Int32, reflect.Int64:
 				field.Set(reflect.ValueOf(&i))
-			case reflect.Int64:
-				field.Set(reflect.ValueOf(&i64))
 			case reflect.Bool:
 				field.Set(reflect.ValueOf(&b))
 			case reflect.String:
