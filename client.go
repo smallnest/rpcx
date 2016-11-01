@@ -1,16 +1,15 @@
 package rpcx
 
 import (
-	"bufio"
 	"crypto/tls"
 	"errors"
 	"io"
 	"net"
-	"net/http"
 	"net/rpc"
 	"time"
 
 	msgpackrpc "github.com/hashicorp/net-rpc-msgpackrpc"
+	kcp "github.com/xtaci/kcp-go"
 )
 
 // SelectMode defines the algorithm of selecting a services from cluster
@@ -107,103 +106,6 @@ func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*rp
 	return []*rpc.Client{s.rpcClient}
 }
 
-// NewDirectRPCClient creates a rpc client
-func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, timeout time.Duration) (*rpc.Client, error) {
-	//if network == "http" || network == "https" {
-	if network == "http" {
-		return NewDirectHTTPRPCClient(c, clientCodecFunc, network, address, "", timeout)
-	}
-
-	var conn net.Conn
-	var tlsConn *tls.Conn
-	var err error
-
-	if c != nil && c.TLSConfig != nil {
-		dialer := &net.Dialer{
-			Timeout: timeout,
-		}
-		tlsConn, err = tls.DialWithDialer(dialer, network, address, c.TLSConfig)
-		//or conn:= tls.Client(netConn, &config)
-
-		conn = net.Conn(tlsConn)
-	} else {
-		conn, err = net.DialTimeout(network, address, timeout)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	var ok bool
-	if conn, ok = c.PluginContainer.DoPostConnected(conn); !ok {
-		return nil, errors.New("failed to do post connected")
-	}
-
-	if c == nil || c.PluginContainer == nil {
-		return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
-	}
-
-	wrapper := newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn), conn)
-	wrapper.Timeout = c.Timeout
-	wrapper.ReadTimeout = c.ReadTimeout
-	wrapper.WriteTimeout = c.WriteTimeout
-
-	return rpc.NewClientWithCodec(wrapper), nil
-}
-
-// NewDirectHTTPRPCClient creates a rpc http client
-func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, path string, timeout time.Duration) (*rpc.Client, error) {
-	if path == "" {
-		path = rpc.DefaultRPCPath
-	}
-
-	var conn net.Conn
-	var tlsConn *tls.Conn
-	var err error
-
-	if c != nil && c.TLSConfig != nil {
-		dialer := &net.Dialer{
-			Timeout: timeout,
-		}
-		tlsConn, err = tls.DialWithDialer(dialer, "tcp", address, c.TLSConfig)
-		//or conn:= tls.Client(netConn, &config)
-
-		conn = net.Conn(tlsConn)
-	} else {
-		conn, err = net.DialTimeout("tcp", address, timeout)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	io.WriteString(conn, "CONNECT "+path+" HTTP/1.0\n\n")
-
-	// Require successful HTTP response
-	// before switching to RPC protocol.
-	resp, err := http.ReadResponse(bufio.NewReader(conn), &http.Request{Method: "CONNECT"})
-	if err == nil && resp.Status == connected {
-		if c == nil || c.PluginContainer == nil {
-			return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
-		}
-		wrapper := newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn), conn)
-		wrapper.Timeout = c.Timeout
-		wrapper.ReadTimeout = c.ReadTimeout
-		wrapper.WriteTimeout = c.WriteTimeout
-
-		return rpc.NewClientWithCodec(wrapper), nil
-	}
-	if err == nil {
-		err = errors.New("unexpected HTTP response: " + resp.Status)
-	}
-	conn.Close()
-	return nil, &net.OpError{
-		Op:   "dial-http",
-		Net:  network + " " + address,
-		Addr: nil,
-		Err:  err,
-	}
-}
-
 // ClientCodecFunc is used to create a rpc.ClientCodecFunc from net.Conn.
 type ClientCodecFunc func(conn io.ReadWriteCloser) rpc.ClientCodec
 
@@ -214,6 +116,7 @@ type Client struct {
 	PluginContainer IClientPluginContainer
 	FailMode        FailMode
 	TLSConfig       *tls.Config
+	Block           kcp.BlockCrypt
 	Retries         int
 	//Timeout sets deadline for underlying net.Conns
 	Timeout time.Duration

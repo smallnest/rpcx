@@ -80,6 +80,8 @@ rpcx使用Go实现，适合使用Go语言实现RPC的功能。
 * 基于地理位置的路由
 * 支持zip 和 snappy 格式的压缩传输
 * 服务别名
+* [kcp](https://github.com/xtaci/kcp-go) support: kcp是一个可信赖的全功能的UDP库实现
+
 
  rpcx更正和实现了下列官方库不支持的特性：
  
