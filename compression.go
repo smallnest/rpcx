@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"time"
 
 	"github.com/golang/snappy"
 )
@@ -39,7 +38,7 @@ func (wf *writeFlusher) Write(p []byte) (int, error) {
 
 // CompressConn wraps a net.Conn and supports compression
 type CompressConn struct {
-	conn         net.Conn
+	net.Conn
 	r            io.Reader
 	w            io.Writer
 	compressType CompressType
@@ -47,8 +46,8 @@ type CompressConn struct {
 
 // NewCompressConn creates a wrapped net.Conn with CompressType
 func NewCompressConn(conn net.Conn, compressType CompressType) net.Conn {
-	cc := &CompressConn{conn: conn}
-	r := io.Reader(cc.conn)
+	cc := &CompressConn{Conn: conn}
+	r := io.Reader(cc.Conn)
 
 	switch compressType {
 	case CompressNone:
@@ -59,7 +58,7 @@ func NewCompressConn(conn net.Conn, compressType CompressType) net.Conn {
 	}
 	cc.r = r
 
-	w := io.Writer(cc.conn)
+	w := io.Writer(cc.Conn)
 	switch compressType {
 	case CompressNone:
 	case CompressFlate:
@@ -72,7 +71,6 @@ func NewCompressConn(conn net.Conn, compressType CompressType) net.Conn {
 		w = snappy.NewWriter(w)
 	}
 	cc.w = w
-
 	return cc
 }
 
@@ -82,36 +80,4 @@ func (c *CompressConn) Read(b []byte) (n int, err error) {
 
 func (c *CompressConn) Write(b []byte) (n int, err error) {
 	return c.w.Write(b)
-}
-
-// Close closes the connection.
-func (c *CompressConn) Close() error {
-	return c.conn.Close()
-}
-
-// LocalAddr returns the local network address.
-func (c *CompressConn) LocalAddr() net.Addr {
-	return c.conn.LocalAddr()
-}
-
-// RemoteAddr returns the remote network address.
-func (c *CompressConn) RemoteAddr() net.Addr {
-	return c.conn.RemoteAddr()
-}
-
-// SetDeadline sets the read and write deadlines associated
-// with the connection. It is equivalent to calling both
-// SetReadDeadline and SetWriteDeadline.
-func (c *CompressConn) SetDeadline(t time.Time) error {
-	return c.conn.SetDeadline(t)
-}
-
-// SetReadDeadline sets the deadline for future Read calls.
-func (c *CompressConn) SetReadDeadline(t time.Time) error {
-	return c.conn.SetReadDeadline(t)
-}
-
-// SetWriteDeadline sets the deadline for future Write calls.
-func (c *CompressConn) SetWriteDeadline(t time.Time) error {
-	return c.conn.SetWriteDeadline(t)
 }
