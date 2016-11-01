@@ -168,9 +168,14 @@ func ServeListener(ln net.Listener) {
 	defaultServer.ServeListener(ln)
 }
 
-//ServeByHTTP implements RPC via HTTP
-func ServeByHTTP(ln net.Listener, rpcPath, debugPath string) {
+// ServeByHTTP implements RPC via HTTP
+func ServeByHTTP(ln net.Listener) {
 	defaultServer.ServeByHTTP(ln, rpc.DefaultRPCPath)
+}
+
+// ServeByMux implements RPC via HTTP with customized mux
+func ServeByMux(ln net.Listener, mux *http.ServeMux) {
+	defaultServer.ServeByMux(ln, rpc.DefaultRPCPath, mux)
 }
 
 // SetServerCodecFunc sets a ServerCodecFunc
@@ -293,10 +298,17 @@ func (s *Server) ServeListener(ln net.Listener) {
 	}
 }
 
-// ServeByHTTP starts
+// ServeByHTTP serves
 func (s *Server) ServeByHTTP(ln net.Listener, rpcPath string) {
 	http.Handle(rpcPath, s)
 	srv := &http.Server{Handler: nil}
+	srv.Serve(ln)
+}
+
+// ServeByMux serves
+func (s *Server) ServeByMux(ln net.Listener, rpcPath string, mux *http.ServeMux) {
+	mux.Handle(rpcPath, s)
+	srv := &http.Server{Handler: mux}
 	srv.Serve(ln)
 }
 

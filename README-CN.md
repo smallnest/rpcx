@@ -85,7 +85,7 @@ rpcx使用Go实现，适合使用Go语言实现RPC的功能。
  
 * [#16449](https://github.com/golang/go/issues/16449): proposal: support custom method names in net/rpc
 * [#15236](https://github.com/golang/go/issues/15236): net/rpc: expected Timeout based alternatives to functions for rpc.Dial, rpc.DialHTTP, rpc.DialHTTPPath [proposal].
-* [#13395](https://github.com/golang/go/issues/13395): **TODO** net/rpc: Server.ServeHTTP assumes default http mux
+* [#13395](https://github.com/golang/go/issues/13395): net/rpc: Server.ServeHTTP assumes default http mux
 * [#10929](https://github.com/golang/go/issues/10929): net/rpc/jsonrpc: Missing support for JSON-RPC 2.0
 * [#7946](https://github.com/golang/go/issues/7946): net/rpc: add client support for RPC over https
 * [#4591](https://github.com/golang/go/issues/4591): Authentication for RPC and HTTP
