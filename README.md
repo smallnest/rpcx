@@ -79,9 +79,6 @@ rpcx focus in on service governance.
 
 ## Features
 
-[more features](feature)
-
-
 * Based on net/rpc. a Go net/prc project can be converted to use rpcx with a few changes.
 * Pluggable. Features are implemented by Plugins, such as service discovery.
 * Communicate with TCP long connections.
@@ -106,7 +103,7 @@ rpcx has fixed/implemented the below issues in [golang/go rpc](https://github.co
 * [#7946](https://github.com/golang/go/issues/7946): net/rpc: add client support for RPC over https
 * [#4591](https://github.com/golang/go/issues/4591): Authentication for RPC and HTTP
 * [#4584](https://github.com/golang/go/issues/4584): net/rpc: access to client's IP address
-* [#3615]()https://github.com/golang/go/issues/3615: rpc: allow aliasing methods
+* [#3615](https://github.com/golang/go/issues/3615): rpc: allow aliasing methods
 
 
 [rpcx-ui](https://github.com/smallnest/rpcx-ui) provides a web ui for services management.
