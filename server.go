@@ -7,11 +7,14 @@ import (
 	"net"
 	"net/http"
 	"net/rpc"
+	"regexp"
+	"strings"
 	"time"
 
 	"rsc.io/letsencrypt"
 
 	"github.com/hashicorp/net-rpc-msgpackrpc"
+	"github.com/valyala/fasthttp/reuseport"
 	kcp "github.com/xtaci/kcp-go"
 )
 
@@ -210,6 +213,18 @@ func Auth(fn AuthorizationFunc) error {
 	return defaultServer.PluginContainer.Add(p)
 }
 
+func validIP4(ipAddress string) bool {
+	ipAddress = strings.Trim(ipAddress, " ")
+	i := strings.LastIndex(ipAddress, ":")
+	ipAddress = ipAddress[:i] //remove port
+
+	re, _ := regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
+	if re.MatchString(ipAddress) {
+		return true
+	}
+	return false
+}
+
 // Serve starts and listens RCP requests.
 //It is blocked until receiving connectings from clients.
 func (s *Server) Serve(network, address string) (err error) {
@@ -217,6 +232,14 @@ func (s *Server) Serve(network, address string) (err error) {
 	switch network {
 	case "kcp":
 		ln, err = kcp.ListenWithOptions(address, nil, 10, 3)
+	case "reuseport":
+		if validIP4(address) {
+			network = "tcp4"
+		} else {
+			network = "tcp6"
+		}
+
+		ln, err = reuseport.Listen(network, address)
 	default: //tcp
 		ln, err = net.Listen(network, address)
 	}
@@ -270,17 +293,6 @@ func (s *Server) ServeTLS(network, address string, config *tls.Config) (err erro
 		wrapper.WriteTimeout = s.WriteTimeout
 		go s.rpcServer.ServeCodec(wrapper)
 	}
-}
-
-// ServeAutoTLS starts and listens RCP requests with let's encrypt.
-//It is blocked until receiving connectings from clients.
-func (s *Server) ServeAutoTLS(network, address string) (err error) {
-	var m letsencrypt.Manager
-	if err = m.CacheFile("lets.cache"); err != nil {
-		return
-	}
-	tlsConfig := &tls.Config{GetCertificate: m.GetCertificate}
-	return ServeTLS(network, address, tlsConfig)
 }
 
 // ServeListener starts
@@ -356,6 +368,9 @@ func (s *Server) Start(network, address string) (err error) {
 	switch network {
 	case "kcp":
 		ln, err = kcp.ListenWithOptions(address, nil, 10, 3)
+	case "reuseport":
+		network = "tcp"
+		ln, err = reuseport.Listen(network, address)
 	default: //tcp
 		ln, err = net.Listen(network, address)
 	}
