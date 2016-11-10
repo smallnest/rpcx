@@ -3,6 +3,7 @@ package plugin
 import (
 	"net"
 	"net/rpc"
+	"sync"
 	"time"
 
 	"github.com/rcrowley/go-metrics"
@@ -13,6 +14,10 @@ type MetricsPlugin struct {
 	Registry metrics.Registry
 	seqs     map[uint64]int64
 }
+
+var (
+	mapLock sync.RWMutex
+)
 
 //NewMetricsPlugin creates a new MetricsPlugirn
 func NewMetricsPlugin() *MetricsPlugin {
@@ -59,7 +64,9 @@ func (plugin *MetricsPlugin) PostWriteResponse(r *rpc.Response, body interface{}
 	m := metrics.GetOrRegisterMeter("service_"+r.ServiceMethod+"_Write_Counter", plugin.Registry)
 	m.Mark(1)
 
+	mapLock.RLock()
 	t := plugin.seqs[r.Seq]
+	mapLock.RUnlock()
 	if t > 0 {
 		t = time.Now().UnixNano() - t
 		if t < 30*time.Minute.Nanoseconds() { //it is impossible that calltime exceeds 30 minute
