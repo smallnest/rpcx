@@ -1,29 +1,30 @@
 package plugin
 
 import (
+	"log/syslog"
 	"net"
 	"net/rpc"
 	"sync"
 	"time"
 
 	"github.com/rcrowley/go-metrics"
+	"github.com/rcrowley/go-metrics/exp"
+	influxdb "github.com/vrischmann/go-metrics-influxdb"
 )
 
-//MetricsPlugin collects metrics of a rpc server
+// MetricsPlugin collects metrics of a rpc server.
+// You can report metrics to log, syslog, Graphite, InfluxDB or others to display them in Dasgboard such as grafana, Graphite.
 type MetricsPlugin struct {
-	Registry metrics.Registry
+	Registry       metrics.Registry
 	timeSeqMap     map[uint64]int64
-	mapLock sync.RWMutex
-	internalSeq uint64
+	mapLock        sync.RWMutex
+	internalSeq    uint64
 	internalSeqMap map[uint64]uint64
 }
 
-
-
-
 //NewMetricsPlugin creates a new MetricsPlugirn
 func NewMetricsPlugin() *MetricsPlugin {
-	return &MetricsPlugin{Registry: metrics.NewRegistry(), timeSeqMap: make(map[uint64]int64, 100),internalSeqMap: make(map[uint64]uint64, 100)}
+	return &MetricsPlugin{Registry: metrics.NewRegistry(), timeSeqMap: make(map[uint64]int64, 100), internalSeqMap: make(map[uint64]uint64, 100)}
 }
 
 // Register handles registering event.
@@ -76,7 +77,7 @@ func (p *MetricsPlugin) PostWriteResponse(r *rpc.Response, body interface{}) err
 	s := r.Seq
 	t := p.timeSeqMap[s]
 	r.Seq = p.internalSeqMap[s]
-	delete(p.internalSeqMap,s)
+	delete(p.internalSeqMap, s)
 	p.mapLock.RUnlock()
 
 	if t > 0 {
@@ -90,6 +91,46 @@ func (p *MetricsPlugin) PostWriteResponse(r *rpc.Response, body interface{}) err
 	}
 
 	return nil
+}
+
+// Log reports metrics into logs.
+//
+// p.Log( 5 * time.Second, log.New(os.Stderr, "metrics: ", log.Lmicroseconds))
+//
+func (p *MetricsPlugin) Log(freq time.Duration, l metrics.Logger) {
+	go metrics.Log(p.Registry, freq, l)
+}
+
+// Syslog reports metrics into syslog.
+//
+// 	w, _ := syslog.Dial("unixgram", "/dev/log", syslog.LOG_INFO, "metrics")
+//	p.Syslog(60e9, w)
+//
+func (p *MetricsPlugin) Syslog(freq time.Duration, w *syslog.Writer) {
+	go metrics.Syslog(p.Registry, freq, w)
+}
+
+// Graphite reports metrics into graphite.
+//
+// 	addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:2003")
+//  p.Graphite(10e9, "metrics", addr)
+//
+func (p *MetricsPlugin) Graphite(freq time.Duration, prefix string, addr *net.TCPAddr) {
+	go metrics.Graphite(p.Registry, freq, prefix, addr)
+}
+
+// InfluxDB reports metrics into influxdb.
+//
+// 	p.InfluxDB(10e9, "127.0.0.1:8086","metrics", "test","test"})
+//
+func (p *MetricsPlugin) InfluxDB(freq time.Duration, url, database, username, password string) {
+	go influxdb.InfluxDB(p.Registry, freq, url, database, username, password)
+}
+
+// Exp uses the same mechanism as the official expvar but exposed under /debug/metrics,
+// which shows a json representation of all your usual expvars as well as all your go-metrics.
+func (p *MetricsPlugin) Exp() {
+	exp.Exp(metrics.DefaultRegistry)
 }
 
 // Name return name of this plugin.
