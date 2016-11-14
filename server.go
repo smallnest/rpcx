@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"rsc.io/letsencrypt"
-
 	"github.com/hashicorp/net-rpc-msgpackrpc"
 )
 
@@ -410,16 +408,6 @@ func (s *Server) StartTLS(network, address string, config *tls.Config) (err erro
 	}()
 
 	return
-}
-
-// StartTLS starts and listens RCP requests with let's encrypt
-func (s *Server) StartAutoTLS(network, address string) (err error) {
-	var m letsencrypt.Manager
-	if err = m.CacheFile("lets.cache"); err != nil {
-		return
-	}
-	tlsConfig := &tls.Config{GetCertificate: m.GetCertificate}
-	return StartTLS(network, address, tlsConfig)
 }
 
 // Close closes RPC server.
