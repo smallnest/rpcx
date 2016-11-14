@@ -1,7 +1,6 @@
 package plugin
 
 import (
-	"log/syslog"
 	"net"
 	"net/rpc"
 	"sync"
@@ -99,15 +98,6 @@ func (p *MetricsPlugin) PostWriteResponse(r *rpc.Response, body interface{}) err
 //
 func (p *MetricsPlugin) Log(freq time.Duration, l metrics.Logger) {
 	go metrics.Log(p.Registry, freq, l)
-}
-
-// Syslog reports metrics into syslog.
-//
-// 	w, _ := syslog.Dial("unixgram", "/dev/log", syslog.LOG_INFO, "metrics")
-//	p.Syslog(60e9, w)
-//
-func (p *MetricsPlugin) Syslog(freq time.Duration, w *syslog.Writer) {
-	go metrics.Syslog(p.Registry, freq, w)
 }
 
 // Graphite reports metrics into graphite.

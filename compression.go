@@ -6,7 +6,9 @@ import (
 	"io"
 	"net"
 
+	"github.com/DataDog/zstd"
 	"github.com/golang/snappy"
+	"github.com/pierrec/lz4"
 )
 
 // CompressType is compression type. Currently only support zip and snappy
@@ -19,6 +21,10 @@ const (
 	CompressFlate
 	// CompressSnappy represents snappy
 	CompressSnappy
+	// CompressZstd represents Facebook/Zstandard
+	CompressZstd
+	// CompressLZ4 represents LZ4 (http://www.lz4.org)
+	CompressLZ4
 )
 
 type writeFlusher struct {
@@ -55,6 +61,10 @@ func NewCompressConn(conn net.Conn, compressType CompressType) net.Conn {
 		r = flate.NewReader(r)
 	case CompressSnappy:
 		r = snappy.NewReader(r)
+	case CompressZstd:
+		r = zstd.NewReader(r)
+	case CompressLZ4:
+		r = lz4.NewReader(r)
 	}
 	cc.r = r
 
@@ -69,6 +79,10 @@ func NewCompressConn(conn net.Conn, compressType CompressType) net.Conn {
 		w = &writeFlusher{w: zw}
 	case CompressSnappy:
 		w = snappy.NewWriter(w)
+	case CompressZstd:
+		w = zstd.NewWriter(w)
+	case CompressLZ4:
+		w = lz4.NewWriter(w)
 	}
 	cc.w = w
 	return cc

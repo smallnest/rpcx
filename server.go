@@ -14,8 +14,6 @@ import (
 	"rsc.io/letsencrypt"
 
 	"github.com/hashicorp/net-rpc-msgpackrpc"
-	"github.com/valyala/fasthttp/reuseport"
-	kcp "github.com/xtaci/kcp-go"
 )
 
 const (
@@ -229,21 +227,7 @@ func validIP4(ipAddress string) bool {
 //It is blocked until receiving connectings from clients.
 func (s *Server) Serve(network, address string) (err error) {
 	var ln net.Listener
-	switch network {
-	case "kcp":
-		ln, err = kcp.ListenWithOptions(address, nil, 10, 3)
-	case "reuseport":
-		if validIP4(address) {
-			network = "tcp4"
-		} else {
-			network = "tcp6"
-		}
-
-		ln, err = reuseport.Listen(network, address)
-	default: //tcp
-		ln, err = net.Listen(network, address)
-	}
-
+	ln, err = makeListener(network, address)
 	if err != nil {
 		return
 	}
@@ -365,15 +349,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // Start starts and listens RCP requests without blocking.
 func (s *Server) Start(network, address string) (err error) {
 	var ln net.Listener
-	switch network {
-	case "kcp":
-		ln, err = kcp.ListenWithOptions(address, nil, 10, 3)
-	case "reuseport":
-		network = "tcp"
-		ln, err = reuseport.Listen(network, address)
-	default: //tcp
-		ln, err = net.Listen(network, address)
-	}
+	ln, err = makeListener(network, address)
 
 	if err != nil {
 		return
