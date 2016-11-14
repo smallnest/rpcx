@@ -12,7 +12,7 @@ import (
 )
 
 // MetricsPlugin collects metrics of a rpc server.
-// You can report metrics to log, syslog, Graphite, InfluxDB or others to display them in Dasgboard such as grafana, Graphite.
+// You can report metrics to log, syslog, Graphite, InfluxDB or others to display them in Dashboard such as grafana, Graphite.
 type MetricsPlugin struct {
 	Registry       metrics.Registry
 	timeSeqMap     map[uint64]int64
