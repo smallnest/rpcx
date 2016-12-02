@@ -141,24 +141,24 @@ func NewServer() *Server {
 // DefaultServer is the default instance of *Server.
 var defaultServer = NewServer()
 
-// Serve starts and listens RCP requests.
+// Serve starts and listens RPC requests.
 //It is blocked until receiving connectings from clients.
 func Serve(n, address string) (err error) {
 	return defaultServer.Serve(n, address)
 }
 
-// ServeTLS starts and listens RCP requests.
+// ServeTLS starts and listens RPC requests.
 //It is blocked until receiving connectings from clients.
 func ServeTLS(n, address string, config *tls.Config) (err error) {
 	return defaultServer.ServeTLS(n, address, config)
 }
 
-// Start starts and listens RCP requests without blocking.
+// Start starts and listens RPC requests without blocking.
 func Start(n, address string) (err error) {
 	return defaultServer.Start(n, address)
 }
 
-// StartTLS starts and listens RCP requests without blocking.
+// StartTLS starts and listens RPC requests without blocking.
 func StartTLS(n, address string, config *tls.Config) (err error) {
 	return defaultServer.StartTLS(n, address, config)
 }
@@ -221,7 +221,7 @@ func validIP4(ipAddress string) bool {
 	return false
 }
 
-// Serve starts and listens RCP requests.
+// Serve starts and listens RPC requests.
 //It is blocked until receiving connectings from clients.
 func (s *Server) Serve(network, address string) (err error) {
 	var ln net.Listener
@@ -249,7 +249,7 @@ func (s *Server) Serve(network, address string) (err error) {
 	}
 }
 
-// ServeTLS starts and listens RCP requests.
+// ServeTLS starts and listens RPC requests.
 //It is blocked until receiving connectings from clients.
 func (s *Server) ServeTLS(network, address string, config *tls.Config) (err error) {
 	ln, err := tls.Listen(network, address, config)
@@ -344,7 +344,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	s.rpcServer.ServeCodec(wrapper)
 }
 
-// Start starts and listens RCP requests without blocking.
+// Start starts and listens RPC requests without blocking.
 func (s *Server) Start(network, address string) (err error) {
 	var ln net.Listener
 	ln, err = makeListener(network, address)
@@ -378,7 +378,7 @@ func (s *Server) Start(network, address string) (err error) {
 	return
 }
 
-// StartTLS starts and listens RCP requests without blocking.
+// StartTLS starts and listens RPC requests without blocking.
 func (s *Server) StartTLS(network, address string, config *tls.Config) (err error) {
 	ln, err := tls.Listen(network, address, config)
 	if err != nil {
