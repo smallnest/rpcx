@@ -2,6 +2,7 @@ package clientselector
 
 import (
 	"errors"
+	"log"
 	"math/rand"
 	"net"
 	"net/rpc"
@@ -72,7 +73,10 @@ func (s *EtcdClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []
 	for _, sv := range s.Servers {
 		ss := strings.Split(sv, "@")
 		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
-		if err == nil {
+		if err != nil {
+			log.Fatal("rpc client connect server failed. " + err.Error())
+			continue
+		} else {
 			clients = append(clients, c)
 		}
 	}
@@ -88,6 +92,7 @@ func (s *EtcdClientSelector) start() {
 	})
 
 	if err != nil {
+		log.Fatal("etcd new client failed. " + err.Error())
 		return
 	}
 	s.KeysAPI = client.NewKeysAPI(cli)

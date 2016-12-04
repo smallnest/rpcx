@@ -130,7 +130,7 @@ func (plugin *EtcdRegisterPlugin) forceMkdirs(path string) (err error) {
 	}
 	_, err = plugin.KeysAPI.Set(context.TODO(), path, "",
 		&client.SetOptions{
-			PrevExist: client.PrevIgnore,
+			PrevExist: client.PrevExist,
 			Dir:       true,
 		})
 
@@ -145,7 +145,8 @@ func (plugin *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metada
 		return
 	}
 	nodePath := fmt.Sprintf("%s/%s", plugin.BasePath, name)
-	if err = plugin.mkdirs(nodePath); err != nil {
+	if err = plugin.forceMkdirs(nodePath); err != nil {
+		log.Fatal(err.Error())
 		return
 	}
 
