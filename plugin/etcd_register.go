@@ -30,6 +30,11 @@ type EtcdRegisterPlugin struct {
 
 // Start starts to connect etcd cluster
 func (plugin *EtcdRegisterPlugin) Start() (err error) {
+	var (
+		resp     *client.Response
+		v        url.Values
+		nodePath string
+	)
 	cli, err := client.New(client.Config{
 		Endpoints:               plugin.EtcdServers,
 		Transport:               client.DefaultTransport,
@@ -40,7 +45,9 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 		return err
 	}
 	plugin.KeysAPI = client.NewKeysAPI(cli)
-	plugin.mkdirs(plugin.BasePath)
+	if err = plugin.mkdirs(plugin.BasePath); err != nil {
+		return
+	}
 
 	if plugin.UpdateInterval > 0 {
 		plugin.ticker = time.NewTicker(plugin.UpdateInterval)
@@ -51,15 +58,22 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 				//set this same metrics for all services at this server
 
 				for _, name := range plugin.Services {
-					plugin.mkdirs(fmt.Sprintf("%s/%s", plugin.BasePath, name))
+					if err = plugin.mkdirs(fmt.Sprintf("%s/%s", plugin.BasePath, name)); err != nil {
+						log.Fatal(err.Error())
+						continue
+					}
 
-					nodePath := fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
+					nodePath = fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
 
-					resp, err := plugin.KeysAPI.Get(context.TODO(), nodePath, &client.GetOptions{
+					resp, err = plugin.KeysAPI.Get(context.TODO(), nodePath, &client.GetOptions{
 						Recursive: false,
 					})
-					if err == nil {
-						v, _ := url.ParseQuery(resp.Node.Value)
+					if err != nil {
+						log.Fatal("get etcd key failed. " + err.Error())
+					} else {
+						if v, err = url.ParseQuery(resp.Node.Value); err != nil {
+							continue
+						}
 						v.Set("tps", string(data))
 
 						_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, v.Encode(), &client.SetOptions{
@@ -68,7 +82,7 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 						})
 
 						if err != nil {
-							log.Fatal(err)
+							log.Fatal("set etcd key failed. " + err.Error())
 						}
 					}
 
@@ -178,6 +192,21 @@ func (plugin *EtcdRegisterPlugin) Unregister(name string) (err error) {
 	if err != nil {
 		return
 	}
+	// because plugin.Start() method will be executed by timer continuously
+	// so it need to remove the service name from service list
+	if plugin.Services == nil || len(plugin.Services) <= 0 {
+		return nil
+	}
+	var index int = 0
+	for index = 0; index < len(plugin.Services); index++ {
+		if plugin.Services[index] == name {
+			break
+		}
+	}
+	if index != len(plugin.Services) {
+		plugin.Services = append(plugin.Services[:index], plugin.Services[index+1:]...)
+	}
+
 	return
 }
 
