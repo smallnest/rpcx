@@ -1,6 +1,9 @@
 package plugin
 
 import (
+	"errors"
+	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -27,11 +30,6 @@ func (plugin *ConsulRegisterPlugin) Start() (err error) {
 		plugin.consulConfig.Address = plugin.ConsulAddress
 	}
 	plugin.client, err = api.NewClient(plugin.consulConfig)
-
-	if err != nil {
-		return err
-	}
-
 	return
 }
 
@@ -42,8 +40,12 @@ func (plugin *ConsulRegisterPlugin) Close() {
 
 // Register handles registering event.
 func (plugin *ConsulRegisterPlugin) Register(name string, rcvr interface{}, metadata ...string) (err error) {
+	if "" == strings.TrimSpace(name) {
+		err = errors.New("register service `name` can't be empty!")
+		return
+	}
 	service := &api.AgentServiceRegistration{
-		ID:      name + "-" + plugin.ServiceAddress,
+		ID:      fmt.Sprintf("%s-%s", name, plugin.ServiceAddress),
 		Name:    name,
 		Address: plugin.ServiceAddress,
 		Tags:    []string{strings.Join(metadata, "&")},
@@ -54,33 +56,48 @@ func (plugin *ConsulRegisterPlugin) Register(name string, rcvr interface{}, meta
 		},
 	}
 	agent := plugin.client.Agent()
-	err = agent.ServiceRegister(service)
-	return
+	return agent.ServiceRegister(service)
 }
 
 // Unregister a service from consul but this service still exists in this node.
-func (plugin *ConsulRegisterPlugin) Unregister(name string) {
+func (plugin *ConsulRegisterPlugin) Unregister(name string) (err error) {
+	if "" == strings.TrimSpace(name) {
+		err = errors.New("Unregister service `name` can't be empty!")
+		return
+	}
 	agent := plugin.client.Agent()
-	id := name + "-" + plugin.ServiceAddress
-	agent.ServiceDeregister(id)
+	id := fmt.Sprintf("%s-%s", name, plugin.ServiceAddress)
+	return agent.ServiceDeregister(id)
 }
 
 // CheckPass sets check pass
-func (plugin *ConsulRegisterPlugin) CheckPass(name string) {
+func (plugin *ConsulRegisterPlugin) CheckPass(name string) (err error) {
+	if "" == strings.TrimSpace(name) {
+		err = errors.New("CheckPass service `name` can't be empty!")
+		return
+	}
 	agent := plugin.client.Agent()
-	id := name + "-" + plugin.ServiceAddress
-	agent.UpdateTTL("service:"+id, "", api.HealthPassing)
+	id := fmt.Sprintf("%s-%s", name, plugin.ServiceAddress)
+	return agent.UpdateTTL("service:"+id, "", api.HealthPassing)
 }
 
 // CheckFail sets check fail
-func (plugin *ConsulRegisterPlugin) CheckFail(name string) {
+func (plugin *ConsulRegisterPlugin) CheckFail(name string) (err error) {
+	if "" == strings.TrimSpace(name) {
+		err = errors.New("CheckFail service `name` can't be empty!")
+		return
+	}
 	agent := plugin.client.Agent()
-	id := name + "-" + plugin.ServiceAddress
-	agent.UpdateTTL("service:"+id, "", api.HealthCritical)
+	id := fmt.Sprintf("%s-%s", name, plugin.ServiceAddress)
+	return agent.UpdateTTL("service:"+id, "", api.HealthCritical)
 }
 
 // FindServices gets a service list by name
 func (plugin *ConsulRegisterPlugin) FindServices(name string) []*api.AgentService {
+	if "" == strings.TrimSpace(name) {
+		log.Fatal("FindServices service `name` can't be empty!")
+		return nil
+	}
 	agent := plugin.client.Agent()
 	ass, err := agent.Services()
 	if err != nil {

@@ -1,6 +1,8 @@
 package plugin
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"net"
 	"net/url"
@@ -49,9 +51,9 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 				//set this same metrics for all services at this server
 
 				for _, name := range plugin.Services {
-					plugin.mkdirs(plugin.BasePath + "/" + name)
+					plugin.mkdirs(fmt.Sprintf("%s/%s", plugin.BasePath, name))
 
-					nodePath := plugin.BasePath + "/" + name + "/" + plugin.ServiceAddress
+					nodePath := fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
 
 					resp, err := plugin.KeysAPI.Get(context.TODO(), nodePath, &client.GetOptions{
 						Recursive: false,
@@ -94,6 +96,10 @@ func (plugin *EtcdRegisterPlugin) Close() {
 }
 
 func (plugin *EtcdRegisterPlugin) mkdirs(path string) (err error) {
+	if "" == strings.TrimSpace(path) {
+		err = errors.New("etcd dir `path` can't be empty!")
+		return
+	}
 	_, err = plugin.KeysAPI.Set(context.TODO(), path, "",
 		&client.SetOptions{
 			Dir:       true,
@@ -104,6 +110,10 @@ func (plugin *EtcdRegisterPlugin) mkdirs(path string) (err error) {
 }
 
 func (plugin *EtcdRegisterPlugin) forceMkdirs(path string) (err error) {
+	if "" == strings.TrimSpace(path) {
+		err = errors.New("etcd dir `path` can't be empty!")
+		return
+	}
 	_, err = plugin.KeysAPI.Set(context.TODO(), path, "",
 		&client.SetOptions{
 			PrevExist: client.PrevIgnore,
@@ -116,10 +126,16 @@ func (plugin *EtcdRegisterPlugin) forceMkdirs(path string) (err error) {
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
 func (plugin *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata ...string) (err error) {
-	nodePath := plugin.BasePath + "/" + name
-	err = plugin.mkdirs(nodePath)
+	if "" == strings.TrimSpace(name) {
+		err = errors.New("service `name` can't be empty!")
+		return
+	}
+	nodePath := fmt.Sprintf("%s/%s", plugin.BasePath, name)
+	if err = plugin.mkdirs(nodePath); err != nil {
+		return
+	}
 
-	nodePath = nodePath + "/" + plugin.ServiceAddress
+	nodePath = fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
 
 	_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, strings.Join(metadata, "&"),
 		&client.SetOptions{
@@ -128,18 +144,41 @@ func (plugin *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metada
 		})
 
 	if err != nil {
-		return err
+		return
 	}
 
-	plugin.Services = append(plugin.Services, name)
+	if !IsContains(plugin.Services, name) {
+		plugin.Services = append(plugin.Services, name)
+	}
 	return
 }
 
-// Unregister a service from zookeeper but this service still exists in this node.
-func (plugin *EtcdRegisterPlugin) Unregister(name string) {
-	nodePath := plugin.BasePath + "/" + name + "/" + plugin.ServiceAddress
+func IsContains(list []string, element string) (exist bool) {
+	exist = false
+	if list == nil || len(list) <= 0 {
+		return
+	}
+	for index := 0; index < len(list); index++ {
+		if list[index] == element {
+			return true
+		}
+	}
+	return
+}
 
-	plugin.KeysAPI.Delete(context.TODO(), nodePath, &client.DeleteOptions{Recursive: true})
+// Unregister a service from etcd but this service still exists in this node.
+func (plugin *EtcdRegisterPlugin) Unregister(name string) (err error) {
+	if "" == strings.TrimSpace(name) {
+		err = errors.New("unregister service `name` cann't be empty!")
+		return
+	}
+	nodePath := fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
+
+	_, err = plugin.KeysAPI.Delete(context.TODO(), nodePath, &client.DeleteOptions{Recursive: true})
+	if err != nil {
+		return
+	}
+	return
 }
 
 // Name return name of this plugin.
