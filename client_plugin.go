@@ -40,6 +40,7 @@ func (p *ClientPluginContainer) Remove(pluginName string) error {
 	for i := range p.plugins {
 		if p.GetName(p.plugins[i]) == pluginName {
 			indexToRemove = i
+			break
 		}
 	}
 	if indexToRemove == -1 {
