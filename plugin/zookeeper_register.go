@@ -175,6 +175,21 @@ func (plugin *ZooKeeperRegisterPlugin) Unregister(name string) (err error) {
 			log.Printf("delete: ok\n")
 		}
 	}
+
+	// because plugin.Start() method will be executed by timer continuously
+	// so it need to remove the service name from service list
+	if plugin.Services == nil || len(plugin.Services) <= 0 {
+		return nil
+	}
+	var index int = 0
+	for index = 0; index < len(plugin.Services); index++ {
+		if plugin.Services[index] == name {
+			break
+		}
+	}
+	if index != len(plugin.Services) {
+		plugin.Services = append(plugin.Services[:index], plugin.Services[index+1:]...)
+	}
 	return
 }
 
