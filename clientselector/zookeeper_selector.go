@@ -33,6 +33,7 @@ type ZooKeeperClientSelector struct {
 	currentServer      int
 	len                int
 	HashServiceAndArgs HashServiceAndArgs
+	ConsistentAddrStrFunction ConsistentAddrStrFunction
 	Client             *rpcx.Client
 }
 
@@ -214,6 +215,10 @@ func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, o
 		return s.getCachedClient(server, clientCodecFunc)
 
 	case rpcx.ConsistentHash:
+		if s.ConsistentAddrStrFunction != nil {
+			server := s.ConsistentAddrStrFunction(options)
+			return s.getCachedClient(server, clientCodecFunc)
+		}
 		if s.HashServiceAndArgs == nil {
 			s.HashServiceAndArgs = JumpConsistentHash
 		}

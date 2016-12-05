@@ -32,6 +32,10 @@ func HashString(s string) uint64 {
 // HashServiceAndArgs define a hash function
 type HashServiceAndArgs func(len int, options ...interface{}) int
 
+// ConsistentFunction define a hash function
+// Return service address, like "tcp@127.0.0.1:8970"
+type ConsistentAddrStrFunction func(options ...interface{}) string
+
 // JumpConsistentHash selects a server by serviceMethod and args
 func JumpConsistentHash(len int, options ...interface{}) int {
 	keyString := ""
