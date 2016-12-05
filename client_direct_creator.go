@@ -48,15 +48,15 @@ func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, add
 }
 
 func wrapConn(c *Client, clientCodecFunc ClientCodecFunc, conn net.Conn) (*rpc.Client, error) {
+	if c == nil || c.PluginContainer == nil {
+		return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
+	}
+	
 	var ok bool
 	if conn, ok = c.PluginContainer.DoPostConnected(conn); !ok {
 		return nil, errors.New("failed to do post connected")
 	}
-
-	if c == nil || c.PluginContainer == nil {
-		return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
-	}
-
+	
 	wrapper := newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn), conn)
 	wrapper.Timeout = c.Timeout
 	wrapper.ReadTimeout = c.ReadTimeout
