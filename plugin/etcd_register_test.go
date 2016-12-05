@@ -21,14 +21,14 @@ func TestEtcdRegisterPlugin_Register(t *testing.T) {
 
 	err := plugin.Start()
 	if err != nil {
-		t.Errorf("can't start this plugin: %v", err)
+		t.Log("must start a default etcd for this test")
+		return
 	}
 
 	err = plugin.Register("ABC", "aService")
 
 	if err != nil {
-		t.Log("must start a default etcd for this test")
-		return
+		t.Errorf("can't register this service")
 	}
 
 	plugin.KeysAPI.Get(context.TODO(), plugin.BasePath+"/ABC/tcp@127.0.0.1:1234", nil)
