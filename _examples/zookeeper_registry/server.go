@@ -38,7 +38,7 @@ func main() {
 		ZooKeeperServers: []string{*zk},
 		BasePath:         "/rpcx",
 		Metrics:          metrics.NewRegistry(),
-		Services:         make([]string, 1),
+		Services:         make([]string, 0),
 		UpdateInterval:   10 * time.Second,
 	}
 	rplugin.Start()
