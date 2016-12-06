@@ -42,10 +42,12 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 	})
 
 	if err != nil {
-		return err
+		log.Println("new client: " + err.Error())
+		return
 	}
 	plugin.KeysAPI = client.NewKeysAPI(cli)
-	if err = plugin.mkdirs(plugin.BasePath); err != nil {
+	if err = plugin.forceMkdirs(plugin.BasePath); err != nil {
+		log.Println(err.Error())
 		return
 	}
 
@@ -59,7 +61,7 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 
 				for _, name := range plugin.Services {
 					if err = plugin.mkdirs(fmt.Sprintf("%s/%s", plugin.BasePath, name)); err != nil {
-						log.Fatal(err.Error())
+						log.Println(err.Error())
 						continue
 					}
 
@@ -69,7 +71,7 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 						Recursive: false,
 					})
 					if err != nil {
-						log.Fatal("get etcd key failed. " + err.Error())
+						log.Println("get etcd key failed. " + err.Error())
 					} else {
 						if v, err = url.ParseQuery(resp.Node.Value); err != nil {
 							continue
@@ -82,7 +84,7 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 						})
 
 						if err != nil {
-							log.Fatal("set etcd key failed. " + err.Error())
+							log.Println("set etcd key failed. " + err.Error())
 						}
 					}
 
