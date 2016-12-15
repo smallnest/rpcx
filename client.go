@@ -67,6 +67,8 @@ type ClientSelector interface {
 	SetSelectMode(SelectMode)
 	//AllClients returns all Clients
 	AllClients(clientCodecFunc ClientCodecFunc) []*rpc.Client
+	//handle failed client
+	HandleFailedClient(client *rpc.Client)
 }
 
 // DirectClientSelector is used to a direct rpc server.
@@ -160,12 +162,15 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 		return c.clientForking(serviceMethod, args, reply)
 	}
 
+	var rpcClient *rpc.Client
 	//select a rpc.Client and call
-	rpcClient, err := c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
+	rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
 	//selected
 	if err == nil && rpcClient != nil {
 		if err = rpcClient.Call(serviceMethod, args, reply); err == nil {
 			return //call successful
+		} else {
+			c.ClientSelector.HandleFailedClient(rpcClient)
 		}
 	}
 
@@ -179,6 +184,8 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 			err = rpcClient.Call(serviceMethod, args, reply)
 			if err == nil {
 				return nil
+			} else {
+				c.ClientSelector.HandleFailedClient(rpcClient)
 			}
 		}
 	} else if c.FailMode == Failtry {
@@ -190,6 +197,8 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 				err = rpcClient.Call(serviceMethod, args, reply)
 				if err == nil {
 					return nil
+				} else {
+					c.ClientSelector.HandleFailedClient(rpcClient)
 				}
 			}
 		}

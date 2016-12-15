@@ -94,11 +94,22 @@ func (s *MultiClientSelector) getCachedClient(network string, address string, cl
 	c := s.clientAndServer[key]
 	if c != nil {
 		return c, nil
+
 	}
 	c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, network, address, s.dailTimeout)
 
 	s.clientAndServer[key] = c
 	return c, err
+}
+
+func (s *MultiClientSelector) HandleFailedClient(client *rpc.Client) {
+	for k, v := range s.clientAndServer {
+		if v == client {
+			delete(s.clientAndServer, k)
+		}
+		client.Close()
+		break
+	}
 }
 
 // Select returns a rpc client

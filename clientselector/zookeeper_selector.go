@@ -16,25 +16,25 @@ import (
 
 // ZooKeeperClientSelector is used to select a rpc server from zookeeper.
 type ZooKeeperClientSelector struct {
-	ZKServers          []string
-	zkConn             *zk.Conn
-	sessionTimeout     time.Duration
-	BasePath           string //should endwith serviceName
-	Servers            []string
-	Group              string
-	clientAndServer    map[string]*rpc.Client
-	metadata           map[string]string
-	Latitude           float64
-	Longitude          float64
-	WeightedServers    []*Weighted
-	SelectMode         rpcx.SelectMode
-	dailTimeout        time.Duration
-	rnd                *rand.Rand
-	currentServer      int
-	len                int
-	HashServiceAndArgs HashServiceAndArgs
+	ZKServers                 []string
+	zkConn                    *zk.Conn
+	sessionTimeout            time.Duration
+	BasePath                  string //should endwith serviceName
+	Servers                   []string
+	Group                     string
+	clientAndServer           map[string]*rpc.Client
+	metadata                  map[string]string
+	Latitude                  float64
+	Longitude                 float64
+	WeightedServers           []*Weighted
+	SelectMode                rpcx.SelectMode
+	dailTimeout               time.Duration
+	rnd                       *rand.Rand
+	currentServer             int
+	len                       int
+	HashServiceAndArgs        HashServiceAndArgs
 	ConsistentAddrStrFunction ConsistentAddrStrFunction
-	Client             *rpcx.Client
+	Client                    *rpcx.Client
 }
 
 // NewZooKeeperClientSelector creates a ZooKeeperClientSelector
@@ -195,6 +195,16 @@ func (s *ZooKeeperClientSelector) getCachedClient(server string, clientCodecFunc
 	c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
 	s.clientAndServer[server] = c
 	return c, err
+}
+
+func (s *ZooKeeperClientSelector) HandleFailedClient(client *rpc.Client) {
+	for k, v := range s.clientAndServer {
+		if v == client {
+			delete(s.clientAndServer, k)
+		}
+		client.Close()
+		break
+	}
 }
 
 //Select returns a rpc client

@@ -233,6 +233,16 @@ func (s *EtcdClientSelector) getCachedClient(server string, clientCodecFunc rpcx
 	return c, err
 }
 
+func (s *EtcdClientSelector) HandleFailedClient(client *rpc.Client) {
+	for k, v := range s.clientAndServer {
+		if v == client {
+			delete(s.clientAndServer, k)
+		}
+		client.Close()
+		break
+	}
+}
+
 // Select returns a rpc client
 func (s *EtcdClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	if s.len == 0 {

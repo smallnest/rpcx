@@ -146,6 +146,16 @@ func (s *ConsulClientSelector) getCachedClient(server string, clientCodecFunc rp
 	return c, err
 }
 
+func (s *ConsulClientSelector) HandleFailedClient(client *rpc.Client) {
+	for k, v := range s.clientAndServer {
+		if v == client {
+			delete(s.clientAndServer, k)
+		}
+		client.Close()
+		break
+	}
+}
+
 // Select returns a rpc client
 func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
 	if s.len == 0 {
