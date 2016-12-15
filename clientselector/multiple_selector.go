@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/rpc"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/smallnest/rpcx"
@@ -21,6 +22,7 @@ type ServerPeer struct {
 type MultiClientSelector struct {
 	Servers            []*ServerPeer
 	clientAndServer    map[string]*rpc.Client
+	clientRWMutex      sync.RWMutex
 	WeightedServers    []*Weighted
 	SelectMode         rpcx.SelectMode
 	dailTimeout        time.Duration
@@ -91,21 +93,27 @@ func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) [
 
 func (s *MultiClientSelector) getCachedClient(network string, address string, clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
 	key := network + "@" + address
+	s.clientRWMutex.RLock()
 	c := s.clientAndServer[key]
+	s.clientRWMutex.RUnlock()
 	if c != nil {
 		return c, nil
 
 	}
 	c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, network, address, s.dailTimeout)
 
+	s.clientRWMutex.Lock()
 	s.clientAndServer[key] = c
+	s.clientRWMutex.Unlock()
 	return c, err
 }
 
 func (s *MultiClientSelector) HandleFailedClient(client *rpc.Client) {
 	for k, v := range s.clientAndServer {
 		if v == client {
+			s.clientRWMutex.Lock()
 			delete(s.clientAndServer, k)
+			s.clientRWMutex.Unlock()
 		}
 		client.Close()
 		break

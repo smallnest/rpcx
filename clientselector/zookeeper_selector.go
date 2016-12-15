@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/samuel/go-zookeeper/zk"
@@ -23,6 +24,7 @@ type ZooKeeperClientSelector struct {
 	Servers                   []string
 	Group                     string
 	clientAndServer           map[string]*rpc.Client
+	clientRWMutex             sync.RWMutex
 	metadata                  map[string]string
 	Latitude                  float64
 	Longitude                 float64
@@ -177,9 +179,15 @@ func (s *ZooKeeperClientSelector) removeInactiveServers(inactiveServers []int) {
 		s.Servers = append(s.Servers[0:k], s.Servers[k+1:]...)
 		s.WeightedServers = append(s.WeightedServers[0:k], s.WeightedServers[k+1:]...)
 
+		s.clientRWMutex.RLock()
 		c := s.clientAndServer[removedServer]
+		s.clientRWMutex.Unlock()
 		if c != nil {
+			s.clientRWMutex.Lock()
 			delete(s.clientAndServer, removedServer)
+			s.clientRWMutex.Unlock()
+
+			//concurrent map read and map write issue?
 			delete(s.metadata, removedServer)
 			c.Close() //close connection to inactive server
 		}
@@ -187,20 +195,26 @@ func (s *ZooKeeperClientSelector) removeInactiveServers(inactiveServers []int) {
 }
 
 func (s *ZooKeeperClientSelector) getCachedClient(server string, clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
+	s.clientRWMutex.Lock()
 	c := s.clientAndServer[server]
+	s.clientRWMutex.Unlock()
 	if c != nil {
 		return c, nil
 	}
 	ss := strings.Split(server, "@") //
 	c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+	s.clientRWMutex.Lock()
 	s.clientAndServer[server] = c
+	s.clientRWMutex.Unlock()
 	return c, err
 }
 
 func (s *ZooKeeperClientSelector) HandleFailedClient(client *rpc.Client) {
 	for k, v := range s.clientAndServer {
 		if v == client {
+			s.clientRWMutex.Lock()
 			delete(s.clientAndServer, k)
+			s.clientRWMutex.Unlock()
 		}
 		client.Close()
 		break

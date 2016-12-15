@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/consul/api"
@@ -23,6 +24,7 @@ type ConsulClientSelector struct {
 	sessionTimeout     time.Duration
 	Servers            []*api.AgentService
 	clientAndServer    map[string]*rpc.Client
+	clientRWMutex      sync.RWMutex
 	WeightedServers    []*Weighted
 	ServiceName        string
 	SelectMode         rpcx.SelectMode
@@ -136,20 +138,26 @@ func (s *ConsulClientSelector) createWeighted(ass map[string]*api.AgentService) 
 }
 
 func (s *ConsulClientSelector) getCachedClient(server string, clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
+	s.clientRWMutex.RLock()
 	c := s.clientAndServer[server]
+	s.clientRWMutex.RUnlock()
 	if c != nil {
 		return c, nil
 	}
 	ss := strings.Split(server, "@") //
 	c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
+	s.clientRWMutex.Lock()
 	s.clientAndServer[server] = c
+	s.clientRWMutex.RUnlock()
 	return c, err
 }
 
 func (s *ConsulClientSelector) HandleFailedClient(client *rpc.Client) {
 	for k, v := range s.clientAndServer {
 		if v == client {
+			s.clientRWMutex.Lock()
 			delete(s.clientAndServer, k)
+			s.clientRWMutex.Unlock()
 		}
 		client.Close()
 		break
