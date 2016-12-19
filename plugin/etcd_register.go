@@ -137,7 +137,7 @@ func (plugin *EtcdRegisterPlugin) forceMkdirs(path string) (err error) {
 		})
 
 	if err != nil {
-		if err.(client.Error).Code == client.ErrorCodeNodeExist {
+		if e, ok := err.(client.Error); ok && e.Code == client.ErrorCodeNodeExist {
 			err = nil
 		}
 	}
