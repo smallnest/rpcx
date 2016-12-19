@@ -181,7 +181,7 @@ func (s *ZooKeeperClientSelector) removeInactiveServers(inactiveServers []int) {
 
 		s.clientRWMutex.RLock()
 		c := s.clientAndServer[removedServer]
-		s.clientRWMutex.Unlock()
+		s.clientRWMutex.RUnlock()
 		if c != nil {
 			s.clientRWMutex.Lock()
 			delete(s.clientAndServer, removedServer)

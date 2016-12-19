@@ -3,12 +3,12 @@ package main
 import "github.com/smallnest/rpcx"
 
 type Args struct {
-	A int `msg:"a"`
-	B int `msg:"b"`
+	A int
+	B int
 }
 
 type Reply struct {
-	C int `msg:"c"`
+	C int
 }
 
 type Arith int
@@ -16,10 +16,6 @@ type Arith int
 func (t *Arith) Mul(args *Args, reply *Reply) error {
 	reply.C = args.A * args.B
 	return nil
-}
-
-func (t *Arith) Error(args *Args, reply *Reply) error {
-	panic("ERROR")
 }
 
 type Arith2 int

@@ -42,7 +42,7 @@ func (plugin *ZooKeeperRegisterPlugin) Start() (err error) {
 					nodePath := fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
 					bytes, stat, err := plugin.Conn.Get(nodePath)
 					if err != nil {
-						log.Println(err.Error())
+						log.Printf("can't get data of node: %s, because of %v", nodePath, err.Error())
 					} else {
 						v, _ := url.ParseQuery(string(bytes))
 						v.Set("tps", string(data))
@@ -121,22 +121,25 @@ func mkdirs(conn *zk.Conn, path string) (err error) {
 // this service is registered at BASE/serviceName/thisIpAddress node
 func (plugin *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}, metadata ...string) (err error) {
 	if "" == strings.TrimSpace(name) {
-		err = errors.New("Register service `name` can't be empty!")
+		err = errors.New("Register service `name` can't be empty")
 		return
 	}
 	nodePath := fmt.Sprintf("%s/%s", plugin.BasePath, name)
 	if err = mkdirs(plugin.Conn, nodePath); err != nil {
+		err = fmt.Errorf("can't create path: %s because of %v", nodePath, err)
 		return
 	}
 
 	nodePath = fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
 	//delete existed node
-	var exists bool = false
+	exists := false
 	if exists, _, err = plugin.Conn.Exists(nodePath); err != nil {
+		err = fmt.Errorf("can't check path: %s because of %v", nodePath, err)
 		return
 	}
 	if exists {
 		if err = plugin.Conn.Delete(nodePath, -1); err != nil {
+			err = fmt.Errorf("can't delete path: %s because of %v", nodePath, err)
 			return
 		}
 	}
@@ -146,6 +149,7 @@ func (plugin *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}, m
 	acl := zk.WorldACL(zk.PermAll)
 	_, err = plugin.Conn.Create(nodePath, []byte(strings.Join(metadata, "&")), flags, acl)
 	if err != nil {
+		err = fmt.Errorf("can't create path: %s because of %v", nodePath, err)
 		return
 	}
 

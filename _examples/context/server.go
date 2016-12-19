@@ -8,13 +8,13 @@ import (
 )
 
 type Args struct {
-	A   int `msg:"a"`
-	B   int `msg:"b"`
+	A   int
+	B   int
 	ctx map[string]interface{}
 }
 
 type Reply struct {
-	C int `msg:"c"`
+	C int
 }
 
 func (a *Args) Value(key string) interface{} {

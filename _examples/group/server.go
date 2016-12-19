@@ -10,12 +10,12 @@ import (
 )
 
 type Args struct {
-	A int `msg:"a"`
-	B int `msg:"b"`
+	A int
+	B int
 }
 
 type Reply struct {
-	C int `msg:"c"`
+	C int
 }
 
 type Arith int
@@ -27,7 +27,7 @@ func (t *Arith) Mul(args *Args, reply *Reply) error {
 
 var addr = flag.String("s", "127.0.0.1:8972", "service address")
 var zk = flag.String("zk", "127.0.0.1:2181", "zookeeper URL")
-var n = flag.String("n", "127.0.0.1:2181", "Arith")
+var n = flag.String("n", "Arith", "service name")
 
 func main() {
 	flag.Parse()
