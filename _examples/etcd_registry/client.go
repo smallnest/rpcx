@@ -10,12 +10,12 @@ import (
 )
 
 type Args struct {
-	A int `msg:"a"`
-	B int `msg:"b"`
+	A int
+	B int
 }
 
 type Reply struct {
-	C int `msg:"c"`
+	C int
 }
 
 var e = flag.String("e", "http://127.0.0.1:2379", "etcd URL")

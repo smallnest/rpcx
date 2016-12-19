@@ -132,10 +132,15 @@ func (plugin *EtcdRegisterPlugin) forceMkdirs(path string) (err error) {
 	}
 	_, err = plugin.KeysAPI.Set(context.TODO(), path, "",
 		&client.SetOptions{
-			PrevExist: client.PrevIgnore,
+			PrevExist: client.PrevNoExist,
 			Dir:       true,
 		})
 
+	if err != nil {
+		if err.(client.Error).Code == client.ErrorCodeNodeExist {
+			err = nil
+		}
+	}
 	return
 }
 
