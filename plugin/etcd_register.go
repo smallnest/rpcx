@@ -47,7 +47,7 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 	}
 	plugin.KeysAPI = client.NewKeysAPI(cli)
 	if err = plugin.forceMkdirs(plugin.BasePath); err != nil {
-		log.Println(err.Error())
+		log.Printf("can't make dirs: %s because of %s", plugin.BasePath, err.Error())
 		return
 	}
 
@@ -132,7 +132,7 @@ func (plugin *EtcdRegisterPlugin) forceMkdirs(path string) (err error) {
 	}
 	_, err = plugin.KeysAPI.Set(context.TODO(), path, "",
 		&client.SetOptions{
-			PrevExist: client.PrevExist,
+			PrevExist: client.PrevIgnore,
 			Dir:       true,
 		})
 
