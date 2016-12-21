@@ -1,14 +1,22 @@
 package plugin
 
 import (
+	"os"
 	"testing"
 	"time"
+
+	"log"
 
 	"github.com/rcrowley/go-metrics"
 	"github.com/samuel/go-zookeeper/zk"
 )
 
 func TestZooKeeperRegisterPlugin_Register(t *testing.T) {
+	if os.Getenv("travis") != "" {
+		log.Println("test in travis-ci.org and it has not installed zookeeper, so don't test this case")
+		return
+	}
+
 	plugin := &ZooKeeperRegisterPlugin{
 		ServiceAddress:   "tcp@127.0.0.1:1234",
 		ZooKeeperServers: []string{"127.0.0.1:2181"},

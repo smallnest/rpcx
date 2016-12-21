@@ -1,6 +1,8 @@
 package plugin
 
 import (
+	"log"
+	"os"
 	"testing"
 	"time"
 
@@ -10,6 +12,11 @@ import (
 )
 
 func TestEtcdRegisterPlugin_Register(t *testing.T) {
+	if os.Getenv("travis") != "" {
+		log.Println("test in travis-ci.org and it has not installed etcd, so don't test this case")
+		return
+	}
+
 	plugin := &EtcdRegisterPlugin{
 		ServiceAddress: "tcp@127.0.0.1:1234",
 		EtcdServers:    []string{"http://127.0.0.1:2379"},
