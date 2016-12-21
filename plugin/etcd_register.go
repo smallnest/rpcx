@@ -60,10 +60,10 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 				//set this same metrics for all services at this server
 
 				for _, name := range plugin.Services {
-					if err = plugin.mkdirs(fmt.Sprintf("%s/%s", plugin.BasePath, name)); err != nil {
-						log.Println(err.Error())
-						continue
-					}
+					// if err = plugin.mkdirs(fmt.Sprintf("%s/%s", plugin.BasePath, name)); err != nil {
+					// 	log.Println(err.Error())
+					// 	continue
+					// }
 
 					nodePath = fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
 
