@@ -36,6 +36,7 @@ var selectModeStrs = [...]string{
 	"WeightedRoundRobin",
 	"WeightedICMP",
 	"ConsistentHash",
+	"Closest",
 }
 
 func (s SelectMode) String() string {
