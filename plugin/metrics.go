@@ -72,12 +72,12 @@ func (p *MetricsPlugin) PostWriteResponse(r *rpc.Response, body interface{}) err
 	m := metrics.GetOrRegisterMeter("service_"+r.ServiceMethod+"_Write_Counter", p.Registry)
 	m.Mark(1)
 
-	p.mapLock.RLock()
+	p.mapLock.Lock()
 	s := r.Seq
 	t := p.timeSeqMap[s]
 	r.Seq = p.internalSeqMap[s]
 	delete(p.internalSeqMap, s)
-	p.mapLock.RUnlock()
+	p.mapLock.Unlock()
 
 	if t > 0 {
 		t = time.Now().UnixNano() - t
