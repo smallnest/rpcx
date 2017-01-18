@@ -26,18 +26,27 @@ func main() {
 
 	s := clientselector.NewMultiClientSelector(servers, rpcx.RandomSelect, 10*time.Second)
 
-	clientPool := &sync.Pool{
-		New: func() interface{} {
+	clientPool := &pool{
+		max: 100,
+		New: func() *rpcx.Client {
 			return rpcx.NewClient(s)
 		},
 	}
-	for i := 0; i < 10000; i++ {
-		callServer(clientPool, s)
+
+	var sg sync.WaitGroup
+	sg.Add(1000)
+	for i := 0; i < 1000; i++ {
+		go callServer(sg, clientPool, s)
+		time.Sleep(10 * time.Millisecond)
 	}
+
+	sg.Wait()
+	clientPool.Close()
+
 }
 
-func callServer(clientPool *sync.Pool, s rpcx.ClientSelector) {
-	client := clientPool.Get().(*rpcx.Client)
+func callServer(sg sync.WaitGroup, clientPool *pool, s rpcx.ClientSelector) {
+	client := clientPool.Get()
 
 	args := &Args{7, 8}
 	var reply Reply
@@ -49,4 +58,54 @@ func callServer(clientPool *sync.Pool, s rpcx.ClientSelector) {
 	}
 
 	clientPool.Put(client)
+	sg.Done()
+}
+
+// client Pool
+
+type pool struct {
+	max     int
+	clients []*rpcx.Client
+	sync.Mutex
+	size int
+	New  func() *rpcx.Client
+}
+
+func (p *pool) Get() (c *rpcx.Client) {
+	p.Lock()
+	defer p.Unlock()
+
+	if p.size < 1 {
+		return p.New()
+	}
+
+	c = p.clients[0]
+	p.clients = p.clients[1:]
+	p.size--
+	return c
+}
+
+func (p *pool) Put(c *rpcx.Client) {
+	p.Lock()
+	defer p.Unlock()
+
+	if p.size > p.max {
+		c.Close()
+		return
+	}
+
+	p.clients = append(p.clients, c)
+	p.size++
+}
+
+func (p *pool) Close() {
+	p.Lock()
+	defer p.Unlock()
+
+	for _, c := range p.clients {
+		c.Close()
+	}
+
+	p.clients = p.clients[:0]
+	p.size = 0
 }
