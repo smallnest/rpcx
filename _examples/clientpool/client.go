@@ -75,6 +75,7 @@ func (p *pool) Get() (c *rpcx.Client) {
 	p.Lock()
 	defer p.Unlock()
 
+	//always return a client
 	if p.size < 1 {
 		return p.New()
 	}
@@ -89,7 +90,7 @@ func (p *pool) Put(c *rpcx.Client) {
 	p.Lock()
 	defer p.Unlock()
 
-	if p.size > p.max {
+	if p.size >= p.max {
 		c.Close()
 		return
 	}
