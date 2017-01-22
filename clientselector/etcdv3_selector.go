@@ -46,6 +46,34 @@ type EtcdV3ClientSelector struct {
 	UpdateIntervalNum 	int64
 }
 
+//SetClient set a Client in order that clientSelector can uses it
+func (this *EtcdV3ClientSelector) SetClient(c *rpcx.Client) {
+	this.Client = c
+}
+
+//SetSelectMode sets SelectMode
+func (this *EtcdV3ClientSelector) SetSelectMode(sm rpcx.SelectMode) {
+	this.SelectMode = sm
+}
+
+//AllClients returns rpc.Clients to all servers
+func (this *EtcdV3ClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
+	var clients []*rpc.Client
+
+	for _, sv := range this.Servers {
+		ss := strings.Split(sv, "@")
+		c, err := rpcx.NewDirectRPCClient(this.Client, clientCodecFunc, ss[0], ss[1], this.dailTimeout)
+		if err != nil {
+			log.Fatal("rpc client connect server failed. " + err.Error())
+			continue
+		} else {
+			clients = append(clients, c)
+		}
+	}
+
+	return clients
+}
+
 // NewEtcdClientSelector creates a EtcdClientSelector
 func NewEtcdV3ClientSelector(etcdServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration) *EtcdV3ClientSelector {
 	selector := &EtcdV3ClientSelector{
