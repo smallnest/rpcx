@@ -14,7 +14,6 @@ import (
 	"net"
 	"net/url"
 	"strconv"
-	"fmt"
 	"errors"
 )
 
@@ -120,16 +119,14 @@ func (this *EtcdV3ClientSelector) watch() {
 	watcher := this.KeysAPI.Watch(context.Background(),this.BasePath, clientv3.WithPrefix())
 	for wresp := range watcher {
 		for _,ev := range wresp.Events {
-			fmt.Printf("%s %q:%q\n",ev.Type,ev.Kv.Key,ev.Kv.Value)
-			if ev.Type == "PUT" || ev.Type == "DELETE" {
-				this.pullServers()
-				if ev.Kv.Value != "dir" {
-					removedServer := strings.TrimPrefix(ev.Kv.Key, this.BasePath+"/")
-					this.clientRWMutex.Lock()
-					delete(this.clientAndServer,removedServer)
-					this.clientRWMutex.Unlock()
+			//fmt.Printf("%s %q:%q\n",ev.Type,ev.Kv.Key,ev.Kv.Value)
+			this.pullServers()
+			if string(ev.Kv.Value) != "dir" {
+				removedServer := strings.TrimPrefix(string(ev.Kv.Key), this.BasePath+"/")
+				this.clientRWMutex.Lock()
+				delete(this.clientAndServer,removedServer)
+				this.clientRWMutex.Unlock()
 
-				}
 			}
 		}
 	}
@@ -142,7 +139,7 @@ func (this *EtcdV3ClientSelector) pullServers() {
 		if len(resp.Kvs) > 0 {
 			var servers []string
 			for _, n := range resp.Kvs {
-				servers = append(servers, strings.TrimPrefix(n.Key, this.BasePath+"/"))
+				servers = append(servers, strings.TrimPrefix(string(n.Key), this.BasePath+"/"))
 
 			}
 			this.Servers = servers
@@ -182,10 +179,10 @@ func (this *EtcdV3ClientSelector) createWeighted(nodes []*mvccpb.KeyValue) {
 	var inactiveServers []int
 
 	for i, n := range nodes {
-		key := strings.TrimPrefix(n.Key, this.BasePath+"/")
+		key := strings.TrimPrefix(string(n.Key), this.BasePath+"/")
 		this.WeightedServers[i] = &Weighted{Server: key, Weight: 1, EffectiveWeight: 1}
-		this.metadata[key] = n.Value
-		if v, err := url.ParseQuery(n.Value); err == nil {
+		this.metadata[key] = string(n.Value)
+		if v, err := url.ParseQuery(string(n.Value)); err == nil {
 			w := v.Get("weight")
 			state := v.Get("state")
 			group := v.Get("group")
