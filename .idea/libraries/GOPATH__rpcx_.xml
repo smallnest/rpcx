@@ -1,0 +1,35 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;rpcx&gt;">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../../../study" />
+      <root url="file://$PROJECT_DIR$/../.." />
+      <root url="file://$PROJECT_DIR$/../../../golang.org" />
+      <root url="file://$PROJECT_DIR$/../../../ip_scan" />
+      <root url="file://$PROJECT_DIR$/../../../services" />
+      <root url="file://$PROJECT_DIR$/../../../lxptest" />
+      <root url="file://$PROJECT_DIR$/../../../test" />
+      <root url="file://$PROJECT_DIR$/../../../lxp" />
+      <root url="file://$PROJECT_DIR$/../../../goinone" />
+      <root url="file://$PROJECT_DIR$/../../../google.golang.org" />
+      <root url="file://$PROJECT_DIR$/../../../.idea" />
+      <root url="file://$PROJECT_DIR$/../../../gopkg.in" />
+    </CLASSES>
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../../../study" />
+      <root url="file://$PROJECT_DIR$/../.." />
+      <root url="file://$PROJECT_DIR$/../../../golang.org" />
+      <root url="file://$PROJECT_DIR$/../../../ip_scan" />
+      <root url="file://$PROJECT_DIR$/../../../services" />
+      <root url="file://$PROJECT_DIR$/../../../lxptest" />
+      <root url="file://$PROJECT_DIR$/../../../test" />
+      <root url="file://$PROJECT_DIR$/../../../lxp" />
+      <root url="file://$PROJECT_DIR$/../../../goinone" />
+      <root url="file://$PROJECT_DIR$/../../../google.golang.org" />
+      <root url="file://$PROJECT_DIR$/../../../.idea" />
+      <root url="file://$PROJECT_DIR$/../../../gopkg.in" />
+    </SOURCES>
+    <excluded>
+      <root url="file://$PROJECT_DIR$" />
+    </excluded>
+  </library>
+</component>
