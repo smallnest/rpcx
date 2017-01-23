@@ -128,7 +128,7 @@ func (p *EtcdV3RegisterPlugin) Put(key, value string, opts ...clientv3.OpOption)
 
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
-func (p *EtcdV3RegisterPlugin) Register(name string, metadata ...string) (err error) {
+func (p *EtcdV3RegisterPlugin) Register(name string, rcvr interface{}, metadata ...string) (err error) {
 	if "" == strings.TrimSpace(name) {
 		err = errors.New("service `name` can't be empty!")
 		return
@@ -142,6 +142,7 @@ func (p *EtcdV3RegisterPlugin) Register(name string, metadata ...string) (err er
 
 	err = p.Put(nodePath, strings.Join(metadata, "&"))
 	if err != nil {
+		log.Printf("failed to put service meta: %+v", err)
 		return
 	}
 
