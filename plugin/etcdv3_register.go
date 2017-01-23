@@ -132,12 +132,12 @@ func (this *EtcdV3RegisterPlugin) Register(name string, metadata ...string) (err
 		err = errors.New("service `name` can't be empty!")
 		return
 	}
-	nodePath := fmt.Sprintf("%s/%s", this.BasePath, name)
-	if err = this.Put(nodePath,"dir"); err != nil {
-		log.Fatal(err.Error())
-		return
-	}
-	nodePath = fmt.Sprintf("%s/%s/%s", this.BasePath, name, this.ServiceAddress)
+	//nodePath := fmt.Sprintf("%s/%s", this.BasePath, name)
+	//if err = this.Put(nodePath,"dir"); err != nil {
+	//	log.Fatal(err.Error())
+	//	return
+	//}
+	nodePath := fmt.Sprintf("%s/%s/%s", this.BasePath, name, this.ServiceAddress)
 
 	err = this.Put(nodePath,strings.Join(metadata,"&"))
 	if err != nil {

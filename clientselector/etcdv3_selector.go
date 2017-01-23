@@ -121,13 +121,10 @@ func (this *EtcdV3ClientSelector) watch() {
 		for _,ev := range wresp.Events {
 			//fmt.Printf("%s %q:%q\n",ev.Type,ev.Kv.Key,ev.Kv.Value)
 			this.pullServers()
-			if string(ev.Kv.Value) != "dir" {
-				removedServer := strings.TrimPrefix(string(ev.Kv.Key), this.BasePath+"/")
-				this.clientRWMutex.Lock()
-				delete(this.clientAndServer,removedServer)
-				this.clientRWMutex.Unlock()
-
-			}
+			removedServer := strings.TrimPrefix(string(ev.Kv.Key), this.BasePath+"/")
+			this.clientRWMutex.Lock()
+			delete(this.clientAndServer,removedServer)
+			this.clientRWMutex.Unlock()
 		}
 	}
 }
