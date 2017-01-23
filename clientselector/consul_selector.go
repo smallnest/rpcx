@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/consul/api"
-	"github.com/smallnest/rpcx"
+	"github.com/lflxp/rpcx"
 )
 
 // ConsulClientSelector is used to select a rpc server from consul.

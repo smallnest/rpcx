@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/smallnest/rpcx"
+	"github.com/lflxp/rpcx"
 )
 
 // ServerPeer is

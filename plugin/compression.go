@@ -3,7 +3,7 @@ package plugin
 import (
 	"net"
 
-	"github.com/smallnest/rpcx"
+	"github.com/lflxp/rpcx"
 )
 
 // CompressionPlugin can compress responses and decompress requests
