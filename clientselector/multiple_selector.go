@@ -82,7 +82,7 @@ func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) [
 	var clients []*rpc.Client
 
 	for _, sv := range s.Servers {
-		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, sv.Network, sv.Address, s.dailTimeout)
+		c, err := s.getCachedClient(sv.Network, sv.Address, clientCodecFunc)
 		if err == nil {
 			clients = append(clients, c)
 		}
