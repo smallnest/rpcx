@@ -29,14 +29,14 @@ type EtcdRegisterPlugin struct {
 }
 
 // Start starts to connect etcd cluster
-func (plugin *EtcdRegisterPlugin) Start() (err error) {
+func (p *EtcdRegisterPlugin) Start() (err error) {
 	var (
 		resp     *client.Response
 		v        url.Values
 		nodePath string
 	)
 	cli, err := client.New(client.Config{
-		Endpoints:               plugin.EtcdServers,
+		Endpoints:               p.EtcdServers,
 		Transport:               client.DefaultTransport,
 		HeaderTimeoutPerRequest: 5 * time.Second,
 	})
@@ -45,29 +45,29 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 		log.Println("new client: " + err.Error())
 		return
 	}
-	plugin.KeysAPI = client.NewKeysAPI(cli)
-	if err = plugin.forceMkdirs(plugin.BasePath); err != nil {
-		log.Printf("can't make dirs: %s because of %s", plugin.BasePath, err.Error())
+	p.KeysAPI = client.NewKeysAPI(cli)
+	if err = p.forceMkdirs(p.BasePath); err != nil {
+		log.Printf("can't make dirs: %s because of %s", p.BasePath, err.Error())
 		return
 	}
 
-	if plugin.UpdateInterval > 0 {
-		plugin.ticker = time.NewTicker(plugin.UpdateInterval)
+	if p.UpdateInterval > 0 {
+		p.ticker = time.NewTicker(p.UpdateInterval)
 		go func() {
-			for range plugin.ticker.C {
-				clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Metrics)
+			for range p.ticker.C {
+				clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
 				data := strconv.FormatInt(clientMeter.Count()/60, 10)
 				//set this same metrics for all services at this server
 
-				for _, name := range plugin.Services {
-					// if err = plugin.mkdirs(fmt.Sprintf("%s/%s", plugin.BasePath, name)); err != nil {
+				for _, name := range p.Services {
+					// if err = p.mkdirs(fmt.Sprintf("%s/%s", p.BasePath, name)); err != nil {
 					// 	log.Println(err.Error())
 					// 	continue
 					// }
 
-					nodePath = fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
+					nodePath = fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
 
-					resp, err = plugin.KeysAPI.Get(context.TODO(), nodePath, &client.GetOptions{
+					resp, err = p.KeysAPI.Get(context.TODO(), nodePath, &client.GetOptions{
 						Recursive: false,
 					})
 					if err != nil {
@@ -78,9 +78,9 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 						}
 						v.Set("tps", string(data))
 
-						_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, v.Encode(), &client.SetOptions{
+						_, err = p.KeysAPI.Set(context.TODO(), nodePath, v.Encode(), &client.SetOptions{
 							PrevExist: client.PrevIgnore,
-							TTL:       plugin.UpdateInterval + 10*time.Second,
+							TTL:       p.UpdateInterval + 10*time.Second,
 						})
 
 						if err != nil {
@@ -98,25 +98,25 @@ func (plugin *EtcdRegisterPlugin) Start() (err error) {
 }
 
 // HandleConnAccept handles connections from clients
-func (plugin *EtcdRegisterPlugin) HandleConnAccept(net.Conn) bool {
-	if plugin.Metrics != nil {
-		clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Metrics)
+func (p *EtcdRegisterPlugin) HandleConnAccept(net.Conn) bool {
+	if p.Metrics != nil {
+		clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
 		clientMeter.Mark(1)
 	}
 	return true
 }
 
 //Close closes this plugin
-func (plugin *EtcdRegisterPlugin) Close() {
-	plugin.ticker.Stop()
+func (p *EtcdRegisterPlugin) Close() {
+	p.ticker.Stop()
 }
 
-func (plugin *EtcdRegisterPlugin) mkdirs(path string) (err error) {
+func (p *EtcdRegisterPlugin) mkdirs(path string) (err error) {
 	if "" == strings.TrimSpace(path) {
 		err = errors.New("etcd dir `path` can't be empty!")
 		return
 	}
-	_, err = plugin.KeysAPI.Set(context.TODO(), path, "",
+	_, err = p.KeysAPI.Set(context.TODO(), path, "",
 		&client.SetOptions{
 			Dir:       true,
 			PrevExist: client.PrevNoExist,
@@ -125,12 +125,12 @@ func (plugin *EtcdRegisterPlugin) mkdirs(path string) (err error) {
 	return
 }
 
-func (plugin *EtcdRegisterPlugin) forceMkdirs(path string) (err error) {
+func (p *EtcdRegisterPlugin) forceMkdirs(path string) (err error) {
 	if "" == strings.TrimSpace(path) {
 		err = errors.New("etcd dir `path` can't be empty!")
 		return
 	}
-	_, err = plugin.KeysAPI.Set(context.TODO(), path, "",
+	_, err = p.KeysAPI.Set(context.TODO(), path, "",
 		&client.SetOptions{
 			PrevExist: client.PrevNoExist,
 			Dir:       true,
@@ -146,31 +146,31 @@ func (plugin *EtcdRegisterPlugin) forceMkdirs(path string) (err error) {
 
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
-func (plugin *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata ...string) (err error) {
+func (p *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata ...string) (err error) {
 	if "" == strings.TrimSpace(name) {
 		err = errors.New("service `name` can't be empty!")
 		return
 	}
-	nodePath := fmt.Sprintf("%s/%s", plugin.BasePath, name)
-	if err = plugin.forceMkdirs(nodePath); err != nil {
+	nodePath := fmt.Sprintf("%s/%s", p.BasePath, name)
+	if err = p.forceMkdirs(nodePath); err != nil {
 		log.Fatal(err.Error())
 		return
 	}
 
-	nodePath = fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
+	nodePath = fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
 
-	_, err = plugin.KeysAPI.Set(context.TODO(), nodePath, strings.Join(metadata, "&"),
+	_, err = p.KeysAPI.Set(context.TODO(), nodePath, strings.Join(metadata, "&"),
 		&client.SetOptions{
 			PrevExist: client.PrevIgnore,
-			TTL:       plugin.UpdateInterval + 10*time.Second,
+			TTL:       p.UpdateInterval + 10*time.Second,
 		})
 
 	if err != nil {
 		return
 	}
 
-	if !IsContains(plugin.Services, name) {
-		plugin.Services = append(plugin.Services, name)
+	if !IsContains(p.Services, name) {
+		p.Services = append(p.Services, name)
 	}
 	return
 }
@@ -189,36 +189,36 @@ func IsContains(list []string, element string) (exist bool) {
 }
 
 // Unregister a service from etcd but this service still exists in this node.
-func (plugin *EtcdRegisterPlugin) Unregister(name string) (err error) {
+func (p *EtcdRegisterPlugin) Unregister(name string) (err error) {
 	if "" == strings.TrimSpace(name) {
 		err = errors.New("unregister service `name` cann't be empty!")
 		return
 	}
-	nodePath := fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
+	nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
 
-	_, err = plugin.KeysAPI.Delete(context.TODO(), nodePath, &client.DeleteOptions{Recursive: true})
+	_, err = p.KeysAPI.Delete(context.TODO(), nodePath, &client.DeleteOptions{Recursive: true})
 	if err != nil {
 		return
 	}
-	// because plugin.Start() method will be executed by timer continuously
+	// because p.Start() method will be executed by timer continuously
 	// so it need to remove the service name from service list
-	if plugin.Services == nil || len(plugin.Services) <= 0 {
+	if p.Services == nil || len(p.Services) <= 0 {
 		return nil
 	}
 	var index int = 0
-	for index = 0; index < len(plugin.Services); index++ {
-		if plugin.Services[index] == name {
+	for index = 0; index < len(p.Services); index++ {
+		if p.Services[index] == name {
 			break
 		}
 	}
-	if index != len(plugin.Services) {
-		plugin.Services = append(plugin.Services[:index], plugin.Services[index+1:]...)
+	if index != len(p.Services) {
+		p.Services = append(p.Services[:index], p.Services[index+1:]...)
 	}
 
 	return
 }
 
-// Name return name of this plugin.
-func (plugin *EtcdRegisterPlugin) Name() string {
+// Name return name of this p.
+func (p *EtcdRegisterPlugin) Name() string {
 	return "EtcdRegisterPlugin"
 }
