@@ -15,7 +15,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/coreos/etcd/client"
-	"github.com/smallnest/rpcx"
+	"github.com/lflxp/rpcx"
 )
 
 // EtcdClientSelector is used to select a rpc server from etcd.
