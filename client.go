@@ -111,6 +111,7 @@ func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*rp
 
 func (s *DirectClientSelector) HandleFailedClient(client *rpc.Client) {
 	client.Close()
+	s.rpcClient = nil // reset
 }
 
 // ClientCodecFunc is used to create a rpc.ClientCodecFunc from net.Conn.
