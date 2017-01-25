@@ -1,8 +1,15 @@
 language: go
 
+
 go:
   - 1.6.x
   - 1.7.x
+
+before_script:
+  - go get -t -v github.com/smallnest/rpcx
+  
+script:
+ - go test -v ./...
 
 notifications:
   email:
