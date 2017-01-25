@@ -2,8 +2,11 @@ WORKDIR=`pwd`
 
 default: build
 
+install:
+	go get github.com/smallnest/rpcx/...
+
 vet:
-	$(GO) vet ./...
+	go vet ./...
 
 tools:
 	go get honnef.co/go/tools/cmd/staticcheck
