@@ -48,7 +48,7 @@ func TestEtcdV3RegisterPlugin_Register(t *testing.T) {
 	}
 
 	plugin.Unregister("ABC")
-	resp, err = plugin.KeysAPI.Get(context.TODO(), plugin.BasePath+"/ABC/tcp@127.0.0.1:1234")
+	_, err = plugin.KeysAPI.Get(context.TODO(), plugin.BasePath+"/ABC/tcp@127.0.0.1:1234")
 	if err != nil {
 		t.Error("service has not been registered on etcd.")
 	}

@@ -47,10 +47,6 @@ func startServer() {
 	serverAddr = server.Address()
 }
 
-func startHTTPServer() {
-
-}
-
 func startClient(t *testing.T) {
 	conn, err := net.DialTimeout("tcp", serverAddr, time.Minute)
 	if err != nil {

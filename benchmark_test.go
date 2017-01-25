@@ -40,10 +40,10 @@ func benchmarkClient(client *rpc.Client, b *testing.B) {
 			for atomic.AddInt32(&N, -1) >= 0 {
 				err := client.Call("Arith.Mul", args, reply)
 				if err != nil {
-					b.Fatalf("rpc error: Mul: expected no error but got string %q", err.Error())
+					b.Errorf("rpc error: Mul: expected no error but got string %q", err.Error())
 				}
 				if reply.C != args.A*args.B {
-					b.Fatalf("rpc error: Mul: expected %d got %d", reply.C, args.A*args.B)
+					b.Errorf("rpc error: Mul: expected %d got %d", reply.C, args.A*args.B)
 				}
 			}
 			wg.Done()
@@ -68,10 +68,10 @@ func benchmarkRPCXClient(client *Client, b *testing.B) {
 			for atomic.AddInt32(&N, -1) >= 0 {
 				err := client.Call("Arith.Mul", args, reply)
 				if err != nil {
-					b.Fatalf("rpc error: Mul: expected no error but got string %q", err.Error())
+					b.Errorf("rpc error: Mul: expected no error but got string %q", err.Error())
 				}
 				if reply.C != args.A*args.B {
-					b.Fatalf("rpc error: Mul: expected %d got %d", reply.C, args.A*args.B)
+					b.Errorf("rpc error: Mul: expected %d got %d", reply.C, args.A*args.B)
 				}
 			}
 			wg.Done()
@@ -96,10 +96,10 @@ func benchmarkRPCXGencodeClient(client *Client, b *testing.B) {
 			for atomic.AddInt32(&N, -1) >= 0 {
 				err := client.Call("Arith.Mul", args, reply)
 				if err != nil {
-					b.Fatalf("rpc error: Mul: expected no error but got string %q", err.Error())
+					b.Errorf("rpc error: Mul: expected no error but got string %q", err.Error())
 				}
 				if reply.C != args.A*args.B {
-					b.Fatalf("rpc error: Mul: expected %d got %d", reply.C, args.A*args.B)
+					b.Errorf("rpc error: Mul: expected %d got %d", reply.C, args.A*args.B)
 				}
 			}
 			wg.Done()
@@ -124,10 +124,10 @@ func benchmarkRPCXProtobufClient(client *Client, b *testing.B) {
 			for atomic.AddInt32(&N, -1) >= 0 {
 				err := client.Call("Arith.Mul", args, reply)
 				if err != nil {
-					b.Fatalf("rpc error: Mul: expected no error but got string %q", err.Error())
+					b.Errorf("rpc error: Mul: expected no error but got string %q", err.Error())
 				}
 				if reply.C != args.A*args.B {
-					b.Fatalf("rpc error: Mul: expected %d got %d", reply.C, args.A*args.B)
+					b.Errorf("rpc error: Mul: expected %d got %d", reply.C, args.A*args.B)
 				}
 			}
 			wg.Done()

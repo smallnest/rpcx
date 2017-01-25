@@ -4,8 +4,6 @@ import (
 	"errors"
 	"math/rand"
 	"net/rpc"
-	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -111,31 +109,31 @@ func (s *ConsulClientSelector) pullServers() {
 	s.Servers = services
 }
 
-func (s *ConsulClientSelector) createWeighted(ass map[string]*api.AgentService) {
-	s.WeightedServers = make([]*Weighted, len(s.Servers))
+// func (s *ConsulClientSelector) createWeighted(ass map[string]*api.AgentService) {
+// 	s.WeightedServers = make([]*Weighted, len(s.Servers))
 
-	i := 0
-	for k, v := range ass {
-		if strings.HasPrefix(k, s.ServiceName) {
-			s.WeightedServers[i] = &Weighted{Server: v, Weight: 1, EffectiveWeight: 1}
-			i++
-			if len(v.Tags) > 0 {
-				if values, err := url.ParseQuery(v.Tags[0]); err == nil {
-					w := values.Get("weight")
-					if w != "" {
-						weight, err := strconv.Atoi(w)
-						if err != nil {
-							s.WeightedServers[i].Weight = weight
-							s.WeightedServers[i].EffectiveWeight = weight
-						}
-					}
-				}
-			}
+// 	i := 0
+// 	for k, v := range ass {
+// 		if strings.HasPrefix(k, s.ServiceName) {
+// 			s.WeightedServers[i] = &Weighted{Server: v, Weight: 1, EffectiveWeight: 1}
+// 			i++
+// 			if len(v.Tags) > 0 {
+// 				if values, err := url.ParseQuery(v.Tags[0]); err == nil {
+// 					w := values.Get("weight")
+// 					if w != "" {
+// 						weight, err := strconv.Atoi(w)
+// 						if err != nil {
+// 							s.WeightedServers[i].Weight = weight
+// 							s.WeightedServers[i].EffectiveWeight = weight
+// 						}
+// 					}
+// 				}
+// 			}
 
-		}
-	}
+// 		}
+// 	}
 
-}
+// }
 
 func (s *ConsulClientSelector) getCachedClient(server string, clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
 	s.clientRWMutex.RLock()

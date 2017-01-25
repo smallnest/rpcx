@@ -163,10 +163,10 @@ func (c *Client) Close() error {
 //Call invokes the named function, waits for it to complete, and returns its error status.
 func (c *Client) Call(serviceMethod string, args interface{}, reply interface{}) (err error) {
 	if c.FailMode == Broadcast {
-		return c.clientBroadCast(serviceMethod, args, reply)
+		return c.clientBroadCast(serviceMethod, args, &reply)
 	}
 	if c.FailMode == Forking {
-		return c.clientForking(serviceMethod, args, reply)
+		return c.clientForking(serviceMethod, args, &reply)
 	}
 
 	var rpcClient *rpc.Client
@@ -221,7 +221,7 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 	return
 }
 
-func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply interface{}) (err error) {
+func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply *interface{}) (err error) {
 	rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
 
 	if len(rpcClients) == 0 {
@@ -243,14 +243,14 @@ func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply i
 			}
 			return errors.New("some clients return Error")
 		}
-		reply = call.Reply
+		*reply = call.Reply
 		l--
 	}
 
 	return nil
 }
 
-func (c *Client) clientForking(serviceMethod string, args interface{}, reply interface{}) (err error) {
+func (c *Client) clientForking(serviceMethod string, args interface{}, reply *interface{}) (err error) {
 	rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
 
 	if len(rpcClients) == 0 {
@@ -267,7 +267,7 @@ func (c *Client) clientForking(serviceMethod string, args interface{}, reply int
 	for l > 0 {
 		call := <-done
 		if call != nil && call.Error == nil {
-			reply = call.Reply
+			*reply = call.Reply
 			return nil
 		}
 		if call == nil {

@@ -111,19 +111,19 @@ func (p *EtcdRegisterPlugin) Close() {
 	p.ticker.Stop()
 }
 
-func (p *EtcdRegisterPlugin) mkdirs(path string) (err error) {
-	if "" == strings.TrimSpace(path) {
-		err = errors.New("etcd dir `path` can't be empty!")
-		return
-	}
-	_, err = p.KeysAPI.Set(context.TODO(), path, "",
-		&client.SetOptions{
-			Dir:       true,
-			PrevExist: client.PrevNoExist,
-		})
+// func (p *EtcdRegisterPlugin) mkdirs(path string) (err error) {
+// 	if "" == strings.TrimSpace(path) {
+// 		err = errors.New("etcd dir `path` can't be empty!")
+// 		return
+// 	}
+// 	_, err = p.KeysAPI.Set(context.TODO(), path, "",
+// 		&client.SetOptions{
+// 			Dir:       true,
+// 			PrevExist: client.PrevNoExist,
+// 		})
 
-	return
-}
+// 	return
+// }
 
 func (p *EtcdRegisterPlugin) forceMkdirs(path string) (err error) {
 	if "" == strings.TrimSpace(path) {
@@ -205,7 +205,7 @@ func (p *EtcdRegisterPlugin) Unregister(name string) (err error) {
 	if p.Services == nil || len(p.Services) <= 0 {
 		return nil
 	}
-	var index int = 0
+	var index int
 	for index = 0; index < len(p.Services); index++ {
 		if p.Services[index] == name {
 			break

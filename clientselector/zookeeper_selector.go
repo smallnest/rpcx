@@ -277,7 +277,7 @@ func mkdirs(conn *zk.Conn, path string) (err error) {
 	}
 
 	//check whether this path exists
-	exist, _, err := conn.Exists(path)
+	exist, _, _ := conn.Exists(path)
 	if exist {
 		return nil
 	}

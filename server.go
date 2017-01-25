@@ -215,10 +215,7 @@ func validIP4(ipAddress string) bool {
 	ipAddress = ipAddress[:i] //remove port
 
 	re, _ := regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
-	if re.MatchString(ipAddress) {
-		return true
-	}
-	return false
+	return re.MatchString(ipAddress)
 }
 
 // Serve starts and listens RPC requests.

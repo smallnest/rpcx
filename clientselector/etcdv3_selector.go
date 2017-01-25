@@ -22,7 +22,6 @@ import (
 type EtcdV3ClientSelector struct {
 	EtcdServers        []string
 	KeysAPI            *clientv3.Client
-	ticker             *time.Ticker
 	sessionTimeout     time.Duration
 	BasePath           string //should endwith serviceName
 	Servers            []string
@@ -104,13 +103,6 @@ func (s *EtcdV3ClientSelector) start() {
 	}
 	s.KeysAPI = cli
 	s.pullServers()
-
-	// s.ticker = time.NewTicker(s.sessionTimeout)
-	// go func() {
-	// 	for range s.ticker.C {
-	// 		s.pullServers()
-	// 	}
-	// }()
 
 	go s.watch()
 }

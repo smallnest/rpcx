@@ -59,10 +59,6 @@ func (plugin *ZooKeeperRegisterPlugin) Start() (err error) {
 	return
 }
 
-func updateServerInfo(conn *zk.Conn) {
-
-}
-
 // HandleConnAccept handles connections from clients
 func (plugin *ZooKeeperRegisterPlugin) HandleConnAccept(net.Conn) bool {
 	if plugin.Metrics != nil {
@@ -89,7 +85,7 @@ func mkdirs(conn *zk.Conn, path string) (err error) {
 	}
 
 	//check whether this path exists
-	exist, _, err := conn.Exists(path)
+	exist, _, _ := conn.Exists(path)
 	if exist {
 		return nil
 	}
@@ -105,7 +101,7 @@ func mkdirs(conn *zk.Conn, path string) (err error) {
 	createdPath := ""
 	for _, p := range paths {
 		createdPath = createdPath + "/" + p
-		exist, _, err = conn.Exists(createdPath)
+		exist, _, _ = conn.Exists(createdPath)
 		if !exist {
 			_, err = conn.Create(createdPath, []byte(""), flags, acl)
 			if err != nil {
@@ -132,7 +128,7 @@ func (plugin *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}, m
 
 	nodePath = fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
 	//delete existed node
-	exists := false
+	var exists bool
 	if exists, _, err = plugin.Conn.Exists(nodePath); err != nil {
 		err = fmt.Errorf("can't check path: %s because of %v", nodePath, err)
 		return
@@ -166,7 +162,7 @@ func (plugin *ZooKeeperRegisterPlugin) Unregister(name string) (err error) {
 	nodePath := fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
 
 	//delete existed node
-	var exists bool = false
+	var exists bool
 	if exists, _, err = plugin.Conn.Exists(nodePath); err != nil {
 		return
 	}
@@ -175,9 +171,10 @@ func (plugin *ZooKeeperRegisterPlugin) Unregister(name string) (err error) {
 		if err != nil {
 			err = errors.New("delete: false because of " + err.Error())
 			return
-		} else {
-			log.Info("delete: ok")
 		}
+
+		log.Info("delete: ok")
+
 	}
 
 	// because plugin.Start() method will be executed by timer continuously
@@ -185,7 +182,7 @@ func (plugin *ZooKeeperRegisterPlugin) Unregister(name string) (err error) {
 	if plugin.Services == nil || len(plugin.Services) <= 0 {
 		return nil
 	}
-	var index int = 0
+	var index int
 	for index = 0; index < len(plugin.Services); index++ {
 		if plugin.Services[index] == name {
 			break

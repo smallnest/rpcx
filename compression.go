@@ -52,7 +52,7 @@ type CompressConn struct {
 
 // NewCompressConn creates a wrapped net.Conn with CompressType
 func NewCompressConn(conn net.Conn, compressType CompressType) net.Conn {
-	cc := &CompressConn{Conn: conn}
+	cc := &CompressConn{Conn: conn, compressType: compressType}
 	r := io.Reader(cc.Conn)
 
 	switch compressType {
@@ -78,7 +78,7 @@ func NewCompressConn(conn net.Conn, compressType CompressType) net.Conn {
 		}
 		w = &writeFlusher{w: zw}
 	case CompressSnappy:
-		w = snappy.NewWriter(w)
+		w = snappy.NewBufferedWriter(w)
 	case CompressZstd:
 		w = zstd.NewWriter(w)
 	case CompressLZ4:

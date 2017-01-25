@@ -55,8 +55,7 @@ func (e *RPCError) Panic() {
 		return
 	}
 	_, fn, line, _ := runtime.Caller(1)
-	errMsg := e.message
-	errMsg = "\nCaller was: " + fmt.Sprintf("%s:%d", fn, line)
+	errMsg := e.message + "\nCaller was: " + fmt.Sprintf("%s:%d", fn, line)
 	panic(errMsg)
 }
 
@@ -67,7 +66,7 @@ func (e *RPCError) Panicf(args ...interface{}) {
 	}
 	_, fn, line, _ := runtime.Caller(1)
 	errMsg := e.Format(args...).Error()
-	errMsg = "\nCaller was: " + fmt.Sprintf("%s:%d", fn, line)
+	errMsg = errMsg + "\nCaller was: " + fmt.Sprintf("%s:%d", fn, line)
 	panic(errMsg)
 }
 

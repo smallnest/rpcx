@@ -1,18 +1,15 @@
 package codec
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/smallnest/rpcx"
 )
 
 var (
-	serverAddr        string
 	serviceName       = "Arith/1.0"
 	serviceMethodName = "Arith/1.0.Mul"
 	service           = new(Arith)
-	once              sync.Once
 )
 
 type Args struct {

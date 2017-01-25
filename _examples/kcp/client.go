@@ -2,10 +2,10 @@ package main
 
 import (
 	"crypto/sha1"
-	"fmt"
 
 	"golang.org/x/crypto/pbkdf2"
 
+	"github.com/lunny/log"
 	"github.com/smallnest/rpcx"
 	kcp "github.com/xtaci/kcp-go"
 )
@@ -24,7 +24,7 @@ const cryptSalt = "rpcx-salt"
 
 func main() {
 	pass := pbkdf2.Key([]byte(cryptKey), []byte(cryptSalt), 4096, 32, sha1.New)
-	bc, err := kcp.NewAESBlockCrypt(pass)
+	bc, _ := kcp.NewAESBlockCrypt(pass)
 
 	s := &rpcx.DirectClientSelector{Network: "kcp", Address: "127.0.0.1:8972"}
 	client := rpcx.NewClient(s)
@@ -32,7 +32,7 @@ func main() {
 
 	args := &Args{7, 8}
 	var reply Reply
-	err = client.Call("Arith.Mul", args, &reply)
+	err := client.Call("Arith.Mul", args, &reply)
 	if err != nil {
 		log.Infof("error for Arith: %d*%d, %v", args.A, args.B, err)
 	} else {

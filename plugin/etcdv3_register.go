@@ -64,9 +64,8 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 				for _, name := range p.Services {
 					nodePath = fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
 
-					ctx, cancel := context.WithTimeout(context.Background(), p.DialTimeout)
+					ctx, _ := context.WithTimeout(context.Background(), p.DialTimeout)
 					resp, err = p.KeysAPI.Get(ctx, nodePath)
-					defer cancel()
 					if err != nil {
 						log.Infof("get etcd key failed: %v", err.Error())
 					} else {
@@ -85,10 +84,10 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 						if kaerr != nil {
 							log.Infof("Set ttl Keepalive is forver: %s", kaerr.Error())
 						}
-						select {
-						case ka := <-ch:
-							log.Infof("TTL value is %d", ka.TTL)
-						}
+
+						ka := <-ch
+						log.Infof("TTL value is %d", ka.TTL)
+
 						_, err = p.KeysAPI.Put(context.TODO(), nodePath, v.Encode(), clientv3.WithLease(ttl.ID))
 						if err != nil {
 							log.Infof("Put key %s value %s : %s", nodePath, v.Encode(), err.Error())
@@ -182,7 +181,7 @@ func (p *EtcdV3RegisterPlugin) Unregister(name string) (err error) {
 	if p.Services == nil || len(p.Services) <= 0 {
 		return nil
 	}
-	var index int = 0
+	var index int
 	for index = 0; index < len(p.Services); index++ {
 		if p.Services[index] == fmt.Sprintf("%s/%s", p.BasePath, name) {
 			break
