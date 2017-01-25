@@ -10,6 +10,7 @@ import (
 	"net/rpc"
 	"time"
 
+	"github.com/lunny/log"
 	kcp "github.com/xtaci/kcp-go"
 )
 
@@ -41,6 +42,7 @@ func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, add
 	}
 
 	if err != nil {
+		log.Errorf("failed to dial server: %v", err)
 		return nil, err
 	}
 
@@ -51,12 +53,12 @@ func wrapConn(c *Client, clientCodecFunc ClientCodecFunc, conn net.Conn) (*rpc.C
 	if c == nil || c.PluginContainer == nil {
 		return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
 	}
-	
+
 	var ok bool
 	if conn, ok = c.PluginContainer.DoPostConnected(conn); !ok {
 		return nil, errors.New("failed to do post connected")
 	}
-	
+
 	wrapper := newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn), conn)
 	wrapper.Timeout = c.Timeout
 	wrapper.ReadTimeout = c.ReadTimeout
@@ -87,6 +89,7 @@ func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network,
 		conn, err = net.DialTimeout("tcp", address, timeout)
 	}
 	if err != nil {
+		log.Errorf("failed to dial server: %v", err)
 		return nil, err
 	}
 
@@ -107,6 +110,7 @@ func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network,
 		return rpc.NewClientWithCodec(wrapper), nil
 	}
 	if err == nil {
+		log.Errorf("unexpected HTTP response: %v", err)
 		err = errors.New("unexpected HTTP response: " + resp.Status)
 	}
 	conn.Close()

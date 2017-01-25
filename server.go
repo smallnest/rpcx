@@ -326,13 +326,14 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	c, _, err := w.(http.Hijacker).Hijack()
 	if err != nil {
-		log.Infof("rpc hijacking %s : %v", req.RemoteAddr, err.Error())
+		log.Errorf("rpc hijacking %s : %v", req.RemoteAddr, err.Error())
 		return
 	}
 	io.WriteString(c, "HTTP/1.0 "+connected+"\n\n")
 
 	var ok bool
 	if c, ok = s.PluginContainer.DoPostConnAccept(c); !ok {
+		log.Errorf("client is not accepted: %s", c.RemoteAddr().String())
 		return
 	}
 
@@ -350,6 +351,7 @@ func (s *Server) Start(network, address string) (err error) {
 	ln, err = makeListener(network, address)
 
 	if err != nil {
+		log.Errorf("failed to start server: %v", err)
 		return
 	}
 
@@ -364,6 +366,7 @@ func (s *Server) Start(network, address string) (err error) {
 
 			var ok bool
 			if c, ok = s.PluginContainer.DoPostConnAccept(c); !ok {
+				log.Errorf("client is not accepted: %s", c.RemoteAddr().String())
 				continue
 			}
 			wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)
@@ -382,6 +385,7 @@ func (s *Server) Start(network, address string) (err error) {
 func (s *Server) StartTLS(network, address string, config *tls.Config) (err error) {
 	ln, err := tls.Listen(network, address, config)
 	if err != nil {
+		log.Errorf("failed to start server: %v", err)
 		return
 	}
 
@@ -396,6 +400,7 @@ func (s *Server) StartTLS(network, address string, config *tls.Config) (err erro
 
 			var ok bool
 			if c, ok = s.PluginContainer.DoPostConnAccept(c); !ok {
+				log.Errorf("client is not accepted: %s", c.RemoteAddr().String())
 				continue
 			}
 			wrapper := newServerCodecWrapper(s.PluginContainer, s.ServerCodecFunc(c), c)

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	msgpackrpc "github.com/hashicorp/net-rpc-msgpackrpc"
+	"github.com/lunny/log"
 	kcp "github.com/xtaci/kcp-go"
 )
 
@@ -175,9 +176,10 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 	if err == nil && rpcClient != nil {
 		if err = rpcClient.Call(serviceMethod, args, reply); err == nil {
 			return //call successful
-		} else {
-			c.ClientSelector.HandleFailedClient(rpcClient)
 		}
+
+		log.Errorf("failed to call: %v", err)
+		c.ClientSelector.HandleFailedClient(rpcClient)
 	}
 
 	if c.FailMode == Failover {
@@ -190,22 +192,28 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 			err = rpcClient.Call(serviceMethod, args, reply)
 			if err == nil {
 				return nil
-			} else {
-				c.ClientSelector.HandleFailedClient(rpcClient)
 			}
+
+			log.Errorf("failed to call: %v", err)
+			c.ClientSelector.HandleFailedClient(rpcClient)
+
 		}
 	} else if c.FailMode == Failtry {
 		for retries := 0; retries < c.Retries; retries++ {
 			if rpcClient == nil {
-				rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
+				if rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args); err != nil {
+					log.Errorf("failed to select a client: %v", err)
+				}
 			}
+
 			if rpcClient != nil {
 				err = rpcClient.Call(serviceMethod, args, reply)
 				if err == nil {
 					return nil
-				} else {
-					c.ClientSelector.HandleFailedClient(rpcClient)
 				}
+
+				log.Errorf("failed to call: %v", err)
+				c.ClientSelector.HandleFailedClient(rpcClient)
 			}
 		}
 	}
@@ -217,6 +225,7 @@ func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply i
 	rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
 
 	if len(rpcClients) == 0 {
+		log.Infof("no any client is available")
 		return nil
 	}
 
@@ -229,6 +238,9 @@ func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply i
 	for l > 0 {
 		call := <-done
 		if call == nil || call.Error != nil {
+			if call != nil {
+				log.Warnf("failed to call: %v", call.Error)
+			}
 			return errors.New("some clients return Error")
 		}
 		reply = call.Reply
@@ -242,6 +254,7 @@ func (c *Client) clientForking(serviceMethod string, args interface{}, reply int
 	rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
 
 	if len(rpcClients) == 0 {
+		log.Infof("no any client is available")
 		return nil
 	}
 
@@ -259,6 +272,9 @@ func (c *Client) clientForking(serviceMethod string, args interface{}, reply int
 		}
 		if call == nil {
 			break
+		}
+		if call.Error != nil {
+			log.Warnf("failed to call: %v", call.Error)
 		}
 		l--
 	}
@@ -305,11 +321,13 @@ func (w *clientCodecWrapper) ReadRequestHeader(r *rpc.Response) error {
 	//pre
 	err := w.PluginContainer.DoPreReadResponseHeader(r)
 	if err != nil {
+		log.Errorf("failed to DoPreReadResponseHeader: %v", err)
 		return err
 	}
 
 	err = w.ClientCodec.ReadResponseHeader(r)
 	if err != nil {
+		log.Errorf("failed to ReadResponseHeader: %v", err)
 		return err
 	}
 
@@ -321,11 +339,13 @@ func (w *clientCodecWrapper) ReadRequestBody(body interface{}) error {
 	//pre
 	err := w.PluginContainer.DoPreReadResponseBody(body)
 	if err != nil {
+		log.Errorf("failed to DoPreReadResponseBody: %v", err)
 		return err
 	}
 
 	err = w.ClientCodec.ReadResponseBody(body)
 	if err != nil {
+		log.Errorf("failed to ReadResponseBody: %v", err)
 		return err
 	}
 
@@ -344,11 +364,13 @@ func (w *clientCodecWrapper) WriteRequest(r *rpc.Request, body interface{}) erro
 	//pre
 	err := w.PluginContainer.DoPreWriteRequest(r, body)
 	if err != nil {
+		log.Errorf("failed to DoPreWriteRequest: %v", err)
 		return err
 	}
 
 	err = w.ClientCodec.WriteRequest(r, body)
 	if err != nil {
+		log.Errorf("failed to WriteRequest: %v", err)
 		return err
 	}
 
