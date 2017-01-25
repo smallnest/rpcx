@@ -6,8 +6,8 @@ go:
   - 1.7.x
 
 before_script:
-  - go get -t -v github.com/smallnest/rpcx
-  
+  - go get -t -v github.com/smallnest/rpcx/...
+
 script:
  - go test -v ./...
 
