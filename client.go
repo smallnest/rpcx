@@ -9,7 +9,7 @@ import (
 	"time"
 
 	msgpackrpc "github.com/hashicorp/net-rpc-msgpackrpc"
-	"github.com/lunny/log"
+	"github.com/smallnest/rpcx/log"
 	kcp "github.com/xtaci/kcp-go"
 )
 

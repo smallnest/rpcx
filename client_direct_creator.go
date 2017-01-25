@@ -10,7 +10,7 @@ import (
 	"net/rpc"
 	"time"
 
-	"github.com/lunny/log"
+	"github.com/smallnest/rpcx/log"
 	kcp "github.com/xtaci/kcp-go"
 )
 
