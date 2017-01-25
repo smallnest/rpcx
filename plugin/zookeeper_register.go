@@ -3,7 +3,6 @@ package plugin
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/url"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/rcrowley/go-metrics"
 	"github.com/samuel/go-zookeeper/zk"
+	"github.com/smallnest/rpcx/log"
 )
 
 //ZooKeeperRegisterPlugin a register plugin which can register services into zookeeper for cluster
@@ -42,7 +42,7 @@ func (plugin *ZooKeeperRegisterPlugin) Start() (err error) {
 					nodePath := fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
 					bytes, stat, err := plugin.Conn.Get(nodePath)
 					if err != nil {
-						log.Printf("can't get data of node: %s, because of %v", nodePath, err.Error())
+						log.Infof("can't get data of node: %s, because of %v", nodePath, err.Error())
 					} else {
 						v, _ := url.ParseQuery(string(bytes))
 						v.Set("tps", string(data))
@@ -176,7 +176,7 @@ func (plugin *ZooKeeperRegisterPlugin) Unregister(name string) (err error) {
 			err = errors.New("delete: false because of " + err.Error())
 			return
 		} else {
-			log.Printf("delete: ok\n")
+			log.Info("delete: ok")
 		}
 	}
 

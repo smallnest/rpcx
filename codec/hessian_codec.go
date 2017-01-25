@@ -88,7 +88,7 @@ package codec
 // 		if c.encBuf.Flush() == nil {
 // 			// Gob couldn't encode the header. Should not happen, so if it does,
 // 			// shut down the connection to signal that the connection is broken.
-// 			log.Println("rpc: gob error encoding response:", err)
+// 			log.Infof("rpc: gob error encoding response:", err)
 // 			c.Close()
 // 		}
 // 		return
@@ -97,7 +97,7 @@ package codec
 // 		if c.encBuf.Flush() == nil {
 // 			// Was a gob problem encoding the body but the header has been written.
 // 			// Shut down the connection to signal that the connection is broken.
-// 			log.Println("rpc: gob error encoding body:", err)
+// 			log.Infof("rpc: gob error encoding body:", err)
 // 			c.Close()
 // 		}
 // 		return

@@ -1,15 +1,16 @@
 package plugin
 
 import (
-	"log"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/smallnest/rpcx/log"
 )
 
 func TestConsulRegisterPlugin_Register(t *testing.T) {
 	if os.Getenv("travis") != "" {
-		log.Println("test in travis-ci.org and it has not installed consul, so don't test this case")
+		log.Infof("test in travis-ci.org and it has not installed consul, so don't test this case")
 		return
 	}
 

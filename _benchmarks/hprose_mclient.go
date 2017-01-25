@@ -31,14 +31,14 @@ func main() {
 		servers[i] = "tcp://" + server
 	}
 
-	fmt.Printf("Servers: %+v\n\n", servers)
+	log.Infof("Servers: %+v\n\n", servers)
 
-	fmt.Printf("concurrency: %d\nrequests per client: %d\n\n", n, m)
+	log.Infof("concurrency: %d\nrequests per client: %d\n\n", n, m)
 
 	args := prepareArgs()
 
 	b, _ := args.Marshal()
-	fmt.Printf("message size: %d bytes\n\n", len(b))
+	log.Infof("message size: %d bytes\n\n", len(b))
 
 	var wg sync.WaitGroup
 	wg.Add(n * m)
@@ -70,7 +70,7 @@ func main() {
 			startWg.Done()
 			startWg.Wait()
 
-			fmt.Printf("goroutine %d started\n", i)
+			log.Infof("goroutine %d started\n", i)
 
 			for j := 0; j < m; j++ {
 				t := time.Now().UnixNano()
@@ -96,7 +96,7 @@ func main() {
 	client.Close()
 	totalT = time.Now().UnixNano() - totalT
 	totalT = totalT / 1000000
-	fmt.Printf("took %d ms for %d requests\n", totalT, n*m)
+	log.Infof("took %d ms for %d requests\n", totalT, n*m)
 
 	totalD := make([]int64, 0, n*m)
 	for _, k := range d {
@@ -113,12 +113,12 @@ func main() {
 	min, _ := stats.Min(totalD2)
 	p99, _ := stats.Percentile(totalD2, 99.9)
 
-	fmt.Printf("sent     requests    : %d\n", n*m)
-	fmt.Printf("received requests    : %d\n", atomic.LoadUint64(&trans))
-	fmt.Printf("received requests_OK : %d\n", atomic.LoadUint64(&transOK))
-	fmt.Printf("throughput  (TPS)    : %d\n", int64(n*m)*1000/totalT)
-	fmt.Printf("mean: %.f ns, median: %.f ns, max: %.f ns, min: %.f ns, p99: %.f ns\n", mean, median, max, min, p99)
-	fmt.Printf("mean: %d ms, median: %d ms, max: %d ms, min: %d ms, p99: %d ms\n", int64(mean/1000000), int64(median/1000000), int64(max/1000000), int64(min/1000000), int64(p99/1000000))
+	log.Infof("sent     requests    : %d\n", n*m)
+	log.Infof("received requests    : %d\n", atomic.LoadUint64(&trans))
+	log.Infof("received requests_OK : %d\n", atomic.LoadUint64(&transOK))
+	log.Infof("throughput  (TPS)    : %d\n", int64(n*m)*1000/totalT)
+	log.Infof("mean: %.f ns, median: %.f ns, max: %.f ns, min: %.f ns, p99: %.f ns\n", mean, median, max, min, p99)
+	log.Infof("mean: %d ms, median: %d ms, max: %d ms, min: %d ms, p99: %d ms\n", int64(mean/1000000), int64(median/1000000), int64(max/1000000), int64(min/1000000), int64(p99/1000000))
 
 }
 

@@ -3,7 +3,6 @@ package rpcx
 import (
 	"crypto/tls"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/rpc"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/net-rpc-msgpackrpc"
+	"github.com/smallnest/rpcx/log"
 )
 
 const (
@@ -326,7 +326,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	c, _, err := w.(http.Hijacker).Hijack()
 	if err != nil {
-		log.Println("rpc hijacking ", req.RemoteAddr, ": ", err.Error())
+		log.Infof("rpc hijacking %s : %v", req.RemoteAddr, err.Error())
 		return
 	}
 	io.WriteString(c, "HTTP/1.0 "+connected+"\n\n")

@@ -2,7 +2,6 @@ package clientselector
 
 import (
 	"errors"
-	"log"
 	"math/rand"
 	"net"
 	"net/rpc"
@@ -15,6 +14,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	mvccpb "github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/smallnest/rpcx"
+	"github.com/smallnest/rpcx/log"
 	"golang.org/x/net/context"
 )
 
@@ -64,7 +64,7 @@ func (s *EtcdV3ClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) 
 		ss := strings.Split(sv, "@")
 		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
 		if err != nil {
-			log.Fatal("rpc client connect server failed. " + err.Error())
+			log.Fatalf("rpc client connect server failed: %v", err.Error())
 			continue
 		} else {
 			clients = append(clients, c)
@@ -99,7 +99,7 @@ func (s *EtcdV3ClientSelector) start() {
 	})
 
 	if err != nil {
-		log.Fatal("etcd new client failed. " + err.Error())
+		log.Fatalf("etcd new client failed: %v", err.Error())
 		return
 	}
 	s.KeysAPI = cli
@@ -119,7 +119,7 @@ func (s *EtcdV3ClientSelector) watch() {
 	watcher := s.KeysAPI.Watch(context.Background(), s.BasePath, clientv3.WithPrefix())
 	for wresp := range watcher {
 		for _, ev := range wresp.Events {
-			//fmt.Printf("%s %q:%q\n",ev.Type,ev.Kv.Key,ev.Kv.Value)
+			//log.Infof("%s %q:%q\n",ev.Type,ev.Kv.Key,ev.Kv.Value)
 			s.pullServers()
 			removedServer := strings.TrimPrefix(string(ev.Kv.Key), s.BasePath+"/")
 			s.clientRWMutex.Lock()

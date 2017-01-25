@@ -133,6 +133,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/smallnest/rpcx"
+  "github.com/smallnest/rpcx/log"
 )
 
 type Args struct {
@@ -168,14 +169,14 @@ func main() {
 	var reply Reply
 	err := client.Call("Posts.Query", args, &reply)
 	if err != nil {
-		fmt.Printf("error for Posts: %s, %v \n", args.PostType, err)
+		log.Infof("error for Posts: %s, %v \n", args.PostType, err)
 		return
 	}
 
 	posts := reply.Posts
 	data, _ := json.MarshalIndent(&posts, "", "\t")
 
-	fmt.Printf("Posts: %s \n", string(data))
+	log.Infof("Posts: %s \n", string(data))
 }
 ```
 

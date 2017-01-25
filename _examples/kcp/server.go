@@ -2,10 +2,10 @@ package main
 
 import (
 	"crypto/sha1"
-	"fmt"
 
 	"golang.org/x/crypto/pbkdf2"
 
+	"github.com/lunny/log"
 	"github.com/smallnest/rpcx"
 	kcp "github.com/xtaci/kcp-go"
 )
@@ -43,7 +43,7 @@ func main() {
 	// kcplistener.SetDSCP(46)
 
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Infof(err.Error())
 		return
 	}
 	server.ServeListener(ln)

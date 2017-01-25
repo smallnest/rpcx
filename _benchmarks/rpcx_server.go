@@ -2,12 +2,12 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os"
 	"runtime/pprof"
 
 	"github.com/smallnest/rpcx"
 	"github.com/smallnest/rpcx/codec"
+	"github.com/smallnest/rpcx/log"
 )
 
 type Hello int

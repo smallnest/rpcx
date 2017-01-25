@@ -2,7 +2,6 @@ package clientselector
 
 import (
 	"errors"
-	"log"
 	"math/rand"
 	"net"
 	"net/rpc"
@@ -12,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/net/context"
-
 	"github.com/coreos/etcd/client"
 	"github.com/smallnest/rpcx"
+	"github.com/smallnest/rpcx/log"
+	"golang.org/x/net/context"
 )
 
 // EtcdClientSelector is used to select a rpc server from etcd.
@@ -76,7 +75,7 @@ func (s *EtcdClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []
 		ss := strings.Split(sv, "@")
 		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
 		if err != nil {
-			log.Fatal("rpc client connect server failed. " + err.Error())
+			log.Fatalf("rpc client connect server failed: %v", err.Error())
 			continue
 		} else {
 			clients = append(clients, c)
@@ -94,7 +93,7 @@ func (s *EtcdClientSelector) start() {
 	})
 
 	if err != nil {
-		log.Fatal("etcd new client failed. " + err.Error())
+		log.Fatal("etcd new client failed: %v", err.Error())
 		return
 	}
 	s.KeysAPI = client.NewKeysAPI(cli)

@@ -2,11 +2,10 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net"
 
+	"github.com/smallnest/rpcx/log"
 	"golang.org/x/net/context"
-
 	"google.golang.org/grpc"
 )
 

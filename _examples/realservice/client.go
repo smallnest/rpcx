@@ -43,12 +43,12 @@ func main() {
 	var reply Reply
 	err := client.Call("Posts.Query", args, &reply)
 	if err != nil {
-		fmt.Printf("error for Posts: %s, %v \n", args.PostType, err)
+		log.Infof("error for Posts: %s, %v", args.PostType, err)
 		return
 	}
 
 	posts := reply.Posts
 	data, _ := json.MarshalIndent(&posts, "", "\t")
 
-	fmt.Printf("Posts: %s \n", string(data))
+	log.Infof("Posts: %s", string(data))
 }

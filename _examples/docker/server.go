@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx"
 )
 
@@ -36,7 +36,7 @@ func main() {
 	server1.Start("tcp", ":8972")
 
 	time.Sleep(5 * time.Second)
-	fmt.Println(server1.Address())
+	log.Info(server1.Address())
 
 	server2 := rpcx.NewServer()
 	server2.RegisterName("Arith", new(Arith2))

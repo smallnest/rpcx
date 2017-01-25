@@ -23,7 +23,7 @@ public class Client {
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             String s;
             while ((s = in.readLine()) != null) {
-                System.out.printf(s);
+                System.out.Infof(s);
             }
 
         } catch (UnknownHostException e) {

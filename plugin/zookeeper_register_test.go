@@ -5,15 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"log"
-
 	"github.com/rcrowley/go-metrics"
 	"github.com/samuel/go-zookeeper/zk"
+	"github.com/smallnest/rpcx/log"
 )
 
 func TestZooKeeperRegisterPlugin_Register(t *testing.T) {
 	if os.Getenv("travis") != "" {
-		log.Println("test in travis-ci.org and it has not installed zookeeper, so don't test this case")
+		log.Info("test in travis-ci.org and it has not installed zookeeper, so don't test this case")
 		return
 	}
 

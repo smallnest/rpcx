@@ -276,11 +276,11 @@ func main() {
 
 	fn := func(p *plugin.AuthorizationAndServiceMethod) error {
 		if p.Authorization != "0b79bab50daca910b000d4f1a2b675d604257e42" || p.Tag != "Bearer" {
-			fmt.Printf("error: wrong Authorization: %s, %s\n", p.Authorization, p.Tag)
+			log.Infof("error: wrong Authorization: %s, %s\n", p.Authorization, p.Tag)
 			return errors.New("Authorization failed ")
 		}
 
-		fmt.Println("Authorization success")
+		log.Infof("Authorization success")
 		return nil
 	}
 
@@ -300,16 +300,16 @@ func main() {
 	//add Authorization info
 	err := client.Auth("0b79bab50daca910b000d4f1a2b675d604257e42_ABC", "Bearer")
 	if err != nil {
-		fmt.Printf("can't add auth plugin: %#v\n", err)
+		log.Infof("can't add auth plugin: %#v\n", err)
 	}
 
 	args := &Args{7, 8}
 	var reply Reply
 	err = client.Call("Arith.Mul", args, &reply)
 	if err != nil {
-		fmt.Printf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
+		log.Infof("error for Arith: %d*%d, %v \n", args.A, args.B, err)
 	} else {
-		fmt.Printf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
+		log.Infof("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
 	}
 
 	client.Close()
@@ -383,9 +383,9 @@ func main() {
 	var reply Reply
 	err := client.Call("Arith.Mul", args, &reply)
 	if err != nil {
-		fmt.Printf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
+		log.Infof("error for Arith: %d*%d, %v \n", args.A, args.B, err)
 	} else {
-		fmt.Printf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
+		log.Infof("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
 	}
 
 	client.Close()
@@ -421,9 +421,9 @@ func main() {
 	divCall := client.Go("Arith.Mul", args, &reply, nil)
 	replyCall := <-divCall.Done // will be equal to divCall
 	if replyCall.Error != nil {
-		fmt.Printf("error for Arith: %d*%d, %v \n", args.A, args.B, replyCall.Error)
+		log.Infof("error for Arith: %d*%d, %v \n", args.A, args.B, replyCall.Error)
 	} else {
-		fmt.Printf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
+		log.Infof("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
 	}
 
 	client.Close()
@@ -524,9 +524,9 @@ func callServer(s rpcx.ClientSelector) {
 	var reply Reply
 	err := client.Call("Arith.Mul", args, &reply)
 	if err != nil {
-		fmt.Printf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
+		log.Infof("error for Arith: %d*%d, %v \n", args.A, args.B, err)
 	} else {
-		fmt.Printf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
+		log.Infof("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
 	}
 
 	client.Close()
@@ -573,9 +573,9 @@ func callServer(s rpcx.ClientSelector) {
 	var reply Reply
 	err := client.Call("Arith.Mul", args, &reply)
 	if err != nil {
-		fmt.Printf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
+		log.Infof("error for Arith: %d*%d, %v \n", args.A, args.B, err)
 	} else {
-		fmt.Printf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
+		log.Infof("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
 	}
 
 	client.Close()
@@ -624,9 +624,9 @@ func callServer(s rpcx.ClientSelector) {
 	var reply Reply
 	err := client.Call("Arith.Mul", args, &reply)
 	if err != nil {
-		fmt.Printf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
+		log.Infof("error for Arith: %d*%d, %v \n", args.A, args.B, err)
 	} else {
-		fmt.Printf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
+		log.Infof("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
 	}
 
 	client.Close()

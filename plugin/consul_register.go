@@ -3,13 +3,12 @@ package plugin
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
+	"strings"
 	"time"
 
-	"strings"
-
 	"github.com/hashicorp/consul/api"
+	"github.com/smallnest/rpcx/log"
 )
 
 //ConsulRegisterPlugin a register plugin which can register services into consul for cluster

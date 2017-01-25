@@ -1,7 +1,6 @@
 package rpcx
 
 import (
-	"log"
 	"net"
 	"net/rpc"
 	"net/rpc/jsonrpc"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/hashicorp/net-rpc-msgpackrpc"
 	"github.com/smallnest/rpcx/codec"
+	"github.com/smallnest/rpcx/log"
 )
 
 // don't use it to test benchmark. It is only used to evaluate libs internally.
@@ -193,7 +193,7 @@ func BenchmarkNetRPC_jsonrpc(b *testing.B) {
 
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
-		log.Fatal("error dialing:", err)
+		b.Fatal("error dialing:", err)
 	}
 	client := jsonrpc.NewClient(conn)
 	defer client.Close()
@@ -225,7 +225,7 @@ func BenchmarkNetRPC_msgp(b *testing.B) {
 
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
-		log.Fatal("error dialing:", err)
+		b.Fatal("error dialing:", err)
 	}
 	client := msgpackrpc.NewClient(conn)
 	defer client.Close()

@@ -3,7 +3,6 @@ package plugin
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/url"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/rcrowley/go-metrics"
+	"github.com/smallnest/rpcx/log"
 	"golang.org/x/net/context"
 )
 
@@ -48,7 +48,7 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 	})
 
 	if err != nil {
-		log.Println("new client: " + err.Error())
+		log.Infof("new client: %v", err.Error())
 		return
 	}
 	p.KeysAPI = cli
@@ -68,7 +68,7 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 					resp, err = p.KeysAPI.Get(ctx, nodePath)
 					defer cancel()
 					if err != nil {
-						log.Println("get etcd key failed. " + err.Error())
+						log.Infof("get etcd key failed: %v", err.Error())
 					} else {
 						if v, err = url.ParseQuery(string(resp.Kvs[0].Value)); err != nil {
 							continue
@@ -78,20 +78,20 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 						//TTL
 						ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalNum+5)
 						if err != nil {
-							log.Println("V3 TTL Grant:" + err.Error())
+							log.Infof("V3 TTL Grant: %v", err.Error())
 						}
 						//KeepAlive TTL alive forever
 						ch, kaerr := p.KeysAPI.KeepAlive(context.TODO(), ttl.ID)
 						if kaerr != nil {
-							log.Printf("Set ttl Keepalive is forver:%s", kaerr.Error())
+							log.Infof("Set ttl Keepalive is forver: %s", kaerr.Error())
 						}
 						select {
 						case ka := <-ch:
-							log.Printf("TTL value is %d", ka.TTL)
+							log.Infof("TTL value is %d", ka.TTL)
 						}
 						_, err = p.KeysAPI.Put(context.TODO(), nodePath, v.Encode(), clientv3.WithLease(ttl.ID))
 						if err != nil {
-							log.Printf("Put key %s value %s :%s", nodePath, v.Encode(), err.Error())
+							log.Infof("Put key %s value %s : %s", nodePath, v.Encode(), err.Error())
 						}
 					}
 
@@ -120,7 +120,7 @@ func (p *EtcdV3RegisterPlugin) Close() {
 func (p *EtcdV3RegisterPlugin) Put(key, value string, opts ...clientv3.OpOption) error {
 	_, err := p.KeysAPI.Put(context.TODO(), key, value, opts...)
 	if err != nil {
-		log.Printf("Put %s %s error %s", key, value, err.Error())
+		log.Infof("Put %s %s error %s", key, value, err.Error())
 		return err
 	}
 	return nil
@@ -142,7 +142,7 @@ func (p *EtcdV3RegisterPlugin) Register(name string, rcvr interface{}, metadata 
 
 	err = p.Put(nodePath, strings.Join(metadata, "&"))
 	if err != nil {
-		log.Printf("failed to put service meta: %+v", err)
+		log.Infof("failed to put service meta: %+v", err)
 		return
 	}
 

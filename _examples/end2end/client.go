@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx"
 )
 
@@ -24,9 +24,9 @@ func main() {
 	var reply Reply
 	err := client.Call("Arith.Mul", args, &reply)
 	if err != nil {
-		fmt.Printf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
+		log.Infof("error for Arith: %d*%d, %v", args.A, args.B, err)
 	} else {
-		fmt.Printf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
+		log.Infof("Arith: %d*%d=%d", args.A, args.B, reply.C)
 	}
 
 	client.Close()

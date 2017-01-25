@@ -8,8 +8,9 @@ import (
 	"bufio"
 	"encoding/gob"
 	"io"
-	"log"
 	"net/rpc"
+
+	"github.com/smallnest/rpcx/log"
 )
 
 // gobServerCodec is exacted from go net/rpc/server.go
@@ -45,7 +46,7 @@ func (c *gobServerCodec) WriteResponse(r *rpc.Response, body interface{}) (err e
 		if c.encBuf.Flush() == nil {
 			// Gob couldn't encode the header. Should not happen, so if it does,
 			// shut down the connection to signal that the connection is broken.
-			log.Println("rpc: gob error encoding response:", err)
+			log.Infof("rpc: gob error encoding response: %v", err)
 			c.Close()
 		}
 		return
@@ -54,7 +55,7 @@ func (c *gobServerCodec) WriteResponse(r *rpc.Response, body interface{}) (err e
 		if c.encBuf.Flush() == nil {
 			// Was a gob problem encoding the body but the header has been written.
 			// Shut down the connection to signal that the connection is broken.
-			log.Println("rpc: gob error encoding body:", err)
+			log.Infof("rpc: gob error encoding body: %v", err)
 			c.Close()
 		}
 		return

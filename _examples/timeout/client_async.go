@@ -28,9 +28,9 @@ func main() {
 	divCall := client.Go("Arith.Mul", args, &reply, nil)
 	replyCall := <-divCall.Done // will be equal to divCall
 	if replyCall.Error != nil {
-		fmt.Printf("error for Arith: %d*%d, %v \n", args.A, args.B, replyCall.Error)
+		log.Infof("error for Arith: %d*%d, %v", args.A, args.B, replyCall.Error)
 	} else {
-		fmt.Printf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
+		log.Infof("Arith: %d*%d=%d", args.A, args.B, reply.C)
 	}
 
 	client.Close()

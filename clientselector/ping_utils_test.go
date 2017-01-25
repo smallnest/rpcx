@@ -3,15 +3,16 @@
 package clientselector
 
 import (
-	"log"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/smallnest/rpcx/log"
 )
 
 func TestPing(t *testing.T) {
 	if os.Getenv("travis") != "" {
-		log.Println("don't test this case in travis-ci.org")
+		log.Infof("don't test this case in travis-ci.org")
 		return
 	}
 	hosts := []string{"www.163.com", "www.baidu.com", "www.qq.com", "www.taobao.com"}

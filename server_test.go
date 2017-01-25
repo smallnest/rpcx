@@ -160,7 +160,7 @@ func (plugin *logCodecPlugin) PreReadRequestHeader(r *rpc.Request) error {
 }
 func (plugin *logCodecPlugin) PostReadRequestHeader(r *rpc.Request) error {
 	plugin.postReadRequestHeader++
-	//fmt.Printf("Received Header: %#v\n", r)
+	//log.Infof("Received Header: %#v\n", r)
 	return nil
 }
 func (plugin *logCodecPlugin) PreReadRequestBody(body interface{}) error {
@@ -168,12 +168,12 @@ func (plugin *logCodecPlugin) PreReadRequestBody(body interface{}) error {
 	return nil
 }
 func (plugin *logCodecPlugin) PostReadRequestBody(body interface{}) error {
-	//fmt.Printf("Received Body: %#v\n", body)
+	//log.Infof("Received Body: %#v\n", body)
 	plugin.postReadRequestBody++
 	return nil
 }
 func (plugin *logCodecPlugin) PreWriteResponse(resp *rpc.Response, body interface{}) error {
-	//fmt.Printf("Sent Header: %#v\nSent Body: %#v\n", resp, body)
+	//log.Infof("Sent Header: %#v\nSent Body: %#v\n", resp, body)
 	plugin.preWriteResponse++
 	return nil
 }

@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/smallnest/rpcx"
 	"github.com/smallnest/rpcx/clientselector"
+	"github.com/smallnest/rpcx/log"
 )
 
 type Args struct {
@@ -52,9 +52,9 @@ func callServer(sg sync.WaitGroup, clientPool *pool, s rpcx.ClientSelector) {
 	var reply Reply
 	err := client.Call("Arith.Mul", args, &reply)
 	if err != nil {
-		fmt.Printf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
+		log.Infof("error for Arith: %d*%d, %v", args.A, args.B, err)
 	} else {
-		fmt.Printf("Arith: %d*%d=%d, client: %p \n", args.A, args.B, reply.C, client)
+		log.Infof("Arith: %d*%d=%d, client: %p", args.A, args.B, reply.C, client)
 	}
 
 	clientPool.Put(client)

@@ -3,7 +3,6 @@ package plugin
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net"
 	"net/url"
 	"strconv"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/coreos/etcd/client"
 	"github.com/rcrowley/go-metrics"
+	"github.com/smallnest/rpcx/log"
 )
 
 //EtcdRegisterPlugin a register plugin which can register services into etcd for cluster
@@ -42,12 +42,12 @@ func (p *EtcdRegisterPlugin) Start() (err error) {
 	})
 
 	if err != nil {
-		log.Println("new client: " + err.Error())
+		log.Infof("new client: %v", err.Error())
 		return
 	}
 	p.KeysAPI = client.NewKeysAPI(cli)
 	if err = p.forceMkdirs(p.BasePath); err != nil {
-		log.Printf("can't make dirs: %s because of %s", p.BasePath, err.Error())
+		log.Infof("can't make dirs: %s because of %s", p.BasePath, err.Error())
 		return
 	}
 
@@ -61,7 +61,7 @@ func (p *EtcdRegisterPlugin) Start() (err error) {
 
 				for _, name := range p.Services {
 					// if err = p.mkdirs(fmt.Sprintf("%s/%s", p.BasePath, name)); err != nil {
-					// 	log.Println(err.Error())
+					// 	log.Infof(err.Error())
 					// 	continue
 					// }
 
@@ -71,7 +71,7 @@ func (p *EtcdRegisterPlugin) Start() (err error) {
 						Recursive: false,
 					})
 					if err != nil {
-						log.Println("get etcd key failed. " + err.Error())
+						log.Infof("get etcd key failed: %v", err.Error())
 					} else {
 						if v, err = url.ParseQuery(resp.Node.Value); err != nil {
 							continue
@@ -84,7 +84,7 @@ func (p *EtcdRegisterPlugin) Start() (err error) {
 						})
 
 						if err != nil {
-							log.Println("set etcd key failed. " + err.Error())
+							log.Infof("set etcd key failed: %v", err.Error())
 						}
 					}
 

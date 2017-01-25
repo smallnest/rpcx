@@ -2,9 +2,9 @@ package main
 
 import (
 	"crypto/tls"
-	"log"
 
 	"github.com/smallnest/rpcx"
+	"github.com/smallnest/rpcx/log"
 )
 
 type Args struct {
@@ -29,7 +29,7 @@ func main() {
 
 	cert, err := tls.LoadX509KeyPair("server.pem", "server.key")
 	if err != nil {
-		log.Println(err)
+		log.Info(err)
 		return
 	}
 
