@@ -1,0 +1,76 @@
+{
+    "dependencies": {
+        "github.com/DataDog/zstd": {
+            "branch": "1.x"
+        },
+        "github.com/coreos/etcd": {
+            "branch": "master"
+        },
+        "github.com/fatih/color": {
+            "branch": "master"
+        },
+        "github.com/gogo/protobuf": {
+            "branch": "master"
+        },
+        "github.com/golang/protobuf": {
+            "branch": "master"
+        },
+        "github.com/golang/snappy": {
+            "branch": "master"
+        },
+        "github.com/hashicorp/consul": {
+            "branch": "master"
+        },
+        "github.com/hashicorp/net-rpc-msgpackrpc": {
+            "branch": "master"
+        },
+        "github.com/juju/ratelimit": {
+            "branch": "master"
+        },
+        "github.com/kavu/go_reuseport": {
+            "branch": "master"
+        },
+        "github.com/mars9/codec": {
+            "branch": "master"
+        },
+        "github.com/micro/go-bson": {
+            "branch": "master"
+        },
+        "github.com/pascaldekloe/colfer": {
+            "branch": "master"
+        },
+        "github.com/pierrec/lz4": {
+            "branch": "master"
+        },
+        "github.com/rcrowley/go-metrics": {
+            "branch": "master"
+        },
+        "github.com/samuel/go-zookeeper": {
+            "branch": "master"
+        },
+        "github.com/smallnest/net-rpc-gencode": {
+            "branch": "master"
+        },
+        "github.com/smallnest/rpc-codec": {
+            "branch": "master"
+        },
+        "github.com/tatsushid/go-fastping": {
+            "branch": "master"
+        },
+        "github.com/vrischmann/go-metrics-influxdb": {
+            "branch": "master"
+        },
+        "github.com/xtaci/kcp-go": {
+            "branch": "master"
+        },
+        "golang.org/x/crypto": {
+            "branch": "master"
+        },
+        "golang.org/x/net": {
+            "branch": "master"
+        },
+        "google.golang.org/grpc": {
+            "branch": "master"
+        }
+    }
+}

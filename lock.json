@@ -1,0 +1,411 @@
+{
+    "memo": "a7bb061c818e1ca942c306210e45633df99c0c203f6ee1b42471a26dcc402121",
+    "projects": [
+        {
+            "name": "github.com/DataDog/zstd",
+            "branch": "1.x",
+            "revision": "add9e2ca52c03c1f6f8deffa22fcc7667dcb4ae2",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/beorn7/perks",
+            "branch": "master",
+            "revision": "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9",
+            "packages": [
+                "quantile"
+            ]
+        },
+        {
+            "name": "github.com/coreos/etcd",
+            "branch": "master",
+            "revision": "d9b98215517c58ea093f587fcdadb1daad0a7d1d",
+            "packages": [
+                "client",
+                "clientv3",
+                "mvcc/mvccpb"
+            ]
+        },
+        {
+            "name": "github.com/fatih/color",
+            "branch": "master",
+            "revision": "34e4ee095d12986a2cef5ddb9aeb3b8cfcfea17c",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/ghodss/yaml",
+            "branch": "master",
+            "revision": "04f313413ffd65ce25f2541bfd2b2ceec5c0908c",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/gogo/protobuf",
+            "branch": "master",
+            "revision": "84af2615df1ba1d35cc975ba94b64ee67d6c196e",
+            "packages": [
+                "proto"
+            ]
+        },
+        {
+            "name": "github.com/golang/protobuf",
+            "branch": "master",
+            "revision": "8ee79997227bf9b34611aee7946ae64735e6fd93",
+            "packages": [
+                "jsonpb",
+                "proto"
+            ]
+        },
+        {
+            "name": "github.com/golang/snappy",
+            "branch": "master",
+            "revision": "7db9049039a047d955fe8c19b83c8ff5abd765c7",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/grpc-ecosystem/go-grpc-prometheus",
+            "branch": "master",
+            "revision": "6b7015e65d366bf3f19b2b2a000a831940f0f7e0",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/grpc-ecosystem/grpc-gateway",
+            "branch": "master",
+            "revision": "a51e1d5b0d7965e5363ac64ca47c4f078d77b3a0",
+            "packages": [
+                "runtime",
+                "utilities"
+            ]
+        },
+        {
+            "name": "github.com/hashicorp/consul",
+            "branch": "master",
+            "revision": "2f9c05a75b9a06323ca996e7adb1bb531be08d48",
+            "packages": [
+                "api"
+            ]
+        },
+        {
+            "name": "github.com/hashicorp/errwrap",
+            "branch": "master",
+            "revision": "7554cd9344cec97297fa6649b055a8c98c2a1e55",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/hashicorp/go-cleanhttp",
+            "branch": "master",
+            "revision": "ad28ea4487f05916463e2423a55166280e8254b5",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/hashicorp/go-msgpack",
+            "branch": "master",
+            "revision": "fa3f63826f7c23912c15263591e65d54d080b458",
+            "packages": [
+                "codec"
+            ]
+        },
+        {
+            "name": "github.com/hashicorp/go-multierror",
+            "branch": "master",
+            "revision": "ed905158d87462226a13fe39ddf685ea65f1c11f",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/hashicorp/net-rpc-msgpackrpc",
+            "branch": "master",
+            "revision": "a14192a58a694c123d8fe5481d4a4727d6ae82f3",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/hashicorp/serf",
+            "version": "v0.8.0",
+            "revision": "b9642a47e6139e50548b6f14588a1a3c0839660a",
+            "packages": [
+                "coordinate"
+            ]
+        },
+        {
+            "name": "github.com/influxdata/influxdb",
+            "branch": "master",
+            "revision": "b0a1e91ad1d0f2b9c8ccf09ab48ce30bdbe17045",
+            "packages": [
+                "client"
+            ]
+        },
+        {
+            "name": "github.com/juju/ratelimit",
+            "branch": "master",
+            "revision": "77ed1c8a01217656d2080ad51981f6e99adaa177",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/kavu/go_reuseport",
+            "branch": "master",
+            "revision": "9c720277112a8e2011b06273f1fa2013e6329bee",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/klauspost/cpuid",
+            "branch": "master",
+            "revision": "09cded8978dc9e80714c4d85b0322337b0a1e5e0",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/klauspost/reedsolomon",
+            "branch": "master",
+            "revision": "c056598956acbb4a085b3c23914415937b3335e5",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/mars9/codec",
+            "branch": "master",
+            "revision": "49676af5c6e05c12d8494c341ecb0a151cf207ea",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/mattn/go-colorable",
+            "branch": "master",
+            "revision": "d228849504861217f796da67fae4f6e347643f15",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/mattn/go-isatty",
+            "branch": "master",
+            "revision": "30a891c33c7cde7b02a981314b4228ec99380cca",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/matttproud/golang_protobuf_extensions",
+            "branch": "master",
+            "revision": "c12348ce28de40eed0136aa2b644d0ee0650e56c",
+            "packages": [
+                "pbutil"
+            ]
+        },
+        {
+            "name": "github.com/micro/go-bson",
+            "branch": "master",
+            "revision": "84522947cabd40ff9a8e98b90fcd4951c576092a",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/pascaldekloe/colfer",
+            "branch": "master",
+            "revision": "b7dc0e51ef8a92f4f236cfae6220b9f4d7b4e0b9",
+            "packages": [
+                "rpc"
+            ]
+        },
+        {
+            "name": "github.com/pierrec/lz4",
+            "branch": "master",
+            "revision": "5c9560bfa9ace2bf86080bf40d46b34ae44604df",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/pierrec/xxHash",
+            "branch": "master",
+            "revision": "5a004441f897722c627870a981d02b29924215fa",
+            "packages": [
+                "xxHash32"
+            ]
+        },
+        {
+            "name": "github.com/pkg/errors",
+            "branch": "master",
+            "revision": "248dadf4e9068a0b3e79f02ed0a610d935de5302",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/prometheus/client_golang",
+            "branch": "master",
+            "revision": "575f371f7862609249a1be4c9145f429fe065e32",
+            "packages": [
+                "prometheus"
+            ]
+        },
+        {
+            "name": "github.com/prometheus/client_model",
+            "branch": "master",
+            "revision": "fa8ad6fec33561be4280a8f0514318c79d7f6cb6",
+            "packages": [
+                "go"
+            ]
+        },
+        {
+            "name": "github.com/prometheus/common",
+            "branch": "master",
+            "revision": "6d76b79f239843a04e8ad8dfd8fcadfa3920236f",
+            "packages": [
+                "expfmt",
+                "model"
+            ]
+        },
+        {
+            "name": "github.com/prometheus/procfs",
+            "branch": "master",
+            "revision": "fcdb11ccb4389efb1b210b7ffb623ab71c5fdd60",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/rcrowley/go-metrics",
+            "branch": "master",
+            "revision": "1f30fe9094a513ce4c700b9a54458bbb0c96996c",
+            "packages": [
+                ".",
+                "exp"
+            ]
+        },
+        {
+            "name": "github.com/samuel/go-zookeeper",
+            "branch": "master",
+            "revision": "1d7be4effb13d2d908342d349d71a284a7542693",
+            "packages": [
+                "zk"
+            ]
+        },
+        {
+            "name": "github.com/smallnest/net-rpc-gencode",
+            "branch": "master",
+            "revision": "2634c6e2ebdb6c0b7d1663a0ba66f16785101d3d",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/smallnest/rpc-codec",
+            "branch": "master",
+            "revision": "89a496d92476c2f5713817ff819557256dc73582",
+            "packages": [
+                "jsonrpc2"
+            ]
+        },
+        {
+            "name": "github.com/tatsushid/go-fastping",
+            "branch": "master",
+            "revision": "d7bb493dee3e090e2ffb6914adddf17c1e7c026c",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/ugorji/go",
+            "branch": "master",
+            "revision": "9c7f9b7a2bc3a520f7c7b30b34b7f85f47fe27b6",
+            "packages": [
+                "codec"
+            ]
+        },
+        {
+            "name": "github.com/vrischmann/go-metrics-influxdb",
+            "branch": "master",
+            "revision": "43af8332c303f62ef62663b02b3b7d8a9802002a",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/xtaci/kcp-go",
+            "branch": "master",
+            "revision": "6da5044c742f24f05b00db9214b57b2ac943c9ab",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "golang.org/x/crypto",
+            "branch": "master",
+            "revision": "41d678d1df78cd0410143162dff954e6dc09300f",
+            "packages": [
+                "blowfish",
+                "cast5",
+                "pbkdf2",
+                "salsa20",
+                "tea",
+                "twofish",
+                "xtea"
+            ]
+        },
+        {
+            "name": "golang.org/x/net",
+            "branch": "master",
+            "revision": "f2499483f923065a842d38eb4c7f1927e6fc6e6d",
+            "packages": [
+                "context",
+                "http2",
+                "http2/hpack",
+                "icmp",
+                "ipv4",
+                "ipv6",
+                "trace"
+            ]
+        },
+        {
+            "name": "golang.org/x/sys",
+            "branch": "master",
+            "revision": "d75a52659825e75fff6158388dddc6a5b04f9ba5",
+            "packages": [
+                "unix"
+            ]
+        },
+        {
+            "name": "google.golang.org/grpc",
+            "branch": "master",
+            "revision": "09aecb094ef6b9ebe49dd999f52c505beeeb402e",
+            "packages": [
+                ".",
+                "codes",
+                "credentials",
+                "grpclog",
+                "metadata"
+            ]
+        },
+        {
+            "name": "gopkg.in/yaml.v2",
+            "branch": "v2",
+            "revision": "a5b47d31c556af34a302ce5d659e6fea44d90de0",
+            "packages": [
+                "."
+            ]
+        }
+    ]
+}
