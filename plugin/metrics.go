@@ -34,10 +34,10 @@ func (p *MetricsPlugin) Register(name string, rcvr interface{}, metadata ...stri
 }
 
 // HandleConnAccept handles connections from clients
-func (p *MetricsPlugin) HandleConnAccept(net.Conn) bool {
+func (p *MetricsPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
 	clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Registry)
 	clientMeter.Mark(1)
-	return true
+	return conn, true
 }
 
 // PreReadRequestHeader marks start time of calling service

@@ -60,12 +60,12 @@ func (plugin *ZooKeeperRegisterPlugin) Start() (err error) {
 }
 
 // HandleConnAccept handles connections from clients
-func (plugin *ZooKeeperRegisterPlugin) HandleConnAccept(net.Conn) bool {
+func (plugin *ZooKeeperRegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
 	if plugin.Metrics != nil {
 		clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Metrics)
 		clientMeter.Mark(1)
 	}
-	return true
+	return conn, true
 }
 
 //Close closes zookeeper connection.

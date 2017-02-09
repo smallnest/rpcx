@@ -98,12 +98,12 @@ func (p *EtcdRegisterPlugin) Start() (err error) {
 }
 
 // HandleConnAccept handles connections from clients
-func (p *EtcdRegisterPlugin) HandleConnAccept(net.Conn) bool {
+func (p *EtcdRegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
 	if p.Metrics != nil {
 		clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
 		clientMeter.Mark(1)
 	}
-	return true
+	return conn, true
 }
 
 //Close closes this plugin

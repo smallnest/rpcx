@@ -11,7 +11,7 @@ func TestRateLimitingPlugin(t *testing.T) {
 
 	total := 0
 	for i := 0; i < 2000; i++ {
-		if p.HandleConnAccept(nil) {
+		if _, ok := p.HandleConnAccept(nil); ok {
 			total++
 		}
 	}

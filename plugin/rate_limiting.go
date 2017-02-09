@@ -25,8 +25,8 @@ func NewRateLimitingPlugin(fillInterval time.Duration, capacity int64) *RateLimi
 }
 
 // HandleConnAccept can limit connecting rate
-func (plugin *RateLimitingPlugin) HandleConnAccept(conn net.Conn) bool {
-	return plugin.bucket.TakeAvailable(1) > 0
+func (plugin *RateLimitingPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
+	return conn, plugin.bucket.TakeAvailable(1) > 0
 }
 
 // Name return name of this plugin.
