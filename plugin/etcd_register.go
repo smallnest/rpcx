@@ -26,6 +26,8 @@ type EtcdRegisterPlugin struct {
 	UpdateInterval time.Duration
 	KeysAPI        client.KeysAPI
 	ticker         *time.Ticker
+	Username       string
+	Password       string
 }
 
 // Start starts to connect etcd cluster
@@ -39,6 +41,8 @@ func (p *EtcdRegisterPlugin) Start() (err error) {
 		Endpoints:               p.EtcdServers,
 		Transport:               client.DefaultTransport,
 		HeaderTimeoutPerRequest: 5 * time.Second,
+		Username:                p.Username,
+		Password:                p.Password,
 	})
 
 	if err != nil {
