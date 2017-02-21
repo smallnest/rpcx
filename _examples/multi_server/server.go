@@ -1,6 +1,6 @@
 package main
 
-import "github.com/smallnest/rpcx"
+import "github.com/saiser/rpcx"
 
 type Args struct {
 	A int

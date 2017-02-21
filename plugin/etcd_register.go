@@ -13,7 +13,7 @@ import (
 
 	"github.com/coreos/etcd/client"
 	"github.com/rcrowley/go-metrics"
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx/log"
 )
 
 //EtcdRegisterPlugin a register plugin which can register services into etcd for cluster

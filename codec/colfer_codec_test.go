@@ -3,7 +3,7 @@ package codec
 import (
 	"testing"
 
-	"github.com/smallnest/rpcx"
+	"github.com/saiser/rpcx"
 )
 
 //go:generate colf go colfer_codec_test.colf

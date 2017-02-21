@@ -4,7 +4,7 @@ import (
 	"io"
 	"net/rpc"
 
-	"github.com/smallnest/rpc-codec/jsonrpc2"
+	"github.com/saiser/rpc-codec/jsonrpc2"
 )
 
 // NewJSONRPC2ServerCodec creates a RPC-JSON 2.0 ServerCodec

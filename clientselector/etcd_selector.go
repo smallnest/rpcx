@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/client"
-	"github.com/smallnest/rpcx"
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx"
+	"github.com/saiser/rpcx/log"
 	"golang.org/x/net/context"
 )
 

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/consul/api"
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx/log"
 )
 
 //ConsulRegisterPlugin a register plugin which can register services into consul for cluster

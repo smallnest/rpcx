@@ -7,7 +7,7 @@ import (
 
 	"github.com/rcrowley/go-metrics"
 	"github.com/samuel/go-zookeeper/zk"
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx/log"
 )
 
 func TestZooKeeperRegisterPlugin_Register(t *testing.T) {

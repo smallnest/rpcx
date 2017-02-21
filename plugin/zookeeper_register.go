@@ -11,7 +11,7 @@ import (
 
 	"github.com/rcrowley/go-metrics"
 	"github.com/samuel/go-zookeeper/zk"
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx/log"
 )
 
 //ZooKeeperRegisterPlugin a register plugin which can register services into zookeeper for cluster

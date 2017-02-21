@@ -3,7 +3,7 @@ package codec
 import (
 	"testing"
 
-	"github.com/smallnest/rpcx"
+	"github.com/saiser/rpcx"
 )
 
 func TestBsonCodec(t *testing.T) {

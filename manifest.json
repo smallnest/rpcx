@@ -48,10 +48,10 @@
         "github.com/samuel/go-zookeeper": {
             "branch": "master"
         },
-        "github.com/smallnest/net-rpc-gencode": {
+        "github.com/saiser/net-rpc-gencode": {
             "branch": "master"
         },
-        "github.com/smallnest/rpc-codec": {
+        "github.com/saiser/rpc-codec": {
             "branch": "master"
         },
         "github.com/tatsushid/go-fastping": {

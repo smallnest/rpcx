@@ -8,7 +8,7 @@ package codec
 // 	"net/rpc"
 // 	"reflect"
 
-// 	hessian "github.com/smallnest/gohessian"
+// 	hessian "github.com/saiser/gohessian"
 // )
 
 // // hessianServerCodec is exacted from go net/rpc/server.go

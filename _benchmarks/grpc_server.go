@@ -4,7 +4,7 @@ import (
 	"flag"
 	"net"
 
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx/log"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

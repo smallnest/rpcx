@@ -304,7 +304,7 @@
             ]
         },
         {
-            "name": "github.com/smallnest/net-rpc-gencode",
+            "name": "github.com/saiser/net-rpc-gencode",
             "branch": "master",
             "revision": "2634c6e2ebdb6c0b7d1663a0ba66f16785101d3d",
             "packages": [
@@ -312,7 +312,7 @@
             ]
         },
         {
-            "name": "github.com/smallnest/rpc-codec",
+            "name": "github.com/saiser/rpc-codec",
             "branch": "master",
             "revision": "89a496d92476c2f5713817ff819557256dc73582",
             "packages": [

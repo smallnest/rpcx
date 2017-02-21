@@ -10,7 +10,7 @@ import (
 	"io"
 	"net/rpc"
 
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx/log"
 )
 
 // gobServerCodec is exacted from go net/rpc/server.go
