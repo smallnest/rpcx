@@ -19,7 +19,7 @@ type ConsulRegisterPlugin struct {
 	consulConfig   *api.Config
 	client         *api.Client
 	Services       []string
-	updateInterval time.Duration
+	UpdateInterval time.Duration
 }
 
 // Start starts to connect etcd cluster
@@ -49,7 +49,7 @@ func (plugin *ConsulRegisterPlugin) Register(name string, rcvr interface{}, meta
 		Address: plugin.ServiceAddress,
 		Tags:    []string{strings.Join(metadata, "&")},
 		Check: &api.AgentServiceCheck{
-			TTL:    strconv.Itoa(int(plugin.updateInterval.Seconds())) + "s",
+			TTL:    strconv.Itoa(int(plugin.UpdateInterval.Seconds())) + "s",
 			Status: api.HealthPassing,
 			TCP:    plugin.ServiceAddress,
 		},
