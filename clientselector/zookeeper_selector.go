@@ -120,13 +120,13 @@ func (s *ZooKeeperClientSelector) start() {
 }
 
 func (s *ZooKeeperClientSelector) createWeighted() {
-	s.WeightedServers = make([]*Weighted, len(s.Servers))
+	weightedServers := make([]*Weighted, len(s.Servers))
 
 	var inactiveServers []int
 
 	for i, ss := range s.Servers {
 		bytes, _, err := s.zkConn.Get(s.BasePath + "/" + ss)
-		s.WeightedServers[i] = &Weighted{Server: ss, Weight: 1, EffectiveWeight: 1}
+		weightedServers[i] = &Weighted{Server: ss, Weight: 1, EffectiveWeight: 1}
 		if err == nil {
 			metadata := string(bytes)
 			s.metadata[ss] = metadata
@@ -141,8 +141,8 @@ func (s *ZooKeeperClientSelector) createWeighted() {
 				if w != "" {
 					weight, err := strconv.Atoi(w)
 					if err != nil {
-						s.WeightedServers[i].Weight = weight
-						s.WeightedServers[i].EffectiveWeight = weight
+						weightedServers[i].Weight = weight
+						weightedServers[i].EffectiveWeight = weight
 					}
 				}
 			}
@@ -150,6 +150,7 @@ func (s *ZooKeeperClientSelector) createWeighted() {
 
 	}
 
+	s.WeightedServers = weightedServers
 	s.removeInactiveServers(inactiveServers)
 }
 
