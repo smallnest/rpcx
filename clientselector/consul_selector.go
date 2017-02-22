@@ -107,6 +107,7 @@ func (s *ConsulClientSelector) pullServers() {
 		}
 	}
 	s.Servers = services
+	s.len = len(services)
 }
 
 // func (s *ConsulClientSelector) createWeighted(ass map[string]*api.AgentService) {
