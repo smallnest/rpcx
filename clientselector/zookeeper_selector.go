@@ -159,13 +159,14 @@ func (s *ZooKeeperClientSelector) watchPath() {
 	servers, _, ch, _ := s.zkConn.ChildrenW(s.BasePath)
 
 	if len(servers) > 0 {
-
+		s.clientRWMutex.Lock()
 		s.Servers = servers
 		s.len = len(servers)
 		if s.SelectMode == rpcx.WeightedRoundRobin {
 			s.createWeighted()
 		}
 		s.currentServer = s.currentServer % s.len
+		s.clientRWMutex.Unlock()
 	}
 
 	<-ch
