@@ -89,7 +89,7 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 						}
 
 						ka := <-ch
-						log.Infof("TTL value is %d", ka.TTL)
+						log.Debugf("TTL value is %d", ka.TTL)
 
 						_, err = p.KeysAPI.Put(context.TODO(), nodePath, v.Encode(), clientv3.WithLease(ttl.ID))
 						if err != nil {
