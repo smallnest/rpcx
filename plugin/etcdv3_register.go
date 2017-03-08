@@ -63,9 +63,12 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 
 				for _, name := range p.Services {
 					nodePath = fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
-
-					ctx, _ := context.WithTimeout(context.Background(), p.DialTimeout)
-					resp, err = p.KeysAPI.Get(ctx, nodePath)
+					if p.DialTimeout > 0 {
+						ctx, _ := context.WithTimeout(context.Background(), p.DialTimeout)
+						resp, err = p.KeysAPI.Get(ctx, nodePath)
+					} else {
+						resp, err = p.KeysAPI.Get(context.TODO(), nodePath)
+					}
 					if err != nil {
 						log.Infof("get etcd key failed: %v", err.Error())
 					} else {
@@ -145,8 +148,8 @@ func (p *EtcdV3RegisterPlugin) Register(name string, rcvr interface{}, metadata 
 		return
 	}
 
-	if !IsContainsV3(p.Services, fmt.Sprintf("%s/%s", p.BasePath, name)) {
-		p.Services = append(p.Services, fmt.Sprintf("%s/%s", p.BasePath, name))
+	if !IsContainsV3(p.Services, name) {
+		p.Services = append(p.Services, name)
 	}
 	return
 }
@@ -183,7 +186,7 @@ func (p *EtcdV3RegisterPlugin) Unregister(name string) (err error) {
 	}
 	var index int
 	for index = 0; index < len(p.Services); index++ {
-		if p.Services[index] == fmt.Sprintf("%s/%s", p.BasePath, name) {
+		if p.Services[index] == name {
 			break
 		}
 	}
