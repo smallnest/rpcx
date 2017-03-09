@@ -7,7 +7,7 @@ import (
 
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/smallnest/rpcx"
+	"github.com/saiser/rpcx"
 )
 
 type Args struct {

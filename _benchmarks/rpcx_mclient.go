@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/montanaflynn/stats"
-	"github.com/smallnest/rpcx"
-	"github.com/smallnest/rpcx/clientselector"
-	"github.com/smallnest/rpcx/codec"
+	"github.com/saiser/rpcx"
+	"github.com/saiser/rpcx/clientselector"
+	"github.com/saiser/rpcx/codec"
 )
 
 var concurrency = flag.Int("c", 1, "concurrency")

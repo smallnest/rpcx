@@ -4,7 +4,7 @@ import (
 	"io"
 	"net/rpc"
 
-	gencodec "github.com/smallnest/net-rpc-gencode"
+	gencodec "github.com/saiser/net-rpc-gencode"
 )
 
 // NewGencodeServerCodec creates a gencode ServerCodec

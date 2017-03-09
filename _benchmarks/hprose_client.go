@@ -11,7 +11,7 @@ import (
 
 	"github.com/hprose/hprose-golang/rpc"
 	"github.com/montanaflynn/stats"
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx/log"
 )
 
 var concurrency = flag.Int("c", 1, "concurrency")

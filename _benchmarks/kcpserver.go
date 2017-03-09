@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 
-	"github.com/smallnest/rpcx"
-	"github.com/smallnest/rpcx/codec"
-	"github.com/smallnest/rpcx/plugin"
+	"github.com/saiser/rpcx"
+	"github.com/saiser/rpcx/codec"
+	"github.com/saiser/rpcx/plugin"
 )
 
 type Hello int

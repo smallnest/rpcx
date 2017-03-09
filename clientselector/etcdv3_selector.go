@@ -13,8 +13,8 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	mvccpb "github.com/coreos/etcd/mvcc/mvccpb"
-	"github.com/smallnest/rpcx"
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx"
+	"github.com/saiser/rpcx/log"
 	"golang.org/x/net/context"
 )
 

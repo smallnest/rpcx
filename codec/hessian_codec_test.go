@@ -3,7 +3,7 @@ package codec
 // import (
 // 	"testing"
 
-// 	"github.com/smallnest/rpcx"
+// 	"github.com/saiser/rpcx"
 // )
 
 // func TestHessianCodec(t *testing.T) {

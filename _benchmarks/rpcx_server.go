@@ -5,9 +5,9 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/smallnest/rpcx"
-	"github.com/smallnest/rpcx/codec"
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx"
+	"github.com/saiser/rpcx/codec"
+	"github.com/saiser/rpcx/log"
 )
 
 type Hello int

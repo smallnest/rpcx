@@ -5,8 +5,8 @@ import (
 
 	"golang.org/x/crypto/pbkdf2"
 
-	"github.com/smallnest/rpcx"
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx"
+	"github.com/saiser/rpcx/log"
 	kcp "github.com/xtaci/kcp-go"
 )
 

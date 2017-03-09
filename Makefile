@@ -3,7 +3,7 @@ WORKDIR=`pwd`
 default: build
 
 install:
-	go get github.com/smallnest/rpcx/...
+	go get github.com/saiser/rpcx/...
 
 vet:
 	go vet ./...
@@ -40,7 +40,7 @@ doc:
 	godoc -http=:6060
 
 deps:
-	go list -f '{{ join .Deps  "\n"}}' ./... |grep "/" | grep -v "github.com/smallnest/rpcx"| grep "\." | sort |uniq
+	go list -f '{{ join .Deps  "\n"}}' ./... |grep "/" | grep -v "github.com/saiser/rpcx"| grep "\." | sort |uniq
 
 fmt:
 	go fmt ./...

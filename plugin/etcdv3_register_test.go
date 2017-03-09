@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/rcrowley/go-metrics"
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx/log"
 )
 
 func TestEtcdV3RegisterPlugin_Register(t *testing.T) {

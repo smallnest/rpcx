@@ -4,9 +4,9 @@ import (
 	"flag"
 	"time"
 
-	"github.com/smallnest/rpcx/log"
-	"github.com/smallnest/rpcx"
-	"github.com/smallnest/rpcx/clientselector"
+	"github.com/saiser/rpcx/log"
+	"github.com/saiser/rpcx"
+	"github.com/saiser/rpcx/clientselector"
 )
 
 type Args struct {

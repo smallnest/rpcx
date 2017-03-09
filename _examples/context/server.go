@@ -3,8 +3,8 @@ package main
 import (
 	"net"
 
-	"github.com/smallnest/rpcx/log"
-	"github.com/smallnest/rpcx"
+	"github.com/saiser/rpcx/log"
+	"github.com/saiser/rpcx"
 )
 
 type Args struct {

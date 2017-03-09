@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/hashicorp/net-rpc-msgpackrpc"
-	"github.com/smallnest/rpcx/codec"
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx/codec"
+	"github.com/saiser/rpcx/log"
 )
 
 // don't use it to test benchmark. It is only used to evaluate libs internally.

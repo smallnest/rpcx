@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/client"
-	"github.com/smallnest/rpcx"
-	"github.com/smallnest/rpcx/log"
+	"github.com/saiser/rpcx"
+	"github.com/saiser/rpcx/log"
 	"golang.org/x/net/context"
 )
 
@@ -38,10 +38,12 @@ type EtcdClientSelector struct {
 	len                int
 	HashServiceAndArgs HashServiceAndArgs
 	Client             *rpcx.Client
+	Username           string
+	Password           string
 }
 
 // NewEtcdClientSelector creates a EtcdClientSelector
-func NewEtcdClientSelector(etcdServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration) *EtcdClientSelector {
+func NewEtcdClientSelector(etcdServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration, username string, password string) *EtcdClientSelector {
 	selector := &EtcdClientSelector{
 		EtcdServers:     etcdServers,
 		BasePath:        basePath,
@@ -50,7 +52,10 @@ func NewEtcdClientSelector(etcdServers []string, basePath string, sessionTimeout
 		dailTimeout:     dailTimeout,
 		clientAndServer: make(map[string]*rpc.Client),
 		metadata:        make(map[string]string),
-		rnd:             rand.New(rand.NewSource(time.Now().UnixNano()))}
+		rnd:             rand.New(rand.NewSource(time.Now().UnixNano())),
+		Username:        username,
+		Password:        password,
+	}
 
 	selector.start()
 	return selector
