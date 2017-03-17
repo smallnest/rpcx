@@ -19,6 +19,8 @@ const (
 	DefaultRPCPath = "/_goRPC_"
 )
 
+var IP4Reg = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
+
 // ArgsContext contains net.Conn so services can get net.Conn info, for example, remote address.
 type ArgsContext interface {
 	Value(key string) interface{}
@@ -214,8 +216,7 @@ func validIP4(ipAddress string) bool {
 	i := strings.LastIndex(ipAddress, ":")
 	ipAddress = ipAddress[:i] //remove port
 
-	re, _ := regexp.Compile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
-	return re.MatchString(ipAddress)
+	return IP4Reg.MatchString(ipAddress)
 }
 
 // Serve starts and listens RPC requests.
