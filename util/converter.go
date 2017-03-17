@@ -10,11 +10,9 @@ func SliceByteToString(b []byte) string {
 }
 
 func StringToSliceByte(s string) []byte {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
+	if len(s) == 0 {
+		return nil
 	}
-	return *(*[]byte)(unsafe.Pointer(&bh))
+	ss := (*reflect.StringHeader)(unsafe.Pointer(&s))
+	return (*[0x7fffffff]byte)(unsafe.Pointer(ss.Data))[:len(s):len(s)]
 }
