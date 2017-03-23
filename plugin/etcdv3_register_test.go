@@ -18,14 +18,13 @@ func TestEtcdV3RegisterPlugin_Register(t *testing.T) {
 	}
 
 	plugin := &EtcdV3RegisterPlugin{
-		ServiceAddress:    "tcp@127.0.0.1:1234",
-		EtcdServers:       []string{"http://127.0.0.1:2379"},
-		BasePath:          "/etcdv3",
-		Metrics:           metrics.NewRegistry(),
-		Services:          make([]string, 1),
-		UpdateInterval:    5 * time.Second,
-		UpdateIntervalNum: 5,
-		DialTimeout:       3 * time.Second,
+		ServiceAddress:      "tcp@127.0.0.1:1234",
+		EtcdServers:         []string{"http://127.0.0.1:2379"},
+		BasePath:            "/etcdv3",
+		Metrics:             metrics.NewRegistry(),
+		Services:            make([]string, 1),
+		UpdateIntervalInSec: 5,
+		DialTimeout:         3 * time.Second,
 	}
 
 	err := plugin.Start()

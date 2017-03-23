@@ -17,18 +17,17 @@ import (
 
 //EtcdV3RegisterPlugin a register plugin which can register services into etcd for cluster
 type EtcdV3RegisterPlugin struct {
-	ServiceAddress    string
-	EtcdServers       []string
-	BasePath          string
-	Metrics           metrics.Registry
-	Services          []string
-	UpdateInterval    time.Duration
-	UpdateIntervalNum int64
-	KeysAPI           *clientv3.Client
-	ticker            *time.Ticker
-	DialTimeout       time.Duration
-	Username          string
-	Password          string
+	ServiceAddress      string
+	EtcdServers         []string
+	BasePath            string
+	Metrics             metrics.Registry
+	Services            []string
+	UpdateIntervalInSec int64
+	KeysAPI             *clientv3.Client
+	ticker              *time.Ticker
+	DialTimeout         time.Duration
+	Username            string
+	Password            string
 }
 
 // Start starts to connect etcd v3 cluster
@@ -53,8 +52,8 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 	}
 	p.KeysAPI = cli
 
-	if p.UpdateInterval > 0 {
-		p.ticker = time.NewTicker(p.UpdateInterval)
+	if p.UpdateIntervalInSec > 0 {
+		p.ticker = time.NewTicker(time.Duration(p.UpdateIntervalInSec) * time.Second)
 		go func() {
 			for range p.ticker.C {
 				clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
@@ -77,8 +76,7 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 						}
 						v.Set("tps", string(data))
 
-						//TTL
-						ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalNum+5)
+						ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalInSec+20)
 						if err != nil {
 							log.Infof("V3 TTL Grant: %v", err.Error())
 						}

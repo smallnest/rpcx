@@ -80,7 +80,7 @@ func (p *EtcdRegisterPlugin) Start() (err error) {
 
 						_, err = p.KeysAPI.Set(context.TODO(), nodePath, v.Encode(), &client.SetOptions{
 							PrevExist: client.PrevIgnore,
-							TTL:       p.UpdateInterval + 10*time.Second,
+							TTL:       p.UpdateInterval + 20*time.Second,
 						})
 
 						if err != nil {
