@@ -74,7 +74,7 @@ func (s *EtcdClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []
 		ss := strings.Split(sv, "@")
 		c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
 		if err != nil {
-			log.Fatalf("rpc client connect server failed: %v", err.Error())
+			log.Errorf("rpc client connect server failed: %v", err.Error())
 			continue
 		} else {
 			clients = append(clients, c)
@@ -92,7 +92,7 @@ func (s *EtcdClientSelector) start() {
 	})
 
 	if err != nil {
-		log.Fatal("etcd new client failed: %v", err.Error())
+		log.Error("etcd new client failed: %v", err.Error())
 		return
 	}
 	s.KeysAPI = client.NewKeysAPI(cli)
