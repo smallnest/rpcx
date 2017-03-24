@@ -153,7 +153,7 @@ func (p *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata ..
 	}
 	nodePath := fmt.Sprintf("%s/%s", p.BasePath, name)
 	if err = p.forceMkdirs(nodePath); err != nil {
-		log.Fatal(err.Error())
+		log.Error(err.Error())
 		return
 	}
 

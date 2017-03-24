@@ -94,7 +94,7 @@ func (plugin *ConsulRegisterPlugin) CheckFail(name string) (err error) {
 // FindServices gets a service list by name
 func (plugin *ConsulRegisterPlugin) FindServices(name string) []*api.AgentService {
 	if "" == strings.TrimSpace(name) {
-		log.Fatal("FindServices service `name` can't be empty!")
+		log.Error("FindServices service `name` can't be empty!")
 		return nil
 	}
 	agent := plugin.client.Agent()
