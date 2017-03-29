@@ -41,10 +41,10 @@ type EtcdClientSelector struct {
 }
 
 // NewEtcdClientSelector creates a EtcdClientSelector
-func NewEtcdClientSelector(etcdServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration) *EtcdClientSelector {
+func NewEtcdClientSelector(etcdServers []string, servicePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration) *EtcdClientSelector {
 	selector := &EtcdClientSelector{
 		EtcdServers:     etcdServers,
-		BasePath:        basePath,
+		BasePath:        servicePath,
 		sessionTimeout:  sessionTimeout,
 		SelectMode:      sm,
 		dailTimeout:     dailTimeout,

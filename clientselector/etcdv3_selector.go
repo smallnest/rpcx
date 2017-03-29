@@ -74,10 +74,10 @@ func (s *EtcdV3ClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) 
 }
 
 // NewEtcdClientSelector creates a EtcdClientSelector
-func NewEtcdV3ClientSelector(etcdServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration) *EtcdV3ClientSelector {
+func NewEtcdV3ClientSelector(etcdServers []string, servicePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration) *EtcdV3ClientSelector {
 	selector := &EtcdV3ClientSelector{
 		EtcdServers:     etcdServers,
-		BasePath:        basePath,
+		BasePath:        servicePath,
 		sessionTimeout:  sessionTimeout,
 		SelectMode:      sm,
 		dailTimeout:     dailTimeout,
