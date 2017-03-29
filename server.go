@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/net-rpc-msgpackrpc"
+	msgpackrpc "github.com/rpcx-ecosystem/net-rpc-msgpackrpc"
 	"github.com/smallnest/rpcx/log"
 )
 

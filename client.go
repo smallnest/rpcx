@@ -8,7 +8,7 @@ import (
 	"net/rpc"
 	"time"
 
-	msgpackrpc "github.com/hashicorp/net-rpc-msgpackrpc"
+	msgpackrpc "github.com/rpcx-ecosystem/net-rpc-msgpackrpc"
 	"github.com/smallnest/rpcx/log"
 	kcp "github.com/xtaci/kcp-go"
 )

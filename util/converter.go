@@ -1,7 +1,6 @@
 package util
 
 import (
-	"reflect"
 	"unsafe"
 )
 
@@ -10,9 +9,7 @@ func SliceByteToString(b []byte) string {
 }
 
 func StringToSliceByte(s string) []byte {
-	if len(s) == 0 {
-		return nil
-	}
-	ss := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	return (*[0x7fffffff]byte)(unsafe.Pointer(ss.Data))[:len(s):len(s)]
+	x := (*[2]uintptr)(unsafe.Pointer(&s))
+	h := [3]uintptr{x[0], x[1], x[1]}
+	return *(*[]byte)(unsafe.Pointer(&h))
 }

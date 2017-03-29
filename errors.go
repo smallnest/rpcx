@@ -6,18 +6,13 @@ import (
 )
 
 var (
-	// ErrPluginAlreadyExists returns an error with message: 'Cannot activate the same plugin again, plugin '+plugin name' is already exists'
-	ErrPluginAlreadyExists = NewRPCError("Cannot use the same plugin again, '%s' is already exists")
-	// ErrPluginActivate returns an error with message: 'While trying to activate plugin '+plugin name'. Trace: +specific error'
-	ErrPluginActivate = NewRPCError("While trying to activate plugin '%s'. Trace: %s")
-	// ErrPluginRemoveNoPlugins returns an error with message: 'No plugins are registed yet, you cannot remove a plugin from an empty list!'
-	ErrPluginRemoveNoPlugins = NewRPCError("No plugins are registed yet, you cannot remove a plugin from an empty list!")
-	// ErrPluginRemoveEmptyName returns an error with message: 'Plugin with an empty name cannot be removed'
-	ErrPluginRemoveEmptyName = NewRPCError("Plugin with an empty name cannot be removed")
-	// ErrPluginRemoveNotFound returns an error with message: 'Cannot remove a plugin which doesn't exists'
-	ErrPluginRemoveNotFound = NewRPCError("Cannot remove a plugin which doesn't exists")
-	// Context other
+	ErrPluginAlreadyExists   = NewRPCError("cannot use the same plugin again, '%s' is already exists")
+	ErrPluginActivate        = NewRPCError("while trying to activate plugin '%s'. Trace: %s")
+	ErrPluginRemoveNoPlugins = NewRPCError("no plugins are registed yet, you cannot remove a plugin from an empty list!")
+	ErrPluginRemoveEmptyName = NewRPCError("plugin with an empty name cannot be removed")
+	ErrPluginRemoveNotFound  = NewRPCError("cannot remove a plugin which doesn't exists")
 
+	ErrWrongServiceMethod = NewRPCError("? is not allowed in service method name):%s")
 )
 
 // RPCError holds the error

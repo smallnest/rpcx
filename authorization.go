@@ -74,7 +74,7 @@ func NewAuthorizationClientPlugin(authorization, tag string) *AuthorizationClien
 func (plugin *AuthorizationClientPlugin) PreWriteRequest(r *rpc.Request, body interface{}) error {
 	plugin.AuthorizationAndServiceMethod.ServiceMethod = r.ServiceMethod
 
-	r.ServiceMethod = plugin.AuthorizationAndServiceMethod.String()
+	r.ServiceMethod = r.ServiceMethod + "\x1f" + plugin.AuthorizationAndServiceMethod.Authorization + "\x1f" + plugin.AuthorizationAndServiceMethod.Tag
 	return nil
 }
 
