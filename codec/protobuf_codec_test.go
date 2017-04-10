@@ -1,6 +1,7 @@
 package codec
 
 import (
+	"context"
 	"testing"
 
 	"github.com/smallnest/rpcx"
@@ -30,7 +31,7 @@ func TestProtobufCodec(t *testing.T) {
 
 	args := &ProtoArgs{7, 8}
 	var reply ProtoReply
-	err := client.Call(serviceMethodName, args, &reply)
+	err := client.Call(context.Background(), serviceMethodName, args, &reply)
 	if err != nil {
 		t.Errorf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
 	} else {

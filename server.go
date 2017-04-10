@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/smallnest/rpcx/codec"
+	msgpackrpc2 "github.com/rpcx-ecosystem/net-rpc-msgpackrpc2"
 	"github.com/smallnest/rpcx/core"
 	"github.com/smallnest/rpcx/log"
 )
@@ -137,7 +137,7 @@ func NewServer() *Server {
 	return &Server{
 		rpcServer:       core.NewServer(),
 		PluginContainer: &ServerPluginContainer{plugins: make([]IPlugin, 0)},
-		ServerCodecFunc: codec.NewGobServerCodec,
+		ServerCodecFunc: msgpackrpc2.NewServerCodec,
 	}
 }
 

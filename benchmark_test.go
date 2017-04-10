@@ -1,6 +1,7 @@
 package rpcx
 
 import (
+	"context"
 	"net"
 	"net/rpc"
 	"net/rpc/jsonrpc"
@@ -66,7 +67,7 @@ func benchmarkRPCXClient(client *Client, b *testing.B) {
 		go func() {
 			reply := new(Reply)
 			for atomic.AddInt32(&N, -1) >= 0 {
-				err := client.Call("Arith.Mul", args, reply)
+				err := client.Call(context.Background(), "Arith.Mul", args, reply)
 				if err != nil {
 					b.Errorf("rpc error: Mul: expected no error but got string %q", err.Error())
 				}
@@ -94,7 +95,7 @@ func benchmarkRPCXGencodeClient(client *Client, b *testing.B) {
 		go func() {
 			reply := new(GencodeReply)
 			for atomic.AddInt32(&N, -1) >= 0 {
-				err := client.Call("Arith.Mul", args, reply)
+				err := client.Call(context.Background(), "Arith.Mul", args, reply)
 				if err != nil {
 					b.Errorf("rpc error: Mul: expected no error but got string %q", err.Error())
 				}
@@ -122,7 +123,7 @@ func benchmarkRPCXProtobufClient(client *Client, b *testing.B) {
 		go func() {
 			reply := new(ProtoReply)
 			for atomic.AddInt32(&N, -1) >= 0 {
-				err := client.Call("Arith.Mul", args, reply)
+				err := client.Call(context.Background(), "Arith.Mul", args, reply)
 				if err != nil {
 					b.Errorf("rpc error: Mul: expected no error but got string %q", err.Error())
 				}
@@ -256,28 +257,28 @@ func BenchmarkRPCX_gob(b *testing.B) {
 	benchmarkRPCXClient(client, b)
 }
 
-func startRPCXWithJson() *Server {
-	server := NewServer()
-	server.RegisterName("Arith", new(Arith))
-	server.ServerCodecFunc = jsonrpc.NewServerCodec
-	ln, _ := listenTCP()
-	go server.ServeListener(ln)
+// func startRPCXWithJson() *Server {
+// 	server := NewServer()
+// 	server.RegisterName("Arith", new(Arith))
+// 	server.ServerCodecFunc = jsonrpc.NewServerCodec
+// 	ln, _ := listenTCP()
+// 	go server.ServeListener(ln)
 
-	return server
-}
+// 	return server
+// }
 
-func BenchmarkRPCX_json(b *testing.B) {
-	b.StopTimer()
-	server := startRPCXWithJson()
-	time.Sleep(5 * time.Second) //waiting for starting server
+// func BenchmarkRPCX_json(b *testing.B) {
+// 	b.StopTimer()
+// 	server := startRPCXWithJson()
+// 	time.Sleep(5 * time.Second) //waiting for starting server
 
-	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), DialTimeout: 10 * time.Second}
-	client := NewClient(s)
-	client.ClientCodecFunc = jsonrpc.NewClientCodec
-	defer client.Close()
+// 	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), DialTimeout: 10 * time.Second}
+// 	client := NewClient(s)
+// 	client.ClientCodecFunc = jsonrpc.NewClientCodec
+// 	defer client.Close()
 
-	benchmarkRPCXClient(client, b)
-}
+// 	benchmarkRPCXClient(client, b)
+// }
 
 func startRPCXWithMsgP() *Server {
 	rpc.Register(new(Arith))
@@ -347,25 +348,25 @@ func (t *ProtoArith) Error(args *ProtoArgs, reply *ProtoReply) error {
 	panic("ERROR")
 }
 
-func startRPCXWithProtobuf() *Server {
-	server := NewServer()
-	server.RegisterName("Arith", new(ProtoArith))
-	server.ServerCodecFunc = codec.NewProtobufServerCodec
-	ln, _ := listenTCP()
-	go server.ServeListener(ln)
+// func startRPCXWithProtobuf() *Server {
+// 	server := NewServer()
+// 	server.RegisterName("Arith", new(ProtoArith))
+// 	server.ServerCodecFunc = codec.NewProtobufServerCodec
+// 	ln, _ := listenTCP()
+// 	go server.ServeListener(ln)
 
-	return server
-}
+// 	return server
+// }
 
-func BenchmarkRPCX_protobuf(b *testing.B) {
-	b.StopTimer()
-	server := startRPCXWithProtobuf()
-	time.Sleep(5 * time.Second) //waiting for starting server
+// func BenchmarkRPCX_protobuf(b *testing.B) {
+// 	b.StopTimer()
+// 	server := startRPCXWithProtobuf()
+// 	time.Sleep(5 * time.Second) //waiting for starting server
 
-	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), DialTimeout: 10 * time.Second}
-	client := NewClient(s)
-	client.ClientCodecFunc = codec.NewProtobufClientCodec
-	defer client.Close()
+// 	s := &DirectClientSelector{Network: "tcp", Address: server.Address(), DialTimeout: 10 * time.Second}
+// 	client := NewClient(s)
+// 	client.ClientCodecFunc = codec.NewProtobufClientCodec
+// 	defer client.Close()
 
-	benchmarkRPCXProtobufClient(client, b)
-}
+// 	benchmarkRPCXProtobufClient(client, b)
+// }

@@ -1,14 +1,15 @@
 package rpcx
 
 import (
+	"context"
 	"net"
-	"net/rpc"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/hashicorp/net-rpc-msgpackrpc"
+	msgpack2 "github.com/rpcx-ecosystem/net-rpc-msgpackrpc2"
 	"github.com/smallnest/rpcx/codec"
+	"github.com/smallnest/rpcx/core"
 )
 
 var (
@@ -49,12 +50,12 @@ func startClient(t *testing.T) {
 		t.Errorf("dialing: %v", err)
 	}
 
-	client := msgpackrpc.NewClient(conn)
+	client := msgpack2.NewClient(conn)
 	defer client.Close()
 
 	args := &Args{7, 8}
 	var reply Reply
-	divCall := client.Go(serviceMethodName, args, &reply, nil)
+	divCall := client.Go(context.Background(), serviceMethodName, args, &reply, nil)
 	replyCall := <-divCall.Done // will be equal to divCall
 	if replyCall.Error != nil {
 		t.Errorf("error for Arith: %d*%d, %v \n", args.A, args.B, replyCall.Error)
@@ -64,7 +65,7 @@ func startClient(t *testing.T) {
 }
 
 func startHTTPClient(t *testing.T, addr string) {
-	//client, err := rpc.DialHTTPPath("tcp", addr, "foo")
+	//client, err := core.DialHTTPPath("tcp", addr, "foo")
 
 	client, err := NewDirectHTTPRPCClient(nil, codec.NewGobClientCodec, "http", addr, "foo", time.Minute)
 	if err != nil {
@@ -74,7 +75,7 @@ func startHTTPClient(t *testing.T, addr string) {
 
 	args := &Args{7, 8}
 	var reply Reply
-	divCall := client.Go(serviceMethodName, args, &reply, nil)
+	divCall := client.Go(context.Background(), serviceMethodName, args, &reply, nil)
 	replyCall := <-divCall.Done // will be equal to divCall
 	if replyCall.Error != nil {
 		t.Errorf("error for Arith: %d*%d, %v \n", args.A, args.B, replyCall.Error)
@@ -146,30 +147,30 @@ type logCodecPlugin struct {
 	preWriteResponse, postWriteResponse         int
 }
 
-func (plugin *logCodecPlugin) PreReadRequestHeader(r *rpc.Request) error {
+func (plugin *logCodecPlugin) PreReadRequestHeader(ctx context.Context, r *core.Request) error {
 	plugin.preReadRequestHeader++
 	return nil
 }
-func (plugin *logCodecPlugin) PostReadRequestHeader(r *rpc.Request) error {
+func (plugin *logCodecPlugin) PostReadRequestHeader(ctx context.Context, r *core.Request) error {
 	plugin.postReadRequestHeader++
 	//log.Infof("Received Header: %#v\n", r)
 	return nil
 }
-func (plugin *logCodecPlugin) PreReadRequestBody(body interface{}) error {
+func (plugin *logCodecPlugin) PreReadRequestBody(ctx context.Context, body interface{}) error {
 	plugin.preReadRequestBody++
 	return nil
 }
-func (plugin *logCodecPlugin) PostReadRequestBody(body interface{}) error {
+func (plugin *logCodecPlugin) PostReadRequestBody(ctx context.Context, body interface{}) error {
 	//log.Infof("Received Body: %#v\n", body)
 	plugin.postReadRequestBody++
 	return nil
 }
-func (plugin *logCodecPlugin) PreWriteResponse(resp *rpc.Response, body interface{}) error {
+func (plugin *logCodecPlugin) PreWriteResponse(resp *core.Response, body interface{}) error {
 	//log.Infof("Sent Header: %#v\nSent Body: %#v\n", resp, body)
 	plugin.preWriteResponse++
 	return nil
 }
-func (plugin *logCodecPlugin) PostWriteResponse(resp *rpc.Response, body interface{}) error {
+func (plugin *logCodecPlugin) PostWriteResponse(resp *core.Response, body interface{}) error {
 	plugin.postWriteResponse++
 	return nil
 }

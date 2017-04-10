@@ -8,7 +8,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/smallnest/rpcx/codec"
+	msgpackrpc2 "github.com/rpcx-ecosystem/net-rpc-msgpackrpc2"
 	"github.com/smallnest/rpcx/core"
 	"github.com/smallnest/rpcx/log"
 	kcp "github.com/xtaci/kcp-go"
@@ -140,7 +140,7 @@ type Client struct {
 func NewClient(s ClientSelector) *Client {
 	client := &Client{
 		PluginContainer: &ClientPluginContainer{plugins: make([]IPlugin, 0)},
-		ClientCodecFunc: codec.NewGobClientCodec,
+		ClientCodecFunc: msgpackrpc2.NewClientCodec,
 		ClientSelector:  s,
 		FailMode:        Failfast,
 		Retries:         3}
