@@ -5,6 +5,7 @@
 package rpc
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -17,8 +18,8 @@ type shutdownCodec struct {
 	closed    bool
 }
 
-func (c *shutdownCodec) WriteRequest(*Request, interface{}) error { return nil }
-func (c *shutdownCodec) ReadResponseBody(interface{}) error       { return nil }
+func (c *shutdownCodec) WriteRequest(context.Context, *Request, interface{}) error { return nil }
+func (c *shutdownCodec) ReadResponseBody(interface{}) error                        { return nil }
 func (c *shutdownCodec) ReadResponseHeader(*Response) error {
 	c.responded <- 1
 	return errors.New("shutdownCodec ReadResponseHeader")
@@ -75,7 +76,7 @@ func TestGobError(t *testing.T) {
 	}
 
 	var reply Reply
-	err = client.Call("S.Recv", &struct{}{}, &reply)
+	err = client.Call(context.Background(), "S.Recv", &struct{}{}, &reply)
 	if err != nil {
 		panic(err)
 	}

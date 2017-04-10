@@ -148,7 +148,7 @@ func testRPC(t *testing.T, addr string) {
 	// Synchronous calls
 	args := &Args{7, 8}
 	reply := new(Reply)
-	err = client.Call("Arith.Add", args, reply)
+	err = client.Call(context.Background(), "Arith.Add", args, reply)
 	if err != nil {
 		t.Errorf("Add: expected no error but got string %q", err.Error())
 	}
@@ -159,7 +159,7 @@ func testRPC(t *testing.T, addr string) {
 	// Methods exported from unexported embedded structs
 	args = &Args{7, 0}
 	reply = new(Reply)
-	err = client.Call("Embed.Exported", args, reply)
+	err = client.Call(context.Background(), "Embed.Exported", args, reply)
 	if err != nil {
 		t.Errorf("Add: expected no error but got string %q", err.Error())
 	}
@@ -170,7 +170,7 @@ func testRPC(t *testing.T, addr string) {
 	// Nonexistent method
 	args = &Args{7, 0}
 	reply = new(Reply)
-	err = client.Call("Arith.BadOperation", args, reply)
+	err = client.Call(context.Background(), "Arith.BadOperation", args, reply)
 	// expect an error
 	if err == nil {
 		t.Error("BadOperation: expected error")
@@ -181,7 +181,7 @@ func testRPC(t *testing.T, addr string) {
 	// Unknown service
 	args = &Args{7, 8}
 	reply = new(Reply)
-	err = client.Call("Arith.Unknown", args, reply)
+	err = client.Call(context.Background(), "Arith.Unknown", args, reply)
 	if err == nil {
 		t.Error("expected error calling unknown service")
 	} else if !strings.Contains(err.Error(), "method") {
@@ -191,9 +191,9 @@ func testRPC(t *testing.T, addr string) {
 	// Out of order.
 	args = &Args{7, 8}
 	mulReply := new(Reply)
-	mulCall := client.Go("Arith.Mul", args, mulReply, nil)
+	mulCall := client.Go(context.Background(), "Arith.Mul", args, mulReply, nil)
 	addReply := new(Reply)
-	addCall := client.Go("Arith.Add", args, addReply, nil)
+	addCall := client.Go(context.Background(), "Arith.Add", args, addReply, nil)
 
 	addCall = <-addCall.Done
 	if addCall.Error != nil {
@@ -214,7 +214,7 @@ func testRPC(t *testing.T, addr string) {
 	// Error test
 	args = &Args{7, 0}
 	reply = new(Reply)
-	err = client.Call("Arith.Div", args, reply)
+	err = client.Call(context.Background(), "Arith.Div", args, reply)
 	// expect an error: zero divide
 	if err == nil {
 		t.Error("Div: expected error")
@@ -224,7 +224,7 @@ func testRPC(t *testing.T, addr string) {
 
 	// Bad type.
 	reply = new(Reply)
-	err = client.Call("Arith.Add", reply, reply) // args, reply would be the correct thing to use
+	err = client.Call(context.Background(), "Arith.Add", reply, reply) // args, reply would be the correct thing to use
 	if err == nil {
 		t.Error("expected error calling Arith.Add with wrong arg type")
 	} else if !strings.Contains(err.Error(), "type") {
@@ -235,7 +235,7 @@ func testRPC(t *testing.T, addr string) {
 	const Val = 12345
 	str := fmt.Sprint(Val)
 	reply = new(Reply)
-	err = client.Call("Arith.Scan", &str, reply)
+	err = client.Call(context.Background(), "Arith.Scan", &str, reply)
 	if err != nil {
 		t.Errorf("Scan: expected no error but got string %q", err.Error())
 	} else if reply.C != Val {
@@ -245,7 +245,7 @@ func testRPC(t *testing.T, addr string) {
 	// Non-struct reply
 	args = &Args{27, 35}
 	str = ""
-	err = client.Call("Arith.String", args, &str)
+	err = client.Call(context.Background(), "Arith.String", args, &str)
 	if err != nil {
 		t.Errorf("String: expected no error but got string %q", err.Error())
 	}
@@ -256,7 +256,7 @@ func testRPC(t *testing.T, addr string) {
 
 	args = &Args{7, 8}
 	reply = new(Reply)
-	err = client.Call("Arith.Mul", args, reply)
+	err = client.Call(context.Background(), "Arith.Mul", args, reply)
 	if err != nil {
 		t.Errorf("Mul: expected no error but got string %q", err.Error())
 	}
@@ -267,7 +267,7 @@ func testRPC(t *testing.T, addr string) {
 	// ServiceName contain "." character
 	args = &Args{7, 8}
 	reply = new(Reply)
-	err = client.Call("net.rpc.Arith.Add", args, reply)
+	err = client.Call(context.Background(), "net.rpc.Arith.Add", args, reply)
 	if err != nil {
 		t.Errorf("Add: expected no error but got string %q", err.Error())
 	}
@@ -286,7 +286,7 @@ func testNewServerRPC(t *testing.T, addr string) {
 	// Synchronous calls
 	args := &Args{7, 8}
 	reply := new(Reply)
-	err = client.Call("newServer.Arith.Add", args, reply)
+	err = client.Call(context.Background(), "newServer.Arith.Add", args, reply)
 	if err != nil {
 		t.Errorf("Add: expected no error but got string %q", err.Error())
 	}
@@ -318,7 +318,7 @@ func testHTTPRPC(t *testing.T, path string) {
 	// Synchronous calls
 	args := &Args{7, 8}
 	reply := new(Reply)
-	err = client.Call("Arith.Add", args, reply)
+	err = client.Call(context.Background(), "Arith.Add", args, reply)
 	if err != nil {
 		t.Errorf("Add: expected no error but got string %q", err.Error())
 	}
@@ -337,7 +337,7 @@ type CodecEmulator struct {
 	err           error
 }
 
-func (codec *CodecEmulator) Call(serviceMethod string, args *Args, reply *Reply) error {
+func (codec *CodecEmulator) Call(ctx context.Context, serviceMethod string, args *Args, reply *Reply) error {
 	codec.serviceMethod = serviceMethod
 	codec.args = args
 	codec.reply = reply
@@ -354,13 +354,13 @@ func (codec *CodecEmulator) Call(serviceMethod string, args *Args, reply *Reply)
 	return codec.err
 }
 
-func (codec *CodecEmulator) ReadRequestHeader(req *Request) error {
+func (codec *CodecEmulator) ReadRequestHeader(ctx context.Context, req *Request) error {
 	req.ServiceMethod = codec.serviceMethod
 	req.Seq = 0
 	return nil
 }
 
-func (codec *CodecEmulator) ReadRequestBody(argv interface{}) error {
+func (codec *CodecEmulator) ReadRequestBody(ctx context.Context, argv interface{}) error {
 	if codec.args == nil {
 		return io.ErrUnexpectedEOF
 	}
@@ -394,7 +394,7 @@ func testServeRequest(t *testing.T, server *Server) {
 
 	args := &Args{7, 8}
 	reply := new(Reply)
-	err := client.Call("Arith.Add", args, reply)
+	err := client.Call(context.Background(), "Arith.Add", args, reply)
 	if err != nil {
 		t.Errorf("Add: expected no error but got string %q", err.Error())
 	}
@@ -402,7 +402,7 @@ func testServeRequest(t *testing.T, server *Server) {
 		t.Errorf("Add: expected %d got %d", reply.C, args.A+args.B)
 	}
 
-	err = client.Call("Arith.Add", nil, reply)
+	err = client.Call(context.Background(), "Arith.Add", nil, reply)
 	if err == nil {
 		t.Errorf("expected error calling Arith.Add with nil arg")
 	}
@@ -454,7 +454,7 @@ func TestRegistrationError(t *testing.T) {
 
 type WriteFailCodec int
 
-func (WriteFailCodec) WriteRequest(*Request, interface{}) error {
+func (WriteFailCodec) WriteRequest(context.Context, *Request, interface{}) error {
 	// the panic caused by this error used to not unlock a lock.
 	return errors.New("fail")
 }
@@ -495,7 +495,7 @@ func testSendDeadlock(client *Client) {
 	}()
 	args := &Args{7, 8}
 	reply := new(Reply)
-	client.Call("Arith.Add", args, reply)
+	client.Call(context.Background(), "Arith.Add", args, reply)
 }
 
 func dialDirect() (*Client, error) {
@@ -517,7 +517,7 @@ func countMallocs(dial func() (*Client, error), t *testing.T) float64 {
 	args := &Args{7, 8}
 	reply := new(Reply)
 	return testing.AllocsPerRun(100, func() {
-		err := client.Call("Arith.Add", args, reply)
+		err := client.Call(context.Background(), "Arith.Add", args, reply)
 		if err != nil {
 			t.Errorf("Add: expected no error but got string %q", err.Error())
 		}
@@ -570,7 +570,7 @@ func TestClientWriteError(t *testing.T) {
 	defer c.Close()
 
 	res := false
-	err := c.Call("foo", 1, &res)
+	err := c.Call(context.Background(), "foo", 1, &res)
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -591,7 +591,7 @@ func TestTCPClose(t *testing.T) {
 
 	args := Args{17, 8}
 	var reply Reply
-	err = client.Call("Arith.Mul", args, &reply)
+	err = client.Call(context.Background(), "Arith.Mul", args, &reply)
 	if err != nil {
 		t.Fatal("arith error:", err)
 	}
@@ -612,7 +612,7 @@ func TestErrorAfterClientClose(t *testing.T) {
 	if err != nil {
 		t.Fatal("close error:", err)
 	}
-	err = client.Call("Arith.Add", &Args{7, 9}, new(Reply))
+	err = client.Call(context.Background(), "Arith.Add", &Args{7, 9}, new(Reply))
 	if err != ErrShutdown {
 		t.Errorf("Forever: expected ErrShutdown got %v", err)
 	}
@@ -646,7 +646,7 @@ func benchmarkEndToEnd(dial func() (*Client, error), b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		reply := new(Reply)
 		for pb.Next() {
-			err := client.Call("Arith.Add", args, reply)
+			err := client.Call(context.Background(), "Arith.Add", args, reply)
 			if err != nil {
 				b.Fatalf("rpc error: Add: expected no error but got string %q", err.Error())
 			}
@@ -685,7 +685,7 @@ func benchmarkEndToEndAsync(dial func() (*Client, error), b *testing.B) {
 			for atomic.AddInt32(&send, -1) >= 0 {
 				gate <- true
 				reply := new(Reply)
-				client.Go("Arith.Add", args, reply, res)
+				client.Go(context.Background(), "Arith.Add", args, reply, res)
 			}
 		}()
 		go func() {

@@ -176,6 +176,7 @@ type service struct {
 // network traffic.
 type Request struct {
 	ServiceMethod string   // format: "Service.Method"
+	Header        string   // headers
 	Seq           uint64   // sequence number chosen by client
 	next          *Request // for free list in Server
 }
@@ -185,6 +186,7 @@ type Request struct {
 // network traffic.
 type Response struct {
 	ServiceMethod string    // echoes that of the Request
+	Header        string    // headers
 	Seq           uint64    // echoes that of the request
 	Error         string    // error, if any.
 	next          *Response // for free list in Server
@@ -443,11 +445,13 @@ type gobServerCodec struct {
 	closed bool
 }
 
-func (c *gobServerCodec) ReadRequestHeader(r *Request) error {
+func (c *gobServerCodec) ReadRequestHeader(ctx context.Context, r *Request) error {
+	values := ctx.Value(":v").(map[string]interface{})
+	values[":conn"] = c.rwc.(net.Conn)
 	return c.dec.Decode(r)
 }
 
-func (c *gobServerCodec) ReadRequestBody(body interface{}) error {
+func (c *gobServerCodec) ReadRequestBody(ctx context.Context, body interface{}) error {
 	return c.dec.Decode(body)
 }
 
@@ -503,7 +507,8 @@ func (server *Server) ServeConn(conn io.ReadWriteCloser) {
 func (server *Server) ServeCodec(codec ServerCodec) {
 	sending := new(sync.Mutex)
 	for {
-		ctx := context.Background()
+		ctx := context.WithValue(context.Background(), interface{}(":v"), make(map[string]interface{}))
+
 		service, mtype, req, argv, replyv, keepReading, err := server.readRequest(ctx, codec)
 		if err != nil {
 			if debugLog && err != io.EOF {
@@ -528,7 +533,7 @@ func (server *Server) ServeCodec(codec ServerCodec) {
 // It does not close the codec upon completion.
 func (server *Server) ServeRequest(codec ServerCodec) error {
 	sending := new(sync.Mutex)
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), interface{}(":v"), make(map[string]interface{}))
 	service, mtype, req, argv, replyv, keepReading, err := server.readRequest(ctx, codec)
 	if err != nil {
 		if !keepReading {
@@ -586,13 +591,13 @@ func (server *Server) freeResponse(resp *Response) {
 }
 
 func (server *Server) readRequest(ctx context.Context, codec ServerCodec) (service *service, mtype *methodType, req *Request, argv, replyv reflect.Value, keepReading bool, err error) {
-	service, mtype, req, keepReading, err = server.readRequestHeader(codec)
+	service, mtype, req, keepReading, err = server.readRequestHeader(ctx, codec)
 	if err != nil {
 		if !keepReading {
 			return
 		}
 		// discard body
-		codec.ReadRequestBody(nil)
+		codec.ReadRequestBody(ctx, nil)
 		return
 	}
 
@@ -605,7 +610,7 @@ func (server *Server) readRequest(ctx context.Context, codec ServerCodec) (servi
 		argIsValue = true
 	}
 	// argv guaranteed to be a pointer now.
-	if err = codec.ReadRequestBody(argv.Interface()); err != nil {
+	if err = codec.ReadRequestBody(ctx, argv.Interface()); err != nil {
 		return
 	}
 	if argIsValue {
@@ -616,10 +621,10 @@ func (server *Server) readRequest(ctx context.Context, codec ServerCodec) (servi
 	return
 }
 
-func (server *Server) readRequestHeader(codec ServerCodec) (service *service, mtype *methodType, req *Request, keepReading bool, err error) {
+func (server *Server) readRequestHeader(ctx context.Context, codec ServerCodec) (service *service, mtype *methodType, req *Request, keepReading bool, err error) {
 	// Grab the request header.
 	req = server.getRequest()
-	err = codec.ReadRequestHeader(req)
+	err = codec.ReadRequestHeader(ctx, req)
 	if err != nil {
 		req = nil
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
@@ -688,8 +693,8 @@ func RegisterName(name string, rcvr interface{}) error {
 // connection. ReadRequestBody may be called with a nil
 // argument to force the body of the request to be read and discarded.
 type ServerCodec interface {
-	ReadRequestHeader(*Request) error
-	ReadRequestBody(interface{}) error
+	ReadRequestHeader(context.Context, *Request) error
+	ReadRequestBody(context.Context, interface{}) error
 	// WriteResponse must be safe for concurrent use by multiple goroutines.
 	WriteResponse(*Response, interface{}) error
 

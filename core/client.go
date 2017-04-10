@@ -6,6 +6,7 @@ package rpc
 
 import (
 	"bufio"
+	"context"
 	"encoding/gob"
 	"errors"
 	"io"
@@ -61,14 +62,14 @@ type Client struct {
 // discarded.
 type ClientCodec interface {
 	// WriteRequest must be safe for concurrent use by multiple goroutines.
-	WriteRequest(*Request, interface{}) error
+	WriteRequest(context.Context, *Request, interface{}) error
 	ReadResponseHeader(*Response) error
 	ReadResponseBody(interface{}) error
 
 	Close() error
 }
 
-func (client *Client) send(call *Call) {
+func (client *Client) send(ctx context.Context, call *Call) {
 	client.reqMutex.Lock()
 	defer client.reqMutex.Unlock()
 
@@ -88,7 +89,7 @@ func (client *Client) send(call *Call) {
 	// Encode and send the request.
 	client.request.Seq = seq
 	client.request.ServiceMethod = call.ServiceMethod
-	err := client.codec.WriteRequest(&client.request, call.Args)
+	err := client.codec.WriteRequest(ctx, &client.request, call.Args)
 	if err != nil {
 		client.mutex.Lock()
 		call = client.pending[seq]
@@ -209,7 +210,7 @@ type gobClientCodec struct {
 	encBuf *bufio.Writer
 }
 
-func (c *gobClientCodec) WriteRequest(r *Request, body interface{}) (err error) {
+func (c *gobClientCodec) WriteRequest(ctx context.Context, r *Request, body interface{}) (err error) {
 	if err = c.enc.Encode(r); err != nil {
 		return
 	}
@@ -291,7 +292,7 @@ func (client *Client) Close() error {
 // the invocation. The done channel will signal when the call is complete by returning
 // the same Call object. If done is nil, Go will allocate a new channel.
 // If non-nil, done must be buffered or Go will deliberately crash.
-func (client *Client) Go(serviceMethod string, args interface{}, reply interface{}, done chan *Call) *Call {
+func (client *Client) Go(ctx context.Context, serviceMethod string, args interface{}, reply interface{}, done chan *Call) *Call {
 	call := new(Call)
 	call.ServiceMethod = serviceMethod
 	call.Args = args
@@ -308,12 +309,12 @@ func (client *Client) Go(serviceMethod string, args interface{}, reply interface
 		}
 	}
 	call.Done = done
-	client.send(call)
+	client.send(ctx, call)
 	return call
 }
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
-func (client *Client) Call(serviceMethod string, args interface{}, reply interface{}) error {
-	call := <-client.Go(serviceMethod, args, reply, make(chan *Call, 1)).Done
+func (client *Client) Call(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
+	call := <-client.Go(ctx, serviceMethod, args, reply, make(chan *Call, 1)).Done
 	return call.Error
 }
