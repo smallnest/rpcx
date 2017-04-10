@@ -1,10 +1,12 @@
 package rpcx
 
 import (
+	"context"
 	"encoding/gob"
 	"errors"
-	"net/rpc"
 	"strings"
+
+	"github.com/smallnest/rpcx/core"
 )
 
 // AuthorizationServerPlugin is used to authorize clients.
@@ -33,7 +35,7 @@ func init() {
 }
 
 // PostReadRequestHeader extracts Authorization header from ServiceMethod field.
-func (plugin *AuthorizationServerPlugin) PostReadRequestHeader(r *rpc.Request) (err error) {
+func (plugin *AuthorizationServerPlugin) PostReadRequestHeader(ctx context.Context, r *core.Request) (err error) {
 	items := strings.Split(r.ServiceMethod, "\x1f")
 
 	if len(items) != 3 {
@@ -71,7 +73,7 @@ func NewAuthorizationClientPlugin(authorization, tag string) *AuthorizationClien
 }
 
 // PreWriteRequest adds Authorization info in requests
-func (plugin *AuthorizationClientPlugin) PreWriteRequest(r *rpc.Request, body interface{}) error {
+func (plugin *AuthorizationClientPlugin) PreWriteRequest(ctx context.Context, r *core.Request, body interface{}) error {
 	plugin.AuthorizationAndServiceMethod.ServiceMethod = r.ServiceMethod
 
 	r.ServiceMethod = r.ServiceMethod + "\x1f" + plugin.AuthorizationAndServiceMethod.Authorization + "\x1f" + plugin.AuthorizationAndServiceMethod.Tag

@@ -3,13 +3,13 @@ package clientselector
 import (
 	"errors"
 	"math/rand"
-	"net/rpc"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/hashicorp/consul/api"
 	"github.com/smallnest/rpcx"
+	"github.com/smallnest/rpcx/core"
 )
 
 // ConsulClientSelector is used to select a rpc server from consul.
@@ -21,7 +21,7 @@ type ConsulClientSelector struct {
 	ticker             *time.Ticker
 	sessionTimeout     time.Duration
 	Servers            []*api.AgentService
-	clientAndServer    map[string]*rpc.Client
+	clientAndServer    map[string]*core.Client
 	clientRWMutex      sync.RWMutex
 	WeightedServers    []*Weighted
 	ServiceName        string
@@ -40,7 +40,7 @@ func NewConsulClientSelector(consulAddress string, serviceName string, sessionTi
 		ConsulAddress:   consulAddress,
 		ServiceName:     serviceName,
 		Servers:         make([]*api.AgentService, 1),
-		clientAndServer: make(map[string]*rpc.Client),
+		clientAndServer: make(map[string]*core.Client),
 		sessionTimeout:  sessionTimeout,
 		SelectMode:      sm,
 		dailTimeout:     dailTimeout,
@@ -60,9 +60,9 @@ func (s *ConsulClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
-//AllClients returns rpc.Clients to all servers
-func (s *ConsulClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
-	var clients []*rpc.Client
+//AllClients returns core.Clients to all servers
+func (s *ConsulClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*core.Client {
+	var clients []*core.Client
 
 	for _, sv := range s.Servers {
 		ss := strings.Split(sv.Address, "@")
@@ -136,7 +136,7 @@ func (s *ConsulClientSelector) pullServers() {
 
 // }
 
-func (s *ConsulClientSelector) getCachedClient(server string, clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
+func (s *ConsulClientSelector) getCachedClient(server string, clientCodecFunc rpcx.ClientCodecFunc) (*core.Client, error) {
 	s.clientRWMutex.RLock()
 	c := s.clientAndServer[server]
 	s.clientRWMutex.RUnlock()
@@ -151,7 +151,7 @@ func (s *ConsulClientSelector) getCachedClient(server string, clientCodecFunc rp
 	return c, err
 }
 
-func (s *ConsulClientSelector) HandleFailedClient(client *rpc.Client) {
+func (s *ConsulClientSelector) HandleFailedClient(client *core.Client) {
 	for k, v := range s.clientAndServer {
 		if v == client {
 			s.clientRWMutex.Lock()
@@ -164,7 +164,7 @@ func (s *ConsulClientSelector) HandleFailedClient(client *rpc.Client) {
 }
 
 // Select returns a rpc client
-func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
+func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*core.Client, error) {
 	if s.len == 0 {
 		return nil, errors.New("No available service")
 	}

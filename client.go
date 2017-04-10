@@ -1,14 +1,15 @@
 package rpcx
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"io"
 	"net"
-	"net/rpc"
 	"time"
 
-	msgpackrpc "github.com/rpcx-ecosystem/net-rpc-msgpackrpc"
+	"github.com/smallnest/rpcx/codec"
+	"github.com/smallnest/rpcx/core"
 	"github.com/smallnest/rpcx/log"
 	kcp "github.com/xtaci/kcp-go"
 )
@@ -60,17 +61,17 @@ const (
 	Forking
 )
 
-//ClientSelector defines an interface to create a rpc.Client from cluster or standalone.
+//ClientSelector defines an interface to create a  core.Client from cluster or standalone.
 type ClientSelector interface {
 	//Select returns a new client and it also update current client
-	Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*rpc.Client, error)
+	Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*core.Client, error)
 	//SetClient set current client
 	SetClient(*Client)
 	SetSelectMode(SelectMode)
 	//AllClients returns all Clients
-	AllClients(clientCodecFunc ClientCodecFunc) []*rpc.Client
+	AllClients(clientCodecFunc ClientCodecFunc) []*core.Client
 	//handle failed client
-	HandleFailedClient(client *rpc.Client)
+	HandleFailedClient(client *core.Client)
 }
 
 // DirectClientSelector is used to a direct rpc server.
@@ -79,11 +80,11 @@ type DirectClientSelector struct {
 	Network, Address string
 	DialTimeout      time.Duration
 	Client           *Client
-	rpcClient        *rpc.Client
+	rpcClient        *core.Client
 }
 
 //Select returns a rpc client.
-func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
+func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*core.Client, error) {
 	if s.rpcClient != nil {
 		return s.rpcClient, nil
 	}
@@ -102,21 +103,21 @@ func (s *DirectClientSelector) SetSelectMode(sm SelectMode) {
 
 }
 
-//AllClients returns rpc.Clients to all servers
-func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*rpc.Client {
+//AllClients returns  core.Clients to all servers
+func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*core.Client {
 	if s.rpcClient == nil {
-		return []*rpc.Client{}
+		return []*core.Client{}
 	}
-	return []*rpc.Client{s.rpcClient}
+	return []*core.Client{s.rpcClient}
 }
 
-func (s *DirectClientSelector) HandleFailedClient(client *rpc.Client) {
+func (s *DirectClientSelector) HandleFailedClient(client *core.Client) {
 	client.Close()
 	s.rpcClient = nil // reset
 }
 
-// ClientCodecFunc is used to create a rpc.ClientCodecFunc from net.Conn.
-type ClientCodecFunc func(conn io.ReadWriteCloser) rpc.ClientCodec
+// ClientCodecFunc is used to create a  core.ClientCodecFunc from net.Conn.
+type ClientCodecFunc func(conn io.ReadWriteCloser) core.ClientCodec
 
 // Client represents a RPC client.
 type Client struct {
@@ -139,7 +140,7 @@ type Client struct {
 func NewClient(s ClientSelector) *Client {
 	client := &Client{
 		PluginContainer: &ClientPluginContainer{plugins: make([]IPlugin, 0)},
-		ClientCodecFunc: msgpackrpc.NewClientCodec,
+		ClientCodecFunc: codec.NewGobClientCodec,
 		ClientSelector:  s,
 		FailMode:        Failfast,
 		Retries:         3}
@@ -161,20 +162,20 @@ func (c *Client) Close() error {
 }
 
 //Call invokes the named function, waits for it to complete, and returns its error status.
-func (c *Client) Call(serviceMethod string, args interface{}, reply interface{}) (err error) {
+func (c *Client) Call(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) (err error) {
 	if c.FailMode == Broadcast {
-		return c.clientBroadCast(serviceMethod, args, &reply)
+		return c.clientBroadCast(ctx, serviceMethod, args, &reply)
 	}
 	if c.FailMode == Forking {
-		return c.clientForking(serviceMethod, args, &reply)
+		return c.clientForking(ctx, serviceMethod, args, &reply)
 	}
 
-	var rpcClient *rpc.Client
-	//select a rpc.Client and call
+	var rpcClient *core.Client
+	//select a  core.Client and call
 	rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
 	//selected
 	if err == nil && rpcClient != nil {
-		if err = rpcClient.Call(serviceMethod, args, reply); err == nil {
+		if err = rpcClient.Call(ctx, serviceMethod, args, reply); err == nil {
 			return //call successful
 		}
 
@@ -189,7 +190,7 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 				continue
 			}
 
-			err = rpcClient.Call(serviceMethod, args, reply)
+			err = rpcClient.Call(ctx, serviceMethod, args, reply)
 			if err == nil {
 				return nil
 			}
@@ -207,7 +208,7 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 			}
 
 			if rpcClient != nil {
-				err = rpcClient.Call(serviceMethod, args, reply)
+				err = rpcClient.Call(ctx, serviceMethod, args, reply)
 				if err == nil {
 					return nil
 				}
@@ -221,7 +222,7 @@ func (c *Client) Call(serviceMethod string, args interface{}, reply interface{})
 	return
 }
 
-func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply *interface{}) (err error) {
+func (c *Client) clientBroadCast(ctx context.Context, serviceMethod string, args interface{}, reply *interface{}) (err error) {
 	rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
 
 	if len(rpcClients) == 0 {
@@ -230,9 +231,9 @@ func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply *
 	}
 
 	l := len(rpcClients)
-	done := make(chan *rpc.Call, l)
+	done := make(chan *core.Call, l)
 	for _, rpcClient := range rpcClients {
-		rpcClient.Go(serviceMethod, args, reply, done)
+		rpcClient.Go(ctx, serviceMethod, args, reply, done)
 	}
 
 	for l > 0 {
@@ -250,7 +251,7 @@ func (c *Client) clientBroadCast(serviceMethod string, args interface{}, reply *
 	return nil
 }
 
-func (c *Client) clientForking(serviceMethod string, args interface{}, reply *interface{}) (err error) {
+func (c *Client) clientForking(ctx context.Context, serviceMethod string, args interface{}, reply *interface{}) (err error) {
 	rpcClients := c.ClientSelector.AllClients(c.ClientCodecFunc)
 
 	if len(rpcClients) == 0 {
@@ -259,9 +260,9 @@ func (c *Client) clientForking(serviceMethod string, args interface{}, reply *in
 	}
 
 	l := len(rpcClients)
-	done := make(chan *rpc.Call, l)
+	done := make(chan *core.Call, l)
 	for _, rpcClient := range rpcClients {
-		rpcClient.Go(serviceMethod, args, reply, done)
+		rpcClient.Go(ctx, serviceMethod, args, reply, done)
 	}
 
 	for l > 0 {
@@ -284,10 +285,10 @@ func (c *Client) clientForking(serviceMethod string, args interface{}, reply *in
 
 //Go invokes the function asynchronously. It returns the Call structure representing the invocation.
 //The done channel will signal when the call is complete by returning the same Call object. If done is nil, Go will allocate a new channel. If non-nil, done must be buffered or Go will deliberately crash.
-func (c *Client) Go(serviceMethod string, args interface{}, reply interface{}, done chan *rpc.Call) *rpc.Call {
+func (c *Client) Go(ctx context.Context, serviceMethod string, args interface{}, reply interface{}, done chan *core.Call) *core.Call {
 	rpcClient, _ := c.ClientSelector.Select(c.ClientCodecFunc)
 
-	return rpcClient.Go(serviceMethod, args, reply, done)
+	return rpcClient.Go(ctx, serviceMethod, args, reply, done)
 }
 
 // Auth sets Authorization info
@@ -297,7 +298,7 @@ func (c *Client) Auth(authorization, tag string) error {
 }
 
 type clientCodecWrapper struct {
-	rpc.ClientCodec
+	core.ClientCodec
 	PluginContainer IClientPluginContainer
 	Timeout         time.Duration
 	ReadTimeout     time.Duration
@@ -305,12 +306,12 @@ type clientCodecWrapper struct {
 	Conn            net.Conn
 }
 
-// newClientCodecWrapper wraps a rpc.ServerCodec.
-func newClientCodecWrapper(pc IClientPluginContainer, c rpc.ClientCodec, conn net.Conn) *clientCodecWrapper {
+// newClientCodecWrapper wraps a  core.ServerCodec.
+func newClientCodecWrapper(pc IClientPluginContainer, c core.ClientCodec, conn net.Conn) *clientCodecWrapper {
 	return &clientCodecWrapper{ClientCodec: c, PluginContainer: pc, Conn: conn}
 }
 
-func (w *clientCodecWrapper) ReadRequestHeader(r *rpc.Response) error {
+func (w *clientCodecWrapper) ReadRequestHeader(r *core.Response) error {
 	if w.Timeout > 0 {
 		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
 	}
@@ -353,7 +354,7 @@ func (w *clientCodecWrapper) ReadRequestBody(body interface{}) error {
 	return w.PluginContainer.DoPostReadResponseBody(body)
 }
 
-func (w *clientCodecWrapper) WriteRequest(r *rpc.Request, body interface{}) error {
+func (w *clientCodecWrapper) WriteRequest(ctx context.Context, r *core.Request, body interface{}) error {
 	if w.Timeout > 0 {
 		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
 	}
@@ -362,20 +363,20 @@ func (w *clientCodecWrapper) WriteRequest(r *rpc.Request, body interface{}) erro
 	}
 
 	//pre
-	err := w.PluginContainer.DoPreWriteRequest(r, body)
+	err := w.PluginContainer.DoPreWriteRequest(ctx, r, body)
 	if err != nil {
 		log.Errorf("failed to DoPreWriteRequest: %v", err)
 		return err
 	}
 
-	err = w.ClientCodec.WriteRequest(r, body)
+	err = w.ClientCodec.WriteRequest(ctx, r, body)
 	if err != nil {
 		log.Errorf("failed to WriteRequest: %v", err)
 		return err
 	}
 
 	//post
-	return w.PluginContainer.DoPostWriteRequest(r, body)
+	return w.PluginContainer.DoPostWriteRequest(ctx, r, body)
 }
 
 func (w *clientCodecWrapper) Close() error {

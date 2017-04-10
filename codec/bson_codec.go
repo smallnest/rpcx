@@ -1,11 +1,12 @@
 package codec
 
 import (
+	"context"
 	"fmt"
 	"io"
-	"net/rpc"
 
 	"github.com/micro/go-bson"
+	"github.com/smallnest/rpcx/core"
 )
 
 type bsonClientCodec struct {
@@ -15,7 +16,7 @@ type bsonClientCodec struct {
 }
 
 // NewBsonClientCodec creates a bson ClientCodec
-func NewBsonClientCodec(conn io.ReadWriteCloser) rpc.ClientCodec {
+func NewBsonClientCodec(conn io.ReadWriteCloser) core.ClientCodec {
 	return &bsonClientCodec{
 		conn:    conn,
 		Encoder: newBsonEncoder(conn),
@@ -23,7 +24,7 @@ func NewBsonClientCodec(conn io.ReadWriteCloser) rpc.ClientCodec {
 	}
 }
 
-func (cc *bsonClientCodec) WriteRequest(req *rpc.Request, v interface{}) (err error) {
+func (cc *bsonClientCodec) WriteRequest(ctx context.Context, req *core.Request, v interface{}) (err error) {
 	if err = cc.Encoder.Encode(req); err != nil {
 		cc.Close()
 		return
@@ -34,7 +35,7 @@ func (cc *bsonClientCodec) WriteRequest(req *rpc.Request, v interface{}) (err er
 	return
 }
 
-func (cc *bsonClientCodec) ReadResponseHeader(res *rpc.Response) error {
+func (cc *bsonClientCodec) ReadResponseHeader(res *core.Response) error {
 	return cc.Decoder.Decode(res)
 }
 
@@ -53,7 +54,7 @@ type bsonServerCodec struct {
 }
 
 // NewBsonServerCodec creates a bson ServerCodec
-func NewBsonServerCodec(conn io.ReadWriteCloser) rpc.ServerCodec {
+func NewBsonServerCodec(conn io.ReadWriteCloser) core.ServerCodec {
 	return &bsonServerCodec{
 		conn:    conn,
 		Encoder: newBsonEncoder(conn),
@@ -62,15 +63,15 @@ func NewBsonServerCodec(conn io.ReadWriteCloser) rpc.ServerCodec {
 
 }
 
-func (sc *bsonServerCodec) ReadRequestHeader(rq *rpc.Request) error {
+func (sc *bsonServerCodec) ReadRequestHeader(ctx context.Context, rq *core.Request) error {
 	return sc.Decoder.Decode(rq)
 }
 
-func (sc *bsonServerCodec) ReadRequestBody(v interface{}) error {
+func (sc *bsonServerCodec) ReadRequestBody(ctx context.Context, v interface{}) error {
 	return sc.Decoder.Decode(v)
 }
 
-func (sc *bsonServerCodec) WriteResponse(rs *rpc.Response, v interface{}) (err error) {
+func (sc *bsonServerCodec) WriteResponse(rs *core.Response, v interface{}) (err error) {
 	if err = sc.Encoder.Encode(rs); err != nil {
 		return
 	}

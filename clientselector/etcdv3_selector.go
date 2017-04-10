@@ -4,7 +4,6 @@ import (
 	"errors"
 	"math/rand"
 	"net"
-	"net/rpc"
 	"net/url"
 	"strconv"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	mvccpb "github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/smallnest/rpcx"
+	"github.com/smallnest/rpcx/core"
 	"github.com/smallnest/rpcx/log"
 	"golang.org/x/net/context"
 )
@@ -26,7 +26,7 @@ type EtcdV3ClientSelector struct {
 	BasePath           string //should endwith serviceName
 	Servers            []string
 	Group              string
-	clientAndServer    map[string]*rpc.Client
+	clientAndServer    map[string]*core.Client
 	clientRWMutex      sync.RWMutex
 	metadata           map[string]string
 	Latitude           float64
@@ -55,9 +55,9 @@ func (s *EtcdV3ClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
-//AllClients returns rpc.Clients to all servers
-func (s *EtcdV3ClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
-	var clients []*rpc.Client
+//AllClients returns core.Clients to all servers
+func (s *EtcdV3ClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*core.Client {
+	var clients []*core.Client
 
 	for _, sv := range s.Servers {
 		ss := strings.Split(sv, "@")
@@ -81,7 +81,7 @@ func NewEtcdV3ClientSelector(etcdServers []string, servicePath string, sessionTi
 		sessionTimeout:  sessionTimeout,
 		SelectMode:      sm,
 		dailTimeout:     dailTimeout,
-		clientAndServer: make(map[string]*rpc.Client),
+		clientAndServer: make(map[string]*core.Client),
 		metadata:        make(map[string]string),
 		rnd:             rand.New(rand.NewSource(time.Now().UnixNano()))}
 
@@ -155,7 +155,7 @@ func (s *EtcdV3ClientSelector) pullServers() {
 			}
 		} else {
 			// when the last instance is down, it should be deleted
-			s.clientAndServer = map[string]*rpc.Client{}
+			s.clientAndServer = map[string]*core.Client{}
 		}
 
 	}
@@ -209,7 +209,7 @@ func (s *EtcdV3ClientSelector) removeInactiveServers(inactiveServers []int) {
 	}
 }
 
-func (s *EtcdV3ClientSelector) getCachedClient(server string, clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
+func (s *EtcdV3ClientSelector) getCachedClient(server string, clientCodecFunc rpcx.ClientCodecFunc) (*core.Client, error) {
 	s.clientRWMutex.RLock()
 	c := s.clientAndServer[server]
 	s.clientRWMutex.RUnlock()
@@ -224,7 +224,7 @@ func (s *EtcdV3ClientSelector) getCachedClient(server string, clientCodecFunc rp
 	return c, err
 }
 
-func (s *EtcdV3ClientSelector) HandleFailedClient(client *rpc.Client) {
+func (s *EtcdV3ClientSelector) HandleFailedClient(client *core.Client) {
 	for k, v := range s.clientAndServer {
 		if v == client {
 			s.clientRWMutex.Lock()
@@ -237,7 +237,7 @@ func (s *EtcdV3ClientSelector) HandleFailedClient(client *rpc.Client) {
 }
 
 // Select returns a rpc client
-func (s *EtcdV3ClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
+func (s *EtcdV3ClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*core.Client, error) {
 	if s.len == 0 {
 		return nil, errors.New("No available service")
 	}

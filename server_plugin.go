@@ -1,8 +1,10 @@
 package rpcx
 
 import (
+	"context"
 	"net"
-	"net/rpc"
+
+	"github.com/smallnest/rpcx/core"
 )
 
 // ServerPluginContainer implements IPluginContainer interface.
@@ -112,10 +114,10 @@ func (p *ServerPluginContainer) DoPostConnAccept(conn net.Conn) (net.Conn, bool)
 }
 
 // DoPreReadRequestHeader invokes DoPreReadRequestHeader plugin.
-func (p *ServerPluginContainer) DoPreReadRequestHeader(r *rpc.Request) error {
+func (p *ServerPluginContainer) DoPreReadRequestHeader(ctx context.Context, r *core.Request) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPreReadRequestHeaderPlugin); ok {
-			err := plugin.PreReadRequestHeader(r)
+			err := plugin.PreReadRequestHeader(ctx, r)
 			if err != nil {
 				return err
 			}
@@ -126,10 +128,10 @@ func (p *ServerPluginContainer) DoPreReadRequestHeader(r *rpc.Request) error {
 }
 
 // DoPostReadRequestHeader invokes DoPostReadRequestHeader plugin.
-func (p *ServerPluginContainer) DoPostReadRequestHeader(r *rpc.Request) error {
+func (p *ServerPluginContainer) DoPostReadRequestHeader(ctx context.Context, r *core.Request) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPostReadRequestHeaderPlugin); ok {
-			err := plugin.PostReadRequestHeader(r)
+			err := plugin.PostReadRequestHeader(ctx, r)
 			if err != nil {
 				return err
 			}
@@ -140,10 +142,10 @@ func (p *ServerPluginContainer) DoPostReadRequestHeader(r *rpc.Request) error {
 }
 
 // DoPreReadRequestBody invokes DoPreReadRequestBody plugin.
-func (p *ServerPluginContainer) DoPreReadRequestBody(body interface{}) error {
+func (p *ServerPluginContainer) DoPreReadRequestBody(ctx context.Context, body interface{}) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPreReadRequestBodyPlugin); ok {
-			err := plugin.PreReadRequestBody(body)
+			err := plugin.PreReadRequestBody(ctx, body)
 			if err != nil {
 				return err
 			}
@@ -154,10 +156,10 @@ func (p *ServerPluginContainer) DoPreReadRequestBody(body interface{}) error {
 }
 
 // DoPostReadRequestBody invokes DoPostReadRequestBody plugin.
-func (p *ServerPluginContainer) DoPostReadRequestBody(body interface{}) error {
+func (p *ServerPluginContainer) DoPostReadRequestBody(ctx context.Context, body interface{}) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPostReadRequestBodyPlugin); ok {
-			err := plugin.PostReadRequestBody(body)
+			err := plugin.PostReadRequestBody(ctx, body)
 			if err != nil {
 				return err
 			}
@@ -168,7 +170,7 @@ func (p *ServerPluginContainer) DoPostReadRequestBody(body interface{}) error {
 }
 
 // DoPreWriteResponse invokes DoPreWriteResponse plugin.
-func (p *ServerPluginContainer) DoPreWriteResponse(resp *rpc.Response, body interface{}) error {
+func (p *ServerPluginContainer) DoPreWriteResponse(resp *core.Response, body interface{}) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPreWriteResponsePlugin); ok {
 			err := plugin.PreWriteResponse(resp, body)
@@ -182,7 +184,7 @@ func (p *ServerPluginContainer) DoPreWriteResponse(resp *rpc.Response, body inte
 }
 
 // DoPostWriteResponse invokes DoPostWriteResponse plugin.
-func (p *ServerPluginContainer) DoPostWriteResponse(resp *rpc.Response, body interface{}) error {
+func (p *ServerPluginContainer) DoPostWriteResponse(resp *core.Response, body interface{}) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPostWriteResponsePlugin); ok {
 			err := plugin.PostWriteResponse(resp, body)
@@ -220,32 +222,32 @@ type (
 
 	//IPreReadRequestHeaderPlugin represents .
 	IPreReadRequestHeaderPlugin interface {
-		PreReadRequestHeader(r *rpc.Request) error
+		PreReadRequestHeader(ctx context.Context, r *core.Request) error
 	}
 
 	//IPostReadRequestHeaderPlugin represents .
 	IPostReadRequestHeaderPlugin interface {
-		PostReadRequestHeader(r *rpc.Request) error
+		PostReadRequestHeader(ctx context.Context, r *core.Request) error
 	}
 
 	//IPreReadRequestBodyPlugin represents .
 	IPreReadRequestBodyPlugin interface {
-		PreReadRequestBody(body interface{}) error
+		PreReadRequestBody(ctx context.Context, body interface{}) error
 	}
 
 	//IPostReadRequestBodyPlugin represents .
 	IPostReadRequestBodyPlugin interface {
-		PostReadRequestBody(body interface{}) error
+		PostReadRequestBody(ctx context.Context, body interface{}) error
 	}
 
 	//IPreWriteResponsePlugin represents .
 	IPreWriteResponsePlugin interface {
-		PreWriteResponse(*rpc.Response, interface{}) error
+		PreWriteResponse(*core.Response, interface{}) error
 	}
 
 	//IPostWriteResponsePlugin represents .
 	IPostWriteResponsePlugin interface {
-		PostWriteResponse(*rpc.Response, interface{}) error
+		PostWriteResponse(*core.Response, interface{}) error
 	}
 
 	//IServerPluginContainer represents a plugin container that defines all methods to manage plugins.
@@ -261,13 +263,13 @@ type (
 
 		DoPostConnAccept(net.Conn) (net.Conn, bool)
 
-		DoPreReadRequestHeader(r *rpc.Request) error
-		DoPostReadRequestHeader(r *rpc.Request) error
+		DoPreReadRequestHeader(ctx context.Context, r *core.Request) error
+		DoPostReadRequestHeader(ctx context.Context, r *core.Request) error
 
-		DoPreReadRequestBody(body interface{}) error
-		DoPostReadRequestBody(body interface{}) error
+		DoPreReadRequestBody(ctx context.Context, body interface{}) error
+		DoPostReadRequestBody(ctx context.Context, body interface{}) error
 
-		DoPreWriteResponse(*rpc.Response, interface{}) error
-		DoPostWriteResponse(*rpc.Response, interface{}) error
+		DoPreWriteResponse(*core.Response, interface{}) error
+		DoPostWriteResponse(*core.Response, interface{}) error
 	}
 )

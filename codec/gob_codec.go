@@ -6,10 +6,11 @@ package codec
 
 import (
 	"bufio"
+	"context"
 	"encoding/gob"
 	"io"
-	"net/rpc"
 
+	"github.com/smallnest/rpcx/core"
 	"github.com/smallnest/rpcx/log"
 )
 
@@ -23,7 +24,7 @@ type gobServerCodec struct {
 }
 
 // NewGobServerCodec creates a gob ServerCodec
-func NewGobServerCodec(conn io.ReadWriteCloser) rpc.ServerCodec {
+func NewGobServerCodec(conn io.ReadWriteCloser) core.ServerCodec {
 	buf := bufio.NewWriter(conn)
 	return &gobServerCodec{
 		rwc:    conn,
@@ -33,15 +34,15 @@ func NewGobServerCodec(conn io.ReadWriteCloser) rpc.ServerCodec {
 	}
 }
 
-func (c *gobServerCodec) ReadRequestHeader(r *rpc.Request) error {
+func (c *gobServerCodec) ReadRequestHeader(ctx context.Context, r *core.Request) error {
 	return c.dec.Decode(r)
 }
 
-func (c *gobServerCodec) ReadRequestBody(body interface{}) error {
+func (c *gobServerCodec) ReadRequestBody(ctx context.Context, body interface{}) error {
 	return c.dec.Decode(body)
 }
 
-func (c *gobServerCodec) WriteResponse(r *rpc.Response, body interface{}) (err error) {
+func (c *gobServerCodec) WriteResponse(r *core.Response, body interface{}) (err error) {
 	if err = c.enc.Encode(r); err != nil {
 		if c.encBuf.Flush() == nil {
 			// Gob couldn't encode the header. Should not happen, so if it does,
@@ -80,12 +81,12 @@ type gobClientCodec struct {
 }
 
 // NewGobClientCodec creates a gob ClientCodec
-func NewGobClientCodec(conn io.ReadWriteCloser) rpc.ClientCodec {
+func NewGobClientCodec(conn io.ReadWriteCloser) core.ClientCodec {
 	encBuf := bufio.NewWriter(conn)
 	return &gobClientCodec{conn, gob.NewDecoder(conn), gob.NewEncoder(encBuf), encBuf}
 }
 
-func (c *gobClientCodec) WriteRequest(r *rpc.Request, body interface{}) (err error) {
+func (c *gobClientCodec) WriteRequest(ctx context.Context, r *core.Request, body interface{}) (err error) {
 	if err = c.enc.Encode(r); err != nil {
 		return
 	}
@@ -95,7 +96,7 @@ func (c *gobClientCodec) WriteRequest(r *rpc.Request, body interface{}) (err err
 	return c.encBuf.Flush()
 }
 
-func (c *gobClientCodec) ReadResponseHeader(r *rpc.Response) error {
+func (c *gobClientCodec) ReadResponseHeader(r *core.Response) error {
 	return c.dec.Decode(r)
 }
 

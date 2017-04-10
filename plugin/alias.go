@@ -1,6 +1,10 @@
 package plugin
 
-import "net/rpc"
+import (
+	"context"
+
+	"github.com/smallnest/rpcx/core"
+)
 
 //AliasPlugin can be used to set aliases for services
 type AliasPlugin struct {
@@ -21,7 +25,7 @@ func NewAliasPlugin() *AliasPlugin {
 // PostReadRequestHeader converts the alias of this service.
 // This plugin must be added after other IPostReadRequestHeaderPlugins such AuthorizationServerPlugin,
 // Because it converts the service name in requests.
-func (p *AliasPlugin) PostReadRequestHeader(r *rpc.Request) error {
+func (p *AliasPlugin) PostReadRequestHeader(ctx context.Context, r *core.Request) error {
 	var sm = r.ServiceMethod
 	if p.Aliases != nil {
 		if sm = p.Aliases[sm]; sm != "" {

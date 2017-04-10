@@ -7,15 +7,15 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/rpc"
 	"time"
 
+	"github.com/smallnest/rpcx/core"
 	"github.com/smallnest/rpcx/log"
 	kcp "github.com/xtaci/kcp-go"
 )
 
 // NewDirectRPCClient creates a rpc client
-func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, timeout time.Duration) (*rpc.Client, error) {
+func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, timeout time.Duration) (*core.Client, error) {
 	//if network == "http" || network == "https" {
 	switch network {
 	case "http":
@@ -49,9 +49,9 @@ func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, add
 	return wrapConn(c, clientCodecFunc, conn)
 }
 
-func wrapConn(c *Client, clientCodecFunc ClientCodecFunc, conn net.Conn) (*rpc.Client, error) {
+func wrapConn(c *Client, clientCodecFunc ClientCodecFunc, conn net.Conn) (*core.Client, error) {
 	if c == nil || c.PluginContainer == nil {
-		return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
+		return core.NewClientWithCodec(clientCodecFunc(conn)), nil
 	}
 
 	var ok bool
@@ -64,13 +64,13 @@ func wrapConn(c *Client, clientCodecFunc ClientCodecFunc, conn net.Conn) (*rpc.C
 	wrapper.ReadTimeout = c.ReadTimeout
 	wrapper.WriteTimeout = c.WriteTimeout
 
-	return rpc.NewClientWithCodec(wrapper), nil
+	return core.NewClientWithCodec(wrapper), nil
 }
 
 // NewDirectHTTPRPCClient creates a rpc http client
-func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, path string, timeout time.Duration) (*rpc.Client, error) {
+func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, path string, timeout time.Duration) (*core.Client, error) {
 	if path == "" {
-		path = rpc.DefaultRPCPath
+		path = core.DefaultRPCPath
 	}
 
 	var conn net.Conn
@@ -100,14 +100,14 @@ func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network,
 	resp, err := http.ReadResponse(bufio.NewReader(conn), &http.Request{Method: "CONNECT"})
 	if err == nil && resp.Status == connected {
 		if c == nil || c.PluginContainer == nil {
-			return rpc.NewClientWithCodec(clientCodecFunc(conn)), nil
+			return core.NewClientWithCodec(clientCodecFunc(conn)), nil
 		}
 		wrapper := newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn), conn)
 		wrapper.Timeout = c.Timeout
 		wrapper.ReadTimeout = c.ReadTimeout
 		wrapper.WriteTimeout = c.WriteTimeout
 
-		return rpc.NewClientWithCodec(wrapper), nil
+		return core.NewClientWithCodec(wrapper), nil
 	}
 	if err == nil {
 		log.Errorf("unexpected HTTP response: %v", err)
@@ -124,7 +124,7 @@ func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network,
 
 // NewDirectKCPRPCClient creates a kcp client.
 // kcp project: https://github.com/xtaci/kcp-go
-func NewDirectKCPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, path string, timeout time.Duration) (*rpc.Client, error) {
+func NewDirectKCPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, path string, timeout time.Duration) (*core.Client, error) {
 	var conn net.Conn
 	var err error
 

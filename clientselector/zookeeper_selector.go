@@ -4,7 +4,6 @@ import (
 	"errors"
 	"math/rand"
 	"net"
-	"net/rpc"
 	"net/url"
 	"strconv"
 	"strings"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/smallnest/rpcx"
+	"github.com/smallnest/rpcx/core"
 )
 
 // ZooKeeperClientSelector is used to select a rpc server from zookeeper.
@@ -23,7 +23,7 @@ type ZooKeeperClientSelector struct {
 	BasePath                  string //should endwith serviceName
 	Servers                   []string
 	Group                     string
-	clientAndServer           map[string]*rpc.Client
+	clientAndServer           map[string]*core.Client
 	clientRWMutex             sync.RWMutex
 	metadata                  map[string]string
 	Latitude                  float64
@@ -48,7 +48,7 @@ func NewZooKeeperClientSelector(zkServers []string, basePath string, sessionTime
 		BasePath:        basePath,
 		sessionTimeout:  sessionTimeout,
 		SelectMode:      sm,
-		clientAndServer: make(map[string]*rpc.Client),
+		clientAndServer: make(map[string]*core.Client),
 		metadata:        make(map[string]string),
 		dailTimeout:     dailTimeout,
 		rnd:             rand.New(rand.NewSource(time.Now().UnixNano()))}
@@ -67,9 +67,9 @@ func (s *ZooKeeperClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
-//AllClients returns rpc.Clients to all servers
-func (s *ZooKeeperClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
-	var clients []*rpc.Client
+//AllClients returns core.Clients to all servers
+func (s *ZooKeeperClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*core.Client {
+	var clients []*core.Client
 
 	for _, sv := range s.Servers {
 		c, err := s.getCachedClient(sv, clientCodecFunc)
@@ -196,7 +196,7 @@ func (s *ZooKeeperClientSelector) removeInactiveServers(inactiveServers []int) {
 	}
 }
 
-func (s *ZooKeeperClientSelector) getCachedClient(server string, clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
+func (s *ZooKeeperClientSelector) getCachedClient(server string, clientCodecFunc rpcx.ClientCodecFunc) (*core.Client, error) {
 	s.clientRWMutex.Lock()
 	c := s.clientAndServer[server]
 	s.clientRWMutex.Unlock()
@@ -211,7 +211,7 @@ func (s *ZooKeeperClientSelector) getCachedClient(server string, clientCodecFunc
 	return c, err
 }
 
-func (s *ZooKeeperClientSelector) HandleFailedClient(client *rpc.Client) {
+func (s *ZooKeeperClientSelector) HandleFailedClient(client *core.Client) {
 	for k, v := range s.clientAndServer {
 		if v == client {
 			s.clientRWMutex.Lock()
@@ -224,7 +224,7 @@ func (s *ZooKeeperClientSelector) HandleFailedClient(client *rpc.Client) {
 }
 
 //Select returns a rpc client
-func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
+func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*core.Client, error) {
 	if s.len == 0 {
 		return nil, errors.New("No available service")
 	}

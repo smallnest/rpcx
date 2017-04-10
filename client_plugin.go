@@ -1,8 +1,10 @@
 package rpcx
 
 import (
+	"context"
 	"net"
-	"net/rpc"
+
+	"github.com/smallnest/rpcx/core"
 )
 
 // ClientPluginContainer implements IPluginContainer interface.
@@ -78,7 +80,7 @@ func (p *ClientPluginContainer) GetAll() []IPlugin {
 }
 
 // DoPreReadResponseHeader invokes DoPreReadResponseHeader plugin.
-func (p *ClientPluginContainer) DoPreReadResponseHeader(r *rpc.Response) error {
+func (p *ClientPluginContainer) DoPreReadResponseHeader(r *core.Response) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPreReadResponseHeaderPlugin); ok {
 			err := plugin.PreReadResponseHeader(r)
@@ -91,7 +93,7 @@ func (p *ClientPluginContainer) DoPreReadResponseHeader(r *rpc.Response) error {
 }
 
 // DoPostReadResponseHeader invokes DoPostReadResponseHeader plugin.
-func (p *ClientPluginContainer) DoPostReadResponseHeader(r *rpc.Response) error {
+func (p *ClientPluginContainer) DoPostReadResponseHeader(r *core.Response) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPostReadResponseHeaderPlugin); ok {
 			err := plugin.PostReadResponseHeader(r)
@@ -131,10 +133,10 @@ func (p *ClientPluginContainer) DoPostReadResponseBody(body interface{}) error {
 }
 
 // DoPreWriteRequest invokes DoPreWriteRequest plugin.
-func (p *ClientPluginContainer) DoPreWriteRequest(r *rpc.Request, body interface{}) error {
+func (p *ClientPluginContainer) DoPreWriteRequest(ctx context.Context, r *core.Request, body interface{}) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPreWriteRequestPlugin); ok {
-			err := plugin.PreWriteRequest(r, body)
+			err := plugin.PreWriteRequest(ctx, r, body)
 			if err != nil {
 				return err
 			}
@@ -145,10 +147,10 @@ func (p *ClientPluginContainer) DoPreWriteRequest(r *rpc.Request, body interface
 }
 
 // DoPostWriteRequest invokes DoPostWriteRequest plugin.
-func (p *ClientPluginContainer) DoPostWriteRequest(r *rpc.Request, body interface{}) error {
+func (p *ClientPluginContainer) DoPostWriteRequest(ctx context.Context, r *core.Request, body interface{}) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPostWriteRequestPlugin); ok {
-			err := plugin.PostWriteRequest(r, body)
+			err := plugin.PostWriteRequest(ctx, r, body)
 			if err != nil {
 				return err
 			}
@@ -181,12 +183,12 @@ type (
 
 	//IPreReadResponseHeaderPlugin represents .
 	IPreReadResponseHeaderPlugin interface {
-		PreReadResponseHeader(*rpc.Response) error
+		PreReadResponseHeader(*core.Response) error
 	}
 
 	//IPostReadResponseHeaderPlugin represents .
 	IPostReadResponseHeaderPlugin interface {
-		PostReadResponseHeader(*rpc.Response) error
+		PostReadResponseHeader(*core.Response) error
 	}
 
 	//IPreReadResponseBodyPlugin represents .
@@ -201,12 +203,12 @@ type (
 
 	//IPreWriteRequestPlugin represents .
 	IPreWriteRequestPlugin interface {
-		PreWriteRequest(*rpc.Request, interface{}) error
+		PreWriteRequest(context.Context, *core.Request, interface{}) error
 	}
 
 	//IPostWriteRequestPlugin represents .
 	IPostWriteRequestPlugin interface {
-		PostWriteRequest(*rpc.Request, interface{}) error
+		PostWriteRequest(context.Context, *core.Request, interface{}) error
 	}
 
 	//IClientPluginContainer represents a plugin container that defines all methods to manage plugins.
@@ -220,12 +222,12 @@ type (
 
 		DoPostConnected(net.Conn) (net.Conn, bool)
 
-		DoPreReadResponseHeader(*rpc.Response) error
-		DoPostReadResponseHeader(*rpc.Response) error
+		DoPreReadResponseHeader(*core.Response) error
+		DoPostReadResponseHeader(*core.Response) error
 		DoPreReadResponseBody(interface{}) error
 		DoPostReadResponseBody(interface{}) error
 
-		DoPreWriteRequest(*rpc.Request, interface{}) error
-		DoPostWriteRequest(*rpc.Request, interface{}) error
+		DoPreWriteRequest(context.Context, *core.Request, interface{}) error
+		DoPostWriteRequest(context.Context, *core.Request, interface{}) error
 	}
 )

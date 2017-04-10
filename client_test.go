@@ -1,6 +1,7 @@
 package rpcx
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -14,7 +15,7 @@ func TestDirectSelector_Call(t *testing.T) {
 
 	args := &Args{7, 8}
 	var reply Reply
-	err := client.Call(serviceMethodName, args, &reply)
+	err := client.Call(context.Background(), serviceMethodName, args, &reply)
 	if err != nil {
 		t.Errorf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
 	}
@@ -33,7 +34,7 @@ func TestDirectSelector_Timeout(t *testing.T) {
 
 	args := &Args{7, 8}
 	var reply Reply
-	err := client.Call(serviceMethodName, args, &reply)
+	err := client.Call(context.Background(), serviceMethodName, args, &reply)
 	if err == nil || !strings.HasSuffix(err.Error(), "i/o timeout") {
 		t.Errorf("expected i/o time, but get error: %v \n", err)
 	}
@@ -49,7 +50,7 @@ func TestDirectSelector_Go(t *testing.T) {
 
 	args := &Args{7, 8}
 	var reply Reply
-	divCall := client.Go(serviceMethodName, args, &reply, nil)
+	divCall := client.Go(context.Background(), serviceMethodName, args, &reply, nil)
 	replyCall := <-divCall.Done // will be equal to divCall
 	if replyCall.Error != nil {
 		t.Errorf("error for Arith: %d*%d, %v \n", args.A, args.B, replyCall.Error)

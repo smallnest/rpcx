@@ -1,13 +1,14 @@
 package plugin
 
 import (
+	"context"
 	"net"
-	"net/rpc"
 	"sync"
 	"time"
 
 	"github.com/rcrowley/go-metrics"
 	"github.com/rcrowley/go-metrics/exp"
+	"github.com/smallnest/rpcx/core"
 	influxdb "github.com/vrischmann/go-metrics-influxdb"
 )
 
@@ -41,7 +42,7 @@ func (p *MetricsPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
 }
 
 // PreReadRequestHeader marks start time of calling service
-func (p *MetricsPlugin) PreReadRequestHeader(r *rpc.Request) error {
+func (p *MetricsPlugin) PreReadRequestHeader(ctx context.Context, r *core.Request) error {
 	p.mapLock.Lock()
 	defer p.mapLock.Unlock()
 	//replace seq with internalSeq
@@ -53,7 +54,7 @@ func (p *MetricsPlugin) PreReadRequestHeader(r *rpc.Request) error {
 }
 
 // PostReadRequestHeader counts read
-func (p *MetricsPlugin) PostReadRequestHeader(r *rpc.Request) error {
+func (p *MetricsPlugin) PostReadRequestHeader(ctx context.Context, r *core.Request) error {
 	if r.ServiceMethod == "" {
 		return nil
 	}
@@ -64,7 +65,7 @@ func (p *MetricsPlugin) PostReadRequestHeader(r *rpc.Request) error {
 }
 
 // PostWriteResponse count write
-func (p *MetricsPlugin) PostWriteResponse(r *rpc.Response, body interface{}) error {
+func (p *MetricsPlugin) PostWriteResponse(r *core.Response, body interface{}) error {
 	if r.ServiceMethod == "" {
 		return nil
 	}

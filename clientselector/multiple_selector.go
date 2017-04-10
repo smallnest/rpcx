@@ -4,12 +4,12 @@ import (
 	"errors"
 	"math/rand"
 	"net"
-	"net/rpc"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/smallnest/rpcx"
+	"github.com/smallnest/rpcx/core"
 )
 
 // ServerPeer is
@@ -21,7 +21,7 @@ type ServerPeer struct {
 // MultiClientSelector is used to select a direct rpc server from a list.
 type MultiClientSelector struct {
 	Servers            []*ServerPeer
-	clientAndServer    map[string]*rpc.Client
+	clientAndServer    map[string]*core.Client
 	clientRWMutex      sync.RWMutex
 	WeightedServers    []*Weighted
 	SelectMode         rpcx.SelectMode
@@ -37,7 +37,7 @@ type MultiClientSelector struct {
 func NewMultiClientSelector(servers []*ServerPeer, sm rpcx.SelectMode, dailTimeout time.Duration) *MultiClientSelector {
 	s := &MultiClientSelector{
 		Servers:         servers,
-		clientAndServer: make(map[string]*rpc.Client),
+		clientAndServer: make(map[string]*core.Client),
 		SelectMode:      sm,
 		dailTimeout:     dailTimeout,
 		rnd:             rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -77,9 +77,9 @@ func (s *MultiClientSelector) SetSelectMode(sm rpcx.SelectMode) {
 	s.SelectMode = sm
 }
 
-//AllClients returns rpc.Clients to all servers
-func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*rpc.Client {
-	var clients []*rpc.Client
+//AllClients returns core.Clients to all servers
+func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) []*core.Client {
+	var clients []*core.Client
 
 	for _, sv := range s.Servers {
 		c, err := s.getCachedClient(sv.Network, sv.Address, clientCodecFunc)
@@ -91,7 +91,7 @@ func (s *MultiClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) [
 	return clients
 }
 
-func (s *MultiClientSelector) getCachedClient(network string, address string, clientCodecFunc rpcx.ClientCodecFunc) (*rpc.Client, error) {
+func (s *MultiClientSelector) getCachedClient(network string, address string, clientCodecFunc rpcx.ClientCodecFunc) (*core.Client, error) {
 	key := network + "@" + address
 	s.clientRWMutex.RLock()
 	c := s.clientAndServer[key]
@@ -108,7 +108,7 @@ func (s *MultiClientSelector) getCachedClient(network string, address string, cl
 	return c, err
 }
 
-func (s *MultiClientSelector) HandleFailedClient(client *rpc.Client) {
+func (s *MultiClientSelector) HandleFailedClient(client *core.Client) {
 	for k, v := range s.clientAndServer {
 		if v == client {
 			s.clientRWMutex.Lock()
@@ -121,7 +121,7 @@ func (s *MultiClientSelector) HandleFailedClient(client *rpc.Client) {
 }
 
 // Select returns a rpc client
-func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*rpc.Client, error) {
+func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*core.Client, error) {
 	if s.len == 0 {
 		return nil, errors.New("No available service")
 	}

@@ -1,16 +1,17 @@
 package rpcx
 
 import (
+	"context"
 	"crypto/tls"
 	"io"
 	"net"
 	"net/http"
-	"net/rpc"
 	"regexp"
 	"strings"
 	"time"
 
-	msgpackrpc "github.com/rpcx-ecosystem/net-rpc-msgpackrpc"
+	"github.com/smallnest/rpcx/codec"
+	"github.com/smallnest/rpcx/core"
 	"github.com/smallnest/rpcx/log"
 )
 
@@ -28,7 +29,7 @@ type ArgsContext interface {
 }
 
 type serverCodecWrapper struct {
-	rpc.ServerCodec
+	core.ServerCodec
 	PluginContainer IServerPluginContainer
 	Conn            net.Conn
 	Timeout         time.Duration
@@ -36,12 +37,12 @@ type serverCodecWrapper struct {
 	WriteTimeout    time.Duration
 }
 
-// newServerCodecWrapper wraps a rpc.ServerCodec.
-func newServerCodecWrapper(pc IServerPluginContainer, c rpc.ServerCodec, Conn net.Conn) *serverCodecWrapper {
+// newServerCodecWrapper wraps a core.ServerCodec.
+func newServerCodecWrapper(pc IServerPluginContainer, c core.ServerCodec, Conn net.Conn) *serverCodecWrapper {
 	return &serverCodecWrapper{ServerCodec: c, PluginContainer: pc, Conn: Conn}
 }
 
-func (w *serverCodecWrapper) ReadRequestHeader(r *rpc.Request) error {
+func (w *serverCodecWrapper) ReadRequestHeader(ctx context.Context, r *core.Request) error {
 	if w.Timeout > 0 {
 		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
 	}
@@ -50,28 +51,28 @@ func (w *serverCodecWrapper) ReadRequestHeader(r *rpc.Request) error {
 	}
 
 	//pre
-	err := w.PluginContainer.DoPreReadRequestHeader(r)
+	err := w.PluginContainer.DoPreReadRequestHeader(ctx, r)
 	if err != nil {
 		return err
 	}
-	err = w.ServerCodec.ReadRequestHeader(r)
+	err = w.ServerCodec.ReadRequestHeader(ctx, r)
 
 	if err != nil {
 		return err
 	}
 
 	//post
-	err = w.PluginContainer.DoPostReadRequestHeader(r)
+	err = w.PluginContainer.DoPostReadRequestHeader(ctx, r)
 	return err
 }
 
-func (w *serverCodecWrapper) ReadRequestBody(body interface{}) error {
+func (w *serverCodecWrapper) ReadRequestBody(ctx context.Context, body interface{}) error {
 	//pre
-	err := w.PluginContainer.DoPreReadRequestBody(body)
+	err := w.PluginContainer.DoPreReadRequestBody(ctx, body)
 	if err != nil {
 		return err
 	}
-	err = w.ServerCodec.ReadRequestBody(body)
+	err = w.ServerCodec.ReadRequestBody(ctx, body)
 	if err != nil {
 		return err
 	}
@@ -81,11 +82,11 @@ func (w *serverCodecWrapper) ReadRequestBody(body interface{}) error {
 	}
 
 	//post
-	err = w.PluginContainer.DoPostReadRequestBody(body)
+	err = w.PluginContainer.DoPostReadRequestBody(ctx, body)
 	return err
 }
 
-func (w *serverCodecWrapper) WriteResponse(resp *rpc.Response, body interface{}) (err error) {
+func (w *serverCodecWrapper) WriteResponse(resp *core.Response, body interface{}) (err error) {
 	if w.Timeout > 0 {
 		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
 	}
@@ -114,8 +115,8 @@ func (w *serverCodecWrapper) Close() (err error) {
 	return
 }
 
-// ServerCodecFunc is used to create a rpc.ServerCodec from net.Conn.
-type ServerCodecFunc func(conn io.ReadWriteCloser) rpc.ServerCodec
+// ServerCodecFunc is used to create a core.ServerCodec from net.Conn.
+type ServerCodecFunc func(conn io.ReadWriteCloser) core.ServerCodec
 
 // Server represents a RPC Server.
 type Server struct {
@@ -124,7 +125,7 @@ type Server struct {
 	PluginContainer IServerPluginContainer
 	//Metadata describes extra info about this service, for example, weight, active status
 	Metadata     string
-	rpcServer    *rpc.Server
+	rpcServer    *core.Server
 	listener     net.Listener
 	Timeout      time.Duration
 	ReadTimeout  time.Duration
@@ -134,9 +135,9 @@ type Server struct {
 // NewServer returns a new Server.
 func NewServer() *Server {
 	return &Server{
-		rpcServer:       rpc.NewServer(),
+		rpcServer:       core.NewServer(),
 		PluginContainer: &ServerPluginContainer{plugins: make([]IPlugin, 0)},
-		ServerCodecFunc: msgpackrpc.NewServerCodec,
+		ServerCodecFunc: codec.NewGobServerCodec,
 	}
 }
 
@@ -172,12 +173,12 @@ func ServeListener(ln net.Listener) {
 
 // ServeByHTTP implements RPC via HTTP
 func ServeByHTTP(ln net.Listener) {
-	defaultServer.ServeByHTTP(ln, rpc.DefaultRPCPath)
+	defaultServer.ServeByHTTP(ln, core.DefaultRPCPath)
 }
 
 // ServeByMux implements RPC via HTTP with customized mux
 func ServeByMux(ln net.Listener, mux *http.ServeMux) {
-	defaultServer.ServeByMux(ln, rpc.DefaultRPCPath, mux)
+	defaultServer.ServeByMux(ln, core.DefaultRPCPath, mux)
 }
 
 // SetServerCodecFunc sets a ServerCodecFunc

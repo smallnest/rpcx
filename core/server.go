@@ -124,7 +124,7 @@
 
 	The net/rpc package is frozen and is not accepting new features.
 */
-package rpc
+package core
 
 import (
 	"bufio"
