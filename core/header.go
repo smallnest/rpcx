@@ -21,6 +21,11 @@ func decodeHeader(s string) (Header, error) {
 // It is imlemented refer to http Header.
 type Header map[string][]string
 
+// NewHeader returns a new header.
+func NewHeader() Header {
+	return make(map[string][]string)
+}
+
 // Add adds the key, value pair to the header.
 // It appends to any existing values associated with key.
 func (h Header) Add(key, value string) {
@@ -70,4 +75,8 @@ func (h Header) clone() Header {
 		h2[k] = vv2
 	}
 	return h2
+}
+
+func (h Header) String() string {
+	return encodeHeader(h)
 }

@@ -149,6 +149,7 @@ const (
 	DefaultDebugPath = "/debug/rpc"
 
 	HeaderKey = ":header"
+	ConnKey   = ":conn"
 )
 
 // Precompute the reflect type for error. Can't use error directly
@@ -426,7 +427,7 @@ func (s *service) call(ctx context.Context, server *Server, sending *sync.Mutex,
 	var returnValues []reflect.Value
 	var err error
 	if mtype.hasContext {
-		returnValues, err = f(function, []reflect.Value{s.rcvr, reflect.ValueOf(context.Background()), argv, replyv})
+		returnValues, err = f(function, []reflect.Value{s.rcvr, reflect.ValueOf(ctx), argv, replyv})
 	} else {
 		returnValues, err = f(function, []reflect.Value{s.rcvr, argv, replyv})
 	}
@@ -533,7 +534,6 @@ func (server *Server) ServeCodec(codec ServerCodec) {
 	sending := new(sync.Mutex)
 	for {
 		ctx := NewMapContext(context.Background())
-
 		service, mtype, req, argv, replyv, keepReading, err := server.readRequest(ctx, codec)
 		if err != nil {
 			if debugLog && err != io.EOF {
@@ -698,6 +698,7 @@ func (server *Server) readRequestHeader(ctx context.Context, codec ServerCodec) 
 				m[HeaderKey] = header
 			}
 		}
+
 	}
 	return
 }
