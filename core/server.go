@@ -147,6 +147,8 @@ const (
 	// Defaults used by HandleHTTP
 	DefaultRPCPath   = "/_goRPC_"
 	DefaultDebugPath = "/debug/rpc"
+
+	HeaderKey = ":header"
 )
 
 // Precompute the reflect type for error. Can't use error directly
@@ -471,8 +473,6 @@ type gobServerCodec struct {
 }
 
 func (c *gobServerCodec) ReadRequestHeader(ctx context.Context, r *Request) error {
-	values := ctx.Value(":v").(map[string]interface{})
-	values[":conn"] = c.rwc.(net.Conn)
 	return c.dec.Decode(r)
 }
 
@@ -532,7 +532,7 @@ func (server *Server) ServeConn(conn io.ReadWriteCloser) {
 func (server *Server) ServeCodec(codec ServerCodec) {
 	sending := new(sync.Mutex)
 	for {
-		ctx := context.WithValue(context.Background(), interface{}(":v"), make(map[string]interface{}))
+		ctx := NewMapContext(context.Background())
 
 		service, mtype, req, argv, replyv, keepReading, err := server.readRequest(ctx, codec)
 		if err != nil {
@@ -558,7 +558,7 @@ func (server *Server) ServeCodec(codec ServerCodec) {
 // It does not close the codec upon completion.
 func (server *Server) ServeRequest(codec ServerCodec) error {
 	sending := new(sync.Mutex)
-	ctx := context.WithValue(context.Background(), interface{}(":v"), make(map[string]interface{}))
+	ctx := NewMapContext(context.Background())
 	service, mtype, req, argv, replyv, keepReading, err := server.readRequest(ctx, codec)
 	if err != nil {
 		if !keepReading {
@@ -682,6 +682,22 @@ func (server *Server) readRequestHeader(ctx context.Context, codec ServerCodec) 
 	mtype = service.method[methodName]
 	if mtype == nil {
 		err = errors.New("rpc: can't find method " + req.ServiceMethod)
+		return
+	}
+
+	//extract header into context
+	if req.Header != "" {
+		var header Header
+		header, err = decodeHeader(req.Header)
+		if err != nil {
+			return
+		}
+
+		if err == nil {
+			if m, ok := FromMapContext(ctx); ok {
+				m[HeaderKey] = header
+			}
+		}
 	}
 	return
 }

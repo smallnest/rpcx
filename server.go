@@ -18,6 +18,7 @@ import (
 const (
 	//DefaultRPCPath is the defaut HTTP RPC PATH
 	DefaultRPCPath = "/_goRPC_"
+	ConnKey        = ":conn"
 )
 
 var IP4Reg = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
@@ -48,6 +49,11 @@ func (w *serverCodecWrapper) ReadRequestHeader(ctx context.Context, r *core.Requ
 	}
 	if w.ReadTimeout > 0 {
 		w.Conn.SetReadDeadline(time.Now().Add(w.ReadTimeout))
+	}
+
+	// 设置client conn in context
+	if m, ok := core.FromMapContext(ctx); ok {
+		m[ConnKey] = w.Conn
 	}
 
 	//pre

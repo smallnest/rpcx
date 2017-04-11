@@ -1,4 +1,4 @@
-package rpcx
+package core
 
 import (
 	"net/textproto"

@@ -88,6 +88,10 @@ func (client *Client) send(ctx context.Context, call *Call) {
 
 	// Encode and send the request.
 	client.request.Seq = seq
+	header, ok := FromContext(ctx)
+	if ok {
+		client.request.Header = encodeHeader(header)
+	}
 	client.request.ServiceMethod = call.ServiceMethod
 	err := client.codec.WriteRequest(ctx, &client.request, call.Args)
 	if err != nil {
