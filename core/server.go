@@ -131,6 +131,7 @@ import (
 	"context"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -421,20 +422,44 @@ func (s *service) call(ctx context.Context, server *Server, sending *sync.Mutex,
 	function := mtype.method.Func
 	// Invoke the method, providing a new value for the reply.
 	var returnValues []reflect.Value
+	var err error
 	if mtype.hasContext {
-		// TODO: context 应该在外层生成
-		returnValues = function.Call([]reflect.Value{s.rcvr, reflect.ValueOf(context.Background()), argv, replyv})
+		returnValues, err = f(function, []reflect.Value{s.rcvr, reflect.ValueOf(context.Background()), argv, replyv})
 	} else {
-		returnValues = function.Call([]reflect.Value{s.rcvr, argv, replyv})
+		returnValues, err = f(function, []reflect.Value{s.rcvr, argv, replyv})
 	}
+
 	// The return value for the method is an error.
-	errInter := returnValues[0].Interface()
 	errmsg := ""
-	if errInter != nil {
-		errmsg = errInter.(error).Error()
+
+	if err != nil {
+		errmsg = err.Error()
+	} else {
+		errInter := returnValues[0].Interface()
+		if errInter != nil {
+			errmsg = errInter.(error).Error()
+		}
 	}
+
 	server.sendResponse(sending, req, replyv.Interface(), codec, errmsg)
 	server.freeRequest(req)
+}
+
+func f(function reflect.Value, v []reflect.Value) ([]reflect.Value, error) {
+	var err error
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			err, ok = r.(error)
+			if !ok {
+				err = fmt.Errorf("internal error: %v", r)
+			}
+		}
+	}()
+
+	returnValues := function.Call(v)
+
+	return returnValues, err
 }
 
 type gobServerCodec struct {
