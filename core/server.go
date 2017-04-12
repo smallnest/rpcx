@@ -448,10 +448,10 @@ func (s *service) call(ctx context.Context, server *Server, sending *sync.Mutex,
 	server.freeRequest(req)
 }
 
-func f(function reflect.Value, v []reflect.Value) ([]reflect.Value, error) {
-	var err error
+func f(function reflect.Value, v []reflect.Value) (values []reflect.Value, err error) {
 	defer func() {
 		if r := recover(); r != nil {
+
 			var ok bool
 			err, ok = r.(error)
 			if !ok {
@@ -460,9 +460,8 @@ func f(function reflect.Value, v []reflect.Value) ([]reflect.Value, error) {
 		}
 	}()
 
-	returnValues := function.Call(v)
-
-	return returnValues, err
+	values = function.Call(v)
+	return values, err
 }
 
 type gobServerCodec struct {
