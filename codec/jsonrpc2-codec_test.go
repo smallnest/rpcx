@@ -1,30 +1,31 @@
 package codec
 
-// import (
-// 	"testing"
+import (
+	"context"
+	"testing"
 
-// 	"github.com/smallnest/rpcx"
-// )
+	"github.com/smallnest/rpcx"
+)
 
-// func TestJSONRPC2Codec(t *testing.T) {
-// 	server := rpcx.NewServer()
-// 	server.ServerCodecFunc = NewJSONRPC2ServerCodec
-// 	server.RegisterName(serviceName, service)
-// 	server.Start("tcp", "127.0.0.1:0")
-// 	serverAddr := server.Address()
+func TestJSONRPC2Codec(t *testing.T) {
+	server := rpcx.NewServer()
+	server.ServerCodecFunc = NewJSONRPC2ServerCodec
+	server.RegisterName(serviceName, service)
+	server.Start("tcp", "127.0.0.1:0")
+	serverAddr := server.Address()
 
-// 	s := &rpcx.DirectClientSelector{Network: "tcp", Address: serverAddr}
-// 	client := rpcx.NewClient(s)
-// 	client.ClientCodecFunc = NewJSONRPC2ClientCodec
+	s := &rpcx.DirectClientSelector{Network: "tcp", Address: serverAddr}
+	client := rpcx.NewClient(s)
+	client.ClientCodecFunc = NewJSONRPC2ClientCodec
 
-// 	args := &Args{7, 8}
-// 	var reply Reply
-// 	err := client.Call(serviceMethodName, args, &reply)
-// 	if err != nil {
-// 		t.Errorf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
-// 	} else {
-// 		t.Logf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
-// 	}
+	args := &Args{7, 8}
+	var reply Reply
+	err := client.Call(context.Background(), serviceMethodName, args, &reply)
+	if err != nil {
+		t.Errorf("error for Arith: %d*%d, %v \n", args.A, args.B, err)
+	} else {
+		t.Logf("Arith: %d*%d=%d \n", args.A, args.B, reply.C)
+	}
 
-// 	client.Close()
-// }
+	client.Close()
+}
