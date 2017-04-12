@@ -8,6 +8,12 @@
 rpcx is a distributed RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).
 It is based on Go net/rpc and provides extra governance features.
 
+**Notice**
+
+Since **rpcx 2.0**, we replace underlying Go official rpc transport with customized rpc transport. So rpcx can support **context** in client side and server side. 
+
+If you want to use underlying Go official rpc transport, please use **rpcx 1.3**.
+
 
 ![Throughput](_documents/throughput.png)
 
@@ -167,7 +173,7 @@ func main() {
 
 	args := &Args{"golang"}
 	var reply Reply
-	err := client.Call("Posts.Query", args, &reply)
+	err := client.Call(context.Background(),"Posts.Query", args, &reply)
 	if err != nil {
 		log.Infof("error for Posts: %s, %v \n", args.PostType, err)
 		return
