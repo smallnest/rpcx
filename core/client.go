@@ -319,6 +319,15 @@ func (client *Client) Go(ctx context.Context, serviceMethod string, args interfa
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
 func (client *Client) Call(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
-	call := <-client.Go(ctx, serviceMethod, args, reply, make(chan *Call, 1)).Done
-	return call.Error
+	Done := client.Go(ctx, serviceMethod, args, reply, make(chan *Call, 1)).Done
+
+	var err error
+	select {
+	case <-ctx.Done(): //cancel by context
+		return ctx.Err()
+	case call := <-Done:
+		err = call.Error
+	}
+
+	return err
 }
