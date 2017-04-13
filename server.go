@@ -91,7 +91,7 @@ func (w *serverCodecWrapper) ReadRequestBody(ctx context.Context, body interface
 	return err
 }
 
-func (w *serverCodecWrapper) WriteResponse(resp *core.Response, body interface{}) (err error) {
+func (w *serverCodecWrapper) WriteResponse(ctx context.Context, resp *core.Response, body interface{}) (err error) {
 	if w.Timeout > 0 {
 		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
 	}
@@ -100,16 +100,16 @@ func (w *serverCodecWrapper) WriteResponse(resp *core.Response, body interface{}
 	}
 
 	// pre
-	if err = w.PluginContainer.DoPreWriteResponse(resp, body); err != nil {
+	if err = w.PluginContainer.DoPreWriteResponse(ctx, resp, body); err != nil {
 		return
 	}
 
-	if err = w.ServerCodec.WriteResponse(resp, body); err != nil {
+	if err = w.ServerCodec.WriteResponse(ctx, resp, body); err != nil {
 		return
 	}
 
 	// post
-	return w.PluginContainer.DoPostWriteResponse(resp, body)
+	return w.PluginContainer.DoPostWriteResponse(ctx, resp, body)
 }
 
 func (w *serverCodecWrapper) Close() (err error) {

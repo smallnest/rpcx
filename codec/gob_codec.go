@@ -42,7 +42,7 @@ func (c *gobServerCodec) ReadRequestBody(ctx context.Context, body interface{}) 
 	return c.dec.Decode(body)
 }
 
-func (c *gobServerCodec) WriteResponse(r *core.Response, body interface{}) (err error) {
+func (c *gobServerCodec) WriteResponse(ctx context.Context, r *core.Response, body interface{}) (err error) {
 	if err = c.enc.Encode(r); err != nil {
 		if c.encBuf.Flush() == nil {
 			// Gob couldn't encode the header. Should not happen, so if it does,

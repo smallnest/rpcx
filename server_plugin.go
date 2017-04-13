@@ -170,10 +170,10 @@ func (p *ServerPluginContainer) DoPostReadRequestBody(ctx context.Context, body 
 }
 
 // DoPreWriteResponse invokes DoPreWriteResponse plugin.
-func (p *ServerPluginContainer) DoPreWriteResponse(resp *core.Response, body interface{}) error {
+func (p *ServerPluginContainer) DoPreWriteResponse(ctx context.Context, resp *core.Response, body interface{}) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPreWriteResponsePlugin); ok {
-			err := plugin.PreWriteResponse(resp, body)
+			err := plugin.PreWriteResponse(ctx, resp, body)
 			if err != nil {
 				return err
 			}
@@ -184,10 +184,10 @@ func (p *ServerPluginContainer) DoPreWriteResponse(resp *core.Response, body int
 }
 
 // DoPostWriteResponse invokes DoPostWriteResponse plugin.
-func (p *ServerPluginContainer) DoPostWriteResponse(resp *core.Response, body interface{}) error {
+func (p *ServerPluginContainer) DoPostWriteResponse(ctx context.Context, resp *core.Response, body interface{}) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(IPostWriteResponsePlugin); ok {
-			err := plugin.PostWriteResponse(resp, body)
+			err := plugin.PostWriteResponse(ctx, resp, body)
 			if err != nil {
 				return err
 			}
@@ -242,12 +242,12 @@ type (
 
 	//IPreWriteResponsePlugin represents .
 	IPreWriteResponsePlugin interface {
-		PreWriteResponse(*core.Response, interface{}) error
+		PreWriteResponse(context.Context, *core.Response, interface{}) error
 	}
 
 	//IPostWriteResponsePlugin represents .
 	IPostWriteResponsePlugin interface {
-		PostWriteResponse(*core.Response, interface{}) error
+		PostWriteResponse(context.Context, *core.Response, interface{}) error
 	}
 
 	//IServerPluginContainer represents a plugin container that defines all methods to manage plugins.
@@ -269,7 +269,7 @@ type (
 		DoPreReadRequestBody(ctx context.Context, body interface{}) error
 		DoPostReadRequestBody(ctx context.Context, body interface{}) error
 
-		DoPreWriteResponse(*core.Response, interface{}) error
-		DoPostWriteResponse(*core.Response, interface{}) error
+		DoPreWriteResponse(context.Context, *core.Response, interface{}) error
+		DoPostWriteResponse(context.Context, *core.Response, interface{}) error
 	}
 )

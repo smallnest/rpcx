@@ -393,7 +393,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 // contains an error when it is used.
 var invalidRequest = struct{}{}
 
-func (server *Server) sendResponse(sending *sync.Mutex, req *Request, reply interface{}, codec ServerCodec, errmsg string) {
+func (server *Server) sendResponse(ctx context.Context, sending *sync.Mutex, req *Request, reply interface{}, codec ServerCodec, errmsg string) {
 	resp := server.getResponse()
 	// Encode the response header
 	resp.ServiceMethod = req.ServiceMethod
@@ -403,7 +403,7 @@ func (server *Server) sendResponse(sending *sync.Mutex, req *Request, reply inte
 	}
 	resp.Seq = req.Seq
 	sending.Lock()
-	err := codec.WriteResponse(resp, reply)
+	err := codec.WriteResponse(ctx, resp, reply)
 	if debugLog && err != nil {
 		log.Println("rpc: writing response:", err)
 	}
@@ -444,7 +444,7 @@ func (s *service) call(ctx context.Context, server *Server, sending *sync.Mutex,
 		}
 	}
 
-	server.sendResponse(sending, req, replyv.Interface(), codec, errmsg)
+	server.sendResponse(ctx, sending, req, replyv.Interface(), codec, errmsg)
 	server.freeRequest(req)
 }
 
@@ -480,7 +480,7 @@ func (c *gobServerCodec) ReadRequestBody(ctx context.Context, body interface{}) 
 	return c.dec.Decode(body)
 }
 
-func (c *gobServerCodec) WriteResponse(r *Response, body interface{}) (err error) {
+func (c *gobServerCodec) WriteResponse(tx context.Context, r *Response, body interface{}) (err error) {
 	if err = c.enc.Encode(r); err != nil {
 		if c.encBuf.Flush() == nil {
 			// Gob couldn't encode the header. Should not happen, so if it does,
@@ -543,7 +543,7 @@ func (server *Server) ServeCodec(codec ServerCodec) {
 			}
 			// send a response if we actually managed to read a header.
 			if req != nil {
-				server.sendResponse(sending, req, invalidRequest, codec, err.Error())
+				server.sendResponse(ctx, sending, req, invalidRequest, codec, err.Error())
 				server.freeRequest(req)
 			}
 			continue
@@ -565,7 +565,7 @@ func (server *Server) ServeRequest(codec ServerCodec) error {
 		}
 		// send a response if we actually managed to read a header.
 		if req != nil {
-			server.sendResponse(sending, req, invalidRequest, codec, err.Error())
+			server.sendResponse(ctx, sending, req, invalidRequest, codec, err.Error())
 			server.freeRequest(req)
 		}
 		return err
@@ -737,7 +737,7 @@ type ServerCodec interface {
 	ReadRequestHeader(context.Context, *Request) error
 	ReadRequestBody(context.Context, interface{}) error
 	// WriteResponse must be safe for concurrent use by multiple goroutines.
-	WriteResponse(*Response, interface{}) error
+	WriteResponse(context.Context, *Response, interface{}) error
 
 	Close() error
 }

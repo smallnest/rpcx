@@ -368,7 +368,7 @@ func (codec *CodecEmulator) ReadRequestBody(ctx context.Context, argv interface{
 	return nil
 }
 
-func (codec *CodecEmulator) WriteResponse(resp *Response, reply interface{}) error {
+func (codec *CodecEmulator) WriteResponse(ctx context.Context, resp *Response, reply interface{}) error {
 	if resp.Error != "" {
 		codec.err = errors.New(resp.Error)
 	} else {

@@ -71,7 +71,7 @@ func (sc *bsonServerCodec) ReadRequestBody(ctx context.Context, v interface{}) e
 	return sc.Decoder.Decode(v)
 }
 
-func (sc *bsonServerCodec) WriteResponse(rs *core.Response, v interface{}) (err error) {
+func (sc *bsonServerCodec) WriteResponse(ctx context.Context, rs *core.Response, v interface{}) (err error) {
 	if err = sc.Encoder.Encode(rs); err != nil {
 		return
 	}
