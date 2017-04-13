@@ -175,7 +175,7 @@ func (c *Client) Call(ctx context.Context, serviceMethod string, args interface{
 	rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args)
 	//selected
 	if err == nil && rpcClient != nil {
-		if err = rpcClient.Call(ctx, serviceMethod, args, reply); err == nil {
+		if err = c.wrapCall(rpcClient, ctx, serviceMethod, args, reply); err == nil {
 			return //call successful
 		}
 
@@ -190,7 +190,7 @@ func (c *Client) Call(ctx context.Context, serviceMethod string, args interface{
 				continue
 			}
 
-			err = rpcClient.Call(ctx, serviceMethod, args, reply)
+			err = c.wrapCall(rpcClient, ctx, serviceMethod, args, reply)
 			if err == nil {
 				return nil
 			}
@@ -208,7 +208,7 @@ func (c *Client) Call(ctx context.Context, serviceMethod string, args interface{
 			}
 
 			if rpcClient != nil {
-				err = rpcClient.Call(ctx, serviceMethod, args, reply)
+				err = c.wrapCall(rpcClient, ctx, serviceMethod, args, reply)
 				if err == nil {
 					return nil
 				}
@@ -281,6 +281,13 @@ func (c *Client) clientForking(ctx context.Context, serviceMethod string, args i
 	}
 
 	return errors.New("all clients return Error")
+}
+
+func (c *Client) wrapCall(client *core.Client, ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
+	c.PluginContainer.DoPreCall(ctx, serviceMethod, args, reply)
+	err := client.Call(ctx, serviceMethod, args, reply)
+	c.PluginContainer.DoPreCall(ctx, serviceMethod, args, reply)
+	return err
 }
 
 //Go invokes the function asynchronously. It returns the Call structure representing the invocation.

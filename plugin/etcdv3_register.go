@@ -53,7 +53,7 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 	p.KeysAPI = cli
 
 	if p.UpdateIntervalInSec > 0 {
-		p.ticker = time.NewTicker(time.Duration(p.UpdateIntervalInSec) * time.Second)
+		p.ticker = time.NewTicker(time.Duration(p.UpdateIntervalInSec*2) * time.Second)
 		go func() {
 			for range p.ticker.C {
 				clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
