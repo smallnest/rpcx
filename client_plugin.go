@@ -175,6 +175,33 @@ func (p *ClientPluginContainer) DoPostConnected(conn net.Conn) (net.Conn, bool) 
 	return conn, true
 }
 
+// DoPreCall executes before call
+func (p *ClientPluginContainer) DoPreCall(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(IPreCallPlugin); ok {
+			err := plugin.DoPreCall(ctx, serviceMethod, args, reply)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// DoPostCall executes after call
+func (p *ClientPluginContainer) DoPostCall(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(IPostCallPlugin); ok {
+			err := plugin.DoPostCall(ctx, serviceMethod, args, reply)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 type (
 	//IPostConnectedPlugin represents connected plugin.
 	IPostConnectedPlugin interface {
@@ -211,6 +238,16 @@ type (
 		PostWriteRequest(context.Context, *core.Request, interface{}) error
 	}
 
+	// IPreCallPlugin is invoked before the client calls a server.
+	IPreCallPlugin interface {
+		DoPreCall(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
+	}
+
+	// IPostCallPlugin is invoked after the client calls a server.
+	IPostCallPlugin interface {
+		DoPostCall(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
+	}
+
 	//IClientPluginContainer represents a plugin container that defines all methods to manage plugins.
 	//And it also defines all extension points.
 	IClientPluginContainer interface {
@@ -229,5 +266,8 @@ type (
 
 		DoPreWriteRequest(context.Context, *core.Request, interface{}) error
 		DoPostWriteRequest(context.Context, *core.Request, interface{}) error
+
+		DoPreCall(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
+		DoPostCall(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	}
 )

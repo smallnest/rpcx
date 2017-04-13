@@ -165,12 +165,12 @@ func (plugin *logCodecPlugin) PostReadRequestBody(ctx context.Context, body inte
 	plugin.postReadRequestBody++
 	return nil
 }
-func (plugin *logCodecPlugin) PreWriteResponse(resp *core.Response, body interface{}) error {
+func (plugin *logCodecPlugin) PreWriteResponse(x context.Context, resp *core.Response, body interface{}) error {
 	//log.Infof("Sent Header: %#v\nSent Body: %#v\n", resp, body)
 	plugin.preWriteResponse++
 	return nil
 }
-func (plugin *logCodecPlugin) PostWriteResponse(resp *core.Response, body interface{}) error {
+func (plugin *logCodecPlugin) PostWriteResponse(x context.Context, resp *core.Response, body interface{}) error {
 	plugin.postWriteResponse++
 	return nil
 }
