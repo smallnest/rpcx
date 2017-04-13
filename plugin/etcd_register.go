@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/net/context"
@@ -23,6 +24,8 @@ type EtcdRegisterPlugin struct {
 	BasePath       string
 	Metrics        metrics.Registry
 	Services       []string
+	metadata       map[string]string
+	metadataLock   sync.Mutex
 	UpdateInterval time.Duration
 	KeysAPI        client.KeysAPI
 	ticker         *time.Ticker
@@ -70,12 +73,42 @@ func (p *EtcdRegisterPlugin) Start() (err error) {
 					resp, err = p.KeysAPI.Get(context.TODO(), nodePath, &client.GetOptions{
 						Recursive: false,
 					})
+
+					if err != nil {
+						if e, ok := err.(client.Error); ok && e.Code == 100 {
+							p.metadataLock.Lock()
+							meta := p.metadata[nodePath]
+							if v, err = url.ParseQuery(meta); err != nil {
+								continue
+							}
+							resp, err = p.KeysAPI.Set(context.TODO(), nodePath, meta,
+								&client.SetOptions{
+									PrevExist: client.PrevIgnore,
+									TTL:       p.UpdateInterval + 10*time.Second,
+								})
+
+							if err != nil {
+								log.Error(err.Error())
+								continue
+							}
+						}
+					}
+
 					if err != nil {
 						log.Infof("get etcd key failed: %v", err.Error())
 					} else {
-						if v, err = url.ParseQuery(resp.Node.Value); err != nil {
-							continue
+						if err == nil {
+							if v, err = url.ParseQuery(resp.Node.Value); err != nil {
+								continue
+							}
+						} else {
+							p.metadataLock.Lock()
+							meta := p.metadata[nodePath]
+							if v, err = url.ParseQuery(meta); err != nil {
+								continue
+							}
 						}
+
 						v.Set("tps", string(data))
 
 						_, err = p.KeysAPI.Set(context.TODO(), nodePath, v.Encode(), &client.SetOptions{
@@ -172,6 +205,14 @@ func (p *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata ..
 	if !IsContains(p.Services, name) {
 		p.Services = append(p.Services, name)
 	}
+
+	p.metadataLock.Lock()
+	if p.metadata == nil {
+		p.metadata = make(map[string]string)
+	}
+	p.metadata[nodePath] = strings.Join(metadata, "&")
+	p.metadataLock.Unlock()
+
 	return
 }
 
