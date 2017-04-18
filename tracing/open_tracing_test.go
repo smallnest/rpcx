@@ -27,9 +27,21 @@ func TestOpenTracingPlugin(t *testing.T) {
 	}
 	err = p.DoPostCall(ctx, "greeting.Say", "smallnest", "")
 	if err != nil {
-		t.Fatalf("failed to DoPreCall: %v", err)
+		t.Fatalf("failed to DoPostCall: %v", err)
 	}
 
+	ctx = core.NewMapContext(context.Background())
+	err = p.DoPostReadRequestHeader(ctx, &core.Request{ServiceMethod: "greeting.Say"})
+	if err != nil {
+		t.Fatalf("failed to DoPostReadRequestHeader: %v", err)
+	}
+
+	err = p.DoPostWriteResponse(ctx, &core.Response{ServiceMethod: "greeting.Say"}, "world")
+	if err != nil {
+		t.Fatalf("failed to DoPostWriteResponse: %v", err)
+	}
+
+	time.Sleep(time.Hour)
 	// see http://localhost:8700/traces to check
 }
 func getTracer() opentracing.Tracer {
