@@ -99,6 +99,8 @@ rpcx focus in on service governance.
 * Compression:inflate and snappy.
 * Alias name for services.
 * [kcp](https://github.com/xtaci/kcp-go) support: a full-featured reliable-UDP library for golang
+* support **OpenTracing** and **Prometheus**
+* support Header and Context
 
 rpcx has fixed/implemented the below issues in [golang/go rpc](https://github.com/golang/go/issues?utf8=✓&q=is%3Aissue%20rpc) and I believe those issues won't be fixed in the official library because the official rpc library will be frozen.
 

@@ -1,0 +1,7 @@
+
+## v2.0
+- replace underlying rpc transport. 替换底层的rpc库，原先使用官方的rpc库，现在在官方的库上做了修改，以便支持context和header
+- support opentracing. 支持opentracing协议的tracing系统，比如ZipKin等
+- support Prometheus. 支持 Prometheus, 当前比较火的监控系统和时间序列库
+- support Header. 客户端可以设置Header,服务器端可以获取这个header
+- support context. 客户端可以设置context，通过context可以取消调用。服务器端方法定义的第一个参数可以是context,通过它能获取客户端传递的header信息和客户端的net.Conn

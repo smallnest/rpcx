@@ -89,6 +89,9 @@ rpcx使用Go实现，适合使用Go语言实现RPC的功能。
 * 支持zip 和 snappy 格式的压缩传输
 * 服务别名
 * [kcp](https://github.com/xtaci/kcp-go) support: kcp是一个可信赖的全功能的UDP库实现
+* 支持 OpenTracing and Prometheus
+* 支持设置Header
+* 支持在客户端调用时使用Context，在服务端方法定义时可以选择使用上下文
 
 
  rpcx更正和实现了下列官方库不支持的特性：
