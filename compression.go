@@ -27,8 +27,13 @@ const (
 	CompressLZ4
 )
 
+type bufferedWriter interface {
+	Write(data []byte) (n int, err error)
+	Flush() error
+}
+
 type writeFlusher struct {
-	w *flate.Writer
+	w bufferedWriter
 }
 
 func (wf *writeFlusher) Write(p []byte) (int, error) {
@@ -78,7 +83,8 @@ func NewCompressConn(conn net.Conn, compressType CompressType) net.Conn {
 		}
 		w = &writeFlusher{w: zw}
 	case CompressSnappy:
-		w = snappy.NewBufferedWriter(w)
+		sw := snappy.NewBufferedWriter(w)
+		w = &writeFlusher{w: sw}
 	case CompressZstd:
 		w = zstd.NewWriter(w)
 	case CompressLZ4:
