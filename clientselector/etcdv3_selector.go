@@ -227,14 +227,21 @@ func (s *EtcdV3ClientSelector) getCachedClient(server string, clientCodecFunc rp
 }
 
 func (s *EtcdV3ClientSelector) HandleFailedClient(client *core.Client) {
+	var foundC *core.Client
+	s.clientRWMutex.RLock()
 	for k, v := range s.clientAndServer {
 		if v == client {
-			s.clientRWMutex.Lock()
-			delete(s.clientAndServer, k)
-			s.clientRWMutex.Unlock()
+			foundC = k
 		}
 		client.Close()
 		break
+	}
+	s.clientRWMutex.RUnlock()
+
+	if foundC != nil {
+		s.clientRWMutex.Lock()
+		delete(s.clientAndServer, foundC)
+		s.clientRWMutex.Unlock()
 	}
 }
 
