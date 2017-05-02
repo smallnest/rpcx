@@ -1,23 +1,14 @@
-Please answer these questions before submitting your issue. Thanks!
-如果您要提交一个关于这个项目的bug, 在提交这个bug之前，请填写下面的信息。谢谢。
+**Please answer these questions before submitting your issue. Thanks!**
 
 ### What operating system and processor architecture are you using (`go env`)?
-程序运行环境的基本信息，你可以使用`go env`获得。
 
 
 ### What did you do?
-测试步骤。
-
 If possible, provide a recipe for reproducing the error.
-如果程序可以复现，请提供可以复现bug的方法。
-
 A complete runnable program is good.
-最好能提供一个可运行的程序用来复现这个issue。
 
 
 ### What did you expect to see?
-期望结果。
 
 
 ### What did you see instead?
-实际运行结果。
