@@ -233,7 +233,6 @@ func (s *EtcdV3ClientSelector) HandleFailedClient(client *core.Client) {
 		if v == client {
 			foundC = k
 		}
-		client.Close()
 		break
 	}
 	s.clientRWMutex.RUnlock()
@@ -241,6 +240,7 @@ func (s *EtcdV3ClientSelector) HandleFailedClient(client *core.Client) {
 	if foundC != nil {
 		s.clientRWMutex.Lock()
 		delete(s.clientAndServer, foundC)
+		client.Close()
 		s.clientRWMutex.Unlock()
 	}
 }
