@@ -1,5 +1,6 @@
-// protoc --gogofaster_out=. protobuf_service.proto
-// mv protobuf_service.pb.go protobuf_service_test.go 
+// protoc --gofast_out=. protobuf_service.proto
+// mv protobuf_service.pb.go protobuf_service.go
+syntax = "proto3";
 package codec;
 
 
