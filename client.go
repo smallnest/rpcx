@@ -286,7 +286,7 @@ func (c *Client) clientForking(ctx context.Context, serviceMethod string, args i
 func (c *Client) wrapCall(client *core.Client, ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
 	c.PluginContainer.DoPreCall(ctx, serviceMethod, args, reply)
 	err := client.Call(ctx, serviceMethod, args, reply)
-	c.PluginContainer.DoPreCall(ctx, serviceMethod, args, reply)
+	c.PluginContainer.DoPostCall(ctx, serviceMethod, args, reply)
 	return err
 }
 
