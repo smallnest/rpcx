@@ -1,5 +1,3 @@
-// +build waiting_etcdv3_stable
-
 package clientselector
 
 import (
@@ -227,7 +225,7 @@ func (s *EtcdV3ClientSelector) getCachedClient(server string, clientCodecFunc rp
 }
 
 func (s *EtcdV3ClientSelector) HandleFailedClient(client *core.Client) {
-	var foundC *core.Client
+	var foundC string
 	s.clientRWMutex.RLock()
 	for k, v := range s.clientAndServer {
 		if v == client {
@@ -237,7 +235,7 @@ func (s *EtcdV3ClientSelector) HandleFailedClient(client *core.Client) {
 	}
 	s.clientRWMutex.RUnlock()
 
-	if foundC != nil {
+	if foundC != "" {
 		s.clientRWMutex.Lock()
 		delete(s.clientAndServer, foundC)
 		client.Close()

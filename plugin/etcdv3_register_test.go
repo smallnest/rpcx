@@ -1,5 +1,3 @@
-// +build waiting_etcdv3_stable
-
 package plugin
 
 import (
