@@ -145,7 +145,7 @@ func (s *ConsulClientSelector) getCachedClient(server string, clientCodecFunc rp
 	}
 	ss := strings.Split(server, "@") //
 	c, err := rpcx.NewDirectRPCClient(s.Client, clientCodecFunc, ss[0], ss[1], s.dailTimeout)
-	s.clientRWMutex.Lock()
+	s.clientRWMutex.RLock()
 	s.clientAndServer[server] = c
 	s.clientRWMutex.Unlock()
 	return c, err
