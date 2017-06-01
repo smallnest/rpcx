@@ -6,6 +6,9 @@ QQ群: 398044387 ![](_documents/images/rpcx_qq.png)
 
 rpcx是一个类似阿里巴巴 [Dubbo](http://dubbo.io/) 和微博 [Motan](https://github.com/weibocom/motan) 的分布式的RPC服务框架，基于Golang net/rpc实现。 
 
+[php-rpcx](https://github.com/Leon2012/php-rpcx) 是一个rpcx的 **PHP client**, 由[Leon2012](https://github.com/Leon2012)创建。
+
+
 **注意**
 
 自 **rpcx 2.0**版本起， rpcx开始使用定制的底层的rpc传输，以便支持 **context**的功能，你需要在客户端调用的时候传入context, 在服务端，你可以选择使用context作为第一个参数，也可以不使用context。这样我们可以方便的的设置header,获取客户端的连接，以及集成OpenTracing等功能。
