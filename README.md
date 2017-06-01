@@ -8,6 +8,9 @@
 rpcx is a distributed RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).
 It is based on Go net/rpc and provides extra governance features.
 
+
+[php-rpcx](https://github.com/Leon2012/php-rpcx) is a php client for rpcx, created by [Leon2012](https://github.com/Leon2012)
+
 **Notice**
 
 Since **rpcx 2.0**, we replace underlying Go official rpc transport with customized rpc transport. So rpcx can support **context** in client side and server side. 
