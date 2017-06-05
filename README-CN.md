@@ -517,3 +517,7 @@ rpcx的测试结果如上，下面事gRPC的测试结果。
 5. [Twitter的RPC框架Finagle简介](http://www.infoq.com/cn/news/2014/05/twitter-finagle-intro)
 6. [armeria: Netty的作者正在开发的一个RPC库](https://github.com/line/armeria)
 7. [wikipedia RPC](https://en.wikipedia.org/wiki/Remote_procedure_call)
+
+## 使用案例
+
+- basara 游戏管理后台， 中央服务器 (风暴三国)
