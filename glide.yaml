@@ -1,0 +1,58 @@
+package: github.com/smallnest/rpcx
+import:
+- package: github.com/DataDog/zstd
+  version: ^0.5.0
+- package: github.com/coreos/etcd
+  version: ^3.2.0-rc.1
+  subpackages:
+  - client
+  - clientv3
+  - mvcc/mvccpb
+- package: github.com/fatih/color
+  version: ^1.5.0
+- package: github.com/golang/snappy
+- package: github.com/hashicorp/consul
+  version: ^0.8.3
+  subpackages:
+  - api
+- package: github.com/juju/ratelimit
+- package: github.com/kavu/go_reuseport
+  version: ^1.2.0
+- package: github.com/micro/go-bson
+- package: github.com/opentracing/opentracing-go
+  version: ^1.0.2
+  subpackages:
+  - ext
+  - log
+- package: github.com/pierrec/lz4
+  version: ^1.0.0
+- package: github.com/rcrowley/go-metrics
+  subpackages:
+  - exp
+- package: github.com/rpcx-ecosystem/codec2
+- package: github.com/rpcx-ecosystem/colfer
+  version: ^1.6.1
+  subpackages:
+  - rpc
+- package: github.com/rpcx-ecosystem/jsonrpc
+- package: github.com/rpcx-ecosystem/net-rpc-gencode2
+- package: github.com/rpcx-ecosystem/net-rpc-msgpackrpc2
+- package: github.com/rpcx-ecosystem/rpc-codec2
+  subpackages:
+  - jsonrpc2
+- package: github.com/samuel/go-zookeeper
+  subpackages:
+  - zk
+- package: github.com/tatsushid/go-fastping
+- package: github.com/vrischmann/go-metrics-influxdb
+- package: github.com/xtaci/kcp-go
+  version: ^3.18.0
+- package: golang.org/x/net
+  subpackages:
+  - context
+testImport:
+- package: github.com/gogo/protobuf
+  version: ^0.4.0
+  subpackages:
+  - proto
+- package: github.com/hashicorp/net-rpc-msgpackrpc
