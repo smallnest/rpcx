@@ -324,6 +324,15 @@ func (client *Client) Call(ctx context.Context, serviceMethod string, args inter
 	var err error
 	select {
 	case <-ctx.Done(): //cancel by context
+		client.mutex.Lock()
+		call := client.pending[client.seq]
+		delete(client.pending, client.seq)
+		client.mutex.Unlock()
+		if call != nil {
+			call.Error = ctx.Err()
+			call.done()
+		}
+
 		return ctx.Err()
 	case call := <-Done:
 		err = call.Error
