@@ -55,6 +55,7 @@ func (p *OpenTracingPlugin) DoPreCall(ctx context.Context, serviceMethod string,
 
 	// We have no better place to record an error than the Span itself :-/
 	if err != nil {
+
 		clientSpan.LogFields(log.String("event", "Tracer.Inject() failed"), log.Error(err))
 	}
 

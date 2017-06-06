@@ -59,7 +59,7 @@ func (p *MetricsPlugin) PostReadRequestHeader(ctx context.Context, r *core.Reque
 		return nil
 	}
 
-	m := metrics.GetOrRegisterMeter("service_"+r.ServiceMethod+"_Read_Counter", p.Registry)
+	m := metrics.GetOrRegisterMeter("service_"+r.ServiceMethod+"_Read_Qps", p.Registry)
 	m.Mark(1)
 	return nil
 }
@@ -70,7 +70,7 @@ func (p *MetricsPlugin) PostWriteResponse(r *core.Response, body interface{}) er
 		return nil
 	}
 
-	m := metrics.GetOrRegisterMeter("service_"+r.ServiceMethod+"_Write_Counter", p.Registry)
+	m := metrics.GetOrRegisterMeter("service_"+r.ServiceMethod+"_Write_Qps", p.Registry)
 	m.Mark(1)
 
 	p.mapLock.Lock()
