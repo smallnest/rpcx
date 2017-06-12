@@ -13,6 +13,7 @@ import (
 	msgpackrpc2 "github.com/rpcx-ecosystem/net-rpc-msgpackrpc2"
 	"github.com/smallnest/rpcx/core"
 	"github.com/smallnest/rpcx/log"
+	kcp "github.com/xtaci/kcp-go"
 )
 
 const (
@@ -135,6 +136,11 @@ type Server struct {
 	Timeout      time.Duration
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
+	KCPConfig    KCPConfig
+}
+
+type KCPConfig struct {
+	BlockCrypt kcp.BlockCrypt
 }
 
 // NewServer returns a new Server.
@@ -150,7 +156,7 @@ func NewServer() *Server {
 var defaultServer = NewServer()
 
 // Serve starts and listens RPC requests.
-//It is blocked until receiving connectings from clients.
+// It is blocked until receiving connectings from clients.
 func Serve(n, address string) (err error) {
 	return defaultServer.Serve(n, address)
 }
@@ -226,10 +232,10 @@ func validIP4(ipAddress string) bool {
 }
 
 // Serve starts and listens RPC requests.
-//It is blocked until receiving connectings from clients.
+// It is blocked until receiving connectings from clients.
 func (s *Server) Serve(network, address string) (err error) {
 	var ln net.Listener
-	ln, err = makeListener(network, address)
+	ln, err = makeListener(network, address, s.KCPConfig.BlockCrypt)
 	if err != nil {
 		return
 	}
@@ -352,7 +358,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // Start starts and listens RPC requests without blocking.
 func (s *Server) Start(network, address string) (err error) {
 	var ln net.Listener
-	ln, err = makeListener(network, address)
+	ln, err = makeListener(network, address, s.KCPConfig.BlockCrypt)
 
 	if err != nil {
 		log.Errorf("failed to start server: %v", err)

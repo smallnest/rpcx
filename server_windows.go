@@ -8,10 +8,11 @@ import (
 	kcp "github.com/xtaci/kcp-go"
 )
 
-func makeListener(network, address string) (ln net.Listener, err error) {
+// block can be nil if the caller wishes to skip encryption.
+func makeListener(network, address string, block kcp.BlockCrypt) (ln net.Listener, err error) {
 	switch network {
 	case "kcp":
-		ln, err = kcp.ListenWithOptions(address, nil, 10, 3)
+		ln, err = kcp.ListenWithOptions(address, block, 10, 3)
 	case "reuseport":
 		if validIP4(address) {
 			network = "tcp4"
