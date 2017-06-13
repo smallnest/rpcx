@@ -11,8 +11,7 @@ import (
 	"github.com/smallnest/rpcx/log"
 )
 
-//ConsulRegisterPlugin a register plugin which can register services into consul for cluster
-//This registry is experimental and has not been test.
+//ConsulRegisterPlugin a register plugin which can register services into consul for cluster.
 type ConsulRegisterPlugin struct {
 	ServiceAddress string
 	ConsulAddress  string

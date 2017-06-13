@@ -136,7 +136,8 @@ type Server struct {
 	Timeout      time.Duration
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
-	KCPConfig    KCPConfig
+	// use for KCP
+	KCPConfig KCPConfig
 }
 
 type KCPConfig struct {

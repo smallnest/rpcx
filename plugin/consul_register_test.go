@@ -17,7 +17,6 @@ func TestConsulRegisterPlugin_Register(t *testing.T) {
 	plugin := &ConsulRegisterPlugin{
 		ServiceAddress: "tcp@127.0.0.1:1234",
 		ConsulAddress:  "localhost:8500",
-		Services:       make([]string, 1),
 		UpdateInterval: time.Second,
 	}
 
