@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	quicconn "github.com/marten-seemann/quic-conn"
 	"github.com/smallnest/rpcx/core"
 	"github.com/smallnest/rpcx/log"
 	kcp "github.com/xtaci/kcp-go"
@@ -22,6 +23,8 @@ func NewDirectRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, add
 		return NewDirectHTTPRPCClient(c, clientCodecFunc, network, address, "", timeout)
 	case "kcp":
 		return NewDirectKCPRPCClient(c, clientCodecFunc, network, address, "", timeout)
+	case "quic":
+		return NewDirectQuicRPCClient(c, clientCodecFunc, network, address, "", timeout)
 	default:
 	}
 
@@ -129,6 +132,21 @@ func NewDirectKCPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, 
 	var err error
 
 	conn, err = kcp.DialWithOptions(address, c.Block, 10, 3)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return wrapConn(c, clientCodecFunc, conn)
+}
+
+// NewDirectQuicRPCClient creates a quic client.
+func NewDirectQuicRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, address string, path string, timeout time.Duration) (*core.Client, error) {
+	var conn net.Conn
+	var err error
+
+	tlsConf := &tls.Config{InsecureSkipVerify: true}
+	conn, err = quicconn.Dial(address, tlsConf)
 
 	if err != nil {
 		return nil, err
