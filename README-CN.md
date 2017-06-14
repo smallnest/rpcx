@@ -95,6 +95,7 @@ rpcx使用Go实现，适合使用Go语言实现RPC的功能。
 * 支持 OpenTracing and Prometheus
 * 支持设置Header
 * 支持在客户端调用时使用Context，在服务端方法定义时可以选择使用上下文
+* 支持 TCP, UDP and QUIC
 
 
  rpcx更正和实现了下列官方库不支持的特性：
