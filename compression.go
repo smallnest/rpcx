@@ -6,7 +6,6 @@ import (
 	"io"
 	"net"
 
-	"github.com/DataDog/zstd"
 	"github.com/golang/snappy"
 	"github.com/pierrec/lz4"
 )
@@ -22,7 +21,7 @@ const (
 	// CompressSnappy represents snappy
 	CompressSnappy
 	// CompressZstd represents Facebook/Zstandard
-	CompressZstd
+	// CompressZstd
 	// CompressLZ4 represents LZ4 (http://www.lz4.org)
 	CompressLZ4
 )
@@ -66,8 +65,8 @@ func NewCompressConn(conn net.Conn, compressType CompressType) net.Conn {
 		r = flate.NewReader(r)
 	case CompressSnappy:
 		r = snappy.NewReader(r)
-	case CompressZstd:
-		r = zstd.NewReader(r)
+	// case CompressZstd:
+	// 	r = zstd.NewReader(r)
 	case CompressLZ4:
 		r = lz4.NewReader(r)
 	}
@@ -85,8 +84,8 @@ func NewCompressConn(conn net.Conn, compressType CompressType) net.Conn {
 	case CompressSnappy:
 		sw := snappy.NewBufferedWriter(w)
 		w = &writeFlusher{w: sw}
-	case CompressZstd:
-		w = zstd.NewWriter(w)
+	// case CompressZstd:
+	// 	w = zstd.NewWriter(w)
 	case CompressLZ4:
 		w = lz4.NewWriter(w)
 	}
