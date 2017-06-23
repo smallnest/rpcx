@@ -10,10 +10,11 @@ import (
 	"encoding/gob"
 	"errors"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"sync"
+
+	"github.com/smallnest/rpcx/log"
 )
 
 // ServerError represents an error that has been returned from
@@ -168,8 +169,8 @@ func (client *Client) input() {
 	}
 	client.mutex.Unlock()
 	client.reqMutex.Unlock()
-	if debugLog && err != io.EOF && !closing {
-		log.Println("rpc: client protocol error:", err)
+	if DebugLog && err != io.EOF && !closing {
+		log.Info("rpc: client protocol error:", err)
 	}
 }
 
@@ -180,8 +181,8 @@ func (call *Call) done() {
 	default:
 		// We don't want to block here. It is the caller's responsibility to make
 		// sure the channel has enough buffer space. See comment in Go().
-		if debugLog {
-			log.Println("rpc: discarding Call reply due to insufficient Done chan capacity")
+		if DebugLog {
+			log.Info("rpc: discarding Call reply due to insufficient Done chan capacity")
 		}
 	}
 }

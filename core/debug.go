@@ -39,7 +39,7 @@ const debugText = `<html>
 var debug = template.Must(template.New("RPC debug").Parse(debugText))
 
 // If set, print log statements for internal and I/O errors.
-var debugLog = false
+var DebugLog = true
 
 type debugMethod struct {
 	Type *methodType
