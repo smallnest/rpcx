@@ -312,7 +312,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 			continue
 		}
 		// Method needs three ins: receiver, *args, *reply
-		// or Method needs three ins: receiver, context, *args, *reply
+		// or Method needs four ins: receiver, context, *args, *reply
 		if mtype.NumIn() != 3 && mtype.NumIn() != 4 {
 			if reportErr {
 				log.Info("method", mname, "has wrong number of ins:", mtype.NumIn())

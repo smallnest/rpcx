@@ -71,6 +71,9 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 					if err != nil {
 						log.Infof("get etcd key failed: %v", err.Error())
 					} else {
+						if len(resp.Kvs) == 0 { // this service has not been registered into etcd
+							continue
+						}
 						if v, err = url.ParseQuery(string(resp.Kvs[0].Value)); err != nil {
 							continue
 						}
