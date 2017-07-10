@@ -109,7 +109,7 @@ func (s *MultiClientSelector) getCachedClient(network string, address string, cl
 }
 
 func (s *MultiClientSelector) HandleFailedClient(client *core.Client) {
-	if Reconnect(client, s.clientAndServer, s.Client, s.dailTimeout) {
+	if rpcx.Reconnect != nil && rpcx.Reconnect(client, s.clientAndServer, s.Client, s.dailTimeout) {
 		return
 	}
 

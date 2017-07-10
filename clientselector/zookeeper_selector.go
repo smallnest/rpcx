@@ -212,7 +212,7 @@ func (s *ZooKeeperClientSelector) getCachedClient(server string, clientCodecFunc
 }
 
 func (s *ZooKeeperClientSelector) HandleFailedClient(client *core.Client) {
-	if Reconnect(client, s.clientAndServer, s.Client, s.dailTimeout) {
+	if rpcx.Reconnect != nil && rpcx.Reconnect(client, s.clientAndServer, s.Client, s.dailTimeout) {
 		return
 	}
 

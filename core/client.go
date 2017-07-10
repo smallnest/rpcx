@@ -58,9 +58,9 @@ func (c *Client) Codec() ClientCodec {
 	return c.codec
 }
 
-// SetCodec reset the codec.
-func (c *Client) SetCodec(codec ClientCodec) {
-	c.codec = codec
+// IsShutdown return this client has been shutdown.
+func (c *Client) IsShutdown() bool {
+	return c.shutdown
 }
 
 // A ClientCodec implements writing of RPC requests and

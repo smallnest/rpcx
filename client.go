@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"strings"
 	"time"
 
 	msgpackrpc2 "github.com/rpcx-ecosystem/net-rpc-msgpackrpc2"
@@ -233,6 +234,10 @@ func (c *Client) clientBroadCast(ctx context.Context, serviceMethod string, args
 	l := len(rpcClients)
 	done := make(chan *core.Call, l)
 	for _, rpcClient := range rpcClients {
+		if rpcClient.IsShutdown() && Reconnect != nil {
+			log.Infof("client has been shutdown")
+			c.ClientSelector.HandleFailedClient(rpcClient)
+		}
 		rpcClient.Go(ctx, serviceMethod, args, reply, done)
 	}
 
@@ -262,6 +267,10 @@ func (c *Client) clientForking(ctx context.Context, serviceMethod string, args i
 	l := len(rpcClients)
 	done := make(chan *core.Call, l)
 	for _, rpcClient := range rpcClients {
+		if rpcClient.IsShutdown() && Reconnect != nil {
+			log.Infof("client has been shutdown")
+			c.ClientSelector.HandleFailedClient(rpcClient)
+		}
 		rpcClient.Go(ctx, serviceMethod, args, reply, done)
 	}
 
@@ -284,6 +293,11 @@ func (c *Client) clientForking(ctx context.Context, serviceMethod string, args i
 }
 
 func (c *Client) wrapCall(client *core.Client, ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
+	if client.IsShutdown() && Reconnect != nil {
+		log.Infof("client has been shutdown")
+		c.ClientSelector.HandleFailedClient(client)
+	}
+
 	c.PluginContainer.DoPreCall(ctx, serviceMethod, args, reply)
 	err := client.Call(ctx, serviceMethod, args, reply)
 	c.PluginContainer.DoPostCall(ctx, serviceMethod, args, reply)
@@ -389,4 +403,55 @@ func (w *ClientCodecWrapper) WriteRequest(ctx context.Context, r *core.Request, 
 
 func (w *ClientCodecWrapper) Close() error {
 	return w.ClientCodec.Close()
+}
+
+// ReconnectFunc recnnect function.
+type ReconnectFunc func(client *core.Client, clientAndServer map[string]*core.Client, rpcxClient *Client, dailTimeout time.Duration) bool
+
+// Reconnect strategy. The default reconnect is to reconnect at most 3 times.
+var Reconnect ReconnectFunc = reconnect
+
+//try to reconnect
+func reconnect(client *core.Client, clientAndServer map[string]*core.Client, rpcxClient *Client, dailTimeout time.Duration) (reconnected bool) {
+	var server string
+	for k, v := range clientAndServer {
+		if v == client {
+			server = k
+		}
+		break
+	}
+
+	if server != "" {
+		ss := strings.Split(server, "@")
+
+		var clientCodecFunc ClientCodecFunc
+		if wrapper, ok := client.Codec().(*ClientCodecWrapper); ok {
+			clientCodecFunc = wrapper.ClientCodecFunc
+		}
+
+		interval := 100 * time.Millisecond
+
+		if clientCodecFunc != nil {
+			for i := 0; i < 3; i++ {
+				c, err := NewDirectRPCClient(rpcxClient, clientCodecFunc, ss[0], ss[1], dailTimeout)
+				if err == nil {
+					// codec := c.Codec()
+					// client.SetCodec(codec) //reconnected codec
+
+					// c.Release()
+					// c.SetCodec(nil) //free c
+					client.Close()
+					*client = *c
+					log.Warnf("reconnected to server: %s", server)
+					return true
+				}
+				log.Warnf("failed to reconnected to server: %s", server)
+				time.Sleep(interval)
+				interval = interval * 2
+			}
+
+		}
+	}
+
+	return false
 }
