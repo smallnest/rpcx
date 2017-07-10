@@ -53,6 +53,16 @@ type Client struct {
 	shutdown bool // server has told us to stop
 }
 
+// Codec gets client's ClientCodec
+func (c *Client) Codec() ClientCodec {
+	return c.codec
+}
+
+// SetCodec reset the codec.
+func (c *Client) SetCodec(codec ClientCodec) {
+	c.codec = codec
+}
+
 // A ClientCodec implements writing of RPC requests and
 // reading of RPC responses for the client side of an RPC session.
 // The client calls WriteRequest to write a request to the connection
@@ -112,6 +122,9 @@ func (client *Client) input() {
 	var response Response
 	for err == nil {
 		response = Response{}
+		if client.codec == nil {
+			break
+		}
 		err = client.codec.ReadResponseHeader(&response)
 		if err != nil {
 			break
@@ -291,6 +304,18 @@ func (client *Client) Close() error {
 	client.closing = true
 	client.mutex.Unlock()
 	return client.codec.Close()
+}
+
+func (client *Client) Release() error {
+	client.mutex.Lock()
+	if client.closing {
+		client.mutex.Unlock()
+		return ErrShutdown
+	}
+	client.closing = true
+	client.mutex.Unlock()
+
+	return nil
 }
 
 // Go invokes the function asynchronously. It returns the Call structure representing

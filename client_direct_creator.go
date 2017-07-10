@@ -63,6 +63,7 @@ func wrapConn(c *Client, clientCodecFunc ClientCodecFunc, conn net.Conn) (*core.
 	}
 
 	wrapper := newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn), conn)
+	wrapper.ClientCodecFunc = clientCodecFunc
 	wrapper.Timeout = c.Timeout
 	wrapper.ReadTimeout = c.ReadTimeout
 	wrapper.WriteTimeout = c.WriteTimeout
@@ -106,6 +107,7 @@ func NewDirectHTTPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network,
 			return core.NewClientWithCodec(clientCodecFunc(conn)), nil
 		}
 		wrapper := newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn), conn)
+		wrapper.ClientCodecFunc = clientCodecFunc
 		wrapper.Timeout = c.Timeout
 		wrapper.ReadTimeout = c.ReadTimeout
 		wrapper.WriteTimeout = c.WriteTimeout
@@ -137,6 +139,12 @@ func NewDirectKCPRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network, 
 		return nil, err
 	}
 
+	wrapper := newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn), conn)
+	wrapper.ClientCodecFunc = clientCodecFunc
+	wrapper.Timeout = c.Timeout
+	wrapper.ReadTimeout = c.ReadTimeout
+	wrapper.WriteTimeout = c.WriteTimeout
+
 	return wrapConn(c, clientCodecFunc, conn)
 }
 
@@ -151,6 +159,12 @@ func NewDirectQuicRPCClient(c *Client, clientCodecFunc ClientCodecFunc, network,
 	if err != nil {
 		return nil, err
 	}
+
+	wrapper := newClientCodecWrapper(c.PluginContainer, clientCodecFunc(conn), conn)
+	wrapper.ClientCodecFunc = clientCodecFunc
+	wrapper.Timeout = c.Timeout
+	wrapper.ReadTimeout = c.ReadTimeout
+	wrapper.WriteTimeout = c.WriteTimeout
 
 	return wrapConn(c, clientCodecFunc, conn)
 }

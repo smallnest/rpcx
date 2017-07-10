@@ -109,6 +109,10 @@ func (s *MultiClientSelector) getCachedClient(network string, address string, cl
 }
 
 func (s *MultiClientSelector) HandleFailedClient(client *core.Client) {
+	if Reconnect(client, s.clientAndServer, s.Client, s.dailTimeout) {
+		return
+	}
+
 	for k, v := range s.clientAndServer {
 		if v == client {
 			s.clientRWMutex.Lock()

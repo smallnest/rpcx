@@ -225,6 +225,10 @@ func (s *EtcdV3ClientSelector) getCachedClient(server string, clientCodecFunc rp
 }
 
 func (s *EtcdV3ClientSelector) HandleFailedClient(client *core.Client) {
+	if Reconnect(client, s.clientAndServer, s.Client, s.dailTimeout) {
+		return
+	}
+
 	var foundC string
 	s.clientRWMutex.RLock()
 	for k, v := range s.clientAndServer {

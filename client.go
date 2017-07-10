@@ -304,8 +304,9 @@ func (c *Client) Auth(authorization, tag string) error {
 	return c.PluginContainer.Add(p)
 }
 
-type clientCodecWrapper struct {
+type ClientCodecWrapper struct {
 	core.ClientCodec
+	ClientCodecFunc
 	PluginContainer IClientPluginContainer
 	Timeout         time.Duration
 	ReadTimeout     time.Duration
@@ -313,12 +314,12 @@ type clientCodecWrapper struct {
 	Conn            net.Conn
 }
 
-// newClientCodecWrapper wraps a  core.ServerCodec.
-func newClientCodecWrapper(pc IClientPluginContainer, c core.ClientCodec, conn net.Conn) *clientCodecWrapper {
-	return &clientCodecWrapper{ClientCodec: c, PluginContainer: pc, Conn: conn}
+// newClientCodecWrapper wraps a  core.ClientCodec.
+func newClientCodecWrapper(pc IClientPluginContainer, c core.ClientCodec, conn net.Conn) *ClientCodecWrapper {
+	return &ClientCodecWrapper{ClientCodec: c, PluginContainer: pc, Conn: conn}
 }
 
-func (w *clientCodecWrapper) ReadRequestHeader(r *core.Response) error {
+func (w *ClientCodecWrapper) ReadRequestHeader(r *core.Response) error {
 	if w.Timeout > 0 {
 		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
 	}
@@ -343,7 +344,7 @@ func (w *clientCodecWrapper) ReadRequestHeader(r *core.Response) error {
 	return w.PluginContainer.DoPostReadResponseHeader(r)
 }
 
-func (w *clientCodecWrapper) ReadRequestBody(body interface{}) error {
+func (w *ClientCodecWrapper) ReadRequestBody(body interface{}) error {
 	//pre
 	err := w.PluginContainer.DoPreReadResponseBody(body)
 	if err != nil {
@@ -361,7 +362,7 @@ func (w *clientCodecWrapper) ReadRequestBody(body interface{}) error {
 	return w.PluginContainer.DoPostReadResponseBody(body)
 }
 
-func (w *clientCodecWrapper) WriteRequest(ctx context.Context, r *core.Request, body interface{}) error {
+func (w *ClientCodecWrapper) WriteRequest(ctx context.Context, r *core.Request, body interface{}) error {
 	if w.Timeout > 0 {
 		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
 	}
@@ -386,6 +387,6 @@ func (w *clientCodecWrapper) WriteRequest(ctx context.Context, r *core.Request, 
 	return w.PluginContainer.DoPostWriteRequest(ctx, r, body)
 }
 
-func (w *clientCodecWrapper) Close() error {
+func (w *ClientCodecWrapper) Close() error {
 	return w.ClientCodec.Close()
 }

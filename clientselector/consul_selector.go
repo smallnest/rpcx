@@ -156,13 +156,17 @@ func (s *ConsulClientSelector) getCachedClient(server string, clientCodecFunc rp
 }
 
 func (s *ConsulClientSelector) HandleFailedClient(client *core.Client) {
+	if Reconnect(client, s.clientAndServer, s.Client, s.dailTimeout) {
+		return
+	}
+
+	client.Close()
 	for k, v := range s.clientAndServer {
 		if v == client {
 			s.clientRWMutex.Lock()
 			delete(s.clientAndServer, k)
 			s.clientRWMutex.Unlock()
 		}
-		client.Close()
 		break
 	}
 }
