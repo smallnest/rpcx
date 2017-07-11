@@ -16,6 +16,7 @@ import (
 // You can report metrics to log, syslog, Graphite, InfluxDB or others to display them in Dashboard such as grafana, Graphite.
 type MetricsPlugin struct {
 	Registry       metrics.Registry
+	Prefix         string
 	timeSeqMap     map[uint64]int64
 	mapLock        sync.RWMutex
 	internalSeq    uint64
@@ -27,16 +28,20 @@ func NewMetricsPlugin() *MetricsPlugin {
 	return &MetricsPlugin{Registry: metrics.NewRegistry(), timeSeqMap: make(map[uint64]int64, 100), internalSeqMap: make(map[uint64]uint64, 100)}
 }
 
+func (p *MetricsPlugin) withPrefix(m string) string {
+	return p.Prefix + m
+}
+
 // Register handles registering event.
 func (p *MetricsPlugin) Register(name string, rcvr interface{}, metadata ...string) error {
-	serviceCounter := metrics.GetOrRegisterCounter("serviceCounter", p.Registry)
+	serviceCounter := metrics.GetOrRegisterCounter(p.withPrefix("serviceCounter"), p.Registry)
 	serviceCounter.Inc(1)
 	return nil
 }
 
 // HandleConnAccept handles connections from clients
 func (p *MetricsPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
-	clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Registry)
+	clientMeter := metrics.GetOrRegisterMeter(p.withPrefix("clientMeter"), p.Registry)
 	clientMeter.Mark(1)
 	return conn, true
 }
@@ -59,7 +64,7 @@ func (p *MetricsPlugin) PostReadRequestHeader(ctx context.Context, r *core.Reque
 		return nil
 	}
 
-	m := metrics.GetOrRegisterMeter("service_"+r.ServiceMethod+"_Read_Qps", p.Registry)
+	m := metrics.GetOrRegisterMeter(p.withPrefix("service_"+r.ServiceMethod+"_Read_Qps"), p.Registry)
 	m.Mark(1)
 	return nil
 }
@@ -70,7 +75,7 @@ func (p *MetricsPlugin) PostWriteResponse(r *core.Response, body interface{}) er
 		return nil
 	}
 
-	m := metrics.GetOrRegisterMeter("service_"+r.ServiceMethod+"_Write_Qps", p.Registry)
+	m := metrics.GetOrRegisterMeter(p.withPrefix("service_"+r.ServiceMethod+"_Write_Qps"), p.Registry)
 	m.Mark(1)
 
 	p.mapLock.Lock()
@@ -84,7 +89,7 @@ func (p *MetricsPlugin) PostWriteResponse(r *core.Response, body interface{}) er
 		t = time.Now().UnixNano() - t
 		if t < 30*time.Minute.Nanoseconds() { //it is impossible that calltime exceeds 30 minute
 			//Historgram
-			h := metrics.GetOrRegisterHistogram("service_"+r.ServiceMethod+"_CallTime", p.Registry,
+			h := metrics.GetOrRegisterHistogram(p.withPrefix("service_"+r.ServiceMethod+"_CallTime"), p.Registry,
 				metrics.NewExpDecaySample(1028, 0.015))
 			h.Update(t)
 		}
