@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	msgpackrpc2 "github.com/rpcx-ecosystem/net-rpc-msgpackrpc2"
@@ -82,15 +83,20 @@ type DirectClientSelector struct {
 	DialTimeout      time.Duration
 	Client           *Client
 	rpcClient        *core.Client
+	sync.Mutex
 }
 
 //Select returns a rpc client.
 func (s *DirectClientSelector) Select(clientCodecFunc ClientCodecFunc, options ...interface{}) (*core.Client, error) {
+	s.Lock()
 	if s.rpcClient != nil {
+		s.Unlock()
 		return s.rpcClient, nil
 	}
+
 	c, err := NewDirectRPCClient(s.Client, clientCodecFunc, s.Network, s.Address, s.DialTimeout)
 	s.rpcClient = c
+	s.Unlock()
 	return c, err
 }
 
@@ -113,8 +119,10 @@ func (s *DirectClientSelector) AllClients(clientCodecFunc ClientCodecFunc) []*co
 }
 
 func (s *DirectClientSelector) HandleFailedClient(client *core.Client) {
+	s.Lock()
 	client.Close()
 	s.rpcClient = nil // reset
+	s.Unlock()
 }
 
 // ClientCodecFunc is used to create a  core.ClientCodecFunc from net.Conn.

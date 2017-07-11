@@ -3,10 +3,6 @@ package clientselector
 import (
 	"net/rpc"
 	"sync"
-	"time"
-
-	"github.com/smallnest/rpcx"
-	"github.com/smallnest/rpcx/core"
 )
 
 // CMap is a goutine-safe/thread-safe map
@@ -34,6 +30,3 @@ func (s *CMap) Remove(key string) {
 	defer s.RUnlock()
 	delete(s.data, key)
 }
-
-// ReconnectFunc recnnect function.
-type ReconnectFunc func(client *core.Client, clientAndServer map[string]*core.Client, rpcxClient *rpcx.Client, dailTimeout time.Duration) bool
