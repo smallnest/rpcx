@@ -297,7 +297,7 @@ func Dial(network, address string) (*Client, error) {
 // shutting down, ErrShutdown is returned.
 func (client *Client) Close() error {
 	client.mutex.Lock()
-	if client.closing {
+	if client.closing || client.shutdown {
 		client.mutex.Unlock()
 		return ErrShutdown
 	}
