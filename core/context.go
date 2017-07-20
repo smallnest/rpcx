@@ -4,6 +4,8 @@ import (
 	"context"
 )
 
+type seqKey struct{}
+
 type headerKey struct{}
 
 // NewContext creates a new context with header attached.
