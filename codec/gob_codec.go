@@ -35,6 +35,7 @@ func NewGobServerCodec(conn io.ReadWriteCloser) core.ServerCodec {
 }
 
 func (c *gobServerCodec) ReadRequestHeader(ctx context.Context, r *core.Request) error {
+	r.Seq = 0
 	return c.dec.Decode(r)
 }
 
