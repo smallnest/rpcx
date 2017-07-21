@@ -444,11 +444,7 @@ func reconnect(client *core.Client, clientAndServer map[string]*core.Client, rpc
 			for i := 0; i < 3; i++ {
 				c, err := NewDirectRPCClient(rpcxClient, clientCodecFunc, ss[0], ss[1], dailTimeout)
 				if err == nil {
-					// codec := c.Codec()
-					// client.SetCodec(codec) //reconnected codec
-
-					// c.Release()
-					// c.SetCodec(nil) //free c
+					// close this client
 					client.Close()
 					*client = *c
 					log.Warnf("reconnected to server: %s", server)

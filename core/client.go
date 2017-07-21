@@ -301,10 +301,20 @@ func Dial(network, address string) (*Client, error) {
 // shutting down, ErrShutdown is returned.
 func (client *Client) Close() error {
 	client.mutex.Lock()
+
+	for seq, call := range client.pending {
+		delete(client.pending, seq)
+		if call != nil {
+			call.Error = ErrShutdown
+			call.done()
+		}
+	}
+
 	if client.closing || client.shutdown {
 		client.mutex.Unlock()
 		return ErrShutdown
 	}
+
 	client.closing = true
 	client.mutex.Unlock()
 	return client.codec.Close()
