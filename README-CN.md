@@ -9,6 +9,16 @@ rpcx是一个类似阿里巴巴 [Dubbo](http://dubbo.io/) 和微博 [Motan](http
 [php-rpcx](https://github.com/Leon2012/php-rpcx) 是一个rpcx的 **PHP client**, 由[Leon2012](https://github.com/Leon2012)创建。
 
 
+**安装**
+
+```
+go get -u -v github.com/smallnest/rpcx/...
+```
+
+rpcx提供了丰富的插件，这也意味着rpcx本身会依赖很多的库，由于GFW等的存在，对于中国大陆的开发人员来说，你可能需要VPN才能下载一些被墙的库。对于`golang.org/x`包下的库来讲，你可以clone github.com/golang相应库到本地。
+
+
+
 **注意**
 
 自 **rpcx 2.0**版本起， rpcx开始使用定制的底层的rpc传输，以便支持 **context**的功能，你需要在客户端调用的时候传入context, 在服务端，你可以选择使用context作为第一个参数，也可以不使用context。这样我们可以方便的的设置header,获取客户端的连接，以及集成OpenTracing等功能。
