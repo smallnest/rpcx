@@ -138,10 +138,16 @@ type Server struct {
 	WriteTimeout time.Duration
 	// use for KCP
 	KCPConfig KCPConfig
+	// for QUIC
+	QUICConfig QUICConfig
 }
 
 type KCPConfig struct {
 	BlockCrypt kcp.BlockCrypt
+}
+
+type QUICConfig struct {
+	TlsConfig *tls.Config
 }
 
 // NewServer returns a new Server.
@@ -236,7 +242,7 @@ func validIP4(ipAddress string) bool {
 // It is blocked until receiving connectings from clients.
 func (s *Server) Serve(network, address string) (err error) {
 	var ln net.Listener
-	ln, err = makeListener(network, address, s.KCPConfig.BlockCrypt)
+	ln, err = makeListener(network, address, s.KCPConfig.BlockCrypt, s.QUICConfig.TlsConfig)
 	if err != nil {
 		return
 	}
@@ -359,7 +365,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // Start starts and listens RPC requests without blocking.
 func (s *Server) Start(network, address string) (err error) {
 	var ln net.Listener
-	ln, err = makeListener(network, address, s.KCPConfig.BlockCrypt)
+	ln, err = makeListener(network, address, s.KCPConfig.BlockCrypt, s.QUICConfig.TlsConfig)
 
 	if err != nil {
 		log.Errorf("failed to start server: %v", err)
