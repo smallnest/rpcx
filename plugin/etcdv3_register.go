@@ -82,11 +82,13 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 						ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalInSec+20)
 						if err != nil {
 							log.Infof("V3 TTL Grant: %v", err.Error())
+							continue
 						}
 						//KeepAlive TTL alive forever
 						ch, kaerr := p.KeysAPI.KeepAlive(context.TODO(), ttl.ID)
 						if kaerr != nil {
 							log.Infof("Set ttl Keepalive is forver: %s", kaerr.Error())
+							continue
 						}
 
 						ka := <-ch
