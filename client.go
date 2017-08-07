@@ -418,7 +418,8 @@ func (w *ClientCodecWrapper) Close() error {
 type ReconnectFunc func(client *core.Client, clientAndServer map[string]*core.Client, rpcxClient *Client, dailTimeout time.Duration) bool
 
 // Reconnect strategy. The default reconnect is to reconnect at most 3 times.
-var Reconnect ReconnectFunc = reconnect
+//var Reconnect ReconnectFunc = reconnect
+var Reconnect ReconnectFunc = nil
 
 //try to reconnect
 func reconnect(client *core.Client, clientAndServer map[string]*core.Client, rpcxClient *Client, dailTimeout time.Duration) (reconnected bool) {
