@@ -3,6 +3,7 @@
 package rpcx
 
 import (
+	"crypto/tls"
 	"net"
 
 	quicconn "github.com/marten-seemann/quic-conn"
