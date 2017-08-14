@@ -27,6 +27,7 @@ type EtcdRegisterPlugin struct {
 	metadata       map[string]string
 	metadataLock   sync.Mutex
 	UpdateInterval time.Duration
+	ExtraTime      time.Duration
 	KeysAPI        client.KeysAPI
 	ticker         *time.Ticker
 }
@@ -84,7 +85,7 @@ func (p *EtcdRegisterPlugin) Start() (err error) {
 							resp, err = p.KeysAPI.Set(context.TODO(), nodePath, meta,
 								&client.SetOptions{
 									PrevExist: client.PrevIgnore,
-									TTL:       p.UpdateInterval + 10*time.Second,
+									TTL:       p.UpdateInterval + p.ExtraTime,
 								})
 
 							if err != nil {

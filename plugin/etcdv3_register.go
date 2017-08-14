@@ -23,6 +23,7 @@ type EtcdV3RegisterPlugin struct {
 	Metrics             metrics.Registry
 	Services            []string
 	UpdateIntervalInSec int64
+	ExtraTimeInSec      int64
 	KeysAPI             *clientv3.Client
 	ticker              *time.Ticker
 	DialTimeout         time.Duration
@@ -79,7 +80,7 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 						}
 						v.Set("tps", string(data))
 
-						ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalInSec+20)
+						ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalInSec+p.ExtraTimeInSec)
 						if err != nil {
 							log.Infof("V3 TTL Grant: %v", err.Error())
 							continue
