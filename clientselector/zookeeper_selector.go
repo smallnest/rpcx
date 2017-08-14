@@ -58,6 +58,25 @@ func NewZooKeeperClientSelector(zkServers []string, basePath string, sessionTime
 	return selector
 }
 
+// NewZooKeeperClientSelectorWithZKConn creates a ZooKeeperClientSelector with a shared zk connection.
+// sessionTimeout is timeout configuration for zookeeper.
+// timeout is timeout configuration for TCP connection to RPC servers.
+func NewZooKeeperClientSelectorWithZKConn(zkConn *zk.Conn, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration, group string) *ZooKeeperClientSelector {
+	selector := &ZooKeeperClientSelector{
+		zkConn:          zkConn,
+		BasePath:        basePath,
+		sessionTimeout:  sessionTimeout,
+		SelectMode:      sm,
+		Group:           group,
+		clientAndServer: make(map[string]*core.Client),
+		metadata:        make(map[string]string),
+		dailTimeout:     dailTimeout,
+		rnd:             rand.New(rand.NewSource(time.Now().UnixNano()))}
+
+	selector.start()
+	return selector
+}
+
 //SetClient sets a Client in order that clientSelector can uses it
 func (s *ZooKeeperClientSelector) SetClient(c *rpcx.Client) {
 	s.Client = c
@@ -83,15 +102,17 @@ func (s *ZooKeeperClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFun
 }
 
 func (s *ZooKeeperClientSelector) start() {
-	c, _, err := zk.Connect(s.ZKServers, s.sessionTimeout)
-	if err != nil {
-		panic(err)
+	if s.zkConn == nil {
+		c, _, err := zk.Connect(s.ZKServers, s.sessionTimeout)
+		if err != nil {
+			panic(err)
+		}
+		s.zkConn = c
 	}
 
-	s.zkConn = c
-	exist, _, _ := c.Exists(s.BasePath)
+	exist, _, _ := s.zkConn.Exists(s.BasePath)
 	if !exist {
-		mkdirs(c, s.BasePath)
+		mkdirs(s.zkConn, s.BasePath)
 	}
 
 	servers, _, _ := s.zkConn.Children(s.BasePath)

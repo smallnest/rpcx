@@ -59,6 +59,38 @@ func (plugin *ZooKeeperRegisterPlugin) Start() (err error) {
 	return
 }
 
+// StartWithZKConn starts with a shared zk connection.
+func (plugin *ZooKeeperRegisterPlugin) StartWithZKConn(conn *zk.Conn) (err error) {
+	plugin.Conn = conn
+
+	if plugin.UpdateInterval > 0 {
+		ticker := time.NewTicker(plugin.UpdateInterval)
+		go func() {
+			for range ticker.C {
+				clientMeter := metrics.GetOrRegisterMeter("clientMeter", plugin.Metrics)
+				data := []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
+				//set this same metrics for all services at this server
+				for _, name := range plugin.Services {
+					nodePath := fmt.Sprintf("%s/%s/%s", plugin.BasePath, name, plugin.ServiceAddress)
+					bytes, stat, err := plugin.Conn.Get(nodePath)
+					if err != nil {
+						log.Infof("can't get data of node: %s, because of %v", nodePath, err.Error())
+					} else {
+						v, _ := url.ParseQuery(string(bytes))
+						v.Set("tps", string(data))
+
+						plugin.Conn.Set(nodePath, []byte(v.Encode()), stat.Version)
+					}
+
+				}
+
+			}
+		}()
+	}
+
+	return
+}
+
 // HandleConnAccept handles connections from clients
 func (plugin *ZooKeeperRegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
 	if plugin.Metrics != nil {
