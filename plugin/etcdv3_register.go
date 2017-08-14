@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -22,6 +23,8 @@ type EtcdV3RegisterPlugin struct {
 	BasePath            string
 	Metrics             metrics.Registry
 	Services            []string
+	ttls                map[string]*clientv3.LeaseGrantResponse
+	ttlsLock            sync.Mutex
 	UpdateIntervalInSec int64
 	ExtraTimeInSec      int64
 	KeysAPI             *clientv3.Client
@@ -33,6 +36,9 @@ type EtcdV3RegisterPlugin struct {
 
 // Start starts to connect etcd v3 cluster
 func (p *EtcdV3RegisterPlugin) Start() (err error) {
+	if p.ttls == nil {
+		p.ttls = make(map[string]*clientv3.LeaseGrantResponse)
+	}
 	var (
 		resp     *clientv3.GetResponse
 		v        url.Values
@@ -80,20 +86,30 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 						}
 						v.Set("tps", string(data))
 
-						ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalInSec+p.ExtraTimeInSec)
-						if err != nil {
-							log.Infof("V3 TTL Grant: %v", err.Error())
-							continue
-						}
-						//KeepAlive TTL alive forever
-						ch, kaerr := p.KeysAPI.KeepAlive(context.TODO(), ttl.ID)
-						if kaerr != nil {
-							log.Infof("Set ttl Keepalive is forver: %s", kaerr.Error())
-							continue
-						}
+						// add ttl and keepalive
+						p.ttlsLock.Lock()
+						ttl = p.ttls[nodePath]
+						if ttl == nil {
+							ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalInSec+p.ExtraTimeInSec)
+							if err != nil {
+								log.Infof("V3 TTL Grant: %v", err.Error())
+								p.ttlsLock.Unlock()
+								continue
+							}
 
-						ka := <-ch
-						log.Debugf("TTL value is %d", ka.TTL)
+							//KeepAlive TTL alive forever
+							ch, kaerr := p.KeysAPI.KeepAlive(context.TODO(), ttl.ID)
+							if kaerr != nil {
+								log.Infof("Set ttl Keepalive is forver: %s", kaerr.Error())
+								p.ttlsLock.Unlock()
+								continue
+							}
+
+							ka := <-ch
+							log.Debugf("TTL value is %d", ka.TTL)
+							p.ttls[nodePath] = ttl
+						}
+						p.ttlsLock.Unlock()
 
 						_, err = p.KeysAPI.Put(context.TODO(), nodePath, v.Encode(), clientv3.WithLease(ttl.ID))
 						if err != nil {
@@ -155,6 +171,37 @@ func (p *EtcdV3RegisterPlugin) Register(name string, rcvr interface{}, metadata 
 	if !IsContainsV3(p.Services, name) {
 		p.Services = append(p.Services, name)
 	}
+
+	// add ttl and keepalive
+	p.ttlsLock.Lock()
+	ttl := p.ttls[nodePath]
+	if ttl == nil {
+		ttl, err = p.KeysAPI.Grant(context.TODO(), p.UpdateIntervalInSec+p.ExtraTimeInSec)
+		if err != nil {
+			log.Infof("V3 TTL Grant: %v", err.Error())
+			p.ttlsLock.Unlock()
+			return err
+		}
+
+		//KeepAlive TTL alive forever
+		ch, kaerr := p.KeysAPI.KeepAlive(context.TODO(), ttl.ID)
+		if kaerr != nil {
+			log.Infof("Set ttl Keepalive is forver: %s", kaerr.Error())
+			p.ttlsLock.Unlock()
+			return kaerr
+		}
+
+		ka := <-ch
+		log.Debugf("TTL value is %d", ka.TTL)
+		p.ttls[nodePath] = ttl
+	}
+	p.ttlsLock.Unlock()
+
+	_, err = p.KeysAPI.Put(context.TODO(), nodePath, strings.Join(metadata, "&"), clientv3.WithLease(ttl.ID))
+	if err != nil {
+		log.Infof("Put key %s value %s : %s", nodePath, strings.Join(metadata, "&"), err.Error())
+	}
+
 	return
 }
 
@@ -178,6 +225,13 @@ func (p *EtcdV3RegisterPlugin) Unregister(name string) (err error) {
 		return
 	}
 	nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
+
+	p.ttlsLock.Lock()
+	ttl := p.ttls[nodePath]
+	if ttl != nil {
+		p.KeysAPI.Revoke(context.TODO(), ttl.ID)
+	}
+	p.ttlsLock.Unlock()
 
 	_, err = p.KeysAPI.Delete(context.TODO(), nodePath, clientv3.WithPrefix())
 	if err != nil {
