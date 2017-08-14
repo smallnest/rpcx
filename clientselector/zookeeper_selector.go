@@ -42,12 +42,13 @@ type ZooKeeperClientSelector struct {
 // NewZooKeeperClientSelector creates a ZooKeeperClientSelector
 // sessionTimeout is timeout configuration for zookeeper.
 // timeout is timeout configuration for TCP connection to RPC servers.
-func NewZooKeeperClientSelector(zkServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration) *ZooKeeperClientSelector {
+func NewZooKeeperClientSelector(zkServers []string, basePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration, group string) *ZooKeeperClientSelector {
 	selector := &ZooKeeperClientSelector{
 		ZKServers:       zkServers,
 		BasePath:        basePath,
 		sessionTimeout:  sessionTimeout,
 		SelectMode:      sm,
+		Group:           group,
 		clientAndServer: make(map[string]*core.Client),
 		metadata:        make(map[string]string),
 		dailTimeout:     dailTimeout,
