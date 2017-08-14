@@ -26,7 +26,6 @@ type EtcdV3RegisterPlugin struct {
 	ttls                map[string]*clientv3.LeaseGrantResponse
 	ttlsLock            sync.Mutex
 	UpdateIntervalInSec int64
-	ExtraTimeInSec      int64
 	KeysAPI             *clientv3.Client
 	ticker              *time.Ticker
 	DialTimeout         time.Duration
@@ -90,7 +89,7 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 						p.ttlsLock.Lock()
 						ttl = p.ttls[nodePath]
 						if ttl == nil {
-							ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalInSec+p.ExtraTimeInSec)
+							ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalInSec)
 							if err != nil {
 								log.Infof("V3 TTL Grant: %v", err.Error())
 								p.ttlsLock.Unlock()
@@ -176,7 +175,7 @@ func (p *EtcdV3RegisterPlugin) Register(name string, rcvr interface{}, metadata 
 	p.ttlsLock.Lock()
 	ttl := p.ttls[nodePath]
 	if ttl == nil {
-		ttl, err = p.KeysAPI.Grant(context.TODO(), p.UpdateIntervalInSec+p.ExtraTimeInSec)
+		ttl, err = p.KeysAPI.Grant(context.TODO(), p.UpdateIntervalInSec)
 		if err != nil {
 			log.Infof("V3 TTL Grant: %v", err.Error())
 			p.ttlsLock.Unlock()
