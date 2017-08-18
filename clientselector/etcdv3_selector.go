@@ -75,6 +75,9 @@ func (s *EtcdV3ClientSelector) AllClients(clientCodecFunc rpcx.ClientCodecFunc) 
 
 // NewEtcdClientSelector creates a EtcdClientSelector
 func NewEtcdV3ClientSelector(etcdServers []string, servicePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration) *EtcdV3ClientSelector {
+	if !strings.HasSuffix(servicePath, "/") {
+		servicePath = servicePath + "/"
+	}
 	selector := &EtcdV3ClientSelector{
 		EtcdServers:     etcdServers,
 		BasePath:        servicePath,
@@ -113,7 +116,7 @@ func (s *EtcdV3ClientSelector) watch() {
 		for _, ev := range wresp.Events {
 			//log.Infof("%s %q:%q\n",ev.Type,ev.Kv.Key,ev.Kv.Value)
 			s.pullServers()
-			removedServer := strings.TrimPrefix(string(ev.Kv.Key), s.BasePath+"/")
+			removedServer := strings.TrimPrefix(string(ev.Kv.Key), s.BasePath)
 			s.clientRWMutex.Lock()
 			delete(s.clientAndServer, removedServer)
 			s.clientRWMutex.Unlock()
@@ -128,7 +131,7 @@ func (s *EtcdV3ClientSelector) pullServers() {
 		if len(resp.Kvs) > 0 {
 			var servers []string
 			for _, n := range resp.Kvs {
-				servers = append(servers, strings.TrimPrefix(string(n.Key), s.BasePath+"/"))
+				servers = append(servers, strings.TrimPrefix(string(n.Key), s.BasePath))
 
 			}
 			s.Servers = servers
@@ -167,7 +170,7 @@ func (s *EtcdV3ClientSelector) createWeighted(nodes []*mvccpb.KeyValue) {
 	var inactiveServers []int
 
 	for i, n := range nodes {
-		key := strings.TrimPrefix(string(n.Key), s.BasePath+"/")
+		key := strings.TrimPrefix(string(n.Key), s.BasePath)
 		s.WeightedServers[i] = &Weighted{Server: key, Weight: 1, EffectiveWeight: 1}
 		s.metadata[key] = string(n.Value)
 		if v, err := url.ParseQuery(string(n.Value)); err == nil {

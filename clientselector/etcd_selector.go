@@ -42,6 +42,10 @@ type EtcdClientSelector struct {
 
 // NewEtcdClientSelector creates a EtcdClientSelector
 func NewEtcdClientSelector(etcdServers []string, servicePath string, sessionTimeout time.Duration, sm rpcx.SelectMode, dailTimeout time.Duration) *EtcdClientSelector {
+	if strings.HasSuffix(servicePath, "/") {
+		servicePath = servicePath[:len(servicePath)-1]
+	}
+
 	selector := &EtcdClientSelector{
 		EtcdServers:     etcdServers,
 		BasePath:        servicePath,
