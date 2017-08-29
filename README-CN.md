@@ -117,7 +117,7 @@ rpcx使用Go实现，适合使用Go语言实现RPC的功能。
 * [#7946](https://github.com/golang/go/issues/7946): net/rpc: add client support for RPC over https
 * [#4591](https://github.com/golang/go/issues/4591): Authentication for RPC and HTTP
 * [#4584](https://github.com/golang/go/issues/4584): net/rpc: access to client's IP address
-* [#3615]()https://github.com/golang/go/issues/3615: rpc: allow aliasing methods
+* [#3615](https://github.com/golang/go/issues/3615): rpc: allow aliasing methods
 
 
 rpcx目标是轻量级的，小而简单，但是期望所有的功能都可以通过插件的方式搭积木的方式完成。
