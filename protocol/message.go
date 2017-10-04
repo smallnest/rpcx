@@ -108,7 +108,7 @@ func (h Header) MessageType() MessageType {
 }
 
 // SetMessageType sets message type.
-func (h Header) SetMessageType(mt MessageType) {
+func (h *Header) SetMessageType(mt MessageType) {
 	h[2] = h[2] | (byte(mt) << 7)
 }
 
@@ -162,12 +162,12 @@ func (h *Header) SetMessageStatusType(mt MessageStatusType) {
 }
 
 // SerializeType returns serialization type of payload.
-func (h *Header) SerializeType() SerializeType {
+func (h Header) SerializeType() SerializeType {
 	return SerializeType((h[3] & 0xF0) >> 4)
 }
 
 // SetSerializeType sets the serialization type.
-func (h Header) SetSerializeType(st SerializeType) {
+func (h *Header) SetSerializeType(st SerializeType) {
 	h[3] = h[3] | (byte(st) << 4)
 }
 
