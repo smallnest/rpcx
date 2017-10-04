@@ -46,7 +46,7 @@ const (
 type CompressType byte
 
 const (
-	// None does not use compression.
+	// None does not compress.
 	None CompressType = iota
 	// Gzip uses gzip compression.
 	Gzip
@@ -73,7 +73,9 @@ type Message struct {
 
 // NewMessage creates an empty message.
 func NewMessage() *Message {
-	header := Header([8]byte{})
+	header := Header([12]byte{})
+	header[0] = magicNumber
+
 	return &Message{
 		Header:   &header,
 		Metadata: make(map[string]string),
@@ -83,7 +85,7 @@ func NewMessage() *Message {
 // Header is the first part of Message and has fixed size.
 // Format:
 //
-type Header [8]byte
+type Header [12]byte
 
 // CheckMagicNumber checks whether header starts rpcx magic number.
 func (h Header) CheckMagicNumber() bool {
@@ -116,7 +118,7 @@ func (h Header) IsHeartbeat() bool {
 }
 
 // SetHeartbeat sets the heartbeat flag.
-func (h Header) SetHeartbeat(hb bool) {
+func (h *Header) SetHeartbeat(hb bool) {
 	if hb {
 		h[2] = h[2] | 0x40
 	} else {
@@ -131,7 +133,7 @@ func (h Header) IsOneway() bool {
 }
 
 // SetOneway sets the oneway flag.
-func (h Header) SetOneway(oneway bool) {
+func (h *Header) SetOneway(oneway bool) {
 	if oneway {
 		h[2] = h[2] | 0x40
 	} else {
@@ -145,12 +147,22 @@ func (h Header) CompressType() CompressType {
 }
 
 // SetCompressType sets the compression type.
-func (h Header) SetCompressType(ct CompressType) {
-	h[2] = h[2] | (byte(ct) << 2)
+func (h *Header) SetCompressType(ct CompressType) {
+	h[2] = h[2] | ((byte(ct) << 2) & 0x1C)
+}
+
+// MessageStatusType returns the message status type.
+func (h Header) MessageStatusType() MessageStatusType {
+	return MessageStatusType(h[2] & 0x03)
+}
+
+// SetMessageStatusType sets message status type.
+func (h *Header) SetMessageStatusType(mt MessageStatusType) {
+	h[2] = h[2] | (byte(mt) & 0x03)
 }
 
 // SerializeType returns serialization type of payload.
-func (h Header) SerializeType() SerializeType {
+func (h *Header) SerializeType() SerializeType {
 	return SerializeType((h[3] & 0xF0) >> 4)
 }
 
@@ -164,8 +176,8 @@ func (h Header) Seq() uint64 {
 	return binary.BigEndian.Uint64(h[4:])
 }
 
-// SeSeq sets  sequence number.
-func (h Header) SeSeq(seq uint64) {
+// SetSeq sets  sequence number.
+func (h *Header) SetSeq(seq uint64) {
 	binary.BigEndian.PutUint64(h[4:], seq)
 }
 
@@ -173,16 +185,43 @@ func (h Header) SeSeq(seq uint64) {
 func (m Message) Encode() []byte {
 	meta := encodeMetadata(m.Metadata)
 
-	l := 8 + (4 + len(meta)) + (4 + len(m.Payload))
+	l := 12 + (4 + len(meta)) + (4 + len(m.Payload))
 
 	data := make([]byte, l)
 	copy(data, m.Header[:])
-	binary.BigEndian.PutUint32(data[8:12], uint32(len(meta)))
+	binary.BigEndian.PutUint32(data[12:16], uint32(len(meta)))
 	copy(data[12:], meta)
-	binary.BigEndian.PutUint32(data[12+len(meta):], uint32(len(m.Payload)))
-	copy(data[16+len(meta):], m.Payload)
+	binary.BigEndian.PutUint32(data[16+len(meta):], uint32(len(m.Payload)))
+	copy(data[20+len(meta):], m.Payload)
 
 	return data
+}
+
+// WriteTo writes message to writers.
+func (m Message) WriteTo(w io.Writer) error {
+	_, err := w.Write(m.Header[:])
+	if err != nil {
+		return err
+	}
+
+	meta := encodeMetadata(m.Metadata)
+	err = binary.Write(w, binary.BigEndian, uint32(len(meta)))
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(meta)
+	if err != nil {
+		return err
+	}
+
+	err = binary.Write(w, binary.BigEndian, uint32(len(m.Payload)))
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(m.Payload)
+	return err
 }
 
 func encodeMetadata(m map[string]string) []byte {
@@ -215,11 +254,13 @@ func decodeMetadata(lenData []byte, r io.Reader) (map[string]string, error) {
 	}
 
 	meta := bytes.Split(data, lineSeparator)
-	if len(meta)%2 != 0 {
+
+	// last element is empty
+	if len(meta)%2 != 1 {
 		return nil, ErrMetaKVMissing
 	}
 
-	for i := 0; i < len(meta); i = i + 2 {
+	for i := 0; i < len(meta)-1; i = i + 2 {
 		m[util.SliceByteToString(meta[i])] = util.SliceByteToString(meta[i+1])
 	}
 	return m, nil
