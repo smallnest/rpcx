@@ -266,7 +266,8 @@ func decodeMetadata(lenData []byte, r io.Reader) (map[string]string, error) {
 	return m, nil
 }
 
-func readMessage(r io.Reader) (*Message, error) {
+// Read reads a message from r.
+func Read(r io.Reader) (*Message, error) {
 	msg := NewMessage()
 	_, err := io.ReadFull(r, msg.Header[:])
 	if err != nil {
