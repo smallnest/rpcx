@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/smallnest/rpcx/codec"
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 )
@@ -29,10 +31,19 @@ const (
 	// WriterBuffsize is used for bufio writer.
 	WriterBuffsize = 16 * 1024
 
-	// ServerPath is service name
+	// ServicePath is service name
 	ServicePath = "__rpcx_path__"
 	// ServiceMethod is name of the service
 	ServiceMethod = "__rpcx_method__"
+	// ServiceError contains error info of service invocation
+	ServiceError = "__rpcx_error__"
+)
+
+var (
+	codecs = map[protocol.SerializeType]codec.Codec{
+		protocol.SerializeNone: &codec.ByteCodec{},
+		protocol.JSON:          &codec.JSONCodec{},
+	}
 )
 
 // contextKey is a value for use with context.WithValue. It's used as
@@ -200,7 +211,8 @@ func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Me
 }
 
 func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res *protocol.Message, err error) {
-	res = protocol.NewMessage()
+	res = req.Clone()
+	res.SetMessageType(protocol.Response)
 
 	serviceName := req.Metadata[ServicePath]
 	methodName := req.Metadata[ServiceMethod]
@@ -210,11 +222,15 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	s.serviceMapMu.RUnlock()
 	if service == nil {
 		err = errors.New("rpcx: can't find service " + serviceName)
+		res.SetMessageStatusType(protocol.Error)
+		res.Metadata[ServiceError] = err.Error()
 		return
 	}
 	mtype := service.method[methodName]
 	if mtype == nil {
 		err = errors.New("rpcx: can't find method " + methodName)
+		res.SetMessageStatusType(protocol.Error)
+		res.Metadata[ServiceError] = err.Error()
 		return
 	}
 
@@ -228,24 +244,43 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		argIsValue = true
 	}
 
-	// TODO decode from playload
-
 	if argIsValue {
 		argv = argv.Elem()
+	}
+
+	codec := codecs[req.SerializeType()]
+	if codec == nil {
+		err = fmt.Errorf("can not find codec for %d", req.SerializeType())
+		res.SetMessageStatusType(protocol.Error)
+		res.Metadata[ServiceError] = err.Error()
+		return
+	}
+
+	err = codec.Decode(req.Payload, argv.Interface())
+	if err != nil {
+		res.SetMessageStatusType(protocol.Error)
+		res.Metadata[ServiceError] = err.Error()
+		return
 	}
 
 	replyv = reflect.New(mtype.ReplyType.Elem())
 
 	err = service.call(ctx, mtype, argv, replyv)
 	if err != nil {
-		// TODO set error response
+		res.SetMessageStatusType(protocol.Error)
+		res.Metadata[ServiceError] = err.Error()
 		return res, err
 
 	}
-	// TODO clone req for req,
-	// encode replyv to res.Payload or
-	// return res
 
+	data, err := codec.Encode(replyv.Interface())
+	if err != nil {
+		res.SetMessageStatusType(protocol.Error)
+		res.Metadata[ServiceError] = err.Error()
+		return res, err
+
+	}
+	res.Payload = data
 	return res, nil
 }
 

@@ -150,7 +150,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 			continue
 		}
 		// Third arg must be a pointer.
-		replyType := mtype.In(2)
+		replyType := mtype.In(3)
 		if replyType.Kind() != reflect.Ptr {
 			if reportErr {
 				log.Info("method", mname, "reply type not a pointer:", replyType)
@@ -186,7 +186,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv reflect.Value) error {
 	function := mtype.method.Func
 	// Invoke the method, providing a new value for the reply.
-	returnValues := function.Call([]reflect.Value{reflect.ValueOf(ctx), s.rcvr, argv, replyv})
+	returnValues := function.Call([]reflect.Value{s.rcvr, reflect.ValueOf(ctx), argv, replyv})
 	// The return value for the method is an error.
 	errInter := returnValues[0].Interface()
 	if errInter != nil {
