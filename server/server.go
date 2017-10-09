@@ -10,40 +10,25 @@ import (
 	"net"
 	"net/http"
 	"reflect"
+	"regexp"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/smallnest/rpcx/codec"
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
+	"github.com/smallnest/rpcx/share"
 )
 
 // ErrServerClosed is returned by the Server's Serve, ListenAndServe after a call to Shutdown or Close.
 var ErrServerClosed = errors.New("http: Server closed")
 
 const (
-	// DefaultRPCPath is used by ServeHTTP
-	DefaultRPCPath = "/_rpcx_"
-
 	// ReaderBuffsize is used for bufio reader.
-	ReaderBuffsize = 16 * 1024
+	ReaderBuffsize = 1024
 	// WriterBuffsize is used for bufio writer.
-	WriterBuffsize = 16 * 1024
-
-	// ServicePath is service name
-	ServicePath = "__rpcx_path__"
-	// ServiceMethod is name of the service
-	ServiceMethod = "__rpcx_method__"
-	// ServiceError contains error info of service invocation
-	ServiceError = "__rpcx_error__"
-)
-
-var (
-	codecs = map[protocol.SerializeType]codec.Codec{
-		protocol.SerializeNone: &codec.ByteCodec{},
-		protocol.JSON:          &codec.JSONCodec{},
-	}
+	WriterBuffsize = 1024
 )
 
 // contextKey is a value for use with context.WithValue. It's used as
@@ -66,15 +51,24 @@ type Server struct {
 	ln           net.Listener
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
-	IdleTimeout  time.Duration
 
 	serviceMapMu sync.RWMutex
 	serviceMap   map[string]*service
-	funcMap      map[string]*methodType
 
 	mu         sync.RWMutex
 	activeConn map[net.Conn]struct{}
 	doneChan   chan struct{}
+
+	inShutdown int32
+	onShutdown []func()
+}
+
+// Address returns listened address.
+func (s *Server) Address() net.Addr {
+	if s.ln == nil {
+		return nil
+	}
+	return s.ln.Addr()
 }
 
 func (s *Server) getDoneChan() <-chan struct{} {
@@ -87,20 +81,35 @@ func (s *Server) getDoneChan() <-chan struct{} {
 	return s.doneChan
 }
 
-func (s *Server) idleTimeout() time.Duration {
-	if s.IdleTimeout != 0 {
-		return s.IdleTimeout
+// Serve starts and listens RPC requests.
+// It is blocked until receiving connectings from clients.
+func (s *Server) Serve(network, address string) (err error) {
+	var ln net.Listener
+	ln, err = makeListener(network, address)
+	if err != nil {
+		return
 	}
-	return s.ReadTimeout
+
+	if network == "http" {
+		s.serveByHTTP(ln, "")
+		return nil
+	}
+	return s.serveListener(ln)
 }
 
-// Serve accepts incoming connections on the Listener ln,
+// serveListener accepts incoming connections on the Listener ln,
 // creating a new service goroutine for each.
 // The service goroutines read requests and then call services to reply to them.
-func (s *Server) Serve(ln net.Listener) error {
+func (s *Server) serveListener(ln net.Listener) error {
 	s.ln = ln
 
 	var tempDelay time.Duration
+
+	s.mu.Lock()
+	if s.activeConn == nil {
+		s.activeConn = make(map[net.Conn]struct{})
+	}
+	s.mu.Unlock()
 
 	for {
 		conn, e := ln.Accept()
@@ -143,6 +152,26 @@ func (s *Server) Serve(ln net.Listener) error {
 	}
 }
 
+// serveByHTTP serves by HTTP.
+// if rpcPath is an empty string, use share.DefaultRPCPath.
+func (s *Server) serveByHTTP(ln net.Listener, rpcPath string) {
+	s.ln = ln
+
+	if rpcPath == "" {
+		rpcPath = share.DefaultRPCPath
+	}
+	http.Handle(rpcPath, s)
+	srv := &http.Server{Handler: nil}
+
+	s.mu.Lock()
+	if s.activeConn == nil {
+		s.activeConn = make(map[net.Conn]struct{})
+	}
+	s.mu.Unlock()
+
+	srv.Serve(ln)
+}
+
 func (s *Server) serveConn(conn net.Conn) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -175,17 +204,9 @@ func (s *Server) serveConn(conn net.Conn) {
 	w := bufio.NewWriterSize(conn, WriterBuffsize)
 
 	for {
-		if s.IdleTimeout != 0 {
-			conn.SetReadDeadline(time.Now().Add(s.IdleTimeout))
-		}
-
 		t0 := time.Now()
 		if s.ReadTimeout != 0 {
 			conn.SetReadDeadline(t0.Add(s.ReadTimeout))
-		}
-
-		if s.WriteTimeout != 0 {
-			conn.SetWriteDeadline(t0.Add(s.WriteTimeout))
 		}
 
 		req, err := s.readRequest(ctx, r)
@@ -194,13 +215,17 @@ func (s *Server) serveConn(conn net.Conn) {
 			return
 		}
 
+		if s.WriteTimeout != 0 {
+			conn.SetWriteDeadline(t0.Add(s.WriteTimeout))
+		}
+
 		go func() {
 			res, err := s.handleRequest(ctx, req)
 			if err != nil {
 				log.Errorf("rpcx: failed to handle request: %v", err)
 			}
-
 			res.WriteTo(w)
+			w.Flush()
 		}()
 	}
 }
@@ -214,24 +239,20 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	res = req.Clone()
 	res.SetMessageType(protocol.Response)
 
-	serviceName := req.Metadata[ServicePath]
-	methodName := req.Metadata[ServiceMethod]
+	serviceName := req.Metadata[protocol.ServicePath]
+	methodName := req.Metadata[protocol.ServiceMethod]
 
 	s.serviceMapMu.RLock()
 	service := s.serviceMap[serviceName]
 	s.serviceMapMu.RUnlock()
 	if service == nil {
 		err = errors.New("rpcx: can't find service " + serviceName)
-		res.SetMessageStatusType(protocol.Error)
-		res.Metadata[ServiceError] = err.Error()
-		return
+		return handleError(res, err)
 	}
 	mtype := service.method[methodName]
 	if mtype == nil {
 		err = errors.New("rpcx: can't find method " + methodName)
-		res.SetMessageStatusType(protocol.Error)
-		res.Metadata[ServiceError] = err.Error()
-		return
+		return handleError(res, err)
 	}
 
 	var argv, replyv reflect.Value
@@ -248,44 +269,41 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		argv = argv.Elem()
 	}
 
-	codec := codecs[req.SerializeType()]
+	codec := share.Codecs[req.SerializeType()]
 	if codec == nil {
 		err = fmt.Errorf("can not find codec for %d", req.SerializeType())
-		res.SetMessageStatusType(protocol.Error)
-		res.Metadata[ServiceError] = err.Error()
-		return
+		return handleError(res, err)
 	}
 
 	err = codec.Decode(req.Payload, argv.Interface())
 	if err != nil {
-		res.SetMessageStatusType(protocol.Error)
-		res.Metadata[ServiceError] = err.Error()
-		return
+		return handleError(res, err)
 	}
 
 	replyv = reflect.New(mtype.ReplyType.Elem())
 
 	err = service.call(ctx, mtype, argv, replyv)
 	if err != nil {
-		res.SetMessageStatusType(protocol.Error)
-		res.Metadata[ServiceError] = err.Error()
-		return res, err
-
+		return handleError(res, err)
 	}
 
 	data, err := codec.Encode(replyv.Interface())
 	if err != nil {
-		res.SetMessageStatusType(protocol.Error)
-		res.Metadata[ServiceError] = err.Error()
-		return res, err
+		return handleError(res, err)
 
 	}
 	res.Payload = data
 	return res, nil
 }
 
+func handleError(res *protocol.Message, err error) (*protocol.Message, error) {
+	res.SetMessageStatusType(protocol.Error)
+	res.Metadata[protocol.ServiceError] = err.Error()
+	return res, err
+}
+
 // Can connect to RPC service using HTTP CONNECT to rpcPath.
-var connected = "200 Connected to Go RPC"
+var connected = "200 Connected to rpcx"
 
 // ServeHTTP implements an http.Handler that answers RPC requests.
 func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -301,12 +319,115 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	io.WriteString(conn, "HTTP/1.0 "+connected+"\n\n")
+
+	s.mu.Lock()
+	s.activeConn[conn] = struct{}{}
+	s.mu.Unlock()
+
 	s.serveConn(conn)
 }
 
-// HandleHTTP registers an HTTP handler for RPC messages on rpcPath,
-// and a debugging handler on debugPath.
-// It is still necessary to invoke http.Serve(), typically in a go statement.
-func (s *Server) HandleHTTP(rpcPath, debugPath string) {
-	http.Handle(rpcPath, s)
+// Close immediately closes all active net.Listeners.
+func (s *Server) Close() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.closeDoneChanLocked()
+	err := s.ln.Close()
+
+	for c := range s.activeConn {
+		c.Close()
+		delete(s.activeConn, c)
+	}
+	return err
+}
+
+// RegisterOnShutdown registers a function to call on Shutdown.
+// This can be used to gracefully shutdown connections.
+func (s *Server) RegisterOnShutdown(f func()) {
+	s.mu.Lock()
+	s.onShutdown = append(s.onShutdown, f)
+	s.mu.Unlock()
+}
+
+// var shutdownPollInterval = 500 * time.Millisecond
+
+// // Shutdown gracefully shuts down the server without interrupting any
+// // active connections. Shutdown works by first closing the
+// // listener, then closing all idle connections, and then waiting
+// // indefinitely for connections to return to idle and then shut down.
+// // If the provided context expires before the shutdown is complete,
+// // Shutdown returns the context's error, otherwise it returns any
+// // error returned from closing the Server's underlying Listener.
+// func (s *Server) Shutdown(ctx context.Context) error {
+// 	atomic.AddInt32(&s.inShutdown, 1)
+// 	defer atomic.AddInt32(&s.inShutdown, -1)
+
+// 	s.mu.Lock()
+// 	err := s.ln.Close()
+// 	s.closeDoneChanLocked()
+// 	for _, f := range s.onShutdown {
+// 		go f()
+// 	}
+// 	s.mu.Unlock()
+
+// 	ticker := time.NewTicker(shutdownPollInterval)
+// 	defer ticker.Stop()
+// 	for {
+// 		if s.closeIdleConns() {
+// 			return err
+// 		}
+// 		select {
+// 		case <-ctx.Done():
+// 			return ctx.Err()
+// 		case <-ticker.C:
+// 		}
+// 	}
+// }
+
+// func (s *Server) closeIdleConns() {
+// 	s.mu.Lock()
+// 	defer s.mu.Unlock()
+// 	quiescent := true
+
+// 	for c := range s.activeConn {
+// 		// check whether the conn is idle
+// 		st, ok := c.curState.Load().(ConnState)
+// 		if !ok || st != StateIdle {
+// 			quiescent = false
+// 			continue
+// 		}
+
+// 		s.Close()
+// 		delete(s.activeConn, c)
+// 	}
+
+// 	return quiescent
+// }
+
+func (s *Server) closeDoneChanLocked() {
+	ch := s.getDoneChanLocked()
+	select {
+	case <-ch:
+		// Already closed. Don't close again.
+	default:
+		// Safe to close here. We're the only closer, guarded
+		// by s.mu.
+		close(ch)
+	}
+}
+func (s *Server) getDoneChanLocked() chan struct{} {
+	if s.doneChan == nil {
+		s.doneChan = make(chan struct{})
+	}
+	return s.doneChan
+}
+
+var ip4Reg = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
+
+func validIP4(ipAddress string) bool {
+	ipAddress = strings.Trim(ipAddress, " ")
+	i := strings.LastIndex(ipAddress, ":")
+	ipAddress = ipAddress[:i] //remove port
+
+	return ip4Reg.MatchString(ipAddress)
 }

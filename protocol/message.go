@@ -22,6 +22,15 @@ var (
 	ErrMetaKVMissing = errors.New("wrong metadata lines. some keys or values are missing")
 )
 
+const (
+	// ServicePath is service name
+	ServicePath = "__rpcx_path__"
+	// ServiceMethod is name of the service
+	ServiceMethod = "__rpcx_method__"
+	// ServiceError contains error info of service invocation
+	ServiceError = "__rpcx_error__"
+)
+
 // MessageType is message type of requests and resposnes.
 type MessageType byte
 
