@@ -1,0 +1,7 @@
+package: github.com/smallnest/rpcx
+import:
+- package: github.com/fatih/color
+- package: github.com/gogo/protobuf
+  subpackages:
+  - proto
+- package: github.com/vmihailenco/msgpack
