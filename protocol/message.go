@@ -56,8 +56,10 @@ const (
 type SerializeType byte
 
 const (
+	// SerializeNone uses raw []byte and don't serialize/deserialize
+	SerializeNone SerializeType = iota
 	// JSON for payload.
-	JSON SerializeType = iota
+	JSON
 	// ProtoBuffer for payload.
 	ProtoBuffer
 	// MsgPack for payload
@@ -179,6 +181,16 @@ func (h Header) Seq() uint64 {
 // SetSeq sets  sequence number.
 func (h *Header) SetSeq(seq uint64) {
 	binary.BigEndian.PutUint64(h[4:], seq)
+}
+
+// Clone clones from an message.
+func (m Message) Clone() *Message {
+	header := *m.Header
+	c := &Message{
+		Header:   &header,
+		Metadata: make(map[string]string),
+	}
+	return c
 }
 
 // Encode encodes messages.
