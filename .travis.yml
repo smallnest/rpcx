@@ -1,0 +1,20 @@
+language: go
+
+
+go:
+  - 1.7.x
+  - 1.8.x
+  - 1.9.x
+  - tip
+
+before_script:
+  - go get -t -v github.com/smallnest/rpcx/...
+
+script:
+ - go test -v ./...
+
+notifications:
+  email:
+    recipients: smallnest@gmail.com
+    on_success: change
+    on_failure: always
