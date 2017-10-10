@@ -8,10 +8,11 @@ go:
   - tip
 
 before_script:
-  - go get -t -v github.com/smallnest/rpcx/...
+  - go get -u -t -v github.com/smallnest/rpcx/...
 
 script:
  - go test -v ./...
+ - goveralls -service=travis-ci
 
 notifications:
   email:
