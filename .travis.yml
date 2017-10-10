@@ -9,6 +9,7 @@ go:
 
 before_script:
   - go get -u -t -v github.com/smallnest/rpcx/...
+  - go get github.com/mattn/goveralls
 
 script:
  - go test -v ./...
