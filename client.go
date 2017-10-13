@@ -389,7 +389,7 @@ func (w *ClientCodecWrapper) WriteRequest(ctx context.Context, r *core.Request, 
 	if w.Timeout > 0 {
 		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
 	}
-	if w.ReadTimeout > 0 {
+	if w.WriteTimeout > 0 {
 		w.Conn.SetWriteDeadline(time.Now().Add(w.WriteTimeout))
 	}
 
