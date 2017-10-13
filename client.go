@@ -342,7 +342,7 @@ func newClientCodecWrapper(pc IClientPluginContainer, c core.ClientCodec, conn n
 	return &ClientCodecWrapper{ClientCodec: c, PluginContainer: pc, Conn: conn}
 }
 
-func (w *ClientCodecWrapper) ReadRequestHeader(r *core.Response) error {
+func (w *ClientCodecWrapper) ReadResponseHeader(r *core.Response) error {
 	if w.Timeout > 0 {
 		w.Conn.SetDeadline(time.Now().Add(w.Timeout))
 	}
@@ -367,7 +367,7 @@ func (w *ClientCodecWrapper) ReadRequestHeader(r *core.Response) error {
 	return w.PluginContainer.DoPostReadResponseHeader(r)
 }
 
-func (w *ClientCodecWrapper) ReadRequestBody(body interface{}) error {
+func (w *ClientCodecWrapper) ReadResponseBody(body interface{}) error {
 	//pre
 	err := w.PluginContainer.DoPreReadResponseBody(body)
 	if err != nil {
