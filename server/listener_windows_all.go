@@ -4,6 +4,7 @@
 package rpcx
 
 import (
+	"errors"
 	"net"
 
 	quicconn "github.com/marten-seemann/quic-conn"
@@ -15,7 +16,11 @@ import (
 func makeListener(network, address string) (ln net.Listener, err error) {
 	switch network {
 	case "kcp":
-		ln, err = kcp.ListenWithOptions(address, block, 10, 3)
+		if s.Options == nil || s.Options["BlockCrypt"] == nil {
+			return errors.New("KCP BlockCrypt must be configured in server.Options")
+		}
+
+		ln, err = kcp.ListenWithOptions(address, s.Options["BlockCrypt"].(kcp.BlockCrypt), 10, 3)
 	case "reuseport":
 		if validIP4(address) {
 			network = "tcp4"

@@ -19,7 +19,6 @@ import (
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
-	kcp "github.com/xtaci/kcp-go"
 )
 
 // ErrServerClosed is returned by the Server's Serve, ListenAndServe after a call to Shutdown or Close.
@@ -63,21 +62,23 @@ type Server struct {
 	inShutdown int32
 	onShutdown []func()
 
-	// use for KCP
-	KCPConfig KCPConfig
-	// for QUIC
-	QUICConfig QUICConfig
+	// BlockCrypt for kcp.BlockCrypt, QUICConfig for quic TlsConfig, etc.
+	Options map[string]interface{}
+	// // use for KCP
+	// KCPConfig KCPConfig
+	// // for QUIC
+	// QUICConfig QUICConfig
 }
 
-// KCPConfig is config of KCP.
-type KCPConfig struct {
-	BlockCrypt kcp.BlockCrypt
-}
+// // KCPConfig is config of KCP.
+// type KCPConfig struct {
+// 	BlockCrypt kcp.BlockCrypt
+// }
 
-// QUICConfig is config of QUIC.
-type QUICConfig struct {
-	TlsConfig *tls.Config
-}
+// // QUICConfig is config of QUIC.
+// type QUICConfig struct {
+// 	TlsConfig *tls.Config
+// }
 
 // Address returns listened address.
 func (s *Server) Address() net.Addr {

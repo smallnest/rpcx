@@ -10,12 +10,16 @@ import (
 	"sync"
 	"time"
 
+	circuit "github.com/rubyist/circuitbreaker"
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
 	"github.com/smallnest/rpcx/util"
 	kcp "github.com/xtaci/kcp-go"
 )
+
+// CircuitBreaker is a default circuit breaker (RateBreaker(0.95, 100)).
+var CircuitBreaker = circuit.NewRateBreaker(0.95, 100)
 
 // ErrShutdown connection is closed.
 var (
@@ -43,6 +47,9 @@ type Client struct {
 	ReadTimeout time.Duration
 	// WriteTimeout sets writedeadline for underlying net.Conns
 	WriteTimeout time.Duration
+
+	//
+	UseCircuitBreaker bool
 
 	Conn net.Conn
 	r    *bufio.Reader
@@ -107,6 +114,16 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
 func (client *Client) Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error {
+	if client.UseCircuitBreaker {
+		return CircuitBreaker.Call(func() error {
+			return client.call(ctx, servicePath, serviceMethod, args, reply)
+		}, 0)
+	}
+
+	return client.call(ctx, servicePath, serviceMethod, args, reply)
+}
+
+func (client *Client) call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error {
 	seq := new(uint64)
 	ctx = context.WithValue(ctx, seqKey{}, seq)
 	Done := client.Go(ctx, servicePath, serviceMethod, args, reply, make(chan *Call, 1)).Done
