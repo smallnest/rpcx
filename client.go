@@ -189,7 +189,7 @@ func (c *Client) Call(ctx context.Context, serviceMethod string, args interface{
 			return //call successful
 		}
 
-		log.Errorf("failed to call: %v", err)
+		log.Warnf("failed to call: %v", err)
 		c.ClientSelector.HandleFailedClient(rpcClient)
 	}
 
@@ -205,7 +205,7 @@ func (c *Client) Call(ctx context.Context, serviceMethod string, args interface{
 				return nil
 			}
 
-			log.Errorf("failed to call: %v", err)
+			log.Warnf("failed to call: %v", err)
 			c.ClientSelector.HandleFailedClient(rpcClient)
 
 		}
@@ -213,7 +213,7 @@ func (c *Client) Call(ctx context.Context, serviceMethod string, args interface{
 		for retries := 0; retries < c.Retries; retries++ {
 			if rpcClient == nil {
 				if rpcClient, err = c.ClientSelector.Select(c.ClientCodecFunc, serviceMethod, args); err != nil {
-					log.Errorf("failed to select a client: %v", err)
+					log.Warnf("failed to select a client: %v", err)
 				}
 			}
 
@@ -223,7 +223,7 @@ func (c *Client) Call(ctx context.Context, serviceMethod string, args interface{
 					return nil
 				}
 
-				log.Errorf("failed to call: %v", err)
+				log.Warnf("failed to call: %v", err)
 				c.ClientSelector.HandleFailedClient(rpcClient)
 			}
 		}
@@ -353,13 +353,13 @@ func (w *ClientCodecWrapper) ReadResponseHeader(r *core.Response) error {
 	//pre
 	err := w.PluginContainer.DoPreReadResponseHeader(r)
 	if err != nil {
-		log.Errorf("failed to DoPreReadResponseHeader: %v", err)
+		log.Warnf("failed to DoPreReadResponseHeader: %v", err)
 		return err
 	}
 
 	err = w.ClientCodec.ReadResponseHeader(r)
 	if err != nil {
-		log.Errorf("failed to ReadResponseHeader: %v", err)
+		log.Warnf("failed to ReadResponseHeader: %v", err)
 		return err
 	}
 
@@ -371,13 +371,13 @@ func (w *ClientCodecWrapper) ReadResponseBody(body interface{}) error {
 	//pre
 	err := w.PluginContainer.DoPreReadResponseBody(body)
 	if err != nil {
-		log.Errorf("failed to DoPreReadResponseBody: %v", err)
+		log.Warnf("failed to DoPreReadResponseBody: %v", err)
 		return err
 	}
 
 	err = w.ClientCodec.ReadResponseBody(body)
 	if err != nil {
-		log.Errorf("failed to ReadResponseBody: %v", err)
+		log.Warnf("failed to ReadResponseBody: %v", err)
 		return err
 	}
 
@@ -396,13 +396,13 @@ func (w *ClientCodecWrapper) WriteRequest(ctx context.Context, r *core.Request, 
 	//pre
 	err := w.PluginContainer.DoPreWriteRequest(ctx, r, body)
 	if err != nil {
-		log.Errorf("failed to DoPreWriteRequest: %v", err)
+		log.Warnf("failed to DoPreWriteRequest: %v", err)
 		return err
 	}
 
 	err = w.ClientCodec.WriteRequest(ctx, r, body)
 	if err != nil {
-		log.Errorf("failed to WriteRequest: %v", err)
+		log.Warnf("failed to WriteRequest: %v", err)
 		return err
 	}
 
