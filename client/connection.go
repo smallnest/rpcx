@@ -9,10 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	quicconn "github.com/marten-seemann/quic-conn"
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/share"
-	kcp "github.com/xtaci/kcp-go"
 )
 
 // Connect connects the server via specified network.
@@ -126,31 +124,4 @@ func newDirectHTTPConn(c *Client, network, address string, opts ...interface{}) 
 		Addr: nil,
 		Err:  err,
 	}
-}
-
-func newDirectKCPConn(c *Client, network, address string, opts ...interface{}) (net.Conn, error) {
-	var conn net.Conn
-	var err error
-
-	conn, err = kcp.DialWithOptions(address, c.Block, 10, 3)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return conn, nil
-}
-
-func newDirectQuicConn(c *Client, network, address string, opts ...interface{}) (net.Conn, error) {
-	var conn net.Conn
-	var err error
-
-	tlsConf := &tls.Config{InsecureSkipVerify: true}
-	conn, err = quicconn.Dial(address, tlsConf)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return conn, nil
 }
