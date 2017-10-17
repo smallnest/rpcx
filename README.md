@@ -7,6 +7,13 @@
 `go get -u -v github.com/smallnest/rpcx/...`
 
 
+if you want to use quic/kcp, zookeeper, etcd, consul registry, use those tags. For example, if you want to use all, you can:
+
+```
+go get -u -v -tags "udp zookeeper etcd consul" github.com/smallnest/rpcx/...
+```
+
+
 rpcx is a distributed RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).
 
 **rpcx 3.0** has been refactored for:
