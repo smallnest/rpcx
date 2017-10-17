@@ -115,10 +115,8 @@ func (s *EtcdV3ClientSelector) watch() {
 	for wresp := range watcher {
 		for _, ev := range wresp.Events {
 			//log.Infof("%s %q:%q\n",ev.Type,ev.Kv.Key,ev.Kv.Value)
-			s.pullServers()
-			removedServer := strings.TrimPrefix(string(ev.Kv.Key), s.BasePath)
 			s.clientRWMutex.Lock()
-			delete(s.clientAndServer, removedServer)
+			s.pullServers()
 			s.clientRWMutex.Unlock()
 		}
 	}
