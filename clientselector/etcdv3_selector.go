@@ -113,7 +113,7 @@ func (s *EtcdV3ClientSelector) start() {
 func (s *EtcdV3ClientSelector) watch() {
 	watcher := s.KeysAPI.Watch(context.Background(), s.BasePath, clientv3.WithPrefix())
 	for wresp := range watcher {
-		for _, ev := range wresp.Events {
+		for range wresp.Events {
 			//log.Infof("%s %q:%q\n",ev.Type,ev.Kv.Key,ev.Kv.Value)
 			s.clientRWMutex.Lock()
 			s.pullServers()

@@ -59,7 +59,7 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 	p.KeysAPI = cli
 
 	if p.UpdateIntervalInSec > 0 {
-		p.ticker = time.NewTicker(time.Duration(p.UpdateIntervalInSec*2) * time.Second)
+		p.ticker = time.NewTicker(time.Duration(p.UpdateIntervalInSec) * time.Second)
 		go func() {
 			for range p.ticker.C {
 				clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
@@ -89,7 +89,7 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 						p.ttlsLock.Lock()
 						ttl = p.ttls[nodePath]
 						if ttl == nil {
-							ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalInSec)
+							ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalInSec*2)
 							if err != nil {
 								log.Infof("V3 TTL Grant: %v", err.Error())
 								p.ttlsLock.Unlock()
