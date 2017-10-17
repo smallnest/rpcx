@@ -184,6 +184,7 @@ func (client *Client) input() {
 		call.Error = err
 		call.done()
 	}
+	client.codec.Close()
 	client.mutex.Unlock()
 	client.reqMutex.Unlock()
 	if DebugLog && err != io.EOF && !closing {
