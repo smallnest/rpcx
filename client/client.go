@@ -18,8 +18,13 @@ import (
 	kcp "github.com/xtaci/kcp-go"
 )
 
+// Breaker is a CircuitBreaker interface.
+type Breaker interface {
+	Call(func() error, time.Duration) error
+}
+
 // CircuitBreaker is a default circuit breaker (RateBreaker(0.95, 100)).
-var CircuitBreaker = circuit.NewRateBreaker(0.95, 100)
+var CircuitBreaker Breaker = circuit.NewRateBreaker(0.95, 100)
 
 // ErrShutdown connection is closed.
 var (
