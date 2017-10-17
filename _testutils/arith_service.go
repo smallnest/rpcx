@@ -12,7 +12,7 @@
 		ProtoArgs
 		ProtoReply
 */
-package client
+package testutils
 
 import proto "github.com/gogo/protobuf/proto"
 import fmt "fmt"

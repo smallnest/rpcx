@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/smallnest/rpcx/_testutils"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/server"
 )
@@ -27,20 +28,20 @@ func (t *Arith) Mul(ctx context.Context, args *Args, reply *Reply) error {
 
 type PBArith int
 
-func (t *PBArith) Mul(ctx context.Context, args *ProtoArgs, reply *ProtoReply) error {
+func (t *PBArith) Mul(ctx context.Context, args *testutils.ProtoArgs, reply *testutils.ProtoReply) error {
 	reply.C = args.A * args.B
 	return nil
 }
 
 func TestClient_IT(t *testing.T) {
-	server := server.Server{}
-	server.RegisterName("Arith", new(Arith))
-	server.RegisterName("PBArith", new(PBArith))
-	go server.Serve("tcp", "127.0.0.1:0")
-	defer server.Close()
+	s := server.Server{}
+	s.RegisterName("Arith", new(Arith), "")
+	s.RegisterName("PBArith", new(PBArith), "")
+	go s.Serve("tcp", "127.0.0.1:0")
+	defer s.Close()
 	time.Sleep(500 * time.Millisecond)
 
-	addr := server.Address().String()
+	addr := s.Address().String()
 
 	client := &Client{
 		SerializeType: protocol.JSON,
@@ -86,11 +87,11 @@ func TestClient_IT(t *testing.T) {
 
 	client.SerializeType = protocol.ProtoBuffer
 
-	pbArgs := &ProtoArgs{
+	pbArgs := &testutils.ProtoArgs{
 		A: 10,
 		B: 20,
 	}
-	pbReply := &ProtoReply{}
+	pbReply := &testutils.ProtoReply{}
 	err = client.Call(context.Background(), "PBArith", "Mul", pbArgs, pbReply)
 	if err != nil {
 		t.Fatalf("failed to call: %v", err)

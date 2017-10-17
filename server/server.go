@@ -68,6 +68,8 @@ type Server struct {
 	// KCPConfig KCPConfig
 	// // for QUIC
 	// QUICConfig QUICConfig
+
+	Plugins pluginContainer
 }
 
 // // KCPConfig is config of KCP.
@@ -165,6 +167,11 @@ func (s *Server) serveListener(ln net.Listener) error {
 		s.activeConn[conn] = struct{}{}
 		s.mu.Unlock()
 
+		conn, ok := s.Plugins.DoPostConnAccept(conn)
+		if !ok {
+			continue
+		}
+
 		go s.serveConn(conn)
 	}
 }
@@ -237,18 +244,22 @@ func (s *Server) serveConn(conn net.Conn) {
 		}
 
 		go func() {
+			s.Plugins.DoPreWriteResponse(ctx, req)
 			res, err := s.handleRequest(ctx, req)
 			if err != nil {
 				log.Errorf("rpcx: failed to handle request: %v", err)
 			}
 			res.WriteTo(w)
 			w.Flush()
+			s.Plugins.DoPostWriteResponse(ctx, req, res, err)
 		}()
 	}
 }
 
 func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Message, err error) {
+	s.Plugins.DoPreReadRequest(ctx)
 	req, err = protocol.Read(r)
+	s.Plugins.DoPostReadRequest(ctx, req, err)
 	return req, err
 }
 
@@ -349,7 +360,10 @@ func (s *Server) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.closeDoneChanLocked()
-	err := s.ln.Close()
+	var err error
+	if s.ln != nil {
+		err = s.ln.Close()
+	}
 
 	for c := range s.activeConn {
 		c.Close()

@@ -54,7 +54,7 @@ func TestHandleRequest(t *testing.T) {
 	req.Payload = data
 
 	server := &Server{}
-	server.RegisterName("Arith", new(Arith))
+	server.RegisterName("Arith", new(Arith), "")
 	res, err := server.handleRequest(context.Background(), req)
 	if err != nil {
 		t.Fatalf("failed to hand request: %v", err)

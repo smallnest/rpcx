@@ -57,13 +57,14 @@ func isExportedOrBuiltinType(t reflect.Type) bool {
 // no suitable methods. It also logs the error.
 // The client accesses each method using a string of the form "Type.Method",
 // where Type is the receiver's concrete type.
-func (s *Server) Register(rcvr interface{}) error {
+func (s *Server) Register(rcvr interface{}, metadata string) error {
 	return s.register(rcvr, "", false)
 }
 
 // RegisterName is like Register but uses the provided name for the type
 // instead of the receiver's concrete type.
-func (s *Server) RegisterName(name string, rcvr interface{}) error {
+func (s *Server) RegisterName(name string, rcvr interface{}, metadata string) error {
+	s.Plugins.DoRegister(name, rcvr, metadata)
 	return s.register(rcvr, name, true)
 }
 
