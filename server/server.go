@@ -249,8 +249,10 @@ func (s *Server) serveConn(conn net.Conn) {
 			if err != nil {
 				log.Errorf("rpcx: failed to handle request: %v", err)
 			}
-			res.WriteTo(w)
-			w.Flush()
+			if !req.IsOneway() {
+				res.WriteTo(w)
+				w.Flush()
+			}
 			s.Plugins.DoPostWriteResponse(ctx, req, res, err)
 		}()
 	}
@@ -315,12 +317,15 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		return handleError(res, err)
 	}
 
-	data, err := codec.Encode(replyv.Interface())
-	if err != nil {
-		return handleError(res, err)
+	if !req.IsOneway() {
+		data, err := codec.Encode(replyv.Interface())
+		if err != nil {
+			return handleError(res, err)
 
+		}
+		res.Payload = data
 	}
-	res.Payload = data
+
 	return res, nil
 }
 
