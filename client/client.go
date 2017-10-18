@@ -15,7 +15,6 @@ import (
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
 	"github.com/smallnest/rpcx/util"
-	kcp "github.com/xtaci/kcp-go"
 )
 
 // Breaker is a CircuitBreaker interface.
@@ -44,7 +43,7 @@ type seqKey struct{}
 // Client represents a RPC client.
 type Client struct {
 	TLSConfig *tls.Config
-	Block     kcp.BlockCrypt
+	Block     interface{} //kcp.BlockCrypt
 
 	//ConnectTimeout sets timeout for dialing
 	ConnectTimeout time.Duration

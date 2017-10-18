@@ -14,7 +14,7 @@ import (
 )
 
 // Connect connects the server via specified network.
-func (c *Client) Connect(network, address string, opts ...interface{}) error {
+func (c *Client) Connect(network, address string) error {
 	var conn net.Conn
 	var err error
 
