@@ -10,10 +10,6 @@ const (
 	Failfast
 	//Failtry use current client again
 	Failtry
-	//Broadcast sends requests to all servers and Success only when all servers return OK
-	Broadcast
-	//Forking sends requests to all servers and Success once one server returns OK
-	Forking
 )
 
 // SelectMode defines the algorithm of selecting a services from candidates.

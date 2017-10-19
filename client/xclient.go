@@ -14,12 +14,17 @@ import (
 var (
 	// ErrXClientShutdown xclient is shutdown.
 	ErrXClientShutdown = errors.New("xClient is shut down")
+	// ErrXClientNoServer selector can't found one server.
+	ErrXClientNoServer = errors.New("can not found any server")
 )
 
 // XClient is an interface that used by client with service discovery and service governance.
+// One XClient is used only for one service. You should create multiple XClient for multiple services.
 type XClient interface {
-	Go(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, done chan *Call) (*Call, error)
-	Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error
+	Go(ctx context.Context, args interface{}, reply interface{}, done chan *Call) (*Call, error)
+	Call(ctx context.Context, args interface{}, reply interface{}) error
+	Broadcast(ctx context.Context, args interface{}, reply interface{}) error
+	Fork(ctx context.Context, args interface{}, reply interface{}) error
 	Close() error
 }
 
@@ -43,16 +48,22 @@ type xClient struct {
 	mu        sync.RWMutex
 	servers   map[string]string
 	discovery ServiceDiscovery
+	selector  Selector
+
+	servicePath   string
+	serviceMethod string
 
 	isShutdown bool
 }
 
 // NewXClient creates a XClient that supports service discovery and service governance.
-func NewXClient(failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery) XClient {
+func NewXClient(servicePath, serviceMethod string, failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery) XClient {
 	client := &xClient{
-		failMode:   failMode,
-		selectMode: selectMode,
-		discovery:  discovery,
+		failMode:      failMode,
+		selectMode:    selectMode,
+		discovery:     discovery,
+		servicePath:   servicePath,
+		serviceMethod: serviceMethod,
 	}
 
 	go client.watch()
@@ -63,6 +74,7 @@ func NewXClient(failMode FailMode, selectMode SelectMode, discovery ServiceDisco
 		servers[p.Key] = p.Value
 	}
 	client.servers = servers
+	client.selector = newSelector(selectMode, servers)
 
 	// TODO init other fields
 
@@ -86,10 +98,11 @@ func (c *xClient) watch() {
 }
 
 // selects a client from candidates base on c.selectMode
-func (c *xClient) selectClient() (*Client, error) {
-	// TODO get server key based on Select mode
-	k := ""
-
+func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string) (*Client, error) {
+	k := c.selector.Select(ctx, servicePath, serviceMethod)
+	if k == "" {
+		return nil, ErrXClientNoServer
+	}
 	return c.getCachedClient(k)
 }
 
@@ -134,30 +147,44 @@ func splitNetworkAndAddress(server string) (string, string) {
 
 // Go invokes the function asynchronously. It returns the Call structure representing the invocation. The done channel will signal when the call is complete by returning the same Call object. If done is nil, Go will allocate a new channel. If non-nil, done must be buffered or Go will deliberately crash.
 // It does not use FailMode.
-func (c *xClient) Go(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, done chan *Call) (*Call, error) {
+func (c *xClient) Go(ctx context.Context, args interface{}, reply interface{}, done chan *Call) (*Call, error) {
 	if c.isShutdown {
 		return nil, ErrXClientShutdown
 	}
-	client, err := c.selectClient()
+	client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod)
 	if err != nil {
 		return nil, err
 	}
-	return client.Go(ctx, servicePath, serviceMethod, args, reply, done), nil
+	return client.Go(ctx, c.servicePath, c.serviceMethod, args, reply, done), nil
 }
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
 // It handles errors base on FailMode.
-func (c *xClient) Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error {
+func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{}) error {
 	if c.isShutdown {
 		return ErrXClientShutdown
 	}
 
-	client, err := c.selectClient()
+	client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod)
 	if err != nil {
 		return err
 	}
 
-	return client.Call(ctx, servicePath, serviceMethod, args, reply)
+	return client.Call(ctx, c.servicePath, c.serviceMethod, args, reply)
+}
+
+// Broadcast sends requests to all servers and Success only when all servers return OK.
+// FailMode and SelectMode are meanless for this method.
+func (c *xClient) Broadcast(ctx context.Context, args interface{}, reply interface{}) error {
+
+	return nil
+}
+
+// Fork sends requests to all servers and Success once one server returns OK.
+// FailMode and SelectMode are meanless for this method.
+func (c *xClient) Fork(ctx context.Context, args interface{}, reply interface{}) error {
+
+	return nil
 }
 
 // Close closes this client and its underlying connnections to services.
