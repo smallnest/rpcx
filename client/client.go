@@ -17,6 +17,15 @@ import (
 	"github.com/smallnest/rpcx/util"
 )
 
+// DefaultOption is a common option configuration for client.
+var DefaultOption = Option{
+	RPCPath:        share.DefaultRPCPath,
+	ConnectTimeout: 10 * time.Second,
+	Breaker:        CircuitBreaker,
+	SerializeType:  protocol.MsgPack,
+	CompressType:   protocol.None,
+}
+
 // Breaker is a CircuitBreaker interface.
 type Breaker interface {
 	Call(func() error, time.Duration) error
@@ -42,9 +51,27 @@ type seqKey struct{}
 
 // Client represents a RPC client.
 type Client struct {
-	TLSConfig *tls.Config
-	Block     interface{} //kcp.BlockCrypt
+	option Option
 
+	Conn net.Conn
+	r    *bufio.Reader
+	w    *bufio.Writer
+
+	mutex    sync.Mutex // protects following
+	seq      uint64
+	pending  map[uint64]*Call
+	closing  bool // user has called Close
+	shutdown bool // server has told us to stop
+}
+
+// Option contains all options for creating clients.
+type Option struct {
+	// TLSConfig for tcp and quic
+	TLSConfig *tls.Config
+	// kcp.BlockCrypt
+	Block interface{}
+	// RPCPath for http connection
+	RPCPath string
 	//ConnectTimeout sets timeout for dialing
 	ConnectTimeout time.Duration
 	// ReadTimeout sets readdeadline for underlying net.Conns
@@ -52,21 +79,11 @@ type Client struct {
 	// WriteTimeout sets writedeadline for underlying net.Conns
 	WriteTimeout time.Duration
 
-	//
-	UseCircuitBreaker bool
-
-	Conn net.Conn
-	r    *bufio.Reader
-	w    *bufio.Writer
+	// Breaker is used to config CircuitBreaker
+	Breaker Breaker
 
 	SerializeType protocol.SerializeType
 	CompressType  protocol.CompressType
-
-	mutex    sync.Mutex // protects following
-	seq      uint64
-	pending  map[uint64]*Call
-	closing  bool // user has called Close
-	shutdown bool // server has told us to stop
 }
 
 // Call represents an active RPC.
@@ -118,8 +135,8 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
 func (client *Client) Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error {
-	if client.UseCircuitBreaker {
-		return CircuitBreaker.Call(func() error {
+	if client.option.Breaker != nil {
+		return client.option.Breaker.Call(func() error {
 			return client.call(ctx, servicePath, serviceMethod, args, reply)
 		}, 0)
 	}
@@ -163,7 +180,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		return
 	}
 
-	codec := share.Codecs[client.SerializeType]
+	codec := share.Codecs[client.option.SerializeType]
 	if codec == nil {
 		call.Error = ErrUnsupportedCodec
 		client.mutex.Unlock()
@@ -187,7 +204,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	req := protocol.NewMessage()
 	req.SetMessageType(protocol.Request)
 	req.SetSeq(seq)
-	req.SetSerializeType(client.SerializeType)
+	req.SetSerializeType(client.option.SerializeType)
 	req.Metadata[protocol.ServicePath] = call.ServicePath
 	req.Metadata[protocol.ServiceMethod] = call.ServiceMethod
 
@@ -198,7 +215,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		return
 	}
 
-	if len(data) > 1024 && client.CompressType == protocol.Gzip {
+	if len(data) > 1024 && client.option.CompressType == protocol.Gzip {
 		data, err = util.Zip(data)
 		if err != nil {
 			call.Error = err
@@ -206,7 +223,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 			return
 		}
 
-		req.SetCompressType(client.CompressType)
+		req.SetCompressType(client.option.CompressType)
 	}
 
 	req.Payload = data

@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -41,32 +42,37 @@ type ServiceDiscovery interface {
 }
 
 type xClient struct {
-	failMode     FailMode
-	selectMode   SelectMode
-	cachedClient map[string]*Client
+	failMode      FailMode
+	selectMode    SelectMode
+	cachedClient  map[string]*Client
+	servicePath   string
+	serviceMethod string
+	option        Option
 
 	mu        sync.RWMutex
 	servers   map[string]string
 	discovery ServiceDiscovery
 	selector  Selector
 
-	servicePath   string
-	serviceMethod string
-
 	isShutdown bool
 }
 
 // NewXClient creates a XClient that supports service discovery and service governance.
-func NewXClient(servicePath, serviceMethod string, failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery) XClient {
+func NewXClient(servicePath, serviceMethod string, failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery, option Option) XClient {
 	client := &xClient{
 		failMode:      failMode,
 		selectMode:    selectMode,
 		discovery:     discovery,
 		servicePath:   servicePath,
 		serviceMethod: serviceMethod,
+		cachedClient:  make(map[string]*Client),
+		option:        option,
 	}
 
-	go client.watch()
+	ch := client.discovery.WatchService()
+	if ch != nil {
+		go client.watch(ch)
+	}
 
 	servers := make(map[string]string)
 	pairs := discovery.GetServices()
@@ -76,14 +82,11 @@ func NewXClient(servicePath, serviceMethod string, failMode FailMode, selectMode
 	client.servers = servers
 	client.selector = newSelector(selectMode, servers)
 
-	// TODO init other fields
-
 	return client
 }
 
 // watch changes of service and update cached clients.
-func (c *xClient) watch() {
-	ch := c.discovery.WatchService()
+func (c *xClient) watch(ch chan []*KVPair) {
 	for pairs := range ch {
 
 		servers := make(map[string]string)
@@ -103,10 +106,17 @@ func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod s
 	if k == "" {
 		return nil, ErrXClientNoServer
 	}
+
 	return c.getCachedClient(k)
 }
 
 func (c *xClient) getCachedClient(k string) (*Client, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in f", r)
+		}
+	}()
+
 	c.mu.RLock()
 	client := c.cachedClient[k]
 	if client != nil {
@@ -115,6 +125,7 @@ func (c *xClient) getCachedClient(k string) (*Client, error) {
 			return client, nil
 		}
 	}
+	c.mu.RUnlock()
 
 	//double check
 	c.mu.Lock()
@@ -122,7 +133,7 @@ func (c *xClient) getCachedClient(k string) (*Client, error) {
 	if client == nil {
 		network, addr := splitNetworkAndAddress(k)
 		client = &Client{
-		// TODO init this client
+			option: c.option,
 		}
 		err := client.Connect(network, addr)
 		if err != nil {

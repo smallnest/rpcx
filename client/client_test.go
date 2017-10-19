@@ -44,8 +44,7 @@ func TestClient_IT(t *testing.T) {
 	addr := s.Address().String()
 
 	client := &Client{
-		SerializeType: protocol.JSON,
-		CompressType:  protocol.Gzip,
+		option: DefaultOption,
 	}
 
 	err := client.Connect("tcp", addr)
@@ -74,7 +73,7 @@ func TestClient_IT(t *testing.T) {
 		t.Fatal("expect an error but got nil")
 	}
 
-	client.SerializeType = protocol.MsgPack
+	client.option.SerializeType = protocol.MsgPack
 	reply = &Reply{}
 	err = client.Call(context.Background(), "Arith", "Mul", args, reply)
 	if err != nil {
@@ -85,7 +84,7 @@ func TestClient_IT(t *testing.T) {
 		t.Fatalf("expect 200 but got %d", reply.C)
 	}
 
-	client.SerializeType = protocol.ProtoBuffer
+	client.option.SerializeType = protocol.ProtoBuffer
 
 	pbArgs := &testutils.ProtoArgs{
 		A: 10,
