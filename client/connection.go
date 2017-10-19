@@ -80,8 +80,6 @@ func newDirectHTTPConn(c *Client, network, address string) (net.Conn, error) {
 		path = share.DefaultRPCPath
 	}
 
-	network = "tcp"
-
 	var conn net.Conn
 	var tlsConn *tls.Conn
 	var err error
@@ -90,12 +88,12 @@ func newDirectHTTPConn(c *Client, network, address string) (net.Conn, error) {
 		dialer := &net.Dialer{
 			Timeout: c.option.ConnectTimeout,
 		}
-		tlsConn, err = tls.DialWithDialer(dialer, network, address, c.option.TLSConfig)
+		tlsConn, err = tls.DialWithDialer(dialer, "tcp", address, c.option.TLSConfig)
 		//or conn:= tls.Client(netConn, &config)
 
 		conn = net.Conn(tlsConn)
 	} else {
-		conn, err = net.DialTimeout(network, address, c.option.ConnectTimeout)
+		conn, err = net.DialTimeout("tcp", address, c.option.ConnectTimeout)
 	}
 	if err != nil {
 		log.Errorf("failed to dial server: %v", err)

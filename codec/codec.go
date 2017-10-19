@@ -3,6 +3,7 @@ package codec
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	proto "github.com/gogo/protobuf/proto"
 	"github.com/vmihailenco/msgpack"
@@ -28,7 +29,7 @@ func (c ByteCodec) Encode(i interface{}) ([]byte, error) {
 
 // Decode returns raw slice of bytes.
 func (c ByteCodec) Decode(data []byte, i interface{}) error {
-	i = &data
+	reflect.ValueOf(i).SetBytes(data)
 	return nil
 }
 

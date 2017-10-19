@@ -58,6 +58,11 @@ type xClient struct {
 	selector  Selector
 
 	isShutdown bool
+
+	// Latitude of this client. Only used for Closest Selector.
+	Latitude float64
+	// Longitude of this client. Only used for Closest Selector.
+	Longitude float64
 }
 
 // NewXClient creates a XClient that supports service discovery and service governance.
@@ -105,8 +110,8 @@ func (c *xClient) watch(ch chan []*KVPair) {
 }
 
 // selects a client from candidates base on c.selectMode
-func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string) (*Client, error) {
-	k := c.selector.Select(ctx, servicePath, serviceMethod)
+func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (*Client, error) {
+	k := c.selector.Select(ctx, servicePath, serviceMethod, args)
 	if k == "" {
 		return nil, ErrXClientNoServer
 	}
@@ -166,7 +171,7 @@ func (c *xClient) Go(ctx context.Context, args interface{}, reply interface{}, d
 	if c.isShutdown {
 		return nil, ErrXClientShutdown
 	}
-	client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod)
+	client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +186,7 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{})
 	}
 
 	var err error
-	client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod)
+	client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
 	if err != nil {
 		return err
 	}
@@ -204,7 +209,7 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{})
 			}
 
 			//select another server
-			client, err = c.selectClient(ctx, c.servicePath, c.serviceMethod)
+			client, err = c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
 			if err != nil {
 				return err
 			}
@@ -244,7 +249,6 @@ func (c *xClient) Broadcast(ctx context.Context, args interface{}, reply interfa
 		go func() {
 			err = client.Call(ctx, c.servicePath, c.serviceMethod, args, reply)
 			done <- (err == nil)
-			return
 		}()
 	}
 
@@ -296,7 +300,6 @@ func (c *xClient) Fork(ctx context.Context, args interface{}, reply interface{})
 			if err == nil {
 				reflect.ValueOf(reply).Set(reflect.ValueOf(reply))
 			}
-			return
 		}()
 	}
 

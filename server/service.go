@@ -98,7 +98,7 @@ func (s *Server) register(rcvr interface{}, name string, useName bool) error {
 	service.method = suitableMethods(service.typ, true)
 
 	if len(service.method) == 0 {
-		errorStr := ""
+		var errorStr string
 
 		// To help the user, see if a pointer receiver would work.
 		method := suitableMethods(reflect.PtrTo(service.typ), false)
