@@ -262,11 +262,11 @@ func (s *Server) serveConn(conn net.Conn) {
 		}
 
 		go func() {
-			s.Plugins.DoPreWriteResponse(ctx, req)
 			res, err := s.handleRequest(ctx, req)
 			if err != nil {
 				log.Errorf("rpcx: failed to handle request: %v", err)
 			}
+			s.Plugins.DoPreWriteResponse(ctx, req)
 			if !req.IsOneway() {
 				res.WriteTo(w)
 				w.Flush()
