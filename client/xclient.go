@@ -10,9 +10,8 @@ import (
 	"time"
 
 	ex "github.com/smallnest/rpcx/errors"
+	"github.com/smallnest/rpcx/share"
 )
-
-// TODO
 
 var (
 	// ErrXClientShutdown xclient is shutdown.
@@ -24,10 +23,10 @@ var (
 // XClient is an interface that used by client with service discovery and service governance.
 // One XClient is used only for one service. You should create multiple XClient for multiple services.
 type XClient interface {
-	Go(ctx context.Context, args interface{}, reply interface{}, done chan *Call) (*Call, error)
-	Call(ctx context.Context, args interface{}, reply interface{}) error
-	Broadcast(ctx context.Context, args interface{}, reply interface{}) error
-	Fork(ctx context.Context, args interface{}, reply interface{}) error
+	Go(ctx context.Context, args interface{}, reply interface{}, metadata map[string]string, done chan *Call) (*Call, error)
+	Call(ctx context.Context, args interface{}, reply interface{}, metadata map[string]string) error
+	Broadcast(ctx context.Context, args interface{}, reply interface{}, metadata map[string]string) error
+	Fork(ctx context.Context, args interface{}, reply interface{}, metadata map[string]string) error
 	Close() error
 }
 
@@ -59,10 +58,8 @@ type xClient struct {
 
 	isShutdown bool
 
-	// Latitude of this client. Only used for Closest Selector.
-	Latitude float64
-	// Longitude of this client. Only used for Closest Selector.
-	Longitude float64
+	// auth is a string for Authentication, for example, "Bearer mF_9.B5f-4.1JqM"
+	auth string
 }
 
 // NewXClient creates a XClient that supports service discovery and service governance.
@@ -89,9 +86,21 @@ func NewXClient(servicePath, serviceMethod string, failMode FailMode, selectMode
 		servers[p.Key] = p.Value
 	}
 	client.servers = servers
-	client.selector = newSelector(selectMode, servers)
+	if selectMode != Closest {
+		client.selector = newSelector(selectMode, servers)
+	}
 
 	return client
+}
+
+// SetGeoSelector sets GeoSelector with client's latitude and longitude.
+func (c *xClient) SetGeoSelector(latitude, longitude float64) {
+	c.selector = newGeoSelector(c.servers, latitude, longitude)
+}
+
+// Auth sets s token for Authentication.
+func (c *xClient) Auth(auth string) {
+	c.auth = auth
 }
 
 // watch changes of service and update cached clients.
@@ -167,22 +176,37 @@ func splitNetworkAndAddress(server string) (string, string) {
 
 // Go invokes the function asynchronously. It returns the Call structure representing the invocation. The done channel will signal when the call is complete by returning the same Call object. If done is nil, Go will allocate a new channel. If non-nil, done must be buffered or Go will deliberately crash.
 // It does not use FailMode.
-func (c *xClient) Go(ctx context.Context, args interface{}, reply interface{}, done chan *Call) (*Call, error) {
+func (c *xClient) Go(ctx context.Context, args interface{}, reply interface{}, metadata map[string]string, done chan *Call) (*Call, error) {
 	if c.isShutdown {
 		return nil, ErrXClientShutdown
 	}
+
+	if c.auth != "" {
+		if metadata == nil {
+			metadata = make(map[string]string)
+		}
+		metadata[share.AuthKey] = c.auth
+	}
+
 	client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
 	if err != nil {
 		return nil, err
 	}
-	return client.Go(ctx, c.servicePath, c.serviceMethod, args, reply, done), nil
+	return client.Go(ctx, c.servicePath, c.serviceMethod, args, reply, metadata, done), nil
 }
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
 // It handles errors base on FailMode.
-func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{}) error {
+func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{}, metadata map[string]string) error {
 	if c.isShutdown {
 		return ErrXClientShutdown
+	}
+
+	if c.auth != "" {
+		if metadata == nil {
+			metadata = make(map[string]string)
+		}
+		metadata[share.AuthKey] = c.auth
 	}
 
 	var err error
@@ -196,14 +220,14 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{})
 		retries := c.Retries
 		for retries > 0 {
 			retries--
-			err = client.call(ctx, c.servicePath, c.serviceMethod, args, reply)
+			err = client.call(ctx, c.servicePath, c.serviceMethod, args, reply, metadata)
 		}
 		return err
 	case Failover:
 		retries := c.Retries
 		for retries > 0 {
 			retries--
-			err = client.call(ctx, c.servicePath, c.serviceMethod, args, reply)
+			err = client.call(ctx, c.servicePath, c.serviceMethod, args, reply, metadata)
 			if err == nil {
 				return nil
 			}
@@ -217,14 +241,25 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{})
 		return err
 
 	default: //Failfast
-		return client.call(ctx, c.servicePath, c.serviceMethod, args, reply)
+		return client.call(ctx, c.servicePath, c.serviceMethod, args, reply, metadata)
 	}
 }
 
 // Broadcast sends requests to all servers and Success only when all servers return OK.
 // FailMode and SelectMode are meanless for this method.
 // Please set timeout to avoid hanging.
-func (c *xClient) Broadcast(ctx context.Context, args interface{}, reply interface{}) error {
+func (c *xClient) Broadcast(ctx context.Context, args interface{}, reply interface{}, metadata map[string]string) error {
+	if c.isShutdown {
+		return ErrXClientShutdown
+	}
+
+	if c.auth != "" {
+		if metadata == nil {
+			metadata = make(map[string]string)
+		}
+		metadata[share.AuthKey] = c.auth
+	}
+
 	var clients []*Client
 	c.mu.RLock()
 	for k := range c.servers {
@@ -247,7 +282,7 @@ func (c *xClient) Broadcast(ctx context.Context, args interface{}, reply interfa
 	for _, client := range clients {
 		client := client
 		go func() {
-			err = client.Call(ctx, c.servicePath, c.serviceMethod, args, reply)
+			err = client.Call(ctx, c.servicePath, c.serviceMethod, args, reply, metadata)
 			done <- (err == nil)
 		}()
 	}
@@ -271,7 +306,18 @@ check:
 
 // Fork sends requests to all servers and Success once one server returns OK.
 // FailMode and SelectMode are meanless for this method.
-func (c *xClient) Fork(ctx context.Context, args interface{}, reply interface{}) error {
+func (c *xClient) Fork(ctx context.Context, args interface{}, reply interface{}, metadata map[string]string) error {
+	if c.isShutdown {
+		return ErrXClientShutdown
+	}
+
+	if c.auth != "" {
+		if metadata == nil {
+			metadata = make(map[string]string)
+		}
+		metadata[share.AuthKey] = c.auth
+	}
+
 	var clients []*Client
 	c.mu.RLock()
 	for k := range c.servers {
@@ -295,7 +341,7 @@ func (c *xClient) Fork(ctx context.Context, args interface{}, reply interface{})
 		client := client
 		go func() {
 			clonedReply := reflect.New(reflect.ValueOf(reply).Elem().Type()).Interface()
-			err = client.Call(ctx, c.servicePath, c.serviceMethod, args, clonedReply)
+			err = client.Call(ctx, c.servicePath, c.serviceMethod, args, clonedReply, metadata)
 			done <- (err == nil)
 			if err == nil {
 				reflect.ValueOf(reply).Set(reflect.ValueOf(reply))

@@ -70,6 +70,9 @@ type Server struct {
 	// QUICConfig QUICConfig
 
 	Plugins pluginContainer
+
+	// AuthFunc can be used to auth.
+	AuthFunc func(req *protocol.Message, token string) error
 }
 
 // // KCPConfig is config of KCP.
@@ -262,6 +265,12 @@ func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Me
 	s.Plugins.DoPreReadRequest(ctx)
 	req, err = protocol.Read(r)
 	s.Plugins.DoPostReadRequest(ctx, req, err)
+
+	if s.AuthFunc != nil && err == nil {
+		token := req.Metadata[share.AuthKey]
+		err = s.AuthFunc(req, token)
+	}
+
 	return req, err
 }
 

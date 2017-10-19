@@ -6,8 +6,11 @@ import (
 )
 
 const (
-	// DefaultRPCPath is used by ServeHTTP
+	// DefaultRPCPath is used by ServeHTTP.
 	DefaultRPCPath = "/_rpcx_"
+
+	// AuthKey is used in metadata.
+	AuthKey = "__AUTH"
 )
 
 var (
