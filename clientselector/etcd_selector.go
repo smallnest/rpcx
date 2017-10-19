@@ -241,9 +241,6 @@ func (s *EtcdClientSelector) getCachedClient(server string, clientCodecFunc rpcx
 }
 
 func (s *EtcdClientSelector) HandleFailedClient(client *core.Client) {
-	if rpcx.Reconnect != nil && rpcx.Reconnect(client, s.clientAndServer, s.Client, s.dailTimeout) {
-		return
-	}
 
 	for k, v := range s.clientAndServer {
 		if v == client {

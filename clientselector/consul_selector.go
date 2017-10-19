@@ -156,9 +156,6 @@ func (s *ConsulClientSelector) getCachedClient(server string, clientCodecFunc rp
 }
 
 func (s *ConsulClientSelector) HandleFailedClient(client *core.Client) {
-	if rpcx.Reconnect != nil && rpcx.Reconnect(client, s.clientAndServer, s.Client, s.dailTimeout) {
-		return
-	}
 
 	client.Close()
 	for k, v := range s.clientAndServer {

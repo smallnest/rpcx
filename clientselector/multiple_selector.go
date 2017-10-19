@@ -109,9 +109,6 @@ func (s *MultiClientSelector) getCachedClient(network string, address string, cl
 }
 
 func (s *MultiClientSelector) HandleFailedClient(client *core.Client) {
-	if rpcx.Reconnect != nil && rpcx.Reconnect(client, s.clientAndServer, s.Client, s.dailTimeout) {
-		return
-	}
 
 	for k, v := range s.clientAndServer {
 		if v == client {
@@ -124,19 +121,17 @@ func (s *MultiClientSelector) HandleFailedClient(client *core.Client) {
 	}
 }
 
-
 // Select returns a rpc client
 func (s *MultiClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, options ...interface{}) (*core.Client, error) {
 	if s.len == 0 {
 		return nil, errors.New("No available service")
 	}
-	peer, err  := s.SelectPeer(options...)
+	peer, err := s.SelectPeer(options...)
 	if err != nil {
 		return nil, err
 	}
 	return s.getCachedClient(peer.Network, peer.Address, clientCodecFunc)
 }
-
 
 // SelectPeer returns a ServerPeer
 func (s *MultiClientSelector) SelectPeer(options ...interface{}) (*ServerPeer, error) {
@@ -172,4 +167,3 @@ func (s *MultiClientSelector) SelectPeer(options ...interface{}) (*ServerPeer, e
 		return nil, errors.New("not supported SelectMode: " + s.SelectMode.String())
 	}
 }
-
