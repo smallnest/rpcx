@@ -11,7 +11,7 @@ import (
 )
 
 func TestZookeeperRegistry(t *testing.T) {
-	s := &server.Server{}
+	s := server.NewServer(nil)
 
 	r := &ZooKeeperRegisterPlugin{
 		ServiceAddress:   "tcp@127.0.0.1:8972",

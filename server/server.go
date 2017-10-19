@@ -69,10 +69,17 @@ type Server struct {
 	// // for QUIC
 	// QUICConfig QUICConfig
 
-	Plugins pluginContainer
+	Plugins PluginContainer
 
 	// AuthFunc can be used to auth.
 	AuthFunc func(req *protocol.Message, token string) error
+}
+
+// NewServer returns a server.
+func NewServer(options map[string]interface{}) *Server {
+	return &Server{
+		Plugins: &pluginContainer{},
+	}
 }
 
 // // KCPConfig is config of KCP.
@@ -124,6 +131,10 @@ func (s *Server) Serve(network, address string) (err error) {
 // The service goroutines read requests and then call services to reply to them.
 func (s *Server) serveListener(ln net.Listener) error {
 	s.ln = ln
+
+	if s.Plugins == nil {
+		s.Plugins = &pluginContainer{}
+	}
 
 	var tempDelay time.Duration
 
@@ -183,6 +194,10 @@ func (s *Server) serveListener(ln net.Listener) error {
 // if rpcPath is an empty string, use share.DefaultRPCPath.
 func (s *Server) serveByHTTP(ln net.Listener, rpcPath string) {
 	s.ln = ln
+
+	if s.Plugins == nil {
+		s.Plugins = &pluginContainer{}
+	}
 
 	if rpcPath == "" {
 		rpcPath = share.DefaultRPCPath

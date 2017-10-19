@@ -64,6 +64,10 @@ func (s *Server) Register(rcvr interface{}, metadata string) error {
 // RegisterName is like Register but uses the provided name for the type
 // instead of the receiver's concrete type.
 func (s *Server) RegisterName(name string, rcvr interface{}, metadata string) error {
+	if s.Plugins == nil {
+		s.Plugins = &pluginContainer{}
+	}
+
 	s.Plugins.DoRegister(name, rcvr, metadata)
 	return s.register(rcvr, name, true)
 }

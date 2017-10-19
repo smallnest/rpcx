@@ -11,7 +11,7 @@ import (
 )
 
 func TestConsulRegistry(t *testing.T) {
-	s := &server.Server{}
+	s := server.NewServer(nil)
 
 	r := &ConsulRegisterPlugin{
 		ServiceAddress: "tcp@127.0.0.1:8972",

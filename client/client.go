@@ -62,6 +62,8 @@ type Client struct {
 	pending  map[uint64]*Call
 	closing  bool // user has called Close
 	shutdown bool // server has told us to stop
+
+	Plugins PluginContainer
 }
 
 // Option contains all options for creating clients.
@@ -206,7 +208,10 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	req.SetMessageType(protocol.Request)
 	req.SetSeq(seq)
 	req.SetSerializeType(client.option.SerializeType)
-	req.Metadata = call.Metadata
+	if call.Metadata != nil {
+		req.Metadata = call.Metadata
+	}
+
 	req.Metadata[protocol.ServicePath] = call.ServicePath
 	req.Metadata[protocol.ServiceMethod] = call.ServiceMethod
 
