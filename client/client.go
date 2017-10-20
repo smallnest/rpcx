@@ -17,6 +17,13 @@ import (
 	"github.com/smallnest/rpcx/util"
 )
 
+// ServiceError is an error from server.
+type ServiceError string
+
+func (e ServiceError) Error() string {
+	return string(e)
+}
+
 // DefaultOption is a common option configuration for client.
 var DefaultOption = Option{
 	Retries:        3,
@@ -290,24 +297,24 @@ func (client *Client) input() {
 			// to read error body, but there's no one to give it to.
 		case res.MessageStatusType() == protocol.Error:
 			// We've got an error response. Give this to the request;
-			call.Error = errors.New(res.Metadata[protocol.ServiceError])
+			call.Error = ServiceError(res.Metadata[protocol.ServiceError])
 			call.done()
 		default:
 			data := res.Payload
 			if res.CompressType() == protocol.Gzip {
 				data, err = util.Unzip(data)
 				if err != nil {
-					call.Error = errors.New("unzip payload: " + err.Error())
+					call.Error = ServiceError("unzip payload: " + err.Error())
 				}
 			}
 
 			codec := share.Codecs[res.SerializeType()]
 			if codec == nil {
-				call.Error = ErrUnsupportedCodec
+				call.Error = ServiceError(ErrUnsupportedCodec.Error())
 			} else {
 				err = codec.Decode(data, call.Reply)
 				if err != nil {
-					call.Error = err
+					call.Error = ServiceError(err.Error())
 				}
 			}
 

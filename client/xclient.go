@@ -172,6 +172,19 @@ func (c *xClient) getCachedClient(k string) (*Client, error) {
 	return client, nil
 }
 
+func (c *xClient) removeClient(k string, client *Client) {
+	c.mu.Lock()
+	cl := c.cachedClient[k]
+	if cl == client {
+		delete(c.cachedClient, k)
+	}
+	c.mu.Unlock()
+
+	if client != nil {
+		client.Close()
+	}
+}
+
 func splitNetworkAndAddress(server string) (string, string) {
 	ss := strings.SplitN(server, "@", 2)
 	if len(ss) == 1 {
@@ -231,6 +244,10 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{},
 			if err == nil {
 				return nil
 			}
+			if _, ok := err.(ServiceError); !ok {
+				c.removeClient(k, client)
+			}
+
 			client, _ = c.getCachedClient(k)
 		}
 		return err
@@ -242,7 +259,9 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{},
 			if err == nil {
 				return nil
 			}
-
+			if _, ok := err.(ServiceError); !ok {
+				c.removeClient(k, client)
+			}
 			//select another server
 			k, client, _ = c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
 		}
@@ -250,7 +269,14 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{},
 		return err
 
 	default: //Failfast
-		return c.wrapCall(ctx, client, args, reply, metadata)
+		err = c.wrapCall(ctx, client, args, reply, metadata)
+		if err != nil {
+			if _, ok := err.(ServiceError); !ok {
+				c.removeClient(k, client)
+			}
+		}
+
+		return err
 	}
 }
 
