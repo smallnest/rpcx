@@ -51,6 +51,9 @@ func newRandomSelector(servers map[string]string) Selector {
 
 func (s randomSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
 	ss := s.servers
+	if len(ss) == 0 {
+		return ""
+	}
 	i := s.r.Intn(len(ss))
 	return ss[i]
 }
@@ -81,6 +84,10 @@ func newRoundRobinSelector(servers map[string]string) Selector {
 
 func (s roundRobinSelector) Select(ctx context.Context, servicePath, serviceMethod string) string {
 	ss := s.servers
+	if len(ss) == 0 {
+		return ""
+	}
+
 	i := s.i
 	i = i % len(ss)
 	s.i = i + 1
@@ -238,6 +245,9 @@ func newConsistentHashSelector(servers map[string]string) Selector {
 
 func (s consistentHashSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
 	ss := s.servers
+	if len(ss) == 0 {
+		return ""
+	}
 	i := JumpConsistentHash(len(ss), servicePath, serviceMethod, args)
 	return ss[i]
 }

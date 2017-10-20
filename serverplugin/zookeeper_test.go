@@ -18,7 +18,6 @@ func TestZookeeperRegistry(t *testing.T) {
 		ZooKeeperServers: []string{"127.0.0.1:2181"},
 		BasePath:         "/rpcx_test",
 		Metrics:          metrics.NewRegistry(),
-		Services:         make([]string, 1),
 		UpdateInterval:   time.Minute,
 	}
 	err := r.Start()

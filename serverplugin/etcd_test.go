@@ -18,7 +18,6 @@ func TestEtcdRegistry(t *testing.T) {
 		EtcdServers:    []string{"127.0.0.1:2379"},
 		BasePath:       "/rpcx_test",
 		Metrics:        metrics.NewRegistry(),
-		Services:       make([]string, 1),
 		UpdateInterval: time.Minute,
 	}
 	err := r.Start()

@@ -94,7 +94,7 @@ func (p *EtcdRegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
 
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
-func (p *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata ...string) (err error) {
+func (p *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata string) (err error) {
 	if "" == strings.TrimSpace(name) {
 		err = errors.New("Register service `name` can't be empty")
 		return

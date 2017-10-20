@@ -253,7 +253,11 @@ func (s *Server) serveConn(conn net.Conn) {
 
 		req, err := s.readRequest(ctx, r)
 		if err != nil {
-			log.Errorf("rpcx: failed to read request: %v", err)
+			if err == io.EOF {
+				log.Infof("client has closed this connection: %s", conn.RemoteAddr().String())
+			} else {
+				log.Errorf("rpcx: failed to read request: %v", err)
+			}
 			return
 		}
 
