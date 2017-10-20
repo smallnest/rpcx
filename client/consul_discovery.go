@@ -3,11 +3,12 @@
 package client
 
 import (
+	"strings"
 	"time"
 
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
-	"github.com/docker/libkv/store/etcd"
+	"github.com/docker/libkv/store/consul"
 	"github.com/smallnest/rpcx/log"
 )
 
@@ -22,7 +23,7 @@ type ConsulDiscovery struct {
 
 // NewConsulDiscovery returns a new ConsulDiscovery.
 func NewConsulDiscovery(basePath string, consulAddr []string) ServiceDiscovery {
-	etcd.Register()
+	consul.Register()
 	kv, err := libkv.NewStore(store.CONSUL, consulAddr, nil)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
@@ -42,8 +43,10 @@ func NewConsulDiscovery(basePath string, consulAddr []string) ServiceDiscovery {
 	}
 
 	var pairs []*KVPair
+	prefix := d.basePath + "/"
 	for _, p := range ps {
-		pairs = append(pairs, &KVPair{Key: p.Key, Value: string(p.Value)})
+		k := strings.TrimPrefix(p.Key, prefix)
+		pairs = append(pairs, &KVPair{Key: k, Value: string(p.Value)})
 	}
 	d.pairs = pairs
 	return d

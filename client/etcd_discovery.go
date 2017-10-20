@@ -3,6 +3,7 @@
 package client
 
 import (
+	"strings"
 	"time"
 
 	"github.com/docker/libkv"
@@ -29,9 +30,6 @@ func NewEtcdDiscovery(basePath string, etcdAddr []string) ServiceDiscovery {
 		panic(err)
 	}
 
-	if basePath[0] == '/' {
-		basePath = basePath[1:]
-	}
 	d := &EtcdDiscovery{basePath: basePath, kv: kv}
 	go d.watch()
 
@@ -42,8 +40,10 @@ func NewEtcdDiscovery(basePath string, etcdAddr []string) ServiceDiscovery {
 	}
 
 	var pairs []*KVPair
+	prefix := d.basePath + "/"
 	for _, p := range ps {
-		pairs = append(pairs, &KVPair{Key: p.Key, Value: string(p.Value)})
+		k := strings.TrimPrefix(p.Key, prefix)
+		pairs = append(pairs, &KVPair{Key: k, Value: string(p.Value)})
 	}
 	d.pairs = pairs
 	return d
@@ -70,8 +70,10 @@ func (d EtcdDiscovery) watch() {
 
 	for ps := range c {
 		var pairs []*KVPair // latest servers
+		prefix := d.basePath + "/"
 		for _, p := range ps {
-			pairs = append(pairs, &KVPair{Key: p.Key, Value: string(p.Value)})
+			k := strings.TrimPrefix(p.Key, prefix)
+			pairs = append(pairs, &KVPair{Key: k, Value: string(p.Value)})
 		}
 		d.pairs = pairs
 
