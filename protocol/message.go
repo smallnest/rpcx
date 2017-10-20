@@ -313,3 +313,30 @@ func Read(r io.Reader) (*Message, error) {
 
 	return msg, err
 }
+
+// Decode decodes a message from reader.
+func (m *Message) Decode(r io.Reader) error {
+
+	_, err := io.ReadFull(r, m.Header[:])
+	if err != nil {
+		return err
+	}
+
+	lenData := make([]byte, 4)
+	m.Metadata, err = decodeMetadata(lenData, r)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.ReadFull(r, lenData)
+	if err != nil {
+		return err
+	}
+	l := binary.BigEndian.Uint32(lenData)
+
+	m.Payload = make([]byte, l)
+
+	_, err = io.ReadFull(r, m.Payload)
+
+	return err
+}

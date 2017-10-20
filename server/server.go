@@ -278,7 +278,9 @@ func (s *Server) serveConn(conn net.Conn) {
 
 func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Message, err error) {
 	s.Plugins.DoPreReadRequest(ctx)
-	req, err = protocol.Read(r)
+	// pool req?
+	req = protocol.NewMessage()
+	err = req.Decode(r)
 	s.Plugins.DoPostReadRequest(ctx, req, err)
 
 	if s.AuthFunc != nil && err == nil {
@@ -290,7 +292,9 @@ func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Me
 }
 
 func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res *protocol.Message, err error) {
+	// pool res?
 	res = req.Clone()
+
 	res.SetMessageType(protocol.Response)
 
 	serviceName := req.Metadata[protocol.ServicePath]
