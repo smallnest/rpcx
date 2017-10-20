@@ -19,6 +19,7 @@ import (
 
 // DefaultOption is a common option configuration for client.
 var DefaultOption = Option{
+	Retries:        3,
 	RPCPath:        share.DefaultRPCPath,
 	ConnectTimeout: 10 * time.Second,
 	Breaker:        CircuitBreaker,
@@ -68,6 +69,9 @@ type Client struct {
 
 // Option contains all options for creating clients.
 type Option struct {
+	// Retries retries to send
+	Retries int
+
 	// TLSConfig for tcp and quic
 	TLSConfig *tls.Config
 	// kcp.BlockCrypt

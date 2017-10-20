@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 	"sync"
@@ -18,11 +17,17 @@ var (
 	ErrXClientShutdown = errors.New("xClient is shut down")
 	// ErrXClientNoServer selector can't found one server.
 	ErrXClientNoServer = errors.New("can not found any server")
+	// ErrServerUnavailable selected server is unavailable.
+	ErrServerUnavailable = errors.New("selected server is unavilable")
 )
 
 // XClient is an interface that used by client with service discovery and service governance.
 // One XClient is used only for one service. You should create multiple XClient for multiple services.
 type XClient interface {
+	SetPlugins(plugins PluginContainer)
+	SetGeoSelector(latitude, longitude float64)
+	Auth(auth string)
+
 	Go(ctx context.Context, args interface{}, reply interface{}, metadata map[string]string, done chan *Call) (*Call, error)
 	Call(ctx context.Context, args interface{}, reply interface{}, metadata map[string]string) error
 	Broadcast(ctx context.Context, args interface{}, reply interface{}, metadata map[string]string) error
@@ -43,7 +48,6 @@ type ServiceDiscovery interface {
 }
 
 type xClient struct {
-	Retries       int
 	failMode      FailMode
 	selectMode    SelectMode
 	cachedClient  map[string]*Client
@@ -67,7 +71,6 @@ type xClient struct {
 // NewXClient creates a XClient that supports service discovery and service governance.
 func NewXClient(servicePath, serviceMethod string, failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery, option Option) XClient {
 	client := &xClient{
-		Retries:       3,
 		failMode:      failMode,
 		selectMode:    selectMode,
 		discovery:     discovery,
@@ -97,6 +100,11 @@ func NewXClient(servicePath, serviceMethod string, failMode FailMode, selectMode
 }
 
 // SetGeoSelector sets GeoSelector with client's latitude and longitude.
+func (c *xClient) SetPlugins(plugins PluginContainer) {
+	c.Plugins = plugins
+}
+
+// SetGeoSelector sets GeoSelector with client's latitude and longitude.
 func (c *xClient) SetGeoSelector(latitude, longitude float64) {
 	c.selector = newGeoSelector(c.servers, latitude, longitude)
 }
@@ -122,22 +130,17 @@ func (c *xClient) watch(ch chan []*KVPair) {
 }
 
 // selects a client from candidates base on c.selectMode
-func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (*Client, error) {
+func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, *Client, error) {
 	k := c.selector.Select(ctx, servicePath, serviceMethod, args)
 	if k == "" {
-		return nil, ErrXClientNoServer
+		return "", nil, ErrXClientNoServer
 	}
 
-	return c.getCachedClient(k)
+	client, err := c.getCachedClient(k)
+	return k, client, err
 }
 
 func (c *xClient) getCachedClient(k string) (*Client, error) {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("Recovered in f", r)
-		}
-	}()
-
 	c.mu.RLock()
 	client := c.cachedClient[k]
 	if client != nil {
@@ -192,7 +195,7 @@ func (c *xClient) Go(ctx context.Context, args interface{}, reply interface{}, m
 		metadata[share.AuthKey] = c.auth
 	}
 
-	client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
+	_, client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
 	if err != nil {
 		return nil, err
 	}
@@ -214,24 +217,25 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{},
 	}
 
 	var err error
-	client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
-	if err != nil {
+	k, client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
+	if err != nil && c.failMode == Failfast {
 		return err
 	}
 
 	switch c.failMode {
 	case Failtry:
-		retries := c.Retries
+		retries := c.option.Retries
 		for retries > 0 {
 			retries--
 			err = c.wrapCall(ctx, client, args, reply, metadata)
 			if err == nil {
 				return nil
 			}
+			client, err = c.getCachedClient(k)
 		}
 		return err
 	case Failover:
-		retries := c.Retries
+		retries := c.option.Retries
 		for retries > 0 {
 			retries--
 			err = c.wrapCall(ctx, client, args, reply, metadata)
@@ -240,11 +244,9 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{},
 			}
 
 			//select another server
-			client, err = c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
-			if err != nil {
-				return err
-			}
+			k, client, err = c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
 		}
+
 		return err
 
 	default: //Failfast
@@ -253,6 +255,9 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{},
 }
 
 func (c *xClient) wrapCall(ctx context.Context, client *Client, args interface{}, reply interface{}, metadata map[string]string) error {
+	if client == nil {
+		return ErrServerUnavailable
+	}
 	c.Plugins.DoPreCall(ctx, c.servicePath, c.serviceMethod, args, metadata)
 	err := client.call(ctx, c.servicePath, c.serviceMethod, args, reply, metadata)
 	c.Plugins.DoPostCall(ctx, c.servicePath, c.serviceMethod, args, reply, metadata, err)
