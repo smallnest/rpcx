@@ -243,7 +243,7 @@ func (s *Server) serveConn(conn net.Conn) {
 
 	ctx := context.WithValue(context.Background(), RemoteConnContextKey, conn)
 	r := bufio.NewReaderSize(conn, ReaderBuffsize)
-	w := bufio.NewWriterSize(conn, WriterBuffsize)
+	//w := bufio.NewWriterSize(conn, WriterBuffsize)
 
 	for {
 		t0 := time.Now()
@@ -272,8 +272,7 @@ func (s *Server) serveConn(conn net.Conn) {
 			}
 			s.Plugins.DoPreWriteResponse(ctx, req)
 			if !req.IsOneway() {
-				res.WriteTo(w)
-				w.Flush()
+				res.WriteTo(conn)
 			}
 			s.Plugins.DoPostWriteResponse(ctx, req, res, err)
 		}()
