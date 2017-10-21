@@ -58,8 +58,8 @@ func (p *MetricsPlugin) PreReadRequest(ctx context.Context) error {
 
 // PostReadRequest counts read
 func (p *MetricsPlugin) PostReadRequest(ctx context.Context, r *protocol.Message, e error) error {
-	sp := r.Metadata[protocol.ServicePath]
-	sm := r.Metadata[protocol.ServiceMethod]
+	sp := r.ServicePath
+	sm := r.ServiceMethod
 
 	m := metrics.GetOrRegisterMeter(p.withPrefix("service_"+sp+"."+sm+"_Read_Qps"), p.Registry)
 	m.Mark(1)
@@ -68,8 +68,8 @@ func (p *MetricsPlugin) PostReadRequest(ctx context.Context, r *protocol.Message
 
 // PostWriteResponse count write
 func (p *MetricsPlugin) PostWriteResponse(ctx context.Context, req *protocol.Message, res *protocol.Message, e error) error {
-	sp := res.Metadata[protocol.ServicePath]
-	sm := res.Metadata[protocol.ServiceMethod]
+	sp := res.ServicePath
+	sm := res.ServiceMethod
 
 	m := metrics.GetOrRegisterMeter(p.withPrefix("service_"+sp+"."+sm+"_Write_Qps"), p.Registry)
 	m.Mark(1)

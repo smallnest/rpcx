@@ -23,10 +23,6 @@ var (
 )
 
 const (
-	// ServicePath is service name
-	ServicePath = "__rpcx_path__"
-	// ServiceMethod is name of the service
-	ServiceMethod = "__rpcx_method__"
 	// ServiceError contains error info of service invocation
 	ServiceError = "__rpcx_error__"
 )
@@ -78,8 +74,11 @@ const (
 // Message is the generic type of Request and Response.
 type Message struct {
 	*Header
-	Metadata map[string]string
-	Payload  []byte
+	ServicePath   string
+	ServiceMethod string
+	metaBytes     []byte
+	Metadata      map[string]string
+	Payload       []byte
 }
 
 // NewMessage creates an empty message.
@@ -88,8 +87,7 @@ func NewMessage() *Message {
 	header[0] = magicNumber
 
 	return &Message{
-		Header:   &header,
-		Metadata: make(map[string]string),
+		Header: &header,
 	}
 }
 
@@ -196,8 +194,9 @@ func (h *Header) SetSeq(seq uint64) {
 func (m Message) Clone() *Message {
 	header := *m.Header
 	c := &Message{
-		Header:   &header,
-		Metadata: make(map[string]string),
+		Header:        &header,
+		ServicePath:   m.ServicePath,
+		ServiceMethod: m.ServiceMethod,
 	}
 	return c
 }
@@ -206,14 +205,27 @@ func (m Message) Clone() *Message {
 func (m Message) Encode() []byte {
 	meta := encodeMetadata(m.Metadata)
 
-	l := 12 + (4 + len(meta)) + (4 + len(m.Payload))
+	spL := len(m.ServicePath)
+	spM := len(m.ServiceMethod)
+
+	metaStart := 12 + (4 + spL) + (4 + spM)
+	payLoadStart := metaStart + (4 + len(meta))
+	l := payLoadStart + (4 + len(m.Payload))
 
 	data := make([]byte, l)
 	copy(data, m.Header[:])
-	binary.BigEndian.PutUint32(data[12:16], uint32(len(meta)))
-	copy(data[12:], meta)
-	binary.BigEndian.PutUint32(data[16+len(meta):], uint32(len(m.Payload)))
-	copy(data[20+len(meta):], m.Payload)
+
+	binary.BigEndian.PutUint32(data[12:16], uint32(spL))
+	copy(data[16:16+spL], util.StringToSliceByte(m.ServicePath))
+
+	binary.BigEndian.PutUint32(data[16+spL:20+spL], uint32(spM))
+	copy(data[20+spL:metaStart], util.StringToSliceByte(m.ServiceMethod))
+
+	binary.BigEndian.PutUint32(data[metaStart:metaStart+4], uint32(len(meta)))
+	copy(data[metaStart+4:], meta)
+
+	binary.BigEndian.PutUint32(data[payLoadStart:payLoadStart+4], uint32(len(m.Payload)))
+	copy(data[payLoadStart+4:], m.Payload)
 
 	return data
 }
@@ -225,17 +237,36 @@ func (m Message) WriteTo(w io.Writer) error {
 		return err
 	}
 
+	//write servicePath and serviceMethod
+	err = binary.Write(w, binary.BigEndian, uint32(len(m.ServicePath)))
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(util.StringToSliceByte(m.ServicePath))
+	if err != nil {
+		return err
+	}
+	err = binary.Write(w, binary.BigEndian, uint32(len(m.ServiceMethod)))
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(util.StringToSliceByte(m.ServiceMethod))
+	if err != nil {
+		return err
+	}
+
+	// write meta
 	meta := encodeMetadata(m.Metadata)
 	err = binary.Write(w, binary.BigEndian, uint32(len(meta)))
 	if err != nil {
 		return err
 	}
-
 	_, err = w.Write(meta)
 	if err != nil {
 		return err
 	}
 
+	//write payload
 	err = binary.Write(w, binary.BigEndian, uint32(len(m.Payload)))
 	if err != nil {
 		return err
@@ -245,95 +276,126 @@ func (m Message) WriteTo(w io.Writer) error {
 	return err
 }
 
+// len,string,len,string,......
 func encodeMetadata(m map[string]string) []byte {
-	var buf bytes.Buffer
-	for k, v := range m {
-		buf.WriteString(k)
-		buf.Write(lineSeparator)
-		buf.WriteString(v)
-		buf.Write(lineSeparator)
+	if len(m) == 0 {
+		return []byte{}
 	}
-
+	var buf bytes.Buffer
+	var d = make([]byte, 4)
+	for k, v := range m {
+		binary.BigEndian.PutUint32(d, uint32(len(k)))
+		buf.Write(d)
+		buf.Write(util.StringToSliceByte(k))
+		binary.BigEndian.PutUint32(d, uint32(len(v)))
+		buf.Write(d)
+		buf.Write(util.StringToSliceByte(v))
+	}
 	return buf.Bytes()
 }
 
-func decodeMetadata(lenData []byte, r io.Reader) (map[string]string, error) {
+func decodeMetadata(lenData []byte, r io.Reader) ([]byte, map[string]string, error) {
 	_, err := io.ReadFull(r, lenData)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	l := binary.BigEndian.Uint32(lenData)
-	m := make(map[string]string)
 	if l == 0 {
-		return m, nil
+		return nil, nil, nil
 	}
+
+	m := make(map[string]string, 10)
 
 	data := make([]byte, l)
 	_, err = io.ReadFull(r, data)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	meta := bytes.Split(data, lineSeparator)
+	n := uint32(0)
+	for n < l {
+		// parse one key and value
+		// key
+		sl := binary.BigEndian.Uint32(data[n : n+4])
+		n = n + 4
+		if n+sl > l-4 {
+			return nil, m, ErrMetaKVMissing
+		}
+		k := util.SliceByteToString(data[n : n+sl])
+		n = n + sl
 
-	// last element is empty
-	if len(meta)%2 != 1 {
-		return nil, ErrMetaKVMissing
+		// value
+		sl = binary.BigEndian.Uint32(data[n : n+4])
+		n = n + 4
+		if n+sl > l {
+			return nil, m, ErrMetaKVMissing
+		}
+		v := util.SliceByteToString(data[n : n+sl])
+		n = n + sl
+		m[k] = v
 	}
 
-	for i := 0; i < len(meta)-1; i = i + 2 {
-		m[util.SliceByteToString(meta[i])] = util.SliceByteToString(meta[i+1])
-	}
-	return m, nil
+	return data, m, nil
 }
 
 // Read reads a message from r.
 func Read(r io.Reader) (*Message, error) {
 	msg := NewMessage()
-	_, err := io.ReadFull(r, msg.Header[:])
+	err := msg.Decode(r)
 	if err != nil {
 		return nil, err
 	}
-
-	lenData := make([]byte, 4)
-	msg.Metadata, err = decodeMetadata(lenData, r)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = io.ReadFull(r, lenData)
-	if err != nil {
-		return nil, err
-	}
-	l := binary.BigEndian.Uint32(lenData)
-
-	msg.Payload = make([]byte, l)
-
-	_, err = io.ReadFull(r, msg.Payload)
-
-	return msg, err
+	return msg, nil
 }
 
 // Decode decodes a message from reader.
 func (m *Message) Decode(r io.Reader) error {
-
+	// parse header
 	_, err := io.ReadFull(r, m.Header[:])
 	if err != nil {
 		return err
 	}
 
+	// parse servicePath
 	lenData := make([]byte, 4)
-	m.Metadata, err = decodeMetadata(lenData, r)
-	if err != nil {
-		return err
-	}
 
 	_, err = io.ReadFull(r, lenData)
 	if err != nil {
 		return err
 	}
 	l := binary.BigEndian.Uint32(lenData)
+	sp := make([]byte, l)
+	_, err = io.ReadFull(r, sp)
+	if err != nil {
+		return err
+	}
+	m.ServicePath = util.SliceByteToString(sp)
 
+	// parse serviceMethod
+	_, err = io.ReadFull(r, lenData)
+	if err != nil {
+		return err
+	}
+	l = binary.BigEndian.Uint32(lenData)
+	sm := make([]byte, l)
+	_, err = io.ReadFull(r, sm)
+	if err != nil {
+		return err
+	}
+	m.ServiceMethod = util.SliceByteToString(sm)
+
+	// parse meta
+	m.metaBytes, m.Metadata, err = decodeMetadata(lenData, r)
+	if err != nil {
+		return err
+	}
+
+	// parse payload
+	_, err = io.ReadFull(r, lenData)
+	if err != nil {
+		return err
+	}
+	l = binary.BigEndian.Uint32(lenData)
 	m.Payload = make([]byte, l)
 
 	_, err = io.ReadFull(r, m.Payload)

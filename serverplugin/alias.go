@@ -41,14 +41,17 @@ func NewAliasPlugin() *AliasPlugin {
 
 // PostReadRequest converts the alias of this service.
 func (p *AliasPlugin) PostReadRequest(ctx context.Context, r *protocol.Message, e error) error {
-	var sp = r.Metadata[protocol.ServicePath]
-	var sm = r.Metadata[protocol.ServiceMethod]
+	var sp = r.ServicePath
+	var sm = r.ServiceMethod
 
 	k := sp + "." + sm
 	if p.Aliases != nil {
 		if pm := p.Aliases[k]; pm != nil {
-			r.Metadata[protocol.ServicePath] = pm.servicePath
-			r.Metadata[protocol.ServiceMethod] = pm.serviceMethod
+			r.ServicePath = pm.servicePath
+			r.ServiceMethod = pm.serviceMethod
+			if r.Metadata == nil {
+				r.Metadata = make(map[string]string)
+			}
 			r.Metadata[aliasAppliedKey] = "true"
 		}
 	}
@@ -60,14 +63,14 @@ func (p *AliasPlugin) PreWriteResponse(ctx context.Context, r *protocol.Message)
 	if r.Metadata[aliasAppliedKey] != "true" {
 		return nil
 	}
-	var sp = r.Metadata[protocol.ServicePath]
-	var sm = r.Metadata[protocol.ServiceMethod]
+	var sp = r.ServicePath
+	var sm = r.ServiceMethod
 
 	k := sp + "." + sm
 	if p.ReseverseAliases != nil {
 		if pm := p.ReseverseAliases[k]; pm != nil {
-			r.Metadata[protocol.ServicePath] = pm.servicePath
-			r.Metadata[protocol.ServiceMethod] = pm.serviceMethod
+			r.ServicePath = pm.servicePath
+			r.ServiceMethod = pm.serviceMethod
 			delete(r.Metadata, aliasAppliedKey)
 		}
 	}

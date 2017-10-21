@@ -38,8 +38,8 @@ func TestHandleRequest(t *testing.T) {
 	req.SetSerializeType(protocol.JSON)
 	req.SetSeq(1234567890)
 
-	req.Metadata[protocol.ServicePath] = "Arith"
-	req.Metadata[protocol.ServiceMethod] = "Mul"
+	req.ServicePath = "Arith"
+	req.ServiceMethod = "Mul"
 
 	argv := &Args{
 		A: 10,

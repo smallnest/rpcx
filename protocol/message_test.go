@@ -18,7 +18,8 @@ func TestMessage(t *testing.T) {
 	req.SetSeq(1234567890)
 
 	m := make(map[string]string)
-	m["__METHOD"] = "Arith.Add"
+	req.ServicePath = "Arith"
+	req.ServiceMethod = "Add"
 	m["__ID"] = "6ba7b810-9dad-11d1-80b4-00c04fd430c9"
 	req.Metadata = m
 
@@ -34,7 +35,6 @@ func TestMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	res, err := Read(&buf)
 	if err != nil {
 		t.Fatal(err)
@@ -49,8 +49,8 @@ func TestMessage(t *testing.T) {
 		t.Errorf("expect 1234567890 but got %d", res.Seq())
 	}
 
-	if res.Metadata["__METHOD"] != "Arith.Add" && res.Metadata["__METHOD"] != "6ba7b810-9dad-11d1-80b4-00c04fd430c9" {
-		t.Errorf("got wrong meatadata: %v", res.Metadata)
+	if res.ServicePath != "Arith" || res.ServiceMethod != "Add" || res.Metadata["__ID"] != "6ba7b810-9dad-11d1-80b4-00c04fd430c9" {
+		t.Errorf("got wrong metadata: %v", res.Metadata)
 	}
 
 	if string(res.Payload) != payload {

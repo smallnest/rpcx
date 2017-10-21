@@ -223,8 +223,8 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		req.Metadata = call.Metadata
 	}
 
-	req.Metadata[protocol.ServicePath] = call.ServicePath
-	req.Metadata[protocol.ServiceMethod] = call.ServiceMethod
+	req.ServicePath = call.ServicePath
+	req.ServiceMethod = call.ServiceMethod
 
 	data, err := codec.Encode(call.Args)
 	if err != nil {
