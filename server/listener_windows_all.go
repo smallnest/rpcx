@@ -32,7 +32,7 @@ func (s *Server) makeListener(network, address string) (ln net.Listener, err err
 		ln, err = net.Listen(network, address)
 	case "quic":
 		if s.TLSConfig == nil {
-			return nil, errors.New("KCP BlockCrypt must be configured in server.Options")
+			return nil, errors.New("TLSConfig must be configured in server.Options")
 		}
 		ln, err = quicconn.Listen("udp", address, s.TLSConfig)
 	default: //tcp

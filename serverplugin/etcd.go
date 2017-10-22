@@ -31,13 +31,14 @@ type EtcdRegisterPlugin struct {
 	Services       []string
 	UpdateInterval time.Duration
 
-	kv store.Store
+	Options *store.Config
+	kv      store.Store
 }
 
 // Start starts to connect etcd cluster
 func (p *EtcdRegisterPlugin) Start() error {
 	etcd.Register()
-	kv, err := libkv.NewStore(store.ETCD, p.EtcdServers, nil)
+	kv, err := libkv.NewStore(store.ETCD, p.EtcdServers, p.Options)
 	if err != nil {
 		log.Errorf("cannot create etcd registry: %v", err)
 		return err

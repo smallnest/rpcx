@@ -22,9 +22,9 @@ type ConsulDiscovery struct {
 }
 
 // NewConsulDiscovery returns a new ConsulDiscovery.
-func NewConsulDiscovery(basePath string, consulAddr []string) ServiceDiscovery {
+func NewConsulDiscovery(basePath string, consulAddr []string, options *store.Config) ServiceDiscovery {
 	consul.Register()
-	kv, err := libkv.NewStore(store.CONSUL, consulAddr, nil)
+	kv, err := libkv.NewStore(store.CONSUL, consulAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
 		panic(err)

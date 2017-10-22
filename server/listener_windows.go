@@ -4,10 +4,8 @@
 package server
 
 import (
-	"errors"
+	"crypto/tls"
 	"net"
-
-	quicconn "github.com/marten-seemann/quic-conn"
 )
 
 // block can be nil if the caller wishes to skip encryption.
@@ -24,9 +22,10 @@ func (s *Server) makeListener(network, address string) (ln net.Listener, err err
 		ln, err = net.Listen(network, address)
 	default: //tcp
 		if s.TLSConfig == nil {
-			return nil, errors.New("KCP BlockCrypt must be configured in server.Options")
+			ln, err = net.Listen(network, address)
+		} else {
+			ln, err = tls.Listen(network, address, s.TLSConfig)
 		}
-		ln, err = quicconn.Listen("udp", address, s.TLSConfig)
 	}
 
 	return ln, err

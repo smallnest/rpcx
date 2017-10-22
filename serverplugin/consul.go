@@ -31,13 +31,14 @@ type ConsulRegisterPlugin struct {
 	Services       []string
 	UpdateInterval time.Duration
 
-	kv store.Store
+	Options *store.Config
+	kv      store.Store
 }
 
 // Start starts to connect consul cluster
 func (p *ConsulRegisterPlugin) Start() error {
 	consul.Register()
-	kv, err := libkv.NewStore(store.CONSUL, p.ConsulServers, nil)
+	kv, err := libkv.NewStore(store.CONSUL, p.ConsulServers, p.Options)
 	if err != nil {
 		log.Errorf("cannot create consul registry: %v", err)
 		return err

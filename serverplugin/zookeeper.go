@@ -32,13 +32,14 @@ type ZooKeeperRegisterPlugin struct {
 	Services       []string
 	UpdateInterval time.Duration
 
-	kv store.Store
+	Options *store.Config
+	kv      store.Store
 }
 
 // Start starts to connect zookeeper cluster
 func (p *ZooKeeperRegisterPlugin) Start() error {
 	zookeeper.Register()
-	kv, err := libkv.NewStore(store.ZK, p.ZooKeeperServers, nil)
+	kv, err := libkv.NewStore(store.ZK, p.ZooKeeperServers, p.Options)
 	if err != nil {
 		log.Errorf("cannot create zk registry: %v", err)
 		return err
