@@ -62,7 +62,9 @@ type Server struct {
 	inShutdown int32
 	onShutdown []func()
 
-	// BlockCrypt for kcp.BlockCrypt, QUICConfig for quic TlsConfig, etc.
+	// TLSConfig for creating tls tcp connection.
+	TLSConfig *tls.Config
+	// BlockCrypt for kcp.BlockCrypt
 	Options map[string]interface{}
 	// // use for KCP
 	// KCPConfig KCPConfig
@@ -81,16 +83,6 @@ func NewServer(options map[string]interface{}) *Server {
 		Plugins: &pluginContainer{},
 	}
 }
-
-// // KCPConfig is config of KCP.
-// type KCPConfig struct {
-// 	BlockCrypt kcp.BlockCrypt
-// }
-
-// // QUICConfig is config of QUIC.
-// type QUICConfig struct {
-// 	TlsConfig *tls.Config
-// }
 
 // Address returns listened address.
 func (s *Server) Address() net.Addr {

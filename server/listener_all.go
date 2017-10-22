@@ -32,12 +32,16 @@ func (s *Server) makeListener(network, address string) (ln net.Listener, err err
 
 		ln, err = reuseport.NewReusablePortListener(network, address)
 	case "quic":
-		if s.Options == nil || s.Options["QuicConfig"] == nil {
+		if s.TLSConfig == nil {
 			return nil, errors.New("KCP BlockCrypt must be configured in server.Options")
 		}
-		ln, err = quicconn.Listen("udp", address, s.Options["QuicConfig"].(*tls.Config))
+		ln, err = quicconn.Listen("udp", address, s.TLSConfig)
 	default: //tcp, http
-		ln, err = net.Listen(network, address)
+		if s.TLSConfig == nil {
+			ln, err = net.Listen(network, address)
+		} else {
+			ln, err = tls.Listen(network, address, s.TLSConfig)
+		}
 	}
 
 	return ln, err

@@ -1,9 +1,10 @@
 // +build windows
 // +build udp
 
-package rpcx
+package server
 
 import (
+	"crypto/tls"
 	"errors"
 	"net"
 
@@ -12,12 +13,12 @@ import (
 )
 
 // block can be nil if the caller wishes to skip encryption.
-// tlsConfig can be nil iff we are not using network "quic".
-func makeListener(network, address string) (ln net.Listener, err error) {
+// tlsConfig can be nil if we are not using network "quic".
+func (s *Server) makeListener(network, address string) (ln net.Listener, err error) {
 	switch network {
 	case "kcp":
 		if s.Options == nil || s.Options["BlockCrypt"] == nil {
-			return errors.New("KCP BlockCrypt must be configured in server.Options")
+			return nil, errors.New("KCP BlockCrypt must be configured in server.Options")
 		}
 
 		ln, err = kcp.ListenWithOptions(address, s.Options["BlockCrypt"].(kcp.BlockCrypt), 10, 3)
@@ -30,9 +31,16 @@ func makeListener(network, address string) (ln net.Listener, err error) {
 
 		ln, err = net.Listen(network, address)
 	case "quic":
-		ln, err = quicconn.Listen("udp", address, tlsConfig)
+		if s.TLSConfig == nil {
+			return nil, errors.New("KCP BlockCrypt must be configured in server.Options")
+		}
+		ln, err = quicconn.Listen("udp", address, s.TLSConfig)
 	default: //tcp
-		ln, err = net.Listen(network, address)
+		if s.TLSConfig == nil {
+			ln, err = net.Listen(network, address)
+		} else {
+			ln, err = tls.Listen(network, address, s.TLSConfig)
+		}
 	}
 
 	return ln, err
