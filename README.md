@@ -1,4 +1,4 @@
-<a href="https://rpcx.site/"><img height="80" src="http://rpcx.site/logos/rpcx-logo-text.png"></a>
+<a href="https://rpcx.site/"><img height="160" src="http://rpcx.site/logos/rpcx-logo-text.png"></a>
 
 Official site: [http://rpcx.site](http://rpcx.site/)
 
@@ -59,6 +59,7 @@ There is a UI manager: [rpcx-ui](https://github.com/smallnest/rpcx-ui).
 - protobuf
 - one machine for the client and the server
 - 581 bytes payload
+- 5000 concurrent clients
 
 **_Test Result_**
 
