@@ -258,6 +258,12 @@ func (s *Server) serveConn(conn net.Conn) {
 		}
 
 		go func() {
+			if req.IsHeartbeat() {
+				req.SetMessageType(protocol.Response)
+				data := req.Encode()
+				conn.Write(data)
+				return
+			}
 			res, err := s.handleRequest(ctx, req)
 			if err != nil {
 				log.Errorf("rpcx: failed to handle request: %v", err)

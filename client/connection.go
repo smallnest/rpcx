@@ -39,10 +39,15 @@ func (c *Client) Connect(network, address string) error {
 
 		c.Conn = conn
 		c.r = bufio.NewReaderSize(conn, ReaderBuffsize)
-		c.w = bufio.NewWriterSize(conn, WriterBuffsize)
+		//c.w = bufio.NewWriterSize(conn, WriterBuffsize)
 
 		// start reading and writing since connected
 		go c.input()
+
+		if c.option.Heartbeat && c.option.HeartbeatInterval > 0 {
+			go c.heartbeat()
+		}
+
 	}
 
 	return err
