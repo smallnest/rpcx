@@ -272,7 +272,9 @@ func (s *Server) serveConn(conn net.Conn) {
 			}
 			s.Plugins.DoPreWriteResponse(ctx, req)
 			if !req.IsOneway() {
-				res.WriteTo(conn)
+				data := res.Encode()
+				conn.Write(data)
+				//res.WriteTo(conn)
 			}
 			s.Plugins.DoPostWriteResponse(ctx, req, res, err)
 		}()
