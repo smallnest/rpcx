@@ -22,3 +22,8 @@ var (
 		protocol.MsgPack:       &codec.MsgpackCodec{},
 	}
 )
+
+// RegisterCodec register customized codec.
+func RegisterCodec(t protocol.SerializeType, c codec.Codec) {
+	Codecs[t] = c
+}
