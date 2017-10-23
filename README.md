@@ -32,7 +32,7 @@ It contains below features
 - Support raw Go functions,. No need to define proto files.
 - Pluggable. Features can be extended such as service discovery, tracing.
 - Support TCP, HTTP, [QUIC](https://en.wikipedia.org/wiki/QUIC) and [KCP](https://github.com/skywind3000/kcp)
-- Support multiple codecs such as JSON、[Protobuf](https://github.com/skywind3000/kcp)、[MessagePack].(https://msgpack.org/index.html) and raw bytes.
+- Support multiple codecs such as JSON、[Protobuf](https://github.com/skywind3000/kcp)、[MessagePack](https://msgpack.org/index.html) and raw bytes.
 - Service discovery. Support peer2peer, configured peers, [zookeeper](https://zookeeper.apache.org), [etcd](https://github.com/coreos/etcd) and [consul](https://www.consul.io).
 - Fault tolerance：Failover、Failfast、Failtry.
 - Load banlancing：support Random, RoundRobin, Consistent hashing, Weighted, network quality and Geography.
