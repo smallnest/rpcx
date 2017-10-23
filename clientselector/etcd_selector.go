@@ -261,13 +261,17 @@ func (s *EtcdClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, option
 
 	switch s.SelectMode {
 	case rpcx.RandomSelect:
-		s.currentServer = s.rnd.Intn(s.len)
-		server := s.Servers[s.currentServer]
+		servers := s.Servers
+		l := len(servers)
+		s.currentServer = s.rnd.Intn(l)
+		server := servers[s.currentServer]
 		return s.getCachedClient(server, clientCodecFunc)
 
 	case rpcx.RoundRobin:
-		s.currentServer = (s.currentServer + 1) % s.len //not use lock for performance so it is not precise even
-		server := s.Servers[s.currentServer]
+		servers := s.Servers
+		l := len(servers)
+		s.currentServer = (s.currentServer + 1) % l //not use lock for performance so it is not precise even
+		server := servers[s.currentServer]
 		return s.getCachedClient(server, clientCodecFunc)
 
 	case rpcx.ConsistentHash:
