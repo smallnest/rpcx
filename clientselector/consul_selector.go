@@ -179,14 +179,14 @@ func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, opti
 		l = int(fastrand.Uint32n(uint32(l)))
 		s.currentServer = l
 		server := servers[s.currentServer]
-		return s.getCachedClient(server, clientCodecFunc)
+		return s.getCachedClient(server.Address, clientCodecFunc)
 
 	case rpcx.RoundRobin:
 		servers := s.Servers
 		l := len(servers)
 		s.currentServer = (s.currentServer + 1) % l //not use lock for performance so it is not precise even
 		server := servers[s.currentServer]
-		return s.getCachedClient(server, clientCodecFunc)
+		return s.getCachedClient(server.Address, clientCodecFunc)
 
 	case rpcx.ConsistentHash:
 		if s.HashServiceAndArgs == nil {
