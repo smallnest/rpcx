@@ -16,8 +16,15 @@ install the basic features:
 If you want to use `quic/kcp`, `zookeeper`, `etcd`, `consul` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
 
 ```sh
-go get -u -v -tags "udp zookeeper etcd consul udp ping" github.com/smallnest/rpcx/...
+go get -u -v -tags "udp zookeeper etcd consul ping" github.com/smallnest/rpcx/...
 ```
+
+**_tags_**:
+- **udp**: support quic and kcp transport
+- **zookeeper**: support zookeeper register
+- **etcd**: support etcd register
+- **consul**: support consul register
+- **ping**: support network quality load balancing
 
 ## Features
 rpcx is a RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).
