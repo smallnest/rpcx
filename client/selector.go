@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/valyala/fastrand"
 )
 
 // Selector defines selector that selects one service from candidates.
@@ -35,7 +37,6 @@ func newSelector(selectMode SelectMode, servers map[string]string) Selector {
 // randomSelector selects randomly.
 type randomSelector struct {
 	servers []string
-	r       *rand.Rand
 }
 
 func newRandomSelector(servers map[string]string) Selector {
@@ -44,9 +45,7 @@ func newRandomSelector(servers map[string]string) Selector {
 		ss = append(ss, k)
 	}
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	return &randomSelector{servers: ss, r: r}
+	return &randomSelector{servers: ss}
 }
 
 func (s randomSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
@@ -54,7 +53,7 @@ func (s randomSelector) Select(ctx context.Context, servicePath, serviceMethod s
 	if len(ss) == 0 {
 		return ""
 	}
-	i := s.r.Intn(len(ss))
+	i := fastrand.Uint32n(uint32(len(ss)))
 	return ss[i]
 }
 
