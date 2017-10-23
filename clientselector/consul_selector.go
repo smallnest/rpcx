@@ -2,7 +2,6 @@ package clientselector
 
 import (
 	"errors"
-	"math/rand"
 	"net/url"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/hashicorp/consul/api"
 	"github.com/smallnest/rpcx"
 	"github.com/smallnest/rpcx/core"
+	"github.com/valyala/fastrand"
 )
 
 // ConsulClientSelector is used to select a rpc server from consul.
@@ -29,7 +29,6 @@ type ConsulClientSelector struct {
 	ServiceName        string
 	SelectMode         rpcx.SelectMode
 	dailTimeout        time.Duration
-	rnd                *rand.Rand
 	currentServer      int
 	len                int
 	HashServiceAndArgs HashServiceAndArgs
@@ -45,8 +44,7 @@ func NewConsulClientSelector(consulAddress string, serviceName string, sessionTi
 		clientAndServer: make(map[string]*core.Client),
 		sessionTimeout:  sessionTimeout,
 		SelectMode:      sm,
-		dailTimeout:     dailTimeout,
-		rnd:             rand.New(rand.NewSource(time.Now().UnixNano()))}
+		dailTimeout:     dailTimeout}
 
 	selector.start()
 	return selector
@@ -178,7 +176,8 @@ func (s *ConsulClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, opti
 	case rpcx.RandomSelect:
 		servers := s.Servers
 		l := len(servers)
-		s.currentServer = s.rnd.Intn(l)
+		l = int(fastrand.Uint32n(uint32(l)))
+		s.currentServer = l
 		server := servers[s.currentServer]
 		return s.getCachedClient(server, clientCodecFunc)
 

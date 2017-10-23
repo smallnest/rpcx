@@ -13,6 +13,7 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 	"github.com/smallnest/rpcx"
 	"github.com/smallnest/rpcx/core"
+	"github.com/valyala/fastrand"
 )
 
 // ZooKeeperClientSelector is used to select a rpc server from zookeeper.
@@ -256,7 +257,8 @@ func (s *ZooKeeperClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, o
 	case rpcx.RandomSelect:
 		servers := s.Servers
 		l := len(servers)
-		s.currentServer = s.rnd.Intn(l)
+		l = int(fastrand.Uint32n(uint32(l)))
+		s.currentServer = l
 		server := servers[s.currentServer]
 		return s.getCachedClient(server, clientCodecFunc)
 

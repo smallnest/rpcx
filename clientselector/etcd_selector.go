@@ -14,6 +14,7 @@ import (
 	"github.com/smallnest/rpcx"
 	"github.com/smallnest/rpcx/core"
 	"github.com/smallnest/rpcx/log"
+	"github.com/valyala/fastrand"
 	"golang.org/x/net/context"
 )
 
@@ -263,7 +264,8 @@ func (s *EtcdClientSelector) Select(clientCodecFunc rpcx.ClientCodecFunc, option
 	case rpcx.RandomSelect:
 		servers := s.Servers
 		l := len(servers)
-		s.currentServer = s.rnd.Intn(l)
+		l = int(fastrand.Uint32n(uint32(l)))
+		s.currentServer = l
 		server := servers[s.currentServer]
 		return s.getCachedClient(server, clientCodecFunc)
 
