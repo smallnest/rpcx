@@ -27,6 +27,7 @@ import "sync"
 
 var poolUint32Dada = sync.Pool{
 	New: func() interface{} {
-		return make([]byte, 4)
+		data := make([]byte, 4)
+		return &data
 	},
 }

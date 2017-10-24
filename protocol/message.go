@@ -351,6 +351,8 @@ func Read(r io.Reader) (*Message, error) {
 
 // Decode decodes a message from reader.
 func (m *Message) Decode(r io.Reader) error {
+	// TODO: validate
+
 	// parse header
 	_, err := io.ReadFull(r, m.Header[:])
 	if err != nil {
@@ -358,13 +360,13 @@ func (m *Message) Decode(r io.Reader) error {
 	}
 
 	//total
-	lenData := poolUint32Dada.Get().([]byte)
-	_, err = io.ReadFull(r, lenData)
+	lenData := poolUint32Dada.Get().(*[]byte)
+	_, err = io.ReadFull(r, *lenData)
 	if err != nil {
 		poolUint32Dada.Put(lenData)
 		return err
 	}
-	l := binary.BigEndian.Uint32(lenData)
+	l := binary.BigEndian.Uint32(*lenData)
 	poolUint32Dada.Put(lenData)
 	data := make([]byte, int(l))
 	_, err = io.ReadFull(r, data)
@@ -403,6 +405,7 @@ func (m *Message) Decode(r io.Reader) error {
 
 	// parse payload
 	l = binary.BigEndian.Uint32(data[n : n+4])
+	_ = l
 	n = n + 4
 	m.Payload = data[n:]
 

@@ -6,6 +6,7 @@ import (
 	"reflect"
 
 	proto "github.com/gogo/protobuf/proto"
+	pb "github.com/golang/protobuf/proto"
 	"github.com/vmihailenco/msgpack"
 )
 
@@ -55,6 +56,10 @@ func (c PBCodec) Encode(i interface{}) ([]byte, error) {
 		return m.Marshal()
 	}
 
+	if m, ok := i.(pb.Message); ok {
+		return pb.Marshal(m)
+	}
+
 	return nil, fmt.Errorf("%T is not a proto.Marshaler", i)
 }
 
@@ -62,6 +67,10 @@ func (c PBCodec) Encode(i interface{}) ([]byte, error) {
 func (c PBCodec) Decode(data []byte, i interface{}) error {
 	if m, ok := i.(proto.Unmarshaler); ok {
 		return m.Unmarshal(data)
+	}
+
+	if m, ok := i.(pb.Message); ok {
+		return pb.Unmarshal(data, m)
 	}
 
 	return fmt.Errorf("%T is not a proto.Unmarshaler", i)
