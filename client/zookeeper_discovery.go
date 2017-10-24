@@ -11,6 +11,10 @@ import (
 	"github.com/smallnest/rpcx/log"
 )
 
+func init() {
+	zookeeper.Register()
+}
+
 // ZookeeperDiscovery is a zoopkeer service discovery.
 // It always returns the registered servers in zookeeper.
 type ZookeeperDiscovery struct {
@@ -22,7 +26,6 @@ type ZookeeperDiscovery struct {
 
 // NewZookeeperDiscovery returns a new ZookeeperDiscovery.
 func NewZookeeperDiscovery(basePath string, zkAddr []string, options *store.Config) ServiceDiscovery {
-	zookeeper.Register()
 	kv, err := libkv.NewStore(store.ZK, zkAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)

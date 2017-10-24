@@ -12,6 +12,10 @@ import (
 	"github.com/smallnest/rpcx/log"
 )
 
+func init() {
+	etcd.Register()
+}
+
 // EtcdDiscovery is a etcd service discovery.
 // It always returns the registered servers in etcd.
 type EtcdDiscovery struct {
@@ -23,7 +27,6 @@ type EtcdDiscovery struct {
 
 // NewEtcdDiscovery returns a new EtcdDiscovery.
 func NewEtcdDiscovery(basePath string, etcdAddr []string, options *store.Config) ServiceDiscovery {
-	etcd.Register()
 	kv, err := libkv.NewStore(store.ETCD, etcdAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)

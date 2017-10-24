@@ -12,6 +12,10 @@ import (
 	"github.com/smallnest/rpcx/log"
 )
 
+func init() {
+	consul.Register()
+}
+
 // ConsulDiscovery is a consul service discovery.
 // It always returns the registered servers in consul.
 type ConsulDiscovery struct {
@@ -23,7 +27,6 @@ type ConsulDiscovery struct {
 
 // NewConsulDiscovery returns a new ConsulDiscovery.
 func NewConsulDiscovery(basePath string, consulAddr []string, options *store.Config) ServiceDiscovery {
-	consul.Register()
 	kv, err := libkv.NewStore(store.CONSUL, consulAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
