@@ -19,6 +19,10 @@ import (
 	"github.com/smallnest/rpcx/log"
 )
 
+func init() {
+	zookeeper.Register()
+}
+
 // ZooKeeperRegisterPlugin implements zookeeper registry.
 type ZooKeeperRegisterPlugin struct {
 	// service address, for example, tcp@127.0.0.1:8972, quic@127.0.0.1:1234
@@ -38,7 +42,6 @@ type ZooKeeperRegisterPlugin struct {
 
 // Start starts to connect zookeeper cluster
 func (p *ZooKeeperRegisterPlugin) Start() error {
-	zookeeper.Register()
 	kv, err := libkv.NewStore(store.ZK, p.ZooKeeperServers, p.Options)
 	if err != nil {
 		log.Errorf("cannot create zk registry: %v", err)

@@ -18,6 +18,10 @@ import (
 	"github.com/smallnest/rpcx/log"
 )
 
+func init() {
+	consul.Register()
+}
+
 // ConsulRegisterPlugin implements consul registry.
 type ConsulRegisterPlugin struct {
 	// service address, for example, tcp@127.0.0.1:8972, quic@127.0.0.1:1234
@@ -37,7 +41,6 @@ type ConsulRegisterPlugin struct {
 
 // Start starts to connect consul cluster
 func (p *ConsulRegisterPlugin) Start() error {
-	consul.Register()
 	kv, err := libkv.NewStore(store.CONSUL, p.ConsulServers, p.Options)
 	if err != nil {
 		log.Errorf("cannot create consul registry: %v", err)

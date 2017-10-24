@@ -18,6 +18,10 @@ import (
 	"github.com/smallnest/rpcx/log"
 )
 
+func init() {
+	etcd.Register()
+}
+
 // EtcdRegisterPlugin implements etcd registry.
 type EtcdRegisterPlugin struct {
 	// service address, for example, tcp@127.0.0.1:8972, quic@127.0.0.1:1234
@@ -37,7 +41,6 @@ type EtcdRegisterPlugin struct {
 
 // Start starts to connect etcd cluster
 func (p *EtcdRegisterPlugin) Start() error {
-	etcd.Register()
 	kv, err := libkv.NewStore(store.ETCD, p.EtcdServers, p.Options)
 	if err != nil {
 		log.Errorf("cannot create etcd registry: %v", err)
