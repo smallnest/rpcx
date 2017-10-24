@@ -1,39 +1,26 @@
-// +build etcd
-
 package client
 
 import (
 	"strings"
 	"time"
 
-	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
-	"github.com/docker/libkv/store/etcd"
 	"github.com/smallnest/rpcx/log"
 )
 
-func init() {
-	etcd.Register()
-}
-
-// EtcdDiscovery is a etcd service discovery.
+// LibkvDiscovery is a libkv service discovery.
 // It always returns the registered servers in etcd.
-type EtcdDiscovery struct {
+type LibkvDiscovery struct {
 	basePath string
 	kv       store.Store
 	pairs    []*KVPair
 	chans    []chan []*KVPair
 }
 
-// NewEtcdDiscovery returns a new EtcdDiscovery.
-func NewEtcdDiscovery(basePath string, etcdAddr []string, options *store.Config) ServiceDiscovery {
-	kv, err := libkv.NewStore(store.ETCD, etcdAddr, options)
-	if err != nil {
-		log.Infof("cannot create store: %v", err)
-		panic(err)
-	}
-
-	d := &EtcdDiscovery{basePath: basePath, kv: kv}
+// NewLibkvDiscovery returns a new LibkvDiscovery.
+// Must register the store before use it.
+func NewLibkvDiscovery(basePath string, kv store.Store) ServiceDiscovery {
+	d := &LibkvDiscovery{basePath: basePath, kv: kv}
 	go d.watch()
 
 	ps, err := kv.List(basePath)
@@ -53,18 +40,18 @@ func NewEtcdDiscovery(basePath string, etcdAddr []string, options *store.Config)
 }
 
 // GetServices returns the servers
-func (d EtcdDiscovery) GetServices() []*KVPair {
+func (d LibkvDiscovery) GetServices() []*KVPair {
 	return d.pairs
 }
 
 // WatchService returns a nil chan.
-func (d EtcdDiscovery) WatchService() chan []*KVPair {
+func (d LibkvDiscovery) WatchService() chan []*KVPair {
 	ch := make(chan []*KVPair, 10)
 	d.chans = append(d.chans, ch)
 	return ch
 }
 
-func (d EtcdDiscovery) watch() {
+func (d LibkvDiscovery) watch() {
 	c, err := d.kv.WatchTree(d.basePath, nil)
 	if err != nil {
 		log.Fatalf("can not watchtree: %s: %v", d.basePath, err)

@@ -52,7 +52,7 @@ func NewZookeeperDiscovery(basePath string, zkAddr []string, options *store.Conf
 	return d
 }
 
-// GetServices returns the static server
+// GetServices returns the servers
 func (d ZookeeperDiscovery) GetServices() []*KVPair {
 	return d.pairs
 }

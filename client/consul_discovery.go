@@ -55,7 +55,7 @@ func NewConsulDiscovery(basePath string, consulAddr []string, options *store.Con
 	return d
 }
 
-// GetServices returns the static server
+// GetServices returns the servers
 func (d ConsulDiscovery) GetServices() []*KVPair {
 	return d.pairs
 }
