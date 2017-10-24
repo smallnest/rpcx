@@ -33,6 +33,11 @@ func NewEtcdDiscovery(basePath string, etcdAddr []string, options *store.Config)
 		panic(err)
 	}
 
+	return NewEtcdDiscoveryStore(basePath, kv)
+}
+
+// NewEtcdDiscoveryStore return a new EtcdDiscovery with specified store.
+func NewEtcdDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	d := &EtcdDiscovery{basePath: basePath, kv: kv}
 	go d.watch()
 
