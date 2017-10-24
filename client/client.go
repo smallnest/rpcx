@@ -255,7 +255,8 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		req.Payload = data
 	}
 
-	err := req.WriteTo(client.Conn)
+	data := req.Encode()
+	_, err := client.Conn.Write(data)
 	if err != nil {
 		client.mutex.Lock()
 		call = client.pending[seq]
