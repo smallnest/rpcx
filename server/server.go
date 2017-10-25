@@ -86,6 +86,8 @@ func NewServer(options map[string]interface{}) *Server {
 
 // Address returns listened address.
 func (s *Server) Address() net.Addr {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	if s.ln == nil {
 		return nil
 	}
@@ -251,8 +253,10 @@ func (s *Server) serveConn(conn net.Conn) {
 		if err != nil {
 			if err == io.EOF {
 				log.Infof("client has closed this connection: %s", conn.RemoteAddr().String())
+			} else if strings.Contains(err.Error(), "use of closed network connection") {
+				log.Infof("rpcx: connection %s is closed", conn.RemoteAddr().String())
 			} else {
-				log.Errorf("rpcx: failed to read request: %v", err)
+				log.Warnf("rpcx: failed to read request: %v", err)
 			}
 			return
 		}
@@ -270,7 +274,7 @@ func (s *Server) serveConn(conn net.Conn) {
 			}
 			res, err := s.handleRequest(ctx, req)
 			if err != nil {
-				log.Errorf("rpcx: failed to handle request: %v", err)
+				log.Warnf("rpcx: failed to handle request: %v", err)
 			}
 			s.Plugins.DoPreWriteResponse(ctx, req)
 			if !req.IsOneway() {

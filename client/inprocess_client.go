@@ -12,6 +12,7 @@ import (
 // InprocessClient is a in-process client for test.
 var InprocessClient = &inprocessClient{
 	services: make(map[string]interface{}),
+	methods:  make(map[string]*reflect.Value),
 }
 
 // inprocessClient is a in-process client that call services in process not via TCP/UDP.
@@ -19,6 +20,9 @@ var InprocessClient = &inprocessClient{
 type inprocessClient struct {
 	services map[string]interface{}
 	sync.RWMutex
+
+	methods map[string]*reflect.Value
+	mmu     sync.RWMutex
 }
 
 // Connect do a fake operaton.
@@ -73,10 +77,25 @@ func (client *inprocessClient) Call(ctx context.Context, servicePath, serviceMet
 		return fmt.Errorf("service %s not found", servicePath)
 	}
 
-	v := reflect.ValueOf(service)
-	mv := v.MethodByName(serviceMethod)
-	if mv == (reflect.Value{}) {
-		return fmt.Errorf("method %s.%s not found", servicePath, serviceMethod)
+	key := servicePath + "." + serviceMethod
+	client.mmu.RLock()
+	var mv = &reflect.Value{}
+	mv = client.methods[key]
+	client.mmu.RUnlock()
+
+	if mv == nil {
+		client.mmu.Lock()
+		mv = client.methods[key]
+		if mv == nil {
+			v := reflect.ValueOf(service)
+			t := v.MethodByName(serviceMethod)
+			if t == (reflect.Value{}) {
+				client.mmu.Unlock()
+				return fmt.Errorf("method %s.%s not found", servicePath, serviceMethod)
+			}
+			mv = &t
+		}
+		client.mmu.Unlock()
 	}
 
 	argv := reflect.ValueOf(args)
