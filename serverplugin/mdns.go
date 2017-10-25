@@ -31,6 +31,22 @@ type MDNSRegisterPlugin struct {
 	UpdateInterval time.Duration
 
 	server *zeroconf.Server
+	domain string
+}
+
+// NewMDNSRegisterPlugin return a new MDNSRegisterPlugin.
+// If domain is empty, use "local." in default.
+func NewMDNSRegisterPlugin(serviceAddress string, port int, m metrics.Registry, updateInterval time.Duration, domain string) *MDNSRegisterPlugin {
+	if domain == "" {
+		domain = "local."
+	}
+	return &MDNSRegisterPlugin{
+		ServiceAddress: serviceAddress,
+		port:           port,
+		Metrics:        m,
+		UpdateInterval: updateInterval,
+		domain:         domain,
+	}
 }
 
 // Start starts to connect etcd cluster
@@ -53,7 +69,7 @@ func (p *MDNSRegisterPlugin) Start() error {
 		panic(err)
 	}
 
-	server, err := zeroconf.Register(host, "_rpcxservices", "local.", p.port, []string{s}, nil)
+	server, err := zeroconf.Register(host, "_rpcxservices", p.domain, p.port, []string{s}, nil)
 	if err != nil {
 		panic(err)
 	}

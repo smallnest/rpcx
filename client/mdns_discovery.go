@@ -21,14 +21,24 @@ type serviceMeta struct {
 type MDNSDiscovery struct {
 	Timeout       time.Duration
 	WatchInterval time.Duration
+	domain        string
 	service       string
 	pairs         []*KVPair
 	chans         []chan []*KVPair
 }
 
 // NewMDNSDiscovery returns a new MDNSDiscovery.
-func NewMDNSDiscovery(service string, timeout time.Duration, watchInterval time.Duration) ServiceDiscovery {
-	d := &MDNSDiscovery{service: service, Timeout: timeout, WatchInterval: watchInterval}
+// If domain is empty, use "local." in default.
+func NewMDNSDiscovery(service string, timeout time.Duration, watchInterval time.Duration, domain string) ServiceDiscovery {
+	if domain == "" {
+		domain = "local."
+	}
+	d := &MDNSDiscovery{service: service, Timeout: timeout, WatchInterval: watchInterval, domain: domain}
+	var err error
+	d.pairs, err = d.browse()
+	if err != nil {
+		log.Warnf("failed to browse services")
+	}
 	go d.watch()
 	return d
 }
@@ -48,7 +58,7 @@ func (d MDNSDiscovery) WatchService() chan []*KVPair {
 func (d MDNSDiscovery) watch() {
 	t := time.NewTicker(d.WatchInterval)
 	for range t.C {
-		pairs, err := browse()
+		pairs, err := d.browse()
 		if err == nil {
 			d.pairs = pairs
 			for _, ch := range d.chans {
@@ -65,7 +75,7 @@ func (d MDNSDiscovery) watch() {
 	}
 }
 
-func browse() ([]*KVPair, error) {
+func (d MDNSDiscovery) browse() ([]*KVPair, error) {
 	resolver, err := zeroconf.NewResolver(nil)
 	if err != nil {
 		log.Warnf("Failed to initialize resolver: %v", err)
@@ -73,9 +83,9 @@ func browse() ([]*KVPair, error) {
 	}
 	entries := make(chan *zeroconf.ServiceEntry)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), d.Timeout)
 	defer cancel()
-	err = resolver.Browse(ctx, "_rpcxservices", "local.", entries)
+	err = resolver.Browse(ctx, "_rpcxservices", d.domain, entries)
 	if err != nil {
 		log.Warnf("Failed to browse: %v", err)
 	}
@@ -98,6 +108,5 @@ func browse() ([]*KVPair, error) {
 			})
 		}
 	}
-
 	return totalServices, nil
 }
