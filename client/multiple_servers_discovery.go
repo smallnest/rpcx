@@ -26,14 +26,14 @@ func (d MultipleServersDiscovery) GetServices() []*KVPair {
 }
 
 // WatchService returns a nil chan.
-func (d MultipleServersDiscovery) WatchService() chan []*KVPair {
+func (d *MultipleServersDiscovery) WatchService() chan []*KVPair {
 	ch := make(chan []*KVPair, 10)
 	d.chans = append(d.chans, ch)
 	return ch
 }
 
 // Update is used to update servers at runtime.
-func (d MultipleServersDiscovery) Update(pairs []*KVPair) {
+func (d *MultipleServersDiscovery) Update(pairs []*KVPair) {
 	for _, ch := range d.chans {
 		ch := ch
 		go func() {

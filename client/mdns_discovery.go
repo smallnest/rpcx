@@ -49,13 +49,13 @@ func (d MDNSDiscovery) GetServices() []*KVPair {
 }
 
 // WatchService returns a nil chan.
-func (d MDNSDiscovery) WatchService() chan []*KVPair {
+func (d *MDNSDiscovery) WatchService() chan []*KVPair {
 	ch := make(chan []*KVPair, 10)
 	d.chans = append(d.chans, ch)
 	return ch
 }
 
-func (d MDNSDiscovery) watch() {
+func (d *MDNSDiscovery) watch() {
 	t := time.NewTicker(d.WatchInterval)
 	for range t.C {
 		pairs, err := d.browse()
@@ -75,7 +75,7 @@ func (d MDNSDiscovery) watch() {
 	}
 }
 
-func (d MDNSDiscovery) browse() ([]*KVPair, error) {
+func (d *MDNSDiscovery) browse() ([]*KVPair, error) {
 	resolver, err := zeroconf.NewResolver(nil)
 	if err != nil {
 		log.Warnf("Failed to initialize resolver: %v", err)

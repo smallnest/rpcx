@@ -63,13 +63,13 @@ func (d EtcdDiscovery) GetServices() []*KVPair {
 }
 
 // WatchService returns a nil chan.
-func (d EtcdDiscovery) WatchService() chan []*KVPair {
+func (d *EtcdDiscovery) WatchService() chan []*KVPair {
 	ch := make(chan []*KVPair, 10)
 	d.chans = append(d.chans, ch)
 	return ch
 }
 
-func (d EtcdDiscovery) watch() {
+func (d *EtcdDiscovery) watch() {
 	c, err := d.kv.WatchTree(d.basePath, nil)
 	if err != nil {
 		log.Fatalf("can not watchtree: %s: %v", d.basePath, err)

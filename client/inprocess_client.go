@@ -58,9 +58,9 @@ func (client *inprocessClient) Go(ctx context.Context, servicePath, serviceMetho
 // Call calls a service synchronously.
 func (client *inprocessClient) Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, metadata map[string]string) (err error) {
 	defer func() {
-		if err := recover(); err != nil {
+		if e := recover(); e != nil {
 			var ok bool
-			if err, ok = err.(error); ok {
+			if err, ok = e.(error); ok {
 				err = fmt.Errorf("failed to call %s.%s because of %v", servicePath, serviceMethod, err)
 			}
 		}
