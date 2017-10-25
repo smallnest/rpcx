@@ -286,13 +286,14 @@ func (s *Server) serveConn(conn net.Conn) {
 				if len(resMetadata) > 0 { //copy meta in context to request
 					meta := res.Metadata
 					if meta == nil {
-						meta = make(map[string]string)
+						res.Metadata = resMetadata
+					} else {
+						for k, v := range resMetadata {
+							meta[k] = v
+						}
 					}
-					for k, v := range resMetadata {
-						meta[k] = v
-					}
-					res.Metadata = meta
 				}
+
 				data := res.Encode()
 				conn.Write(data)
 				//res.WriteTo(conn)

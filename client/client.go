@@ -158,11 +158,12 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 	if meta != nil { //copy meta in context to meta in requests
 		metaMap := meta.(map[string]string)
 		if metadata == nil {
-			call.Metadata = metadata
+			call.Metadata = metaMap
 		} else {
 			for k, v := range metaMap {
 				metadata[k] = v
 			}
+
 		}
 	}
 	call.Args = args
@@ -261,7 +262,6 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	req := protocol.NewMessage()
 	req.SetMessageType(protocol.Request)
 	req.SetSeq(seq)
-
 	// heartbeat
 	if call.ServicePath == "" && call.ServiceMethod == "" {
 		req.SetHeartbeat(true)
