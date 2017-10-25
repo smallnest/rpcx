@@ -97,8 +97,8 @@ func (p *pluginContainer) All() []Plugin {
 // DoRegister invokes DoRegister plugin.
 func (p *pluginContainer) DoRegister(name string, rcvr interface{}, metadata string) error {
 	var es []error
-	for i := range p.plugins {
-		if plugin, ok := p.plugins[i].(RegisterPlugin); ok {
+	for _, rp := range p.plugins {
+		if plugin, ok := rp.(RegisterPlugin); ok {
 			err := plugin.Register(name, rcvr, metadata)
 			if err != nil {
 				es = append(es, err)

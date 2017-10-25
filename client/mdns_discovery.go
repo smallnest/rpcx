@@ -11,9 +11,9 @@ import (
 )
 
 type serviceMeta struct {
-	Service        string
-	Meta           string
-	ServiceAddress string
+	Service        string `json:"service,omitempty"`
+	Meta           string `json:"meta,omitempty"`
+	ServiceAddress string `json:"service_address,omitempty"`
 }
 
 // MDNSDiscovery is a mdns service discovery.
@@ -37,7 +37,7 @@ func NewMDNSDiscovery(service string, timeout time.Duration, watchInterval time.
 	var err error
 	d.pairs, err = d.browse()
 	if err != nil {
-		log.Warnf("failed to browse services")
+		log.Warnf("failed to browse services: %v", err)
 	}
 	go d.watch()
 	return d
@@ -83,6 +83,30 @@ func (d MDNSDiscovery) browse() ([]*KVPair, error) {
 	}
 	entries := make(chan *zeroconf.ServiceEntry)
 
+	var totalServices []*KVPair
+	var services []*serviceMeta
+
+	done := make(chan struct{})
+	go func(results <-chan *zeroconf.ServiceEntry) {
+		for entry := range entries {
+			s, _ := url.QueryUnescape(entry.Text[0])
+			err := json.Unmarshal([]byte(s), &services)
+			if err != nil {
+				log.Warnf("Failed to browse: %v", err)
+				continue
+			}
+
+			for _, sm := range services {
+				totalServices = append(totalServices, &KVPair{
+					Key:   sm.ServiceAddress,
+					Value: sm.Meta,
+				})
+			}
+		}
+
+		close(done)
+	}(entries)
+
 	ctx, cancel := context.WithTimeout(context.Background(), d.Timeout)
 	defer cancel()
 	err = resolver.Browse(ctx, "_rpcxservices", d.domain, entries)
@@ -90,23 +114,6 @@ func (d MDNSDiscovery) browse() ([]*KVPair, error) {
 		log.Warnf("Failed to browse: %v", err)
 	}
 
-	var totalServices []*KVPair
-
-	var services []*serviceMeta
-	for entry := range entries {
-		s, _ := url.QueryUnescape(entry.Text[0])
-		err := json.Unmarshal([]byte(s), &services)
-		if err != nil {
-			log.Warnf("Failed to browse: %v", err)
-			continue
-		}
-
-		for _, sm := range services {
-			totalServices = append(totalServices, &KVPair{
-				Key:   sm.Service,
-				Value: sm.Meta,
-			})
-		}
-	}
+	<-done
 	return totalServices, nil
 }

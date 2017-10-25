@@ -15,9 +15,9 @@ import (
 )
 
 type serviceMeta struct {
-	Service        string
-	Meta           string
-	ServiceAddress string
+	Service        string `json:"service,omitempty"`
+	Meta           string `json:"meta,omitempty"`
+	ServiceAddress string `json:"service_address,omitempty"`
 }
 
 // MDNSRegisterPlugin implements mdns/dns-sd registry.
@@ -51,6 +51,41 @@ func NewMDNSRegisterPlugin(serviceAddress string, port int, m metrics.Registry, 
 
 // Start starts to connect etcd cluster
 func (p *MDNSRegisterPlugin) Start() error {
+
+	if p.server == nil && len(p.Services) != 0 {
+		p.initMDNS()
+	}
+
+	if p.UpdateInterval > 0 {
+		ticker := time.NewTicker(p.UpdateInterval)
+		go func() {
+			defer p.server.Shutdown()
+
+			// refresh service TTL
+			for range ticker.C {
+				if p.server == nil && len(p.Services) == 0 {
+					continue
+				}
+
+				clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
+				data := []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
+				//set this same metrics for all services at this server
+				for _, sm := range p.Services {
+					v, _ := url.ParseQuery(string(sm.Meta))
+					v.Set("tps", string(data))
+					sm.Meta = v.Encode()
+				}
+				ss, _ := json.Marshal(p.Services)
+				s := url.QueryEscape(string(ss))
+				p.server.SetText([]string{s})
+			}
+		}()
+	}
+
+	return nil
+}
+
+func (p *MDNSRegisterPlugin) initMDNS() {
 	data, _ := json.Marshal(p.Services)
 	s := url.QueryEscape(string(data))
 	host, _ := os.Hostname()
@@ -74,30 +109,6 @@ func (p *MDNSRegisterPlugin) Start() error {
 		panic(err)
 	}
 	p.server = server
-
-	if p.UpdateInterval > 0 {
-		ticker := time.NewTicker(p.UpdateInterval)
-		go func() {
-			p.server.Shutdown()
-
-			// refresh service TTL
-			for range ticker.C {
-				clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
-				data := []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
-				//set this same metrics for all services at this server
-				for _, sm := range p.Services {
-					v, _ := url.ParseQuery(string(sm.Meta))
-					v.Set("tps", string(data))
-					sm.Meta = v.Encode()
-				}
-				ss, _ := json.Marshal(p.Services)
-				s := url.QueryEscape(string(ss))
-				p.server.SetText([]string{s})
-			}
-		}()
-	}
-
-	return nil
 }
 
 // HandleConnAccept handles connections from clients
@@ -116,9 +127,6 @@ func (p *MDNSRegisterPlugin) Register(name string, rcvr interface{}, metadata st
 		err = errors.New("Register service `name` can't be empty")
 		return
 	}
-	if p.server == nil {
-		return errors.New("MDNSRegisterPlugin has not started")
-	}
 
 	sm := &serviceMeta{
 		Service:        name,
@@ -127,6 +135,12 @@ func (p *MDNSRegisterPlugin) Register(name string, rcvr interface{}, metadata st
 	}
 
 	p.Services = append(p.Services, sm)
+
+	if p.server == nil {
+		p.initMDNS()
+		return
+	}
+
 	ss, _ := json.Marshal(p.Services)
 	s := url.QueryEscape(string(ss))
 	p.server.SetText([]string{s})
