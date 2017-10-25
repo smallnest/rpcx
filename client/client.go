@@ -57,6 +57,17 @@ const (
 
 type seqKey struct{}
 
+// RPCClient is interface that defines one client to call one server.
+type RPCClient interface {
+	Connect(network, address string) error
+	Go(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, metadata map[string]string, done chan *Call) *Call
+	Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, metadata map[string]string) error
+	Close() error
+
+	IsClosing() bool
+	IsShutdown() bool
+}
+
 // Client represents a RPC client.
 type Client struct {
 	option Option
@@ -121,6 +132,16 @@ func (call *Call) done() {
 		log.Debug("rpc: discarding Call reply due to insufficient Done chan capacity")
 
 	}
+}
+
+// IsClosing client is closing or not.
+func (client *Client) IsClosing() bool {
+	return client.closing
+}
+
+// IsShutdown client is shutdown or not.
+func (client *Client) IsShutdown() bool {
+	return client.shutdown
 }
 
 // Go invokes the function asynchronously. It returns the Call structure representing

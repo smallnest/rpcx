@@ -66,11 +66,11 @@ func (p *EtcdRegisterPlugin) Start() error {
 				//set this same metrics for all services at this server
 				for _, name := range p.Services {
 					nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
-					kvPaire, err := p.kv.Get(nodePath)
+					kvPair, err := p.kv.Get(nodePath)
 					if err != nil {
 						log.Infof("can't get data of node: %s, because of %v", nodePath, err.Error())
 					} else {
-						v, _ := url.ParseQuery(string(kvPaire.Value))
+						v, _ := url.ParseQuery(string(kvPair.Value))
 						v.Set("tps", string(data))
 						p.kv.Put(nodePath, []byte(v.Encode()), &store.WriteOptions{TTL: p.UpdateInterval * 2})
 					}

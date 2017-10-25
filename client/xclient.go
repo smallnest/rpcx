@@ -50,7 +50,7 @@ type ServiceDiscovery interface {
 type xClient struct {
 	failMode      FailMode
 	selectMode    SelectMode
-	cachedClient  map[string]*Client
+	cachedClient  map[string]RPCClient
 	servicePath   string
 	serviceMethod string
 	option        Option
@@ -76,7 +76,7 @@ func NewXClient(servicePath, serviceMethod string, failMode FailMode, selectMode
 		discovery:     discovery,
 		servicePath:   servicePath,
 		serviceMethod: serviceMethod,
-		cachedClient:  make(map[string]*Client),
+		cachedClient:  make(map[string]RPCClient),
 		option:        option,
 	}
 
@@ -130,7 +130,7 @@ func (c *xClient) watch(ch chan []*KVPair) {
 }
 
 // selects a client from candidates base on c.selectMode
-func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, *Client, error) {
+func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, RPCClient, error) {
 	k := c.selector.Select(ctx, servicePath, serviceMethod, args)
 	if k == "" {
 		return "", nil, ErrXClientNoServer
@@ -140,11 +140,11 @@ func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod s
 	return k, client, err
 }
 
-func (c *xClient) getCachedClient(k string) (*Client, error) {
+func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 	c.mu.RLock()
 	client := c.cachedClient[k]
 	if client != nil {
-		if !client.closing && !client.shutdown {
+		if !client.IsClosing() && !client.IsShutdown() {
 			c.mu.RUnlock()
 			return client, nil
 		}
@@ -156,15 +156,20 @@ func (c *xClient) getCachedClient(k string) (*Client, error) {
 	client = c.cachedClient[k]
 	if client == nil {
 		network, addr := splitNetworkAndAddress(k)
-		client = &Client{
-			option:  c.option,
-			Plugins: c.Plugins,
+		if network == "inprocess" {
+			client = InprocessClient
+		} else {
+			client = &Client{
+				option:  c.option,
+				Plugins: c.Plugins,
+			}
+			err := client.Connect(network, addr)
+			if err != nil {
+				c.mu.Unlock()
+				return nil, err
+			}
 		}
-		err := client.Connect(network, addr)
-		if err != nil {
-			c.mu.Unlock()
-			return nil, err
-		}
+
 		c.cachedClient[k] = client
 	}
 	c.mu.Unlock()
@@ -172,7 +177,7 @@ func (c *xClient) getCachedClient(k string) (*Client, error) {
 	return client, nil
 }
 
-func (c *xClient) removeClient(k string, client *Client) {
+func (c *xClient) removeClient(k string, client RPCClient) {
 	c.mu.Lock()
 	cl := c.cachedClient[k]
 	if cl == client {
@@ -280,12 +285,12 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{},
 	}
 }
 
-func (c *xClient) wrapCall(ctx context.Context, client *Client, args interface{}, reply interface{}, metadata map[string]string) error {
+func (c *xClient) wrapCall(ctx context.Context, client RPCClient, args interface{}, reply interface{}, metadata map[string]string) error {
 	if client == nil {
 		return ErrServerUnavailable
 	}
 	c.Plugins.DoPreCall(ctx, c.servicePath, c.serviceMethod, args, metadata)
-	err := client.call(ctx, c.servicePath, c.serviceMethod, args, reply, metadata)
+	err := client.Call(ctx, c.servicePath, c.serviceMethod, args, reply, metadata)
 	c.Plugins.DoPostCall(ctx, c.servicePath, c.serviceMethod, args, reply, metadata, err)
 	return err
 }
@@ -305,7 +310,7 @@ func (c *xClient) Broadcast(ctx context.Context, args interface{}, reply interfa
 		metadata[share.AuthKey] = c.auth
 	}
 
-	var clients []*Client
+	var clients []RPCClient
 	c.mu.RLock()
 	for k := range c.servers {
 		client, err := c.getCachedClient(k)
@@ -363,7 +368,7 @@ func (c *xClient) Fork(ctx context.Context, args interface{}, reply interface{},
 		metadata[share.AuthKey] = c.auth
 	}
 
-	var clients []*Client
+	var clients []RPCClient
 	c.mu.RLock()
 	for k := range c.servers {
 		client, err := c.getCachedClient(k)
