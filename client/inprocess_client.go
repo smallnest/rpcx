@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/smallnest/rpcx/log"
+	"github.com/smallnest/rpcx/share"
 )
 
 // InprocessClient is a in-process client for test.
@@ -31,11 +32,14 @@ func (client *inprocessClient) Connect(network, address string) error {
 }
 
 // Go calls is not async. It still use sync to call.
-func (client *inprocessClient) Go(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, metadata map[string]string, done chan *Call) *Call {
+func (client *inprocessClient) Go(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, done chan *Call) *Call {
 	call := new(Call)
 	call.ServicePath = servicePath
 	call.ServiceMethod = serviceMethod
-	call.Metadata = metadata
+	meta := ctx.Value(share.ReqMetaDataKey)
+	if meta != nil { //copy meta in context to meta in requests
+		call.Metadata = meta.(map[string]string)
+	}
 	call.Args = args
 	call.Reply = reply
 	if done == nil {
@@ -50,7 +54,7 @@ func (client *inprocessClient) Go(ctx context.Context, servicePath, serviceMetho
 		}
 	}
 	call.Done = done
-	err := client.Call(ctx, servicePath, serviceMethod, args, reply, metadata)
+	err := client.Call(ctx, servicePath, serviceMethod, args, reply)
 	if err != nil {
 		call.Error = ServiceError(err.Error())
 
@@ -60,7 +64,7 @@ func (client *inprocessClient) Go(ctx context.Context, servicePath, serviceMetho
 }
 
 // Call calls a service synchronously.
-func (client *inprocessClient) Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, metadata map[string]string) (err error) {
+func (client *inprocessClient) Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) (err error) {
 	defer func() {
 		if e := recover(); e != nil {
 			var ok bool

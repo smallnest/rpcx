@@ -59,7 +59,7 @@ func TestClient_IT(t *testing.T) {
 	}
 
 	reply := &Reply{}
-	err = client.Call(context.Background(), "Arith", "Mul", args, reply, nil)
+	err = client.Call(context.Background(), "Arith", "Mul", args, reply)
 	if err != nil {
 		t.Fatalf("failed to call: %v", err)
 	}
@@ -68,14 +68,14 @@ func TestClient_IT(t *testing.T) {
 		t.Fatalf("expect 200 but got %d", reply.C)
 	}
 
-	err = client.Call(context.Background(), "Arith", "Add", args, reply, nil)
+	err = client.Call(context.Background(), "Arith", "Add", args, reply)
 	if err == nil {
 		t.Fatal("expect an error but got nil")
 	}
 
 	client.option.SerializeType = protocol.MsgPack
 	reply = &Reply{}
-	err = client.Call(context.Background(), "Arith", "Mul", args, reply, nil)
+	err = client.Call(context.Background(), "Arith", "Mul", args, reply)
 	if err != nil {
 		t.Fatalf("failed to call: %v", err)
 	}
@@ -91,7 +91,7 @@ func TestClient_IT(t *testing.T) {
 		B: 20,
 	}
 	pbReply := &testutils.ProtoReply{}
-	err = client.Call(context.Background(), "PBArith", "Mul", pbArgs, pbReply, nil)
+	err = client.Call(context.Background(), "PBArith", "Mul", pbArgs, pbReply)
 	if err != nil {
 		t.Fatalf("failed to call: %v", err)
 	}

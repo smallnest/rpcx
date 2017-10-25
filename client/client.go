@@ -60,8 +60,8 @@ type seqKey struct{}
 // RPCClient is interface that defines one client to call one server.
 type RPCClient interface {
 	Connect(network, address string) error
-	Go(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, metadata map[string]string, done chan *Call) *Call
-	Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, metadata map[string]string) error
+	Go(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, done chan *Call) *Call
+	Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error
 	Close() error
 
 	IsClosing() bool
@@ -149,22 +149,13 @@ func (client *Client) IsShutdown() bool {
 // the invocation. The done channel will signal when the call is complete by returning
 // the same Call object. If done is nil, Go will allocate a new channel.
 // If non-nil, done must be buffered or Go will deliberately crash.
-func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, metadata map[string]string, done chan *Call) *Call {
+func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, done chan *Call) *Call {
 	call := new(Call)
 	call.ServicePath = servicePath
 	call.ServiceMethod = serviceMethod
-	call.Metadata = metadata
 	meta := ctx.Value(share.ReqMetaDataKey)
 	if meta != nil { //copy meta in context to meta in requests
-		metaMap := meta.(map[string]string)
-		if metadata == nil {
-			call.Metadata = metaMap
-		} else {
-			for k, v := range metaMap {
-				metadata[k] = v
-			}
-
-		}
+		call.Metadata = meta.(map[string]string)
 	}
 	call.Args = args
 	call.Reply = reply
@@ -185,20 +176,20 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 }
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
-func (client *Client) Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, metadata map[string]string) error {
+func (client *Client) Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error {
 	if client.option.Breaker != nil {
 		return client.option.Breaker.Call(func() error {
-			return client.call(ctx, servicePath, serviceMethod, args, reply, metadata)
+			return client.call(ctx, servicePath, serviceMethod, args, reply)
 		}, 0)
 	}
 
-	return client.call(ctx, servicePath, serviceMethod, args, reply, metadata)
+	return client.call(ctx, servicePath, serviceMethod, args, reply)
 }
 
-func (client *Client) call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, metadata map[string]string) error {
+func (client *Client) call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error {
 	seq := new(uint64)
 	ctx = context.WithValue(ctx, seqKey{}, seq)
-	Done := client.Go(ctx, servicePath, serviceMethod, args, reply, metadata, make(chan *Call, 1)).Done
+	Done := client.Go(ctx, servicePath, serviceMethod, args, reply, make(chan *Call, 1)).Done
 
 	var err error
 	select {
@@ -400,7 +391,7 @@ func (client *Client) heartbeat() {
 			return
 		}
 
-		err := client.Call(context.Background(), "", "", nil, nil, nil)
+		err := client.Call(context.Background(), "", "", nil, nil)
 		if err != nil {
 			log.Warnf("failed to heartbeat to %s", client.Conn.RemoteAddr().String())
 		}
