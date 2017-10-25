@@ -272,17 +272,32 @@ func (s *Server) serveConn(conn net.Conn) {
 				conn.Write(data)
 				return
 			}
-			res, err := s.handleRequest(ctx, req)
+
+			resMetadata := make(map[string]string)
+			newCtx := context.WithValue(context.WithValue(ctx, share.ReqMetaDataKey, req.Metadata),
+				share.ResMetaDataKey, resMetadata)
+
+			res, err := s.handleRequest(newCtx, req)
 			if err != nil {
 				log.Warnf("rpcx: failed to handle request: %v", err)
 			}
-			s.Plugins.DoPreWriteResponse(ctx, req)
+			s.Plugins.DoPreWriteResponse(newCtx, req)
 			if !req.IsOneway() {
+				if len(resMetadata) > 0 { //copy meta in context to request
+					meta := res.Metadata
+					if meta == nil {
+						meta = make(map[string]string)
+					}
+					for k, v := range resMetadata {
+						meta[k] = v
+					}
+					res.Metadata = meta
+				}
 				data := res.Encode()
 				conn.Write(data)
 				//res.WriteTo(conn)
 			}
-			s.Plugins.DoPostWriteResponse(ctx, req, res, err)
+			s.Plugins.DoPostWriteResponse(newCtx, req, res, err)
 		}()
 	}
 }

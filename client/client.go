@@ -118,10 +118,11 @@ type Call struct {
 	ServicePath   string            // The name of the service and method to call.
 	ServiceMethod string            // The name of the service and method to call.
 	Metadata      map[string]string //metadata
-	Args          interface{}       // The argument to the function (*struct).
-	Reply         interface{}       // The reply from the function (*struct).
-	Error         error             // After completion, the error status.
-	Done          chan *Call        // Strobes when call is complete.
+	ResMetadata   map[string]string
+	Args          interface{} // The argument to the function (*struct).
+	Reply         interface{} // The reply from the function (*struct).
+	Error         error       // After completion, the error status.
+	Done          chan *Call  // Strobes when call is complete.
 }
 
 func (call *Call) done() {
@@ -153,6 +154,17 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 	call.ServicePath = servicePath
 	call.ServiceMethod = serviceMethod
 	call.Metadata = metadata
+	meta := ctx.Value(share.ReqMetaDataKey)
+	if meta != nil { //copy meta in context to meta in requests
+		metaMap := meta.(map[string]string)
+		if metadata == nil {
+			call.Metadata = metadata
+		} else {
+			for k, v := range metaMap {
+				metadata[k] = v
+			}
+		}
+	}
 	call.Args = args
 	call.Reply = reply
 	if done == nil {
@@ -202,6 +214,13 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 		return ctx.Err()
 	case call := <-Done:
 		err = call.Error
+		meta := ctx.Value(share.ResMetaDataKey)
+		if meta != nil && len(call.ResMetadata) > 0 {
+			resMeta := meta.(map[string]string)
+			for k, v := range call.ResMetadata {
+				resMeta[k] = v
+			}
+		}
 	}
 
 	return err
@@ -326,6 +345,7 @@ func (client *Client) input() {
 		case res.MessageStatusType() == protocol.Error:
 			// We've got an error response. Give this to the request;
 			call.Error = ServiceError(res.Metadata[protocol.ServiceError])
+			call.ResMetadata = res.Metadata
 			call.done()
 		default:
 			data := res.Payload
@@ -347,7 +367,7 @@ func (client *Client) input() {
 					}
 				}
 			}
-
+			call.ResMetadata = res.Metadata
 			call.done()
 		}
 	}
