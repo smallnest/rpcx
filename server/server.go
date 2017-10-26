@@ -81,6 +81,7 @@ type Server struct {
 func NewServer(options map[string]interface{}) *Server {
 	return &Server{
 		Plugins: &pluginContainer{},
+		Options: options,
 	}
 }
 
