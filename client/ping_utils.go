@@ -45,7 +45,6 @@ func createICMPWeighted(servers map[string]string) []*Weighted {
 		w.EffectiveWeight = rtt
 		ss = append(ss, w)
 	}
-
 	return ss
 }
 
@@ -83,7 +82,7 @@ func Ping(host string) (rtt int, err error) {
 // It is hard coded based on Ops experience.
 func CalculateWeight(rtt int) int {
 	switch {
-	case rtt > 0 && rtt <= 10:
+	case rtt >= 0 && rtt <= 10:
 		return 191
 	case rtt > 10 && rtt <= 200:
 		return 201 - rtt
