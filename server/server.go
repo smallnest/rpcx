@@ -74,7 +74,7 @@ type Server struct {
 	Plugins PluginContainer
 
 	// AuthFunc can be used to auth.
-	AuthFunc func(req *protocol.Message, token string) error
+	AuthFunc func(ctx context.Context, req *protocol.Message, token string) error
 }
 
 // NewServer returns a server.
@@ -266,6 +266,22 @@ func (s *Server) serveConn(conn net.Conn) {
 			conn.SetWriteDeadline(t0.Add(s.WriteTimeout))
 		}
 
+		err = s.auth(ctx, req)
+		if err != nil {
+			s.Plugins.DoPreWriteResponse(ctx, req)
+			if !req.IsOneway() {
+				res := req.Clone()
+				res.SetMessageType(protocol.Response)
+				handleError(res, err)
+				data := res.Encode()
+				conn.Write(data)
+				s.Plugins.DoPostWriteResponse(ctx, req, res, err)
+				protocol.FreeMsg(res)
+			}
+
+			protocol.FreeMsg(req)
+			continue
+		}
 		go func() {
 			if req.IsHeartbeat() {
 				req.SetMessageType(protocol.Response)
@@ -314,12 +330,16 @@ func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Me
 	err = req.Decode(r)
 	s.Plugins.DoPostReadRequest(ctx, req, err)
 
-	if s.AuthFunc != nil && err == nil {
+	return req, err
+}
+
+func (s *Server) auth(ctx context.Context, req *protocol.Message) error {
+	if s.AuthFunc != nil {
 		token := req.Metadata[share.AuthKey]
-		err = s.AuthFunc(req, token)
+		return s.AuthFunc(ctx, req, token)
 	}
 
-	return req, err
+	return nil
 }
 
 func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res *protocol.Message, err error) {
