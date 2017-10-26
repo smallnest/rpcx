@@ -300,6 +300,9 @@ func (s *Server) serveConn(conn net.Conn) {
 				//res.WriteTo(conn)
 			}
 			s.Plugins.DoPostWriteResponse(newCtx, req, res, err)
+
+			protocol.FreeMsg(req)
+			protocol.FreeMsg(res)
 		}()
 	}
 }
@@ -307,7 +310,7 @@ func (s *Server) serveConn(conn net.Conn) {
 func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Message, err error) {
 	s.Plugins.DoPreReadRequest(ctx)
 	// pool req?
-	req = protocol.NewMessage()
+	req = protocol.GetPooledMsg()
 	err = req.Decode(r)
 	s.Plugins.DoPostReadRequest(ctx, req, err)
 

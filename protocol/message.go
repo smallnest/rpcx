@@ -9,6 +9,11 @@ import (
 	"github.com/smallnest/rpcx/util"
 )
 
+// MaxMessageLength is the max length of a message.
+// Default is 0 that means does not limit length of messages.
+// It is used to validate when read messages from io.Reader.
+var MaxMessageLength = 0
+
 const (
 	magicNumber byte = 0x08
 )
@@ -20,6 +25,8 @@ var (
 var (
 	// ErrMetaKVMissing some keys or values are mssing.
 	ErrMetaKVMissing = errors.New("wrong metadata lines. some keys or values are missing")
+	// ErrMessageToLong message is too long
+	ErrMessageToLong = errors.New("message is too long")
 )
 
 const (
@@ -193,11 +200,10 @@ func (h *Header) SetSeq(seq uint64) {
 // Clone clones from an message.
 func (m Message) Clone() *Message {
 	header := *m.Header
-	c := &Message{
-		Header:        &header,
-		ServicePath:   m.ServicePath,
-		ServiceMethod: m.ServiceMethod,
-	}
+	c := GetPooledMsg()
+	c.Header = &header
+	c.ServicePath = m.ServicePath
+	c.ServiceMethod = m.ServiceMethod
 	return c
 }
 
@@ -351,7 +357,7 @@ func Read(r io.Reader) (*Message, error) {
 
 // Decode decodes a message from reader.
 func (m *Message) Decode(r io.Reader) error {
-	// TODO: validate
+	// validate rest length for each step?
 
 	// parse header
 	_, err := io.ReadFull(r, m.Header[:])
@@ -360,14 +366,19 @@ func (m *Message) Decode(r io.Reader) error {
 	}
 
 	//total
-	lenData := poolUint32Dada.Get().(*[]byte)
+	lenData := poolUint32Data.Get().(*[]byte)
 	_, err = io.ReadFull(r, *lenData)
 	if err != nil {
-		poolUint32Dada.Put(lenData)
+		poolUint32Data.Put(lenData)
 		return err
 	}
 	l := binary.BigEndian.Uint32(*lenData)
-	poolUint32Dada.Put(lenData)
+	poolUint32Data.Put(lenData)
+
+	if MaxMessageLength > 0 && int(l) > MaxMessageLength {
+		return ErrMessageToLong
+	}
+
 	data := make([]byte, int(l))
 	_, err = io.ReadFull(r, data)
 	if err != nil {
@@ -410,4 +421,16 @@ func (m *Message) Decode(r io.Reader) error {
 	m.Payload = data[n:]
 
 	return err
+}
+
+// Reset clean data of this message but keep allocated data
+func (m *Message) Reset() {
+	for i := 1; i < 12; i++ {
+		m.Header[0] = 0
+	}
+	m.Metadata = nil
+	m.Payload = m.Payload[:0]
+	m.data = m.data[:0]
+	m.ServicePath = ""
+	m.ServiceMethod = ""
 }

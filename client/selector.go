@@ -78,15 +78,14 @@ func newRoundRobinSelector(servers map[string]string) Selector {
 		ss = append(ss, k)
 	}
 
-	return &randomSelector{servers: ss}
+	return &roundRobinSelector{servers: ss}
 }
 
-func (s roundRobinSelector) Select(ctx context.Context, servicePath, serviceMethod string) string {
+func (s *roundRobinSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
 	ss := s.servers
 	if len(ss) == 0 {
 		return ""
 	}
-
 	i := s.i
 	i = i % len(ss)
 	s.i = i + 1
@@ -112,7 +111,7 @@ func newWeightedRoundRobinSelector(servers map[string]string) Selector {
 	return &weightedRoundRobinSelector{servers: ss}
 }
 
-func (s weightedRoundRobinSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
+func (s *weightedRoundRobinSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
 	ss := s.servers
 	if len(ss) == 0 {
 		return ""

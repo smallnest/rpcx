@@ -250,7 +250,8 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		*cseq = seq
 	}
 
-	req := protocol.NewMessage()
+	//req := protocol.NewMessage()
+	req := protocol.GetPooledMsg()
 	req.SetMessageType(protocol.Request)
 	req.SetSeq(seq)
 	// heartbeat
@@ -287,6 +288,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	}
 
 	data := req.Encode()
+	protocol.FreeMsg(req)
 	_, err := client.Conn.Write(data)
 	if err != nil {
 		client.mutex.Lock()
@@ -313,9 +315,10 @@ func (client *Client) send(ctx context.Context, call *Call) {
 
 func (client *Client) input() {
 	var err error
-	var res *protocol.Message
+	var res = protocol.NewMessage()
 	for err == nil {
-		res, err = protocol.Read(client.r)
+		err := res.Decode(client.r)
+		//res, err = protocol.Read(client.r)
 
 		if err != nil {
 			break
@@ -361,6 +364,8 @@ func (client *Client) input() {
 			call.ResMetadata = res.Metadata
 			call.done()
 		}
+
+		res.Reset()
 	}
 	// Terminate pending calls.
 	client.mutex.Lock()
