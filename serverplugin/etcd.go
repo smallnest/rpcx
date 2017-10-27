@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/docker/libkv"
@@ -33,6 +34,8 @@ type EtcdRegisterPlugin struct {
 	Metrics  metrics.Registry
 	// Registered services
 	Services       []string
+	metasLock      sync.RWMutex
+	metas          map[string]string
 	UpdateInterval time.Duration
 
 	Options *store.Config
@@ -71,6 +74,16 @@ func (p *EtcdRegisterPlugin) Start() error {
 					kvPair, err := p.KV.Get(nodePath)
 					if err != nil {
 						log.Infof("can't get data of node: %s, because of %v", nodePath, err.Error())
+
+						p.metasLock.RLock()
+						meta := p.metas[name]
+						p.metasLock.RUnlock()
+
+						err = p.KV.Put(nodePath, []byte(meta), &store.WriteOptions{TTL: p.UpdateInterval * 2})
+						if err != nil {
+							log.Errorf("cannot re-create etcd path %s: %v", nodePath, err)
+						}
+
 					} else {
 						v, _ := url.ParseQuery(string(kvPair.Value))
 						v.Set("tps", string(data))
@@ -126,12 +139,19 @@ func (p *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata st
 	}
 
 	nodePath = fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
-	err = p.KV.Put(nodePath, []byte(p.ServiceAddress), &store.WriteOptions{TTL: p.UpdateInterval * 2})
+	err = p.KV.Put(nodePath, []byte(metadata), &store.WriteOptions{TTL: p.UpdateInterval * 2})
 	if err != nil {
 		log.Errorf("cannot create etcd path %s: %v", nodePath, err)
 		return err
 	}
 
 	p.Services = append(p.Services, name)
+
+	p.metasLock.Lock()
+	if p.metas == nil {
+		p.metas = make(map[string]string)
+	}
+	p.metas[name] = metadata
+	p.metasLock.Unlock()
 	return
 }

@@ -31,7 +31,7 @@ ineffassign:
 gocyclo:
 	@ gocyclo -over 20 $(shell find . -name "*.go" |egrep -v "_testutils/*|vendor/*|pb\.go|_test\.go")
 
-check: staticcheck gosimple ineffassign gocyclo
+check: staticcheck gosimple ineffassign
 
 doc:
 	godoc -http=:6060
@@ -43,10 +43,10 @@ fmt:
 	go fmt ./...
 
 build:
-	go build -tags "reuseport kcp quic zookeeper etcd consul ping" ./...
+	go build ./...
 
-buildu:
+build-all:
 	go build -tags "reuseport kcp quic zookeeper etcd consul ping" ./...
 
 test:
-	go test -tags "reuseport kcp quic zookeeper etcd consul ping" ./...
+	go test -race -tags "reuseport kcp quic zookeeper etcd consul ping" ./...

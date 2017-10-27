@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/docker/libkv"
@@ -34,6 +35,8 @@ type ZooKeeperRegisterPlugin struct {
 	Metrics  metrics.Registry
 	// Registered services
 	Services       []string
+	metasLock      sync.RWMutex
+	metas          map[string]string
 	UpdateInterval time.Duration
 
 	Options *store.Config
@@ -76,6 +79,15 @@ func (p *ZooKeeperRegisterPlugin) Start() error {
 					kvPaire, err := p.KV.Get(nodePath)
 					if err != nil {
 						log.Infof("can't get data of node: %s, because of %v", nodePath, err.Error())
+
+						p.metasLock.RLock()
+						meta := p.metas[name]
+						p.metasLock.RUnlock()
+
+						err = p.KV.Put(nodePath, []byte(meta), &store.WriteOptions{TTL: p.UpdateInterval * 2})
+						if err != nil {
+							log.Errorf("cannot re-create zookeeper path %s: %v", nodePath, err)
+						}
 					} else {
 						v, _ := url.ParseQuery(string(kvPaire.Value))
 						v.Set("tps", string(data))
@@ -134,12 +146,19 @@ func (p *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}, metada
 	}
 
 	nodePath = fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
-	err = p.KV.Put(nodePath, []byte(p.ServiceAddress), &store.WriteOptions{TTL: p.UpdateInterval * 2})
+	err = p.KV.Put(nodePath, []byte(metadata), &store.WriteOptions{TTL: p.UpdateInterval * 2})
 	if err != nil {
 		log.Errorf("cannot create zk path %s: %v", nodePath, err)
 		return err
 	}
 
 	p.Services = append(p.Services, name)
+
+	p.metasLock.Lock()
+	if p.metas == nil {
+		p.metas = make(map[string]string)
+	}
+	p.metas[name] = metadata
+	p.metasLock.Unlock()
 	return
 }

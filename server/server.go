@@ -125,8 +125,6 @@ func (s *Server) Serve(network, address string) (err error) {
 // creating a new service goroutine for each.
 // The service goroutines read requests and then call services to reply to them.
 func (s *Server) serveListener(ln net.Listener) error {
-	s.ln = ln
-
 	if s.Plugins == nil {
 		s.Plugins = &pluginContainer{}
 	}
@@ -134,6 +132,7 @@ func (s *Server) serveListener(ln net.Listener) error {
 	var tempDelay time.Duration
 
 	s.mu.Lock()
+	s.ln = ln
 	if s.activeConn == nil {
 		s.activeConn = make(map[net.Conn]struct{})
 	}
