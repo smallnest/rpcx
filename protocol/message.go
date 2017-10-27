@@ -426,7 +426,7 @@ func (m *Message) Decode(r io.Reader) error {
 // Reset clean data of this message but keep allocated data
 func (m *Message) Reset() {
 	for i := 1; i < 12; i++ {
-		m.Header[0] = 0
+		m.Header[i] = 0
 	}
 	m.Metadata = nil
 	m.Payload = m.Payload[:0]

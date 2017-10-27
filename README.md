@@ -13,18 +13,20 @@ install the basic features:
 `go get -u -v github.com/smallnest/rpcx/...`
 
 
-If you want to use `quic/kcp`, `zookeeper`, `etcd`, `consul` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
+If you want to use `reuseport`、`quic`、`kcp`, `zookeeper`, `etcd`, `consul` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
 
 ```sh
-go get -u -v -tags "udp zookeeper etcd consul ping" github.com/smallnest/rpcx/...
+go get -u -v -tags "reuseport quic kcp zookeeper etcd consul ping" github.com/smallnest/rpcx/...
 ```
 
 **_tags_**:
-- **udp**: support quic and kcp transport
+- **quic**: support quic transport
+- **kcp**: support kcp transport
 - **zookeeper**: support zookeeper register
 - **etcd**: support etcd register
 - **consul**: support consul register
 - **ping**: support network quality load balancing
+- **reuseport**: support reuseport
 
 ## Features
 rpcx is a RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).
@@ -32,7 +34,7 @@ rpcx is a RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan]
 **rpcx 3.0** has been refactored for targets:
 1. **Simple**: easy to learn, easy to develop, easy to intergate and easy to deploy
 2. **Performance**: high perforamnce (>= grpc-go)
-3. **Cross-platform**: support _raw slice of bytes_, _JSON_, _Protobuf_ and _MessagePack_. Theoretically it can be use in java, php, python, c/c++, node.js, c# and other platforms theoretically
+3. **Cross-platform**: support _raw slice of bytes_, _JSON_, _Protobuf_ and _MessagePack_. Theoretically it can be use in java, php, python, c/c++, node.js, c# and other platforms
 4. **Service discovery and service governance.**: support zookeeper, etcd and consul.
 
 It contains below features
