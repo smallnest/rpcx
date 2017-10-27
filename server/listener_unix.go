@@ -3,6 +3,7 @@
 package server
 
 import (
+	"net"
 
 	reuseport "github.com/kavu/go_reuseport"
 )
@@ -11,8 +12,8 @@ func init() {
 	makeListeners["reuseport"] = reuseportMakeListener
 }
 
-
-func reuseportMakeListener func(s *Server, address string) (ln net.Listener, err error) {
+func reuseportMakeListener(s *Server, address string) (ln net.Listener, err error) {
+	var network string
 	if validIP4(address) {
 		network = "tcp4"
 	} else {
