@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rcrowley/go-metrics"
@@ -22,6 +23,8 @@ type ZooKeeperRegisterPlugin struct {
 	Conn             *zk.Conn
 	Metrics          metrics.Registry
 	Services         []string
+	metadata         map[string]string
+	metadataLock     sync.RWMutex
 	UpdateInterval   time.Duration
 }
 
@@ -43,6 +46,24 @@ func (plugin *ZooKeeperRegisterPlugin) Start() (err error) {
 					bytes, stat, err := plugin.Conn.Get(nodePath)
 					if err != nil {
 						log.Infof("can't get data of node: %s, because of %v", nodePath, err.Error())
+						plugin.metadataLock.RLock()
+						meta := plugin.metadata[name]
+						plugin.metadataLock.RUnlock()
+
+						nodePath := fmt.Sprintf("%s/%s", plugin.BasePath, name)
+						if err = mkdirs(plugin.Conn, nodePath); err != nil {
+							err = fmt.Errorf("can't create path: %s because of %v", nodePath, err)
+							continue
+						}
+
+						flags := int32(zk.FlagEphemeral)
+						acl := zk.WorldACL(zk.PermAll)
+						_, err = plugin.Conn.Create(nodePath, []byte(meta), flags, acl)
+						if err != nil {
+							err = fmt.Errorf("can't create path: %s because of %v", nodePath, err)
+							continue
+						}
+
 					} else {
 						v, _ := url.ParseQuery(string(bytes))
 						v.Set("tps", string(data))
@@ -182,6 +203,14 @@ func (plugin *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}, m
 	}
 
 	plugin.Services = append(plugin.Services, name)
+
+	plugin.metadataLock.Lock()
+	if plugin.metadata == nil {
+		plugin.metadata = make(map[string]string)
+	}
+	plugin.metadata[name] = strings.Join(metadata, "&")
+	plugin.metadataLock.Unlock()
+
 	return
 }
 

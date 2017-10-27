@@ -23,6 +23,8 @@ type EtcdV3RegisterPlugin struct {
 	BasePath            string
 	Metrics             metrics.Registry
 	Services            []string
+	metadata            map[string]string
+	metadataLock        sync.RWMutex
 	ttls                map[string]*clientv3.LeaseGrantResponse
 	ttlsLock            sync.Mutex
 	UpdateIntervalInSec int64
@@ -74,49 +76,55 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 					} else {
 						resp, err = p.KeysAPI.Get(context.TODO(), nodePath)
 					}
-					if err != nil {
-						log.Infof("get etcd key failed: %v", err.Error())
+
+					var meta string
+					if err != nil || len(resp.Kvs) == 0 {
+						log.Warnf("get etcd key failed: %v", err.Error())
+						p.metadataLock.RLock()
+						meta = p.metadata[name]
+						p.metadataLock.RUnlock()
+
 					} else {
-						if len(resp.Kvs) == 0 { // this service has not been registered into etcd
-							continue
-						}
-						if v, err = url.ParseQuery(string(resp.Kvs[0].Value)); err != nil {
-							continue
-						}
-						v.Set("tps", string(data))
-
-						// add ttl and keepalive
-						p.ttlsLock.Lock()
-						ttl = p.ttls[nodePath]
-						if ttl == nil {
-							ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalInSec*2)
-							if err != nil {
-								log.Infof("V3 TTL Grant: %v", err.Error())
-								p.ttlsLock.Unlock()
-								continue
-							}
-
-							//KeepAlive TTL alive forever
-							ch, kaerr := p.KeysAPI.KeepAlive(context.TODO(), ttl.ID)
-							if kaerr != nil {
-								log.Infof("Set ttl Keepalive is forver: %s", kaerr.Error())
-								p.ttlsLock.Unlock()
-								continue
-							}
-
-							ka := <-ch
-							log.Debugf("TTL value is %d", ka.TTL)
-							p.ttls[nodePath] = ttl
-						}
-						p.ttlsLock.Unlock()
-
-						_, err = p.KeysAPI.Put(context.TODO(), nodePath, v.Encode(), clientv3.WithLease(ttl.ID))
-						if err != nil {
-							log.Infof("Put key %s value %s : %s", nodePath, v.Encode(), err.Error())
-						}
+						meta = string(resp.Kvs[0].Value)
 					}
 
+					if v, err = url.ParseQuery(meta); err != nil {
+						continue
+					}
+
+					v.Set("tps", string(data))
+
+					// add ttl and keepalive
+					p.ttlsLock.Lock()
+					ttl = p.ttls[nodePath]
+					if ttl == nil {
+						ttl, err = cli.Grant(context.TODO(), p.UpdateIntervalInSec*2)
+						if err != nil {
+							log.Infof("V3 TTL Grant: %v", err.Error())
+							p.ttlsLock.Unlock()
+							continue
+						}
+
+						//KeepAlive TTL alive forever
+						ch, kaerr := p.KeysAPI.KeepAlive(context.TODO(), ttl.ID)
+						if kaerr != nil {
+							log.Infof("Set ttl Keepalive is forver: %s", kaerr.Error())
+							p.ttlsLock.Unlock()
+							continue
+						}
+
+						ka := <-ch
+						log.Debugf("TTL value is %d", ka.TTL)
+						p.ttls[nodePath] = ttl
+					}
+					p.ttlsLock.Unlock()
+
+					_, err = p.KeysAPI.Put(context.TODO(), nodePath, v.Encode(), clientv3.WithLease(ttl.ID))
+					if err != nil {
+						log.Infof("Put key %s value %s : %s", nodePath, v.Encode(), err.Error())
+					}
 				}
+
 			}
 		}()
 	}
@@ -171,6 +179,13 @@ func (p *EtcdV3RegisterPlugin) Register(name string, rcvr interface{}, metadata 
 		p.Services = append(p.Services, name)
 	}
 
+	p.metadataLock.Lock()
+	if p.metadata == nil {
+		p.metadata = make(map[string]string)
+	}
+	p.metadata[name] = strings.Join(metadata, "&")
+	p.metadataLock.Unlock()
+
 	// add ttl and keepalive
 	p.ttlsLock.Lock()
 	ttl := p.ttls[nodePath]
@@ -200,7 +215,6 @@ func (p *EtcdV3RegisterPlugin) Register(name string, rcvr interface{}, metadata 
 	if err != nil {
 		log.Infof("Put key %s value %s : %s", nodePath, strings.Join(metadata, "&"), err.Error())
 	}
-
 	return
 }
 

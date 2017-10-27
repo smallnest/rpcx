@@ -25,7 +25,7 @@ type EtcdRegisterPlugin struct {
 	Metrics        metrics.Registry
 	Services       []string
 	metadata       map[string]string
-	metadataLock   sync.Mutex
+	metadataLock   sync.RWMutex
 	UpdateInterval time.Duration
 	ExtraTime      time.Duration
 	KeysAPI        client.KeysAPI
@@ -76,50 +76,37 @@ func (p *EtcdRegisterPlugin) Start() (err error) {
 					})
 
 					if err != nil {
-						if e, ok := err.(client.Error); ok && e.Code == 100 {
-							p.metadataLock.Lock()
-							meta := p.metadata[nodePath]
-							if v, err = url.ParseQuery(meta); err != nil {
-								continue
-							}
-							resp, err = p.KeysAPI.Set(context.TODO(), nodePath, meta,
-								&client.SetOptions{
-									PrevExist: client.PrevIgnore,
-									TTL:       p.UpdateInterval + p.ExtraTime,
-								})
+						p.metadataLock.RLock()
+						meta := p.metadata[name]
+						p.metadataLock.RUnlock()
 
-							if err != nil {
-								log.Error(err.Error())
-								continue
-							}
-						}
-					}
-
-					if err != nil {
-						log.Infof("get etcd key failed: %v", err.Error())
-					} else {
-						if err == nil {
-							if v, err = url.ParseQuery(resp.Node.Value); err != nil {
-								continue
-							}
-						} else {
-							p.metadataLock.Lock()
-							meta := p.metadata[nodePath]
-							if v, err = url.ParseQuery(meta); err != nil {
-								continue
-							}
-						}
-
-						v.Set("tps", string(data))
-
-						_, err = p.KeysAPI.Set(context.TODO(), nodePath, v.Encode(), &client.SetOptions{
-							PrevExist: client.PrevIgnore,
-							TTL:       p.UpdateInterval + 20*time.Second,
-						})
+						resp, err = p.KeysAPI.Set(context.TODO(), nodePath, meta,
+							&client.SetOptions{
+								PrevExist: client.PrevIgnore,
+								TTL:       p.UpdateInterval + p.ExtraTime,
+							})
 
 						if err != nil {
-							log.Infof("set etcd key failed: %v", err.Error())
+							log.Error(err.Error())
+
 						}
+
+						continue
+					}
+
+					if v, err = url.ParseQuery(resp.Node.Value); err != nil {
+						continue
+					}
+
+					v.Set("tps", string(data))
+
+					_, err = p.KeysAPI.Set(context.TODO(), nodePath, v.Encode(), &client.SetOptions{
+						PrevExist: client.PrevIgnore,
+						TTL:       p.UpdateInterval + 20*time.Second,
+					})
+
+					if err != nil {
+						log.Infof("set etcd key failed: %v", err.Error())
 					}
 
 				}
@@ -211,7 +198,7 @@ func (p *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata ..
 	if p.metadata == nil {
 		p.metadata = make(map[string]string)
 	}
-	p.metadata[nodePath] = strings.Join(metadata, "&")
+	p.metadata[name] = strings.Join(metadata, "&")
 	p.metadataLock.Unlock()
 
 	return

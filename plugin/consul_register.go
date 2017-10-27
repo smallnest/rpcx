@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/consul/api"
@@ -18,6 +19,8 @@ type ConsulRegisterPlugin struct {
 	consulConfig   *api.Config
 	client         *api.Client
 	Services       []string
+	metadata       map[string]string
+	metadataLock   sync.Mutex
 	UpdateInterval time.Duration
 }
 
@@ -28,6 +31,7 @@ func (plugin *ConsulRegisterPlugin) Start() (err error) {
 		plugin.consulConfig.Address = plugin.ConsulAddress
 	}
 	plugin.client, err = api.NewClient(plugin.consulConfig)
+
 	return
 }
 
@@ -54,7 +58,20 @@ func (plugin *ConsulRegisterPlugin) Register(name string, rcvr interface{}, meta
 		},
 	}
 	agent := plugin.client.Agent()
+
+	plugin.metadataLock.Lock()
+	if plugin.metadata == nil {
+		plugin.metadata = make(map[string]string)
+	}
+	plugin.metadata[name] = strings.Join(metadata, "&")
+	plugin.metadataLock.Unlock()
+
+	if !IsContains(plugin.Services, name) {
+		plugin.Services = append(plugin.Services, name)
+	}
+
 	return agent.ServiceRegister(service)
+
 }
 
 // Unregister a service from consul but this service still exists in this node.
