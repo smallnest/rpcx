@@ -2,7 +2,7 @@
 
 Official site: [http://rpcx.site](http://rpcx.site/)
 
-[![License](https://img.shields.io/:license-apache-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![GoDoc](https://godoc.org/github.com/smallnest/rpcx?status.png)](http://godoc.org/github.com/smallnest/rpcx)  [![travis](https://travis-ci.org/smallnest/rpcx.svg?branch=v3.0)](https://travis-ci.org/smallnest/rpcx) [![Go Report Card](https://goreportcard.com/badge/github.com/smallnest/rpcx)](https://goreportcard.com/report/github.com/smallnest/rpcx) [![coveralls](https://coveralls.io/repos/smallnest/rpcx/badge.svg?branch=v3.0&service=github)](https://coveralls.io/github/smallnest/rpcx?branch=v3.0) [![QQ群](https://img.shields.io/:QQ群-398044387-blue.svg)](_documents/images/rpcx_qq.png)
+[![License](https://img.shields.io/:license-apache%202-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![GoDoc](https://godoc.org/github.com/smallnest/rpcx?status.png)](http://godoc.org/github.com/smallnest/rpcx)  [![travis](https://travis-ci.org/smallnest/rpcx.svg?branch=v3.0)](https://travis-ci.org/smallnest/rpcx) [![Go Report Card](https://goreportcard.com/badge/github.com/smallnest/rpcx)](https://goreportcard.com/report/github.com/smallnest/rpcx) [![coveralls](https://coveralls.io/repos/smallnest/rpcx/badge.svg?branch=v3.0&service=github)](https://coveralls.io/github/smallnest/rpcx?branch=v3.0) [![QQ群](https://img.shields.io/:QQ群-398044387-blue.svg)](_documents/images/rpcx_qq.png)
 
 
 
@@ -35,7 +35,7 @@ rpcx is a RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan]
 1. **Simple**: easy to learn, easy to develop, easy to intergate and easy to deploy
 2. **Performance**: high perforamnce (>= grpc-go)
 3. **Cross-platform**: support _raw slice of bytes_, _JSON_, _Protobuf_ and _MessagePack_. Theoretically it can be use in java, php, python, c/c++, node.js, c# and other platforms
-4. **Service discovery and service governance.**: support zookeeper, etcd and consul.
+4. **Service discovery and service governance.**: support zookeeper, etcd, consul and mDNS.
 
 It contains below features
 - Support raw Go functions,. No need to define proto files.
@@ -51,7 +51,7 @@ It contains below features
 - Support heartbeat and one-way request.
 - Other features: metrics, log, timeout, alias, CircuitBreaker.
 
-rpcx uses a binary protocol and platform-independent, that means you can develop services in other languages such as Java, python, nodejs, and you can use other prorgramming languages to invoke services developed in Go.
+rpcx uses a platform-independent binary protocol that means you can develop services in other languages such as Java, python, nodejs, and you can use other prorgramming languages to invoke services developed in Go.
 
 There is a UI manager: [rpcx-ui](https://github.com/smallnest/rpcx-ui).
 

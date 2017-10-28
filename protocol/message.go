@@ -425,12 +425,17 @@ func (m *Message) Decode(r io.Reader) error {
 
 // Reset clean data of this message but keep allocated data
 func (m *Message) Reset() {
-	for i := 1; i < 12; i++ {
-		m.Header[i] = 0
-	}
+	resetHeader(m.Header)
 	m.Metadata = nil
 	m.Payload = m.Payload[:0]
 	m.data = m.data[:0]
 	m.ServicePath = ""
 	m.ServiceMethod = ""
+}
+
+var zeroHeaderArray Header
+var zeroHeader = zeroHeaderArray[1:]
+
+func resetHeader(h *Header) {
+	copy(h[1:], zeroHeader)
 }
