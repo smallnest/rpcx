@@ -9,7 +9,7 @@ import (
 )
 
 func TestXClient_IT(t *testing.T) {
-	s := server.Server{}
+	s := server.NewServer()
 	s.RegisterName("Arith", new(Arith), "")
 	go s.Serve("tcp", "127.0.0.1:0")
 	defer s.Close()

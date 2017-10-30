@@ -14,9 +14,16 @@ func init() {
 }
 
 func kcpMakeListener(s *Server, address string) (ln net.Listener, err error) {
-	if s.Options == nil || s.Options["BlockCrypt"] == nil {
+	if s.options == nil || s.options["BlockCrypt"] == nil {
 		return nil, errors.New("KCP BlockCrypt must be configured in server.Options")
 	}
 
-	return kcp.ListenWithOptions(address, s.Options["BlockCrypt"].(kcp.BlockCrypt), 10, 3)
+	return kcp.ListenWithOptions(address, s.options["BlockCrypt"].(kcp.BlockCrypt), 10, 3)
+}
+
+// WithWriteTimeout sets writeTimeout.
+func WithBlockCrypt(bc kcp.BlockCrypt) OptionFn {
+	return func(s *Server) {
+		s.options["BlockCrypt"] = bc
+	}
 }
