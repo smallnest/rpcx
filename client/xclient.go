@@ -28,10 +28,10 @@ type XClient interface {
 	ConfigGeoSelector(latitude, longitude float64)
 	Auth(auth string)
 
-	Go(ctx context.Context, args interface{}, reply interface{}, done chan *Call) (*Call, error)
-	Call(ctx context.Context, args interface{}, reply interface{}) error
-	Broadcast(ctx context.Context, args interface{}, reply interface{}) error
-	Fork(ctx context.Context, args interface{}, reply interface{}) error
+	Go(ctx context.Context, serviceMethod string, args interface{}, reply interface{}, done chan *Call) (*Call, error)
+	Call(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
+	Broadcast(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
+	Fork(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Close() error
 }
 
@@ -69,15 +69,14 @@ type xClient struct {
 }
 
 // NewXClient creates a XClient that supports service discovery and service governance.
-func NewXClient(servicePath, serviceMethod string, failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery, option Option) XClient {
+func NewXClient(servicePath string, failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery, option Option) XClient {
 	client := &xClient{
-		failMode:      failMode,
-		selectMode:    selectMode,
-		discovery:     discovery,
-		servicePath:   servicePath,
-		serviceMethod: serviceMethod,
-		cachedClient:  make(map[string]RPCClient),
-		option:        option,
+		failMode:     failMode,
+		selectMode:   selectMode,
+		discovery:    discovery,
+		servicePath:  servicePath,
+		cachedClient: make(map[string]RPCClient),
+		option:       option,
 	}
 
 	ch := client.discovery.WatchService()
@@ -202,7 +201,7 @@ func splitNetworkAndAddress(server string) (string, string) {
 
 // Go invokes the function asynchronously. It returns the Call structure representing the invocation. The done channel will signal when the call is complete by returning the same Call object. If done is nil, Go will allocate a new channel. If non-nil, done must be buffered or Go will deliberately crash.
 // It does not use FailMode.
-func (c *xClient) Go(ctx context.Context, args interface{}, reply interface{}, done chan *Call) (*Call, error) {
+func (c *xClient) Go(ctx context.Context, serviceMethod string, args interface{}, reply interface{}, done chan *Call) (*Call, error) {
 	if c.isShutdown {
 		return nil, ErrXClientShutdown
 	}
@@ -216,16 +215,16 @@ func (c *xClient) Go(ctx context.Context, args interface{}, reply interface{}, d
 		m[share.AuthKey] = c.auth
 	}
 
-	_, client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
+	_, client, err := c.selectClient(ctx, c.servicePath, serviceMethod, args)
 	if err != nil {
 		return nil, err
 	}
-	return client.Go(ctx, c.servicePath, c.serviceMethod, args, reply, done), nil
+	return client.Go(ctx, c.servicePath, serviceMethod, args, reply, done), nil
 }
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
 // It handles errors base on FailMode.
-func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{}) error {
+func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
 	if c.isShutdown {
 		return ErrXClientShutdown
 	}
@@ -240,7 +239,7 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{})
 	}
 
 	var err error
-	k, client, err := c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
+	k, client, err := c.selectClient(ctx, c.servicePath, serviceMethod, args)
 	if err != nil && c.failMode == Failfast {
 		return err
 	}
@@ -250,7 +249,7 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{})
 		retries := c.option.Retries
 		for retries > 0 {
 			retries--
-			err = c.wrapCall(ctx, client, args, reply)
+			err = c.wrapCall(ctx, client, serviceMethod, args, reply)
 			if err == nil {
 				return nil
 			}
@@ -265,7 +264,7 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{})
 		retries := c.option.Retries
 		for retries > 0 {
 			retries--
-			err = c.wrapCall(ctx, client, args, reply)
+			err = c.wrapCall(ctx, client, serviceMethod, args, reply)
 			if err == nil {
 				return nil
 			}
@@ -273,13 +272,13 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{})
 				c.removeClient(k, client)
 			}
 			//select another server
-			k, client, _ = c.selectClient(ctx, c.servicePath, c.serviceMethod, args)
+			k, client, _ = c.selectClient(ctx, c.servicePath, serviceMethod, args)
 		}
 
 		return err
 
 	default: //Failfast
-		err = c.wrapCall(ctx, client, args, reply)
+		err = c.wrapCall(ctx, client, serviceMethod, args, reply)
 		if err != nil {
 			if _, ok := err.(ServiceError); !ok {
 				c.removeClient(k, client)
@@ -290,20 +289,20 @@ func (c *xClient) Call(ctx context.Context, args interface{}, reply interface{})
 	}
 }
 
-func (c *xClient) wrapCall(ctx context.Context, client RPCClient, args interface{}, reply interface{}) error {
+func (c *xClient) wrapCall(ctx context.Context, client RPCClient, serviceMethod string, args interface{}, reply interface{}) error {
 	if client == nil {
 		return ErrServerUnavailable
 	}
-	c.Plugins.DoPreCall(ctx, c.servicePath, c.serviceMethod, args)
-	err := client.Call(ctx, c.servicePath, c.serviceMethod, args, reply)
-	c.Plugins.DoPostCall(ctx, c.servicePath, c.serviceMethod, args, reply, err)
+	c.Plugins.DoPreCall(ctx, c.servicePath, serviceMethod, args)
+	err := client.Call(ctx, c.servicePath, serviceMethod, args, reply)
+	c.Plugins.DoPostCall(ctx, c.servicePath, serviceMethod, args, reply, err)
 	return err
 }
 
 // Broadcast sends requests to all servers and Success only when all servers return OK.
 // FailMode and SelectMode are meanless for this method.
 // Please set timeout to avoid hanging.
-func (c *xClient) Broadcast(ctx context.Context, args interface{}, reply interface{}) error {
+func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
 	if c.isShutdown {
 		return ErrXClientShutdown
 	}
@@ -339,7 +338,7 @@ func (c *xClient) Broadcast(ctx context.Context, args interface{}, reply interfa
 	for _, client := range clients {
 		client := client
 		go func() {
-			err = c.wrapCall(ctx, client, args, reply)
+			err = c.wrapCall(ctx, client, serviceMethod, args, reply)
 			done <- (err == nil)
 		}()
 	}
@@ -363,7 +362,7 @@ check:
 
 // Fork sends requests to all servers and Success once one server returns OK.
 // FailMode and SelectMode are meanless for this method.
-func (c *xClient) Fork(ctx context.Context, args interface{}, reply interface{}) error {
+func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
 	if c.isShutdown {
 		return ErrXClientShutdown
 	}
@@ -400,7 +399,7 @@ func (c *xClient) Fork(ctx context.Context, args interface{}, reply interface{})
 		client := client
 		go func() {
 			clonedReply := reflect.New(reflect.ValueOf(reply).Elem().Type()).Interface()
-			err = c.wrapCall(ctx, client, args, clonedReply)
+			err = c.wrapCall(ctx, client, serviceMethod, args, clonedReply)
 			done <- (err == nil)
 			if err == nil {
 				reflect.ValueOf(reply).Set(reflect.ValueOf(clonedReply))
