@@ -240,8 +240,14 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 
 	var err error
 	k, client, err := c.selectClient(ctx, c.servicePath, serviceMethod, args)
-	if err != nil && c.failMode == Failfast {
-		return err
+	if err != nil {
+		if c.failMode == Failfast {
+			return err
+		}
+
+		if _, ok := err.(ServiceError); ok {
+			return err
+		}
 	}
 
 	switch c.failMode {
@@ -253,10 +259,11 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 			if err == nil {
 				return nil
 			}
-			if _, ok := err.(ServiceError); !ok {
-				c.removeClient(k, client)
+			if _, ok := err.(ServiceError); ok {
+				return err
 			}
 
+			c.removeClient(k, client)
 			client, _ = c.getCachedClient(k)
 		}
 		return err
@@ -268,9 +275,11 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 			if err == nil {
 				return nil
 			}
-			if _, ok := err.(ServiceError); !ok {
-				c.removeClient(k, client)
+			if _, ok := err.(ServiceError); ok {
+				return err
 			}
+
+			c.removeClient(k, client)
 			//select another server
 			k, client, _ = c.selectClient(ctx, c.servicePath, serviceMethod, args)
 		}
