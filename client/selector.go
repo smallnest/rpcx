@@ -89,6 +89,7 @@ func (s *roundRobinSelector) Select(ctx context.Context, servicePath, serviceMet
 	i := s.i
 	i = i % len(ss)
 	s.i = i + 1
+
 	return ss[i]
 }
 

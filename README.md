@@ -93,7 +93,7 @@ The below is a simple example.
     // define example.Arith
     ……
 
-    s := server.Server{}
+    s := server.NewServer()
 	s.RegisterName("Arith", new(example.Arith), "")
 	s.Serve("tcp", addr)
 

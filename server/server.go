@@ -85,7 +85,6 @@ func NewServer(options ...OptionFn) *Server {
 	}
 
 	for _, op := range options {
-		fmt.Printf("%T\n", op)
 		op(s)
 	}
 
