@@ -107,15 +107,15 @@ The below is a simple example.
     ……
 
     d := client.NewPeer2PeerDiscovery("tcp@"+addr, "")
-	xclient := client.NewXClient("Arith", "Mul", client.Failtry, client.RandomSelect, d, client.DefaultOption)
+	xclient := client.NewXClient("Arith", client.Failtry, client.RandomSelect, d, client.DefaultOption)
 	defer xclient.Close()
-	err := xclient.Call(context.Background(), args, reply, nil)
+	err := xclient.Call(context.Background(), "Mul", args, reply, nil)
 ```
 
 ## Companies that use rpcx
 
-- 某集群式防御项目： 每天千万级的调用量
-- 风暴三国
+- Cluster defense project： 10 millions of calls per day.
+- [Storm of the Three Kingdoms](https://www.juxia.com/sjwy/game-2747.html): game
 - 车弹趣
 - 撩车友
 - 迈布
