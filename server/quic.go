@@ -14,8 +14,8 @@ func init() {
 }
 
 func quicMakeListener(s *Server, address string) (ln net.Listener, err error) {
-	if s.TLSConfig == nil {
+	if s.tlsConfig == nil {
 		return nil, errors.New("TLSConfig must be configured in server.Options")
 	}
-	return quicconn.Listen("udp", address, s.TLSConfig)
+	return quicconn.Listen("udp", address, s.tlsConfig)
 }

@@ -34,7 +34,7 @@ func (t *PBArith) Mul(ctx context.Context, args *testutils.ProtoArgs, reply *tes
 }
 
 func TestClient_IT(t *testing.T) {
-	s := server.Server{}
+	s := server.NewServer()
 	s.RegisterName("Arith", new(Arith), "")
 	s.RegisterName("PBArith", new(PBArith), "")
 	go s.Serve("tcp", "127.0.0.1:0")

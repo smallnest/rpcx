@@ -32,10 +32,10 @@ func (s *Server) makeListener(network, address string) (ln net.Listener, err err
 }
 
 func tcpMakeListener(s *Server, address string) (ln net.Listener, err error) {
-	if s.TLSConfig == nil {
+	if s.tlsConfig == nil {
 		ln, err = net.Listen("tcp", address)
 	} else {
-		ln, err = tls.Listen("tcp", address, s.TLSConfig)
+		ln, err = tls.Listen("tcp", address, s.tlsConfig)
 	}
 
 	return ln, err
