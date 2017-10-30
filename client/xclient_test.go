@@ -18,7 +18,7 @@ func TestXClient_IT(t *testing.T) {
 	addr := s.Address().String()
 
 	d := NewPeer2PeerDiscovery("tcp@"+addr, "desc=a test service")
-	xclient := NewXClient("Arith", "Mul", Failtry, RandomSelect, d, DefaultOption)
+	xclient := NewXClient("Arith", Failtry, RandomSelect, d, DefaultOption)
 
 	defer xclient.Close()
 
@@ -28,7 +28,7 @@ func TestXClient_IT(t *testing.T) {
 	}
 
 	reply := &Reply{}
-	err := xclient.Call(context.Background(), args, reply)
+	err := xclient.Call(context.Background(), "Mul", args, reply)
 	if err != nil {
 		t.Fatalf("failed to call: %v", err)
 	}
