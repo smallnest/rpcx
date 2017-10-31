@@ -28,6 +28,9 @@ const (
 	ConsistentHash
 	//Closest is selecting the closest server
 	Closest
+
+	// SelectByUser is selecting by implementation of users
+	SelectByUser = 1000
 )
 
 var selectModeStrs = [...]string{

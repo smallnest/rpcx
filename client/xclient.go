@@ -90,12 +90,17 @@ func NewXClient(servicePath string, failMode FailMode, selectMode SelectMode, di
 		servers[p.Key] = p.Value
 	}
 	client.servers = servers
-	if selectMode != Closest {
+	if selectMode != Closest && selectMode != SelectByUser {
 		client.selector = newSelector(selectMode, servers)
 	}
 
 	client.Plugins = &pluginContainer{}
 	return client
+}
+
+// SetSelector sets customized selector by users.
+func (c *xClient) SetSelector(s Selector) {
+	c.selector = s
 }
 
 // SetPlugins sets client's plugins.

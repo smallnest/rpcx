@@ -29,6 +29,8 @@ func newSelector(selectMode SelectMode, servers map[string]string) Selector {
 		return newWeightedICMPSelector(servers)
 	case ConsistentHash:
 		return newConsistentHashSelector(servers)
+	case SelectByUser:
+		return nil
 	default:
 		return newRandomSelector(servers)
 	}
