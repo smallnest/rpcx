@@ -378,10 +378,6 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		argIsValue = true
 	}
 
-	if argIsValue {
-		argv = argv.Elem()
-	}
-
 	codec := share.Codecs[req.SerializeType()]
 	if codec == nil {
 		err = fmt.Errorf("can not find codec for %d", req.SerializeType())
@@ -391,6 +387,10 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	err = codec.Decode(req.Payload, argv.Interface())
 	if err != nil {
 		return handleError(res, err)
+	}
+
+	if argIsValue {
+		argv = argv.Elem()
 	}
 
 	replyv = reflect.New(mtype.ReplyType.Elem())
