@@ -1,5 +1,4 @@
 // +build zookeeper
-
 package client
 
 import (
@@ -22,6 +21,9 @@ type ZookeeperDiscovery struct {
 	kv       store.Store
 	pairs    []*KVPair
 	chans    []chan []*KVPair
+
+	// -1 means it always retry to watch until zookeeper is ok, 0 means no retry.
+	RetriesAfterWatchFailed int
 }
 
 // NewZookeeperDiscovery returns a new ZookeeperDiscovery.
@@ -54,6 +56,7 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDisc
 		pairs = append(pairs, &KVPair{Key: p.Key, Value: string(p.Value)})
 	}
 	d.pairs = pairs
+	d.RetriesAfterWatchFailed = -1
 	return d
 }
 
@@ -70,28 +73,56 @@ func (d *ZookeeperDiscovery) WatchService() chan []*KVPair {
 }
 
 func (d *ZookeeperDiscovery) watch() {
-	c, err := d.kv.WatchTree(d.basePath, nil)
-	if err != nil {
-		log.Fatalf("can not watchtree: %s: %v", d.basePath, err)
-		return
-	}
+	for {
+		var err error
+		var c <-chan []*store.KVPair
+		var tempDelay time.Duration
 
-	for ps := range c {
-		var pairs []*KVPair // latest servers
-		for _, p := range ps {
-			pairs = append(pairs, &KVPair{Key: p.Key, Value: string(p.Value)})
-		}
-		d.pairs = pairs
-
-		for _, ch := range d.chans {
-			ch := ch
-			go func() {
-				select {
-				case ch <- pairs:
-				case <-time.After(time.Minute):
-					log.Warn("chan is full and new change has ben dropped")
+		retry := d.RetriesAfterWatchFailed
+		for d.RetriesAfterWatchFailed == -1 || retry > 0 {
+			c, err = d.kv.WatchTree(d.basePath, nil)
+			if err != nil {
+				if d.RetriesAfterWatchFailed > 0 {
+					retry--
 				}
-			}()
+				if tempDelay == 0 {
+					tempDelay = 1 * time.Second
+				} else {
+					tempDelay *= 2
+				}
+				if max := 30 * time.Second; tempDelay > max {
+					tempDelay = max
+				}
+				log.Warnf("can not watchtree (with retry %d, sleep %v): %s: %v", retry, tempDelay, d.basePath, err)
+				time.Sleep(tempDelay)
+				continue
+			}
+			break
 		}
+
+		if err != nil {
+			log.Fatalf("can not watchtree: %s: %v", d.basePath, err)
+		}
+
+		for ps := range c {
+			var pairs []*KVPair // latest servers
+			for _, p := range ps {
+				pairs = append(pairs, &KVPair{Key: p.Key, Value: string(p.Value)})
+			}
+			d.pairs = pairs
+
+			for _, ch := range d.chans {
+				ch := ch
+				go func() {
+					select {
+					case ch <- pairs:
+					case <-time.After(time.Minute):
+						log.Warn("chan is full and new change has ben dropped")
+					}
+				}()
+			}
+		}
+
+		log.Warn("chan is closed and will rewatch")
 	}
 }
