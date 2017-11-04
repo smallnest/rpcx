@@ -448,11 +448,13 @@ func (c *xClient) Close() error {
 
 	var errs []error
 	c.mu.Lock()
-	for _, v := range c.cachedClient {
+	for k, v := range c.cachedClient {
 		e := v.Close()
 		if e != nil {
 			errs = append(errs, e)
 		}
+
+		delete(c.cachedClient, k)
 
 	}
 	c.mu.Unlock()
