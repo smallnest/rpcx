@@ -79,7 +79,10 @@ func (p *EtcdV3RegisterPlugin) Start() (err error) {
 
 					var meta string
 					if err != nil || len(resp.Kvs) == 0 {
-						log.Warnf("get etcd key failed: %v", err.Error())
+						if err != nil {
+							log.Warnf("get etcd key failed: %v", err.Error())
+						}
+
 						p.metadataLock.RLock()
 						meta = p.metadata[name]
 						p.metadataLock.RUnlock()
