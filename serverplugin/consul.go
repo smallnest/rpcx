@@ -70,8 +70,12 @@ func (p *ConsulRegisterPlugin) Start() error {
 
 			// refresh service TTL
 			for range ticker.C {
-				clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
-				data := []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
+				var data []byte
+				if p.Metrics != nil {
+					clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
+					data = []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
+				}
+
 				//set this same metrics for all services at this server
 				for _, name := range p.Services {
 					nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
@@ -83,14 +87,14 @@ func (p *ConsulRegisterPlugin) Start() error {
 						meta := p.metas[name]
 						p.metasLock.RUnlock()
 
-						err = p.kv.Put(nodePath, []byte(meta), &store.WriteOptions{TTL: p.UpdateInterval * 2})
+						err = p.kv.Put(nodePath, []byte(meta), &store.WriteOptions{TTL: p.UpdateInterval * 3})
 						if err != nil {
 							log.Errorf("cannot re-create consul path %s: %v", nodePath, err)
 						}
 					} else {
 						v, _ := url.ParseQuery(string(kvPaire.Value))
 						v.Set("tps", string(data))
-						p.kv.Put(nodePath, []byte(v.Encode()), &store.WriteOptions{TTL: p.UpdateInterval * 2})
+						p.kv.Put(nodePath, []byte(v.Encode()), &store.WriteOptions{TTL: p.UpdateInterval * 3})
 					}
 				}
 
