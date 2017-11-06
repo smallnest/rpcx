@@ -29,14 +29,14 @@ type ConsulDiscovery struct {
 }
 
 // NewConsulDiscovery returns a new ConsulDiscovery.
-func NewConsulDiscovery(basePath string, consulAddr []string, options *store.Config) ServiceDiscovery {
+func NewConsulDiscovery(basePath, servicePath string, consulAddr []string, options *store.Config) ServiceDiscovery {
 	kv, err := libkv.NewStore(store.CONSUL, consulAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
 		panic(err)
 	}
 
-	return NewConsulDiscoveryStore(basePath, kv)
+	return NewConsulDiscoveryStore(basePath+"/"+servicePath, kv)
 }
 
 // NewConsulDiscoveryStore returns a new ConsulDiscovery with specified store.

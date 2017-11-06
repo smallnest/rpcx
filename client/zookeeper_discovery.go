@@ -28,14 +28,14 @@ type ZookeeperDiscovery struct {
 }
 
 // NewZookeeperDiscovery returns a new ZookeeperDiscovery.
-func NewZookeeperDiscovery(basePath string, zkAddr []string, options *store.Config) ServiceDiscovery {
+func NewZookeeperDiscovery(basePath string, servicePath string, zkAddr []string, options *store.Config) ServiceDiscovery {
 	kv, err := libkv.NewStore(store.ZK, zkAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
 		panic(err)
 	}
 
-	return NewZookeeperDiscoveryWithStore(basePath, kv)
+	return NewZookeeperDiscoveryWithStore(basePath+"/"+servicePath, kv)
 }
 
 // NewZookeeperDiscoveryWithStore returns a new ZookeeperDiscovery with specified store.

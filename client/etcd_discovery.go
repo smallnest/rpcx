@@ -29,14 +29,14 @@ type EtcdDiscovery struct {
 }
 
 // NewEtcdDiscovery returns a new EtcdDiscovery.
-func NewEtcdDiscovery(basePath string, etcdAddr []string, options *store.Config) ServiceDiscovery {
+func NewEtcdDiscovery(basePath string, servicePath string, etcdAddr []string, options *store.Config) ServiceDiscovery {
 	kv, err := libkv.NewStore(store.ETCD, etcdAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
 		panic(err)
 	}
 
-	return NewEtcdDiscoveryStore(basePath, kv)
+	return NewEtcdDiscoveryStore(basePath+"/"+servicePath, kv)
 }
 
 // NewEtcdDiscoveryStore return a new EtcdDiscovery with specified store.
