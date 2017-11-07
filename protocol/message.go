@@ -120,7 +120,7 @@ func (h *Header) SetVersion(v byte) {
 
 // MessageType returns the message type.
 func (h Header) MessageType() MessageType {
-	return MessageType(h[2] & 0x80)
+	return MessageType(h[2]&0x80) >> 7
 }
 
 // SetMessageType sets message type.
