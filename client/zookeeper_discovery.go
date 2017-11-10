@@ -52,7 +52,7 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDisc
 		panic(err)
 	}
 
-	var pairs []*KVPair
+	var pairs = make([]*KVPair, 0, len(ps))
 	for _, p := range ps {
 		pairs = append(pairs, &KVPair{Key: p.Key, Value: string(p.Value)})
 	}

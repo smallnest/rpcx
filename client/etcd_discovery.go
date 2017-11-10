@@ -50,7 +50,7 @@ func NewEtcdDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 		panic(err)
 	}
 
-	var pairs []*KVPair
+	var pairs = make([]*KVPair, 0, len(ps))
 	prefix := d.basePath + "/"
 	for _, p := range ps {
 		k := strings.TrimPrefix(p.Key, prefix)
