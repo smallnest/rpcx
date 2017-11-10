@@ -151,9 +151,9 @@ func (h Header) IsOneway() bool {
 // SetOneway sets the oneway flag.
 func (h *Header) SetOneway(oneway bool) {
 	if oneway {
-		h[2] = h[2] | 0x40
+		h[2] = h[2] | 0x20
 	} else {
-		h[2] = h[2] &^ 0x40
+		h[2] = h[2] &^ 0x20
 	}
 }
 
