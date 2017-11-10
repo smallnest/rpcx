@@ -84,7 +84,7 @@ func newRoundRobinSelector(servers map[string]string) Selector {
 }
 
 func (s *roundRobinSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
-	var ss = make([]string, 0, len(s.servers))
+	var ss = s.servers
 	if len(ss) == 0 {
 		return ""
 	}
