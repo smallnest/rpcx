@@ -129,7 +129,9 @@ func (c *xClient) watch(ch chan []*KVPair) {
 		}
 		c.mu.Lock()
 		c.servers = servers
-		// TODO update other fields
+
+		c.selector.UpdateServer(servers)
+
 		c.mu.Unlock()
 	}
 }

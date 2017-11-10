@@ -44,7 +44,6 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDisc
 		basePath = basePath[1:]
 	}
 	d := &ZookeeperDiscovery{basePath: basePath, kv: kv}
-	go d.watch()
 
 	ps, err := kv.List(basePath)
 	if err != nil {
@@ -58,6 +57,8 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDisc
 	}
 	d.pairs = pairs
 	d.RetriesAfterWatchFailed = -1
+	go d.watch()
+
 	return d
 }
 

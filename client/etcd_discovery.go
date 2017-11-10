@@ -42,8 +42,6 @@ func NewEtcdDiscovery(basePath string, servicePath string, etcdAddr []string, op
 // NewEtcdDiscoveryStore return a new EtcdDiscovery with specified store.
 func NewEtcdDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	d := &EtcdDiscovery{basePath: basePath, kv: kv}
-	go d.watch()
-
 	ps, err := kv.List(basePath)
 	if err != nil {
 		log.Infof("cannot get services of from registry: %v", basePath, err)
@@ -58,6 +56,8 @@ func NewEtcdDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	}
 	d.pairs = pairs
 	d.RetriesAfterWatchFailed = -1
+
+	go d.watch()
 	return d
 }
 

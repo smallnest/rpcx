@@ -45,7 +45,6 @@ func NewConsulDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 		basePath = basePath[1:]
 	}
 	d := &ConsulDiscovery{basePath: basePath, kv: kv}
-	go d.watch()
 
 	ps, err := kv.List(basePath)
 	if err != nil {
@@ -61,6 +60,7 @@ func NewConsulDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	}
 	d.pairs = pairs
 	d.RetriesAfterWatchFailed = -1
+	go d.watch()
 	return d
 }
 
