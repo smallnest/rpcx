@@ -79,11 +79,6 @@ func NewXClient(servicePath string, failMode FailMode, selectMode SelectMode, di
 		option:       option,
 	}
 
-	ch := client.discovery.WatchService()
-	if ch != nil {
-		go client.watch(ch)
-	}
-
 	servers := make(map[string]string)
 	pairs := discovery.GetServices()
 	for _, p := range pairs {
@@ -95,12 +90,22 @@ func NewXClient(servicePath string, failMode FailMode, selectMode SelectMode, di
 	}
 
 	client.Plugins = &pluginContainer{}
+
+	ch := client.discovery.WatchService()
+	if ch != nil {
+		go client.watch(ch)
+	}
+
 	return client
 }
 
 // SetSelector sets customized selector by users.
 func (c *xClient) SetSelector(s Selector) {
 	c.selector = s
+
+	c.mu.RLock()
+	c.selector.UpdateServer(c.servers)
+	c.mu.RUnlock()
 }
 
 // SetPlugins sets client's plugins.
@@ -112,6 +117,7 @@ func (c *xClient) SetPlugins(plugins PluginContainer) {
 // and use newGeoSelector.
 func (c *xClient) ConfigGeoSelector(latitude, longitude float64) {
 	c.selector = newGeoSelector(c.servers, latitude, longitude)
+	c.selectMode = Closest
 }
 
 // Auth sets s token for Authentication.
@@ -130,7 +136,9 @@ func (c *xClient) watch(ch chan []*KVPair) {
 		c.mu.Lock()
 		c.servers = servers
 
-		c.selector.UpdateServer(servers)
+		if c.selector != nil {
+			c.selector.UpdateServer(servers)
+		}
 
 		c.mu.Unlock()
 	}
