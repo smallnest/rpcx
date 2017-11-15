@@ -101,11 +101,11 @@ func NewXClient(servicePath string, failMode FailMode, selectMode SelectMode, di
 
 // SetSelector sets customized selector by users.
 func (c *xClient) SetSelector(s Selector) {
-	c.selector = s
-
 	c.mu.RLock()
-	c.selector.UpdateServer(c.servers)
+	s.UpdateServer(c.servers)
 	c.mu.RUnlock()
+
+	c.selector = s
 }
 
 // SetPlugins sets client's plugins.
