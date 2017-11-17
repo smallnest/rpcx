@@ -85,6 +85,13 @@ type Client struct {
 	Plugins PluginContainer
 }
 
+// NewClient returns a new Client with the option.
+func NewClient(option Option) *Client {
+	return &Client{
+		option: option,
+	}
+}
+
 // Option contains all options for creating clients.
 type Option struct {
 	// Retries retries to send
