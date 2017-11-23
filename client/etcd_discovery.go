@@ -41,13 +41,16 @@ func NewEtcdDiscovery(basePath string, servicePath string, etcdAddr []string, op
 
 // NewEtcdDiscoveryStore return a new EtcdDiscovery with specified store.
 func NewEtcdDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
+	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
+		basePath = basePath[:len(basePath)-1]
+	}
+
 	d := &EtcdDiscovery{basePath: basePath, kv: kv}
 	ps, err := kv.List(basePath)
 	if err != nil {
 		log.Infof("cannot get services of from registry: %v", basePath, err)
 		panic(err)
 	}
-
 	var pairs = make([]*KVPair, 0, len(ps))
 	prefix := d.basePath + "/"
 	for _, p := range ps {

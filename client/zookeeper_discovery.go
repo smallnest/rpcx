@@ -3,6 +3,7 @@
 package client
 
 import (
+	"strings"
 	"time"
 
 	"github.com/docker/libkv"
@@ -29,6 +30,10 @@ type ZookeeperDiscovery struct {
 
 // NewZookeeperDiscovery returns a new ZookeeperDiscovery.
 func NewZookeeperDiscovery(basePath string, servicePath string, zkAddr []string, options *store.Config) ServiceDiscovery {
+	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
+		basePath = basePath[:len(basePath)-1]
+	}
+
 	kv, err := libkv.NewStore(store.ZK, zkAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
