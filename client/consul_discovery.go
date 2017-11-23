@@ -41,6 +41,10 @@ func NewConsulDiscovery(basePath, servicePath string, consulAddr []string, optio
 
 // NewConsulDiscoveryStore returns a new ConsulDiscovery with specified store.
 func NewConsulDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
 	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
 		basePath = basePath[:len(basePath)-1]
 	}
