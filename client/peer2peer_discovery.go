@@ -12,6 +12,11 @@ func NewPeer2PeerDiscovery(server, metadata string) ServiceDiscovery {
 	return &Peer2PeerDiscovery{server: server, metadata: metadata}
 }
 
+// Clone clones this ServiceDiscovery with new servicePath.
+func (d Peer2PeerDiscovery) Clone(servicePath string) ServiceDiscovery {
+	return &d
+}
+
 // GetServices returns the static server
 func (d Peer2PeerDiscovery) GetServices() []*KVPair {
 	return []*KVPair{&KVPair{Key: d.server, Value: d.metadata}}

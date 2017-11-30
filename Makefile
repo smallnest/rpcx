@@ -12,6 +12,7 @@ tools:
 	go get github.com/gordonklaus/ineffassign
 	go get github.com/fzipp/gocyclo
 	go get github.com/golang/lint/golint
+	go get github.com/alexkohler/prealloc
 
 lint:
 	golint ./...
@@ -29,7 +30,10 @@ ineffassign:
 	ineffassign .
 
 gocyclo:
-	@ gocyclo -over 20 $(shell find . -name "*.go" |egrep -v "_testutils/*|vendor/*|pb\.go|_test\.go")
+	gocyclo -over 20 $(shell find . -name "*.go" |egrep -v "_testutils/*|vendor/*|pb\.go|_test\.go")
+
+prealloc:
+	prealloc ./...
 
 check: staticcheck gosimple ineffassign
 

@@ -64,6 +64,11 @@ func NewEtcdDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	return d
 }
 
+// Clone clones this ServiceDiscovery with new servicePath.
+func (d EtcdDiscovery) Clone(servicePath string) ServiceDiscovery {
+	return NewEtcdDiscoveryStore(d.basePath+"/"+servicePath, d.kv)
+}
+
 // GetServices returns the servers
 func (d EtcdDiscovery) GetServices() []*KVPair {
 	return d.pairs

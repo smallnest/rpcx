@@ -43,6 +43,11 @@ func NewMDNSDiscovery(service string, timeout time.Duration, watchInterval time.
 	return d
 }
 
+// Clone clones this ServiceDiscovery with new servicePath.
+func (d MDNSDiscovery) Clone(servicePath string) ServiceDiscovery {
+	return NewMDNSDiscovery(servicePath, d.Timeout, d.WatchInterval, d.domain)
+}
+
 // GetServices returns the servers
 func (d MDNSDiscovery) GetServices() []*KVPair {
 	return d.pairs

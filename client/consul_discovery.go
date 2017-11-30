@@ -69,6 +69,11 @@ func NewConsulDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	return d
 }
 
+// Clone clones this ServiceDiscovery with new servicePath.
+func (d ConsulDiscovery) Clone(servicePath string) ServiceDiscovery {
+	return NewConsulDiscoveryStore(d.basePath+"/"+servicePath, d.kv)
+}
+
 // GetServices returns the servers
 func (d ConsulDiscovery) GetServices() []*KVPair {
 	return d.pairs

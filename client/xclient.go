@@ -46,6 +46,7 @@ type KVPair struct {
 type ServiceDiscovery interface {
 	GetServices() []*KVPair
 	WatchService() chan []*KVPair
+	Clone(servicePath string) ServiceDiscovery
 }
 
 type xClient struct {

@@ -71,6 +71,11 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDisc
 	return d
 }
 
+// Clone clones this ServiceDiscovery with new servicePath.
+func (d ZookeeperDiscovery) Clone(servicePath string) ServiceDiscovery {
+	return NewZookeeperDiscoveryWithStore(d.basePath+"/"+servicePath, d.kv)
+}
+
 // GetServices returns the servers
 func (d ZookeeperDiscovery) GetServices() []*KVPair {
 	return d.pairs
