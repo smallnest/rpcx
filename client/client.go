@@ -2,11 +2,14 @@ package client
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
 	"io"
 	"net"
+	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
@@ -15,6 +18,20 @@ import (
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
 	"github.com/smallnest/rpcx/util"
+)
+
+const (
+	XVersion           = "X-RPCX-Version"
+	XMessageType       = "X-RPCX-MesssageType"
+	XHeartbeat         = "X-RPCX-Heartbeat"
+	XOneway            = "X-RPCX-Oneway"
+	XMessageStatusType = "X-RPCX-MessageStatusType"
+	XSerializeType     = "X-RPCX-SerializeType"
+	XMessageID         = "X-RPCX-MessageID"
+	XServicePath       = "X-RPCX-ServicePath"
+	XServiceMethod     = "X-RPCX-ServiceMethod"
+	XMeta              = "X-RPCX-Meta"
+	XErrorMessage      = "X-RPCX-ErrorMessage"
 )
 
 // ServiceError is an error from server.
@@ -62,6 +79,7 @@ type RPCClient interface {
 	Connect(network, address string) error
 	Go(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, done chan *Call) *Call
 	Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error
+	SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error)
 	Close() error
 
 	IsClosing() bool
@@ -130,6 +148,7 @@ type Call struct {
 	Reply         interface{} // The reply from the function (*struct).
 	Error         error       // After completion, the error status.
 	Done          chan *Call  // Strobes when call is complete.
+	Raw           bool        // raw message or not
 }
 
 func (call *Call) done() {
@@ -225,6 +244,113 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 	return err
 }
 
+// SendRaw sends raw messages. You don't care args and replys.
+func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error) {
+	ctx = context.WithValue(ctx, seqKey{}, r.Seq())
+
+	call := new(Call)
+	call.Raw = true
+	call.ServicePath = r.ServicePath
+	call.ServiceMethod = r.ServiceMethod
+	meta := ctx.Value(share.ReqMetaDataKey)
+	if meta != nil { //copy meta in context to meta in requests
+		call.Metadata = meta.(map[string]string)
+	}
+	done := make(chan *Call, 10)
+	call.Done = done
+
+	seq := r.Seq()
+	client.mutex.Lock()
+	client.pending[seq] = call
+	client.mutex.Unlock()
+
+	data := r.Encode()
+	_, err := client.Conn.Write(data)
+	if err != nil {
+		client.mutex.Lock()
+		call = client.pending[seq]
+		delete(client.pending, seq)
+		client.mutex.Unlock()
+		if call != nil {
+			call.Error = err
+			call.done()
+		}
+	}
+	if r.IsOneway() {
+		client.mutex.Lock()
+		call = client.pending[seq]
+		delete(client.pending, seq)
+		client.mutex.Unlock()
+		if call != nil {
+			call.done()
+		}
+	}
+
+	var m map[string]string
+	var payload []byte
+
+	select {
+	case <-ctx.Done(): //cancel by context
+		client.mutex.Lock()
+		call := client.pending[seq]
+		delete(client.pending, seq)
+		client.mutex.Unlock()
+		if call != nil {
+			call.Error = ctx.Err()
+			call.done()
+		}
+
+		return nil, nil, ctx.Err()
+	case call := <-done:
+		err = call.Error
+		m = call.Metadata
+		if call.Reply != nil {
+			payload = call.Reply.([]byte)
+		}
+	}
+
+	return m, payload, err
+}
+
+func convertRes2Raw(res *protocol.Message) (map[string]string, []byte, error) {
+	m := make(map[string]string)
+	m[XVersion] = strconv.Itoa(int(res.Version()))
+	if res.IsHeartbeat() {
+		m[XHeartbeat] = "true"
+	}
+	if res.IsOneway() {
+		m[XOneway] = "true"
+	}
+	if res.MessageStatusType() == protocol.Error {
+		m[XMessageStatusType] = "Error"
+	} else {
+		m[XMessageStatusType] = "Normal"
+	}
+
+	if res.CompressType() == protocol.Gzip {
+		m["Content-Encoding"] = "gzip"
+	}
+
+	m[XMeta] = urlencode(res.Metadata)
+	m[XSerializeType] = strconv.Itoa(int(res.SerializeType()))
+	m[XMessageID] = strconv.FormatUint(res.Seq(), 10)
+	m[XServicePath] = res.ServicePath
+	m[XServiceMethod] = res.ServiceMethod
+
+	return m, res.Payload, nil
+}
+
+func urlencode(data map[string]string) string {
+	var buf bytes.Buffer
+	for k, v := range data {
+		buf.WriteString(url.QueryEscape(k))
+		buf.WriteByte('=')
+		buf.WriteString(url.QueryEscape(v))
+		buf.WriteByte('&')
+	}
+	s := buf.String()
+	return s[0 : len(s)-1]
+}
 func (client *Client) send(ctx context.Context, call *Call) {
 
 	// Register this call.
@@ -348,28 +474,38 @@ func (client *Client) input() {
 			// We've got an error response. Give this to the request;
 			call.Error = ServiceError(res.Metadata[protocol.ServiceError])
 			call.ResMetadata = res.Metadata
+
+			if call.Raw {
+				call.Metadata, call.Reply, _ = convertRes2Raw(res)
+				call.Metadata[XErrorMessage] = call.Error.Error()
+			}
 			call.done()
 		default:
-			data := res.Payload
-			if len(data) > 0 {
-				if res.CompressType() == protocol.Gzip {
-					data, err = util.Unzip(data)
-					if err != nil {
-						call.Error = ServiceError("unzip payload: " + err.Error())
+			if call.Raw {
+				call.Metadata, call.Reply, _ = convertRes2Raw(res)
+			} else {
+				data := res.Payload
+				if len(data) > 0 {
+					if res.CompressType() == protocol.Gzip {
+						data, err = util.Unzip(data)
+						if err != nil {
+							call.Error = ServiceError("unzip payload: " + err.Error())
+						}
 					}
-				}
 
-				codec := share.Codecs[res.SerializeType()]
-				if codec == nil {
-					call.Error = ServiceError(ErrUnsupportedCodec.Error())
-				} else {
-					err = codec.Decode(data, call.Reply)
-					if err != nil {
-						call.Error = ServiceError(err.Error())
+					codec := share.Codecs[res.SerializeType()]
+					if codec == nil {
+						call.Error = ServiceError(ErrUnsupportedCodec.Error())
+					} else {
+						err = codec.Decode(data, call.Reply)
+						if err != nil {
+							call.Error = ServiceError(err.Error())
+						}
 					}
 				}
+				call.ResMetadata = res.Metadata
 			}
-			call.ResMetadata = res.Metadata
+
 			call.done()
 		}
 

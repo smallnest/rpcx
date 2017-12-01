@@ -2,11 +2,13 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"sync"
 
 	"github.com/smallnest/rpcx/log"
+	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
 )
 
@@ -113,6 +115,10 @@ func (client *inprocessClient) Call(ctx context.Context, servicePath, serviceMet
 	}
 
 	return err
+}
+
+func (client *inprocessClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error) {
+	return nil, nil, errors.New("SendRaw method is not supported by inprocessClient")
 }
 
 // Close do a fake operaton.
