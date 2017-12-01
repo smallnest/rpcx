@@ -261,6 +261,9 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 
 	seq := r.Seq()
 	client.mutex.Lock()
+	if client.pending == nil {
+		client.pending = make(map[uint64]*Call)
+	}
 	client.pending[seq] = call
 	client.mutex.Unlock()
 
@@ -341,6 +344,9 @@ func convertRes2Raw(res *protocol.Message) (map[string]string, []byte, error) {
 }
 
 func urlencode(data map[string]string) string {
+	if len(data) == 0 {
+		return ""
+	}
 	var buf bytes.Buffer
 	for k, v := range data {
 		buf.WriteString(url.QueryEscape(k))

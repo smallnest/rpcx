@@ -348,7 +348,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		retries := c.option.Retries
 		for retries > 0 {
 			retries--
-			m, payload, err := c.SendRaw(ctx, r)
+			m, payload, err := client.SendRaw(ctx, r)
 			if err == nil {
 				return m, payload, nil
 			}
@@ -364,7 +364,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		retries := c.option.Retries
 		for retries > 0 {
 			retries--
-			m, payload, err := c.SendRaw(ctx, r)
+			m, payload, err := client.SendRaw(ctx, r)
 			if err == nil {
 				return m, payload, nil
 			}
@@ -380,7 +380,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		return nil, nil, err
 
 	default: //Failfast
-		m, payload, err := c.SendRaw(ctx, r)
+		m, payload, err := client.SendRaw(ctx, r)
 
 		if err != nil {
 			if _, ok := err.(ServiceError); !ok {
