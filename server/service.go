@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"runtime"
+	"strings"
 	"sync"
 	"unicode"
 	"unicode/utf8"
@@ -18,8 +20,6 @@ var typeOfError = reflect.TypeOf((*error)(nil)).Elem()
 
 // Precompute the reflect type for context.
 var typeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
-
-var emptyService = new(service)
 
 type methodType struct {
 	sync.Mutex // protects counters
@@ -89,22 +89,21 @@ func (s *Server) RegisterName(name string, rcvr interface{}, metadata string) er
 //	- three arguments, the first is of context.Context, both of exported type for three arguments
 //	- the third argument is a pointer
 //	- one return value, of type error
-// The client accesses function using a string of the form ".Method",
-// where service path is empty.
-func (s *Server) RegisterFunction(fn interface{}, metadata string) error {
+// The client accesses function using a string of the form "servicePath.Method".
+func (s *Server) RegisterFunction(servicePath string, fn interface{}, metadata string) error {
 	s.Plugins.DoRegisterFunction("", fn, metadata)
-	return s.registerFunction(fn, "", false)
+	return s.registerFunction(servicePath, fn, "", false)
 }
 
 // RegisterFunctionName is like RegisterFunction but uses the provided name for the function
 // instead of the function's concrete type.
-func (s *Server) RegisterFunctionName(name string, fn interface{}, metadata string) error {
+func (s *Server) RegisterFunctionName(servicePath string, name string, fn interface{}, metadata string) error {
 	if s.Plugins == nil {
 		s.Plugins = &pluginContainer{}
 	}
 
 	s.Plugins.DoRegisterFunction(name, fn, metadata)
-	return s.registerFunction(fn, name, true)
+	return s.registerFunction(servicePath, fn, name, true)
 }
 
 func (s *Server) register(rcvr interface{}, name string, useName bool) error {
@@ -153,11 +152,18 @@ func (s *Server) register(rcvr interface{}, name string, useName bool) error {
 	return nil
 }
 
-func (s *Server) registerFunction(fn interface{}, name string, useName bool) error {
+func (s *Server) registerFunction(servicePath string, fn interface{}, name string, useName bool) error {
 	s.serviceMapMu.Lock()
 	defer s.serviceMapMu.Unlock()
 	if s.serviceMap == nil {
 		s.serviceMap = make(map[string]*service)
+	}
+
+	ss := s.serviceMap[servicePath]
+	if ss == nil {
+		ss = new(service)
+		ss.name = servicePath
+		ss.function = make(map[string]*functionType)
 	}
 
 	f, ok := fn.(reflect.Value)
@@ -168,7 +174,13 @@ func (s *Server) registerFunction(fn interface{}, name string, useName bool) err
 		return errors.New("function must be func or bound method")
 	}
 
-	fname := reflect.Indirect(f).Type().Name()
+	fname := runtime.FuncForPC(reflect.Indirect(f).Pointer()).Name()
+	if fname != "" {
+		i := strings.LastIndex(fname, ".")
+		if i >= 0 {
+			fname = fname[i+1:]
+		}
+	}
 	if useName {
 		fname = name
 	}
@@ -211,9 +223,8 @@ func (s *Server) registerFunction(fn interface{}, name string, useName bool) err
 	}
 
 	// Install the methods
-	emptyService.function[fname] = &functionType{fn: f, ArgType: argType, ReplyType: replyType}
-
-	s.serviceMap[""] = emptyService
+	ss.function[fname] = &functionType{fn: f, ArgType: argType, ReplyType: replyType}
+	s.serviceMap[servicePath] = ss
 	return nil
 }
 

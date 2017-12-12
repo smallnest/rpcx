@@ -348,9 +348,6 @@ func (s *Server) auth(ctx context.Context, req *protocol.Message) error {
 
 func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res *protocol.Message, err error) {
 	serviceName := req.ServicePath
-	if serviceName == "" {
-		return s.handleRequestForFunction(ctx, req)
-	}
 	methodName := req.ServiceMethod
 
 	res = req.Clone()
@@ -365,6 +362,9 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	}
 	mtype := service.method[methodName]
 	if mtype == nil {
+		if service.function[methodName] != nil { //check raw functions
+			return s.handleRequestForFunction(ctx, req)
+		}
 		err = errors.New("rpcx: can't find method " + methodName)
 		return handleError(res, err)
 	}
@@ -418,12 +418,13 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 
 	res.SetMessageType(protocol.Response)
 
+	serviceName := req.ServicePath
 	methodName := req.ServiceMethod
 	s.serviceMapMu.RLock()
-	service := s.serviceMap[""]
+	service := s.serviceMap[serviceName]
 	s.serviceMapMu.RUnlock()
 	if service == nil {
-		err = errors.New("rpcx: can't find service func raw function")
+		err = errors.New("rpcx: can't find service  for func raw function")
 		return handleError(res, err)
 	}
 	mtype := service.function[methodName]
