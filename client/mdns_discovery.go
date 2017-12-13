@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/grandcat/zeroconf"
@@ -25,6 +26,8 @@ type MDNSDiscovery struct {
 	service       string
 	pairs         []*KVPair
 	chans         []chan []*KVPair
+
+	mu sync.Mutex
 }
 
 // NewMDNSDiscovery returns a new MDNSDiscovery.
@@ -60,6 +63,22 @@ func (d *MDNSDiscovery) WatchService() chan []*KVPair {
 	return ch
 }
 
+func (d *MDNSDiscovery) RemoveWatcher(ch chan []*KVPair) {
+	d.mu.Lock()
+	d.mu.Unlock()
+
+	var chans []chan []*KVPair
+	for _, c := range d.chans {
+		if c == ch {
+			continue
+		}
+
+		chans = append(chans, c)
+	}
+
+	d.chans = chans
+}
+
 func (d *MDNSDiscovery) watch() {
 	t := time.NewTicker(d.WatchInterval)
 	for range t.C {
@@ -69,6 +88,11 @@ func (d *MDNSDiscovery) watch() {
 			for _, ch := range d.chans {
 				ch := ch
 				go func() {
+					defer func() {
+						if r := recover(); r != nil {
+
+						}
+					}()
 					select {
 					case ch <- pairs:
 					case <-time.After(time.Minute):

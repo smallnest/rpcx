@@ -48,6 +48,7 @@ type KVPair struct {
 type ServiceDiscovery interface {
 	GetServices() []*KVPair
 	WatchService() chan []*KVPair
+	RemoveWatcher(ch chan []*KVPair)
 	Clone(servicePath string) ServiceDiscovery
 }
 
@@ -70,6 +71,8 @@ type xClient struct {
 	auth string
 
 	Plugins PluginContainer
+
+	ch chan []*KVPair
 }
 
 // NewXClient creates a XClient that supports service discovery and service governance.
@@ -97,6 +100,7 @@ func NewXClient(servicePath string, failMode FailMode, selectMode SelectMode, di
 
 	ch := client.discovery.WatchService()
 	if ch != nil {
+		client.ch = ch
 		go client.watch(ch)
 	}
 
@@ -132,7 +136,6 @@ func (c *xClient) Auth(auth string) {
 // watch changes of service and update cached clients.
 func (c *xClient) watch(ch chan []*KVPair) {
 	for pairs := range ch {
-
 		servers := make(map[string]string)
 		for _, p := range pairs {
 			servers[p.Key] = p.Value
@@ -546,6 +549,17 @@ func (c *xClient) Close() error {
 
 	}
 	c.mu.Unlock()
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+
+			}
+		}()
+
+		c.discovery.RemoveWatcher(c.ch)
+		close(c.ch)
+	}()
 
 	if len(errs) > 0 {
 		return ex.NewMultiError(errs)
