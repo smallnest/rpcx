@@ -76,6 +76,11 @@ func newDirectConn(c *Client, network, address string) (net.Conn, error) {
 		return nil, err
 	}
 
+	if tc, ok := conn.(*net.TCPConn); ok {
+		tc.SetKeepAlive(true)
+		tc.SetKeepAlivePeriod(3 * time.Minute)
+	}
+
 	return conn, nil
 }
 
