@@ -28,6 +28,8 @@ type MDNSDiscovery struct {
 	chans         []chan []*KVPair
 
 	mu sync.Mutex
+
+	stopCh chan struct{}
 }
 
 // NewMDNSDiscovery returns a new MDNSDiscovery.
@@ -37,6 +39,8 @@ func NewMDNSDiscovery(service string, timeout time.Duration, watchInterval time.
 		domain = "local."
 	}
 	d := &MDNSDiscovery{service: service, Timeout: timeout, WatchInterval: watchInterval, domain: domain}
+	d.stopCh = make(chan struct{})
+
 	var err error
 	d.pairs, err = d.browse()
 	if err != nil {
@@ -81,24 +85,32 @@ func (d *MDNSDiscovery) RemoveWatcher(ch chan []*KVPair) {
 
 func (d *MDNSDiscovery) watch() {
 	t := time.NewTicker(d.WatchInterval)
-	for range t.C {
-		pairs, err := d.browse()
-		if err == nil {
-			d.pairs = pairs
-			for _, ch := range d.chans {
-				ch := ch
-				go func() {
-					defer func() {
-						if r := recover(); r != nil {
 
+	for {
+		select {
+		case <-d.stopCh:
+			t.Stop()
+			log.Info("discovery has been closed")
+			return
+		case <-t.C:
+			pairs, err := d.browse()
+			if err == nil {
+				d.pairs = pairs
+				for _, ch := range d.chans {
+					ch := ch
+					go func() {
+						defer func() {
+							if r := recover(); r != nil {
+
+							}
+						}()
+						select {
+						case ch <- pairs:
+						case <-time.After(time.Minute):
+							log.Warn("chan is full and new change has ben dropped")
 						}
 					}()
-					select {
-					case ch <- pairs:
-					case <-time.After(time.Minute):
-						log.Warn("chan is full and new change has ben dropped")
-					}
-				}()
+				}
 			}
 		}
 	}
@@ -145,4 +157,8 @@ func (d *MDNSDiscovery) browse() ([]*KVPair, error) {
 
 	<-done
 	return totalServices, nil
+}
+
+func (d *MDNSDiscovery) Close() {
+	close(d.stopCh)
 }

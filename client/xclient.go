@@ -50,6 +50,7 @@ type ServiceDiscovery interface {
 	WatchService() chan []*KVPair
 	RemoveWatcher(ch chan []*KVPair)
 	Clone(servicePath string) ServiceDiscovery
+	Close()
 }
 
 type xClient struct {

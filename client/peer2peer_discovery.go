@@ -28,3 +28,7 @@ func (d Peer2PeerDiscovery) WatchService() chan []*KVPair {
 }
 
 func (d *Peer2PeerDiscovery) RemoveWatcher(ch chan []*KVPair) {}
+
+func (d *Peer2PeerDiscovery) Close() {
+
+}

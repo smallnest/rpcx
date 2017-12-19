@@ -27,6 +27,8 @@ type ConsulDiscovery struct {
 	mu       sync.Locker
 	// -1 means it always retry to watch until zookeeper is ok, 0 means no retry.
 	RetriesAfterWatchFailed int
+
+	stopCh chan struct{}
 }
 
 // NewConsulDiscovery returns a new ConsulDiscovery.
@@ -51,6 +53,7 @@ func NewConsulDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	}
 
 	d := &ConsulDiscovery{basePath: basePath, kv: kv}
+	d.stopCh = make(chan struct{})
 
 	ps, err := kv.List(basePath)
 	if err != nil {
@@ -130,33 +133,52 @@ func (d *ConsulDiscovery) watch() {
 			break
 		}
 
+		if err != nil {
+			log.Errorf("can't watch %s: %v", d.basePath, err)
+			return
+		}
+
 		prefix := d.basePath + "/"
 
-		for ps := range c {
-			var pairs []*KVPair // latest servers
-			for _, p := range ps {
-				k := strings.TrimPrefix(p.Key, prefix)
-				pairs = append(pairs, &KVPair{Key: k, Value: string(p.Value)})
-			}
-			d.pairs = pairs
+	readChanges:
+		for {
+			select {
+			case <-d.stopCh:
+				log.Info("discovery has been closed")
+				return
+			case ps := <-c:
+				if ps == nil {
+					break readChanges
+				}
+				var pairs []*KVPair // latest servers
+				for _, p := range ps {
+					k := strings.TrimPrefix(p.Key, prefix)
+					pairs = append(pairs, &KVPair{Key: k, Value: string(p.Value)})
+				}
+				d.pairs = pairs
 
-			for _, ch := range d.chans {
-				ch := ch
-				go func() {
-					defer func() {
-						if r := recover(); r != nil {
+				for _, ch := range d.chans {
+					ch := ch
+					go func() {
+						defer func() {
+							if r := recover(); r != nil {
 
+							}
+						}()
+						select {
+						case ch <- pairs:
+						case <-time.After(time.Minute):
+							log.Warn("chan is full and new change has ben dropped")
 						}
 					}()
-					select {
-					case ch <- pairs:
-					case <-time.After(time.Minute):
-						log.Warn("chan is full and new change has ben dropped")
-					}
-				}()
+				}
 			}
 		}
 
 		log.Warn("chan is closed and will rewatch")
 	}
+}
+
+func (d *ConsulDiscovery) Close() {
+	close(d.stopCh)
 }

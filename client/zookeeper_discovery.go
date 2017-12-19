@@ -28,6 +28,8 @@ type ZookeeperDiscovery struct {
 
 	// -1 means it always retry to watch until zookeeper is ok, 0 means no retry.
 	RetriesAfterWatchFailed int
+
+	stopCh chan struct{}
 }
 
 // NewZookeeperDiscovery returns a new ZookeeperDiscovery.
@@ -55,6 +57,7 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDisc
 		basePath = basePath[1:]
 	}
 	d := &ZookeeperDiscovery{basePath: basePath, kv: kv}
+	d.stopCh = make(chan struct{})
 
 	ps, err := kv.List(basePath)
 	if err != nil {
@@ -135,33 +138,52 @@ func (d *ZookeeperDiscovery) watch() {
 		}
 
 		if err != nil {
+			log.Errorf("can't watch %s: %v", d.basePath, err)
+			return
+		}
+
+		if err != nil {
 			log.Fatalf("can not watchtree: %s: %v", d.basePath, err)
 		}
 
-		for ps := range c {
-			var pairs []*KVPair // latest servers
-			for _, p := range ps {
-				pairs = append(pairs, &KVPair{Key: p.Key, Value: string(p.Value)})
-			}
-			d.pairs = pairs
+	readChanges:
+		for {
+			select {
+			case <-d.stopCh:
+				log.Info("discovery has been closed")
+				return
+			case ps := <-c:
+				if ps == nil {
+					break readChanges
+				}
+				var pairs []*KVPair // latest servers
+				for _, p := range ps {
+					pairs = append(pairs, &KVPair{Key: p.Key, Value: string(p.Value)})
+				}
+				d.pairs = pairs
 
-			for _, ch := range d.chans {
-				ch := ch
-				go func() {
-					defer func() {
-						if r := recover(); r != nil {
+				for _, ch := range d.chans {
+					ch := ch
+					go func() {
+						defer func() {
+							if r := recover(); r != nil {
 
+							}
+						}()
+						select {
+						case ch <- pairs:
+						case <-time.After(time.Minute):
+							log.Warn("chan is full and new change has ben dropped")
 						}
 					}()
-					select {
-					case ch <- pairs:
-					case <-time.After(time.Minute):
-						log.Warn("chan is full and new change has ben dropped")
-					}
-				}()
+				}
 			}
 		}
 
 		log.Warn("chan is closed and will rewatch")
 	}
+}
+
+func (d *ZookeeperDiscovery) Close() {
+	close(d.stopCh)
 }

@@ -73,3 +73,7 @@ func (d *MultipleServersDiscovery) Update(pairs []*KVPair) {
 		}()
 	}
 }
+
+func (d *MultipleServersDiscovery) Close() {
+
+}
