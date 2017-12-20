@@ -114,9 +114,9 @@ The below is a simple example.
 	err := xclient.Call(context.Background(), "Mul", args, reply, nil)
 ```
 
-## Companies that use rpcx
+## Productions
 
-- Cluster defense project： 10 millions of calls per day.
+- Cluster defense project： 1 billion of calls per day (2 server, CPU Usage 2% ~ 8%, few memory usage, 8 clients)
 - [Storm of the Three Kingdoms](https://www.juxia.com/sjwy/game-2747.html): game
 - 车弹趣
 - 撩车友
