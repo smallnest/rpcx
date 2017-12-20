@@ -301,7 +301,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv reflect.Value) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("internal error: %v", r)
+			err = fmt.Errorf("[service internal error]: %v", r)
 		}
 	}()
 
@@ -320,7 +320,7 @@ func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv refl
 func (s *service) callForFunction(ctx context.Context, ft *functionType, argv, replyv reflect.Value) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("internal error: %v", r)
+			err = fmt.Errorf("[service internal error]: %v", r)
 		}
 	}()
 
