@@ -26,7 +26,7 @@ type methodType struct {
 	method     reflect.Method
 	ArgType    reflect.Type
 	ReplyType  reflect.Type
-	numCalls   uint
+	// numCalls   uint
 }
 
 type functionType struct {
@@ -34,7 +34,6 @@ type functionType struct {
 	fn         reflect.Value
 	ArgType    reflect.Type
 	ReplyType  reflect.Type
-	numCalls   uint
 }
 
 type service struct {

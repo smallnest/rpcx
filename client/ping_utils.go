@@ -68,7 +68,7 @@ func Ping(host string) (rtt int, err error) {
 	// }
 	err = p.Run()
 
-	return
+	return rtt, err
 }
 
 // CalculateWeight converts the rtt to weighted by:

@@ -457,7 +457,7 @@ func (client *Client) input() {
 	var err error
 	var res = protocol.NewMessage()
 	for err == nil {
-		err := res.Decode(client.r)
+		err = res.Decode(client.r)
 		//res, err = protocol.Read(client.r)
 
 		if err != nil {

@@ -14,6 +14,8 @@ tools:
 	go get github.com/golang/lint/golint
 	go get github.com/alexkohler/prealloc
 
+gometalinter:
+	gometalinter -D gocyclo --enable-all ./...
 lint:
 	golint ./...
 

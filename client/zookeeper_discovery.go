@@ -95,7 +95,7 @@ func (d *ZookeeperDiscovery) WatchService() chan []*KVPair {
 
 func (d *ZookeeperDiscovery) RemoveWatcher(ch chan []*KVPair) {
 	d.mu.Lock()
-	d.mu.Unlock()
+	defer d.mu.Unlock()
 
 	var chans []chan []*KVPair
 	for _, c := range d.chans {

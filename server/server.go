@@ -59,7 +59,7 @@ type Server struct {
 	activeConn map[net.Conn]struct{}
 	doneChan   chan struct{}
 
-	inShutdown int32
+	// inShutdown int32
 	onShutdown []func()
 
 	// TLSConfig for creating tls tcp connection.

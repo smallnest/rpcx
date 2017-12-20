@@ -57,7 +57,7 @@ func (p *pluginContainer) DoPreCall(ctx context.Context, servicePath, serviceMet
 func (p *pluginContainer) DoPostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PostCallPlugin); ok {
-			err := plugin.DoPostCall(ctx, servicePath, serviceMethod, args, reply, err)
+			err = plugin.DoPostCall(ctx, servicePath, serviceMethod, args, reply, err)
 			if err != nil {
 				return err
 			}

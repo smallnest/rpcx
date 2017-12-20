@@ -41,7 +41,7 @@ func (d *MultipleServersDiscovery) WatchService() chan []*KVPair {
 
 func (d *MultipleServersDiscovery) RemoveWatcher(ch chan []*KVPair) {
 	d.mu.Lock()
-	d.mu.Unlock()
+	defer d.mu.Unlock()
 
 	var chans []chan []*KVPair
 	for _, c := range d.chans {
