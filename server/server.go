@@ -369,15 +369,7 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		return handleError(res, err)
 	}
 
-	var argv, replyv reflect.Value
-
-	argIsValue := false // if true, need to indirect before calling.
-	if mtype.ArgType.Kind() == reflect.Ptr {
-		argv = reflect.New(mtype.ArgType.Elem())
-	} else {
-		argv = reflect.New(mtype.ArgType)
-		argIsValue = true
-	}
+	var argv = argsReplyPools.Get(mtype.ArgType)
 
 	codec := share.Codecs[req.SerializeType()]
 	if codec == nil {
@@ -385,24 +377,24 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		return handleError(res, err)
 	}
 
-	err = codec.Decode(req.Payload, argv.Interface())
+	err = codec.Decode(req.Payload, argv)
 	if err != nil {
 		return handleError(res, err)
 	}
 
-	if argIsValue {
-		argv = argv.Elem()
-	}
+	replyv := argsReplyPools.Get(mtype.ReplyType)
 
-	replyv = reflect.New(mtype.ReplyType.Elem())
+	err = service.call(ctx, mtype, reflect.ValueOf(argv), reflect.ValueOf(replyv))
 
-	err = service.call(ctx, mtype, argv, replyv)
+	argsReplyPools.Put(mtype.ArgType, argv)
 	if err != nil {
+		argsReplyPools.Put(mtype.ReplyType, replyv)
 		return handleError(res, err)
 	}
 
 	if !req.IsOneway() {
-		data, err := codec.Encode(replyv.Interface())
+		data, err := codec.Encode(replyv)
+		argsReplyPools.Put(mtype.ReplyType, replyv)
 		if err != nil {
 			return handleError(res, err)
 
@@ -433,15 +425,7 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 		return handleError(res, err)
 	}
 
-	var argv, replyv reflect.Value
-
-	argIsValue := false // if true, need to indirect before calling.
-	if mtype.ArgType.Kind() == reflect.Ptr {
-		argv = reflect.New(mtype.ArgType.Elem())
-	} else {
-		argv = reflect.New(mtype.ArgType)
-		argIsValue = true
-	}
+	var argv = argsReplyPools.Get(mtype.ArgType)
 
 	codec := share.Codecs[req.SerializeType()]
 	if codec == nil {
@@ -449,24 +433,25 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 		return handleError(res, err)
 	}
 
-	err = codec.Decode(req.Payload, argv.Interface())
+	err = codec.Decode(req.Payload, argv)
 	if err != nil {
 		return handleError(res, err)
 	}
 
-	if argIsValue {
-		argv = argv.Elem()
-	}
+	replyv := argsReplyPools.Get(mtype.ReplyType)
 
-	replyv = reflect.New(mtype.ReplyType.Elem())
+	err = service.callForFunction(ctx, mtype, reflect.ValueOf(argv), reflect.ValueOf(replyv))
 
-	err = service.callForFunction(ctx, mtype, argv, replyv)
+	argsReplyPools.Put(mtype.ArgType, argv)
+
 	if err != nil {
+		argsReplyPools.Put(mtype.ReplyType, replyv)
 		return handleError(res, err)
 	}
 
 	if !req.IsOneway() {
-		data, err := codec.Encode(replyv.Interface())
+		data, err := codec.Encode(replyv)
+		argsReplyPools.Put(mtype.ReplyType, replyv)
 		if err != nil {
 			return handleError(res, err)
 
