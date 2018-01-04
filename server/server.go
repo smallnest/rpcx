@@ -44,6 +44,8 @@ var (
 	// services with context.WithValue to access the connection arrived on.
 	// The associated value will be of type net.Conn.
 	RemoteConnContextKey = &contextKey{"remote-conn"}
+	// StartRequestContextKey records the start time
+	StartRequestContextKey = &contextKey{"start-parse-request"}
 )
 
 // Server is rpcx server that use TCP or UDP.
@@ -245,7 +247,6 @@ func (s *Server) serveConn(conn net.Conn) {
 		}
 	}
 
-	ctx := context.WithValue(context.Background(), RemoteConnContextKey, conn)
 	r := bufio.NewReaderSize(conn, ReaderBuffsize)
 	//w := bufio.NewWriterSize(conn, WriterBuffsize)
 
@@ -255,6 +256,7 @@ func (s *Server) serveConn(conn net.Conn) {
 			conn.SetReadDeadline(t0.Add(s.readTimeout))
 		}
 
+		ctx := context.WithValue(context.Background(), RemoteConnContextKey, conn)
 		req, err := s.readRequest(ctx, r)
 		if err != nil {
 			if err == io.EOF {
@@ -271,6 +273,7 @@ func (s *Server) serveConn(conn net.Conn) {
 			conn.SetWriteDeadline(t0.Add(s.writeTimeout))
 		}
 
+		ctx = context.WithValue(ctx, StartRequestContextKey, time.Now().UnixNano())
 		err = s.auth(ctx, req)
 		if err != nil {
 			s.Plugins.DoPreWriteResponse(ctx, req)
