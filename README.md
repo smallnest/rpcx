@@ -116,7 +116,7 @@ The below is a simple example.
 
 ## Productions
 
-- Cluster defense project： 1 billion of calls per day (2 server, CPU Usage 2% ~ 8%, few memory usage, 8 clients)
+- Cluster defense project： 4 billion of calls per day (2 server, 8 clients)
 - [Storm of the Three Kingdoms](https://www.juxia.com/sjwy/game-2747.html): game
 - 车弹趣
 - 撩车友
