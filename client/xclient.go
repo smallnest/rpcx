@@ -278,12 +278,15 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 		retries := c.option.Retries
 		for retries > 0 {
 			retries--
-			err = c.wrapCall(ctx, client, serviceMethod, args, reply)
-			if err == nil {
-				return nil
-			}
-			if _, ok := err.(ServiceError); ok {
-				return err
+
+			if client != nil {
+				err = c.wrapCall(ctx, client, serviceMethod, args, reply)
+				if err == nil {
+					return nil
+				}
+				if _, ok := err.(ServiceError); ok {
+					return err
+				}
 			}
 
 			c.removeClient(k, client)
@@ -294,12 +297,15 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 		retries := c.option.Retries
 		for retries > 0 {
 			retries--
-			err = c.wrapCall(ctx, client, serviceMethod, args, reply)
-			if err == nil {
-				return nil
-			}
-			if _, ok := err.(ServiceError); ok {
-				return err
+
+			if client != nil {
+				err = c.wrapCall(ctx, client, serviceMethod, args, reply)
+				if err == nil {
+					return nil
+				}
+				if _, ok := err.(ServiceError); ok {
+					return err
+				}
 			}
 
 			c.removeClient(k, client)
@@ -337,6 +343,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 
 	var err error
 	k, client, err := c.selectClient(ctx, r.ServicePath, r.ServiceMethod, r.Payload)
+
 	if err != nil {
 		if c.failMode == Failfast {
 			return nil, nil, err
@@ -352,12 +359,14 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		retries := c.option.Retries
 		for retries > 0 {
 			retries--
-			m, payload, err := client.SendRaw(ctx, r)
-			if err == nil {
-				return m, payload, nil
-			}
-			if _, ok := err.(ServiceError); ok {
-				return nil, nil, err
+			if client != nil {
+				m, payload, err := client.SendRaw(ctx, r)
+				if err == nil {
+					return m, payload, nil
+				}
+				if _, ok := err.(ServiceError); ok {
+					return nil, nil, err
+				}
 			}
 
 			c.removeClient(k, client)
@@ -368,12 +377,14 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		retries := c.option.Retries
 		for retries > 0 {
 			retries--
-			m, payload, err := client.SendRaw(ctx, r)
-			if err == nil {
-				return m, payload, nil
-			}
-			if _, ok := err.(ServiceError); ok {
-				return nil, nil, err
+			if client != nil {
+				m, payload, err := client.SendRaw(ctx, r)
+				if err == nil {
+					return m, payload, nil
+				}
+				if _, ok := err.(ServiceError); ok {
+					return nil, nil, err
+				}
 			}
 
 			c.removeClient(k, client)
