@@ -278,33 +278,39 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 		retries := c.option.Retries
 		for retries > 0 {
 			retries--
-			err = c.wrapCall(ctx, client, serviceMethod, args, reply)
-			if err == nil {
-				return nil
-			}
-			if _, ok := err.(ServiceError); ok {
-				return err
+
+			if client != nil {
+				err = c.wrapCall(ctx, client, serviceMethod, args, reply)
+				if err == nil {
+					return nil
+				}
+				if _, ok := err.(ServiceError); ok {
+					return err
+				}
 			}
 
 			c.removeClient(k, client)
-			client, _ = c.getCachedClient(k)
+			client, err = c.getCachedClient(k)
 		}
 		return err
 	case Failover:
 		retries := c.option.Retries
 		for retries > 0 {
 			retries--
-			err = c.wrapCall(ctx, client, serviceMethod, args, reply)
-			if err == nil {
-				return nil
-			}
-			if _, ok := err.(ServiceError); ok {
-				return err
+
+			if client != nil {
+				err = c.wrapCall(ctx, client, serviceMethod, args, reply)
+				if err == nil {
+					return nil
+				}
+				if _, ok := err.(ServiceError); ok {
+					return err
+				}
 			}
 
 			c.removeClient(k, client)
 			//select another server
-			k, client, _ = c.selectClient(ctx, c.servicePath, serviceMethod, args)
+			k, client, err = c.selectClient(ctx, c.servicePath, serviceMethod, args)
 		}
 
 		return err
@@ -337,6 +343,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 
 	var err error
 	k, client, err := c.selectClient(ctx, r.ServicePath, r.ServiceMethod, r.Payload)
+
 	if err != nil {
 		if c.failMode == Failfast {
 			return nil, nil, err
@@ -352,33 +359,37 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		retries := c.option.Retries
 		for retries > 0 {
 			retries--
-			m, payload, err := client.SendRaw(ctx, r)
-			if err == nil {
-				return m, payload, nil
-			}
-			if _, ok := err.(ServiceError); ok {
-				return nil, nil, err
+			if client != nil {
+				m, payload, err := client.SendRaw(ctx, r)
+				if err == nil {
+					return m, payload, nil
+				}
+				if _, ok := err.(ServiceError); ok {
+					return nil, nil, err
+				}
 			}
 
 			c.removeClient(k, client)
-			client, _ = c.getCachedClient(k)
+			client, err = c.getCachedClient(k)
 		}
 		return nil, nil, err
 	case Failover:
 		retries := c.option.Retries
 		for retries > 0 {
 			retries--
-			m, payload, err := client.SendRaw(ctx, r)
-			if err == nil {
-				return m, payload, nil
-			}
-			if _, ok := err.(ServiceError); ok {
-				return nil, nil, err
+			if client != nil {
+				m, payload, err := client.SendRaw(ctx, r)
+				if err == nil {
+					return m, payload, nil
+				}
+				if _, ok := err.(ServiceError); ok {
+					return nil, nil, err
+				}
 			}
 
 			c.removeClient(k, client)
 			//select another server
-			k, client, _ = c.selectClient(ctx, r.ServicePath, r.ServiceMethod, r.Payload)
+			k, client, err = c.selectClient(ctx, r.ServicePath, r.ServiceMethod, r.Payload)
 		}
 
 		return nil, nil, err
