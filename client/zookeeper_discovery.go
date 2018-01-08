@@ -3,6 +3,7 @@
 package client
 
 import (
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -78,6 +79,7 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDisc
 
 // Clone clones this ServiceDiscovery with new servicePath.
 func (d ZookeeperDiscovery) Clone(servicePath string) ServiceDiscovery {
+	d.basePath = filepath.Dir(d.basePath)
 	return NewZookeeperDiscoveryWithStore(d.basePath+"/"+servicePath, d.kv)
 }
 

@@ -3,6 +3,7 @@
 package client
 
 import (
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -75,6 +76,7 @@ func NewConsulDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 
 // Clone clones this ServiceDiscovery with new servicePath.
 func (d ConsulDiscovery) Clone(servicePath string) ServiceDiscovery {
+	d.basePath = filepath.Dir(d.basePath)
 	return NewConsulDiscoveryStore(d.basePath+"/"+servicePath, d.kv)
 }
 

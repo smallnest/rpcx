@@ -3,6 +3,7 @@
 package client
 
 import (
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -72,6 +73,7 @@ func NewEtcdDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 
 // Clone clones this ServiceDiscovery with new servicePath.
 func (d EtcdDiscovery) Clone(servicePath string) ServiceDiscovery {
+	d.basePath = filepath.Dir(d.basePath)
 	return NewEtcdDiscoveryStore(d.basePath+"/"+servicePath, d.kv)
 }
 
