@@ -3,7 +3,6 @@
 package client
 
 import (
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -74,9 +73,21 @@ func NewConsulDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	return d
 }
 
+// NewConsulDiscoveryTemplate returns a new ConsulDiscovery template.
+func NewConsulDiscoveryTemplate(basePath string, consulAddr []string, options *store.Config) ServiceDiscovery {
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
+		basePath = basePath[:len(basePath)-1]
+	}
+
+	return &ConsulDiscovery{basePath: basePath}
+}
+
 // Clone clones this ServiceDiscovery with new servicePath.
 func (d ConsulDiscovery) Clone(servicePath string) ServiceDiscovery {
-	d.basePath = filepath.Dir(d.basePath)
 	return NewConsulDiscoveryStore(d.basePath+"/"+servicePath, d.kv)
 }
 

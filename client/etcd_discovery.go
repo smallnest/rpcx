@@ -3,7 +3,6 @@
 package client
 
 import (
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -71,9 +70,16 @@ func NewEtcdDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	return d
 }
 
+// NewEtcdDiscoveryTemplate returns a new EtcdDiscovery template.
+func NewEtcdDiscoveryTemplate(basePath string, zkAddr []string, options *store.Config) ServiceDiscovery {
+	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
+		basePath = basePath[:len(basePath)-1]
+	}
+	return &EtcdDiscovery{basePath: basePath}
+}
+
 // Clone clones this ServiceDiscovery with new servicePath.
 func (d EtcdDiscovery) Clone(servicePath string) ServiceDiscovery {
-	d.basePath = filepath.Dir(d.basePath)
 	return NewEtcdDiscoveryStore(d.basePath+"/"+servicePath, d.kv)
 }
 

@@ -3,7 +3,6 @@
 package client
 
 import (
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -77,9 +76,21 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDisc
 	return d
 }
 
+// NewZookeeperDiscoveryTemplate returns a new ZookeeperDiscovery template.
+func NewZookeeperDiscoveryTemplate(basePath string, zkAddr []string, options *store.Config) ServiceDiscovery {
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
+		basePath = basePath[:len(basePath)-1]
+	}
+
+	return &ZookeeperDiscovery{basePath: basePath}
+}
+
 // Clone clones this ServiceDiscovery with new servicePath.
 func (d ZookeeperDiscovery) Clone(servicePath string) ServiceDiscovery {
-	d.basePath = filepath.Dir(d.basePath)
 	return NewZookeeperDiscoveryWithStore(d.basePath+"/"+servicePath, d.kv)
 }
 
