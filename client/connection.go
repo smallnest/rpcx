@@ -72,7 +72,7 @@ func newDirectConn(c *Client, network, address string) (net.Conn, error) {
 	}
 
 	if err != nil {
-		log.Errorf("failed to dial server: %v", err)
+		log.Warnf("failed to dial server: %v", err)
 		return nil, err
 	}
 

@@ -68,7 +68,7 @@ func (d *MultipleServersDiscovery) Update(pairs []*KVPair) {
 			select {
 			case ch <- pairs:
 			case <-time.After(time.Minute):
-				log.Warn("chan is full and new change has ben dropped")
+				log.Warn("chan is full and new change has been dropped")
 			}
 		}()
 	}
