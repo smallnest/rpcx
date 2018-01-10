@@ -86,7 +86,13 @@ func NewZookeeperDiscoveryTemplate(basePath string, zkAddr []string, options *st
 		basePath = basePath[:len(basePath)-1]
 	}
 
-	return &ZookeeperDiscovery{basePath: basePath}
+	kv, err := libkv.NewStore(store.ZK, zkAddr, options)
+	if err != nil {
+		log.Infof("cannot create store: %v", err)
+		panic(err)
+	}
+
+	return &ZookeeperDiscovery{basePath: basePath, kv: kv}
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.

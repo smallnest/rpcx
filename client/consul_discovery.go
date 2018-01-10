@@ -83,7 +83,13 @@ func NewConsulDiscoveryTemplate(basePath string, consulAddr []string, options *s
 		basePath = basePath[:len(basePath)-1]
 	}
 
-	return &ConsulDiscovery{basePath: basePath}
+	kv, err := libkv.NewStore(store.CONSUL, consulAddr, options)
+	if err != nil {
+		log.Infof("cannot create store: %v", err)
+		panic(err)
+	}
+
+	return &ConsulDiscovery{basePath: basePath, kv: kv}
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
