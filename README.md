@@ -39,6 +39,7 @@ rpcx is a RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan]
 3. **Cross-platform**: support _raw slice of bytes_, _JSON_, _Protobuf_ and _MessagePack_. Theoretically it can be use in java, php, python, c/c++, node.js, c# and other platforms
 4. **Service discovery and service governance.**: support zookeeper, etcd and consul.
 
+
 It contains below features
 - Support raw Go functions,. No need to define proto files.
 - Pluggable. Features can be extended such as service discovery, tracing.
@@ -52,6 +53,7 @@ It contains below features
 - Support Authorization.
 - Support heartbeat and one-way request.
 - Other features: metrics, log, timeout, alias, CircuitBreaker.
+- Support bidirectional communication.
 
 rpcx uses a binary protocol and platform-independent, that means you can develop services in other languages such as Java, python, nodejs, and you can use other prorgramming languages to invoke services developed in Go.
 
