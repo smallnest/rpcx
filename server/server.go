@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/smallnest/rpcx/log"
@@ -60,6 +61,7 @@ type Server struct {
 	mu         sync.RWMutex
 	activeConn map[net.Conn]struct{}
 	doneChan   chan struct{}
+	seq        uint64
 
 	// inShutdown int32
 	onShutdown []func()
@@ -101,6 +103,32 @@ func (s *Server) Address() net.Addr {
 		return nil
 	}
 	return s.ln.Addr()
+}
+
+// SendMessage a request to the specified client.
+// The client is designated by the conn.
+// conn can be gotten from context in services:
+//
+//   ctx.Value(RemoteConnContextKey)
+//
+// servicePath, serviceMethod, metadata can be set to zero values.
+func (s *Server) SendMessage(conn net.Conn, servicePath, serviceMethod string, metadata map[string]string, data []byte) error {
+	req := protocol.GetPooledMsg()
+	req.SetMessageType(protocol.Request)
+
+	seq := atomic.AddUint64(&s.seq, 1)
+	req.SetSeq(seq)
+	req.SetOneway(true)
+	req.SetSerializeType(protocol.SerializeNone)
+	req.ServicePath = servicePath
+	req.ServiceMethod = serviceMethod
+	req.Metadata = metadata
+	req.Payload = data
+
+	reqData := req.Encode()
+	protocol.FreeMsg(req)
+	_, err := conn.Write(reqData)
+	return err
 }
 
 func (s *Server) getDoneChan() <-chan struct{} {
@@ -303,9 +331,11 @@ func (s *Server) serveConn(conn net.Conn) {
 				share.ResMetaDataKey, resMetadata)
 
 			res, err := s.handleRequest(newCtx, req)
+
 			if err != nil {
 				log.Warnf("rpcx: failed to handle request: %v", err)
 			}
+
 			s.Plugins.DoPreWriteResponse(newCtx, req)
 			if !req.IsOneway() {
 				if len(resMetadata) > 0 { //copy meta in context to request

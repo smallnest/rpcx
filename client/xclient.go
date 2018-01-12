@@ -74,6 +74,8 @@ type xClient struct {
 	Plugins PluginContainer
 
 	ch chan []*KVPair
+
+	serverMessageChan chan<- *protocol.Message
 }
 
 // NewXClient creates a XClient that supports service discovery and service governance.
@@ -85,6 +87,39 @@ func NewXClient(servicePath string, failMode FailMode, selectMode SelectMode, di
 		servicePath:  servicePath,
 		cachedClient: make(map[string]RPCClient),
 		option:       option,
+	}
+
+	servers := make(map[string]string)
+	pairs := discovery.GetServices()
+	for _, p := range pairs {
+		servers[p.Key] = p.Value
+	}
+	client.servers = servers
+	if selectMode != Closest && selectMode != SelectByUser {
+		client.selector = newSelector(selectMode, servers)
+	}
+
+	client.Plugins = &pluginContainer{}
+
+	ch := client.discovery.WatchService()
+	if ch != nil {
+		client.ch = ch
+		go client.watch(ch)
+	}
+
+	return client
+}
+
+// NewBidirectionalXClient creates a new xclient that can receive notifications from servers.
+func NewBidirectionalXClient(servicePath string, failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery, option Option, serverMessageChan chan<- *protocol.Message) XClient {
+	client := &xClient{
+		failMode:          failMode,
+		selectMode:        selectMode,
+		discovery:         discovery,
+		servicePath:       servicePath,
+		cachedClient:      make(map[string]RPCClient),
+		option:            option,
+		serverMessageChan: serverMessageChan,
 	}
 
 	servers := make(map[string]string)
@@ -193,6 +228,8 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 			}
 		}
 
+		client.RegisterServerMessageChan(c.serverMessageChan)
+
 		c.cachedClient[k] = client
 	}
 	c.mu.Unlock()
@@ -209,6 +246,7 @@ func (c *xClient) removeClient(k string, client RPCClient) {
 	c.mu.Unlock()
 
 	if client != nil {
+		client.UnregisterServerMessageChan()
 		client.Close()
 	}
 }

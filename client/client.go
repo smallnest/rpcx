@@ -82,6 +82,9 @@ type RPCClient interface {
 	SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error)
 	Close() error
 
+	RegisterServerMessageChan(ch chan<- *protocol.Message)
+	UnregisterServerMessageChan()
+
 	IsClosing() bool
 	IsShutdown() bool
 }
@@ -101,6 +104,8 @@ type Client struct {
 	shutdown bool // server has told us to stop
 
 	Plugins PluginContainer
+
+	ServerMessageChan chan<- *protocol.Message
 }
 
 // NewClient returns a new Client with the option.
@@ -159,6 +164,16 @@ func (call *Call) done() {
 		log.Debug("rpc: discarding Call reply due to insufficient Done chan capacity")
 
 	}
+}
+
+// RegisterServerMessageChan registers the channel that receives server requests.
+func (client *Client) RegisterServerMessageChan(ch chan<- *protocol.Message) {
+	client.ServerMessageChan = ch
+}
+
+// UnregisterServerMessageChan removes ServerMessageChan.
+func (client *Client) UnregisterServerMessageChan() {
+	client.ServerMessageChan = nil
 }
 
 // IsClosing client is closing or not.
@@ -456,6 +471,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 func (client *Client) input() {
 	var err error
 	var res = protocol.NewMessage()
+
 	for err == nil {
 		err = res.Decode(client.r)
 		//res, err = protocol.Read(client.r)
@@ -464,18 +480,23 @@ func (client *Client) input() {
 			break
 		}
 		seq := res.Seq()
-		client.mutex.Lock()
-		call := client.pending[seq]
-		delete(client.pending, seq)
-		client.mutex.Unlock()
+		var call *Call
+		isServerMessage := (res.MessageType() == protocol.Request && !res.IsHeartbeat() && res.IsOneway())
+		if !isServerMessage {
+			client.mutex.Lock()
+			call = client.pending[seq]
+			delete(client.pending, seq)
+			client.mutex.Unlock()
+		}
 
 		switch {
 		case call == nil:
-			// We've got no pending call. That usually means that
-			// WriteRequest partially failed, and call was already
-			// removed; response is a server telling us about an
-			// error reading request body. We should still attempt
-			// to read error body, but there's no one to give it to.
+			if isServerMessage {
+				if client.ServerMessageChan != nil {
+					go client.handleServerRequest(res)
+				}
+				continue
+			}
 		case res.MessageStatusType() == protocol.Error:
 			// We've got an error response. Give this to the request;
 			call.Error = ServiceError(res.Metadata[protocol.ServiceError])
@@ -536,6 +557,23 @@ func (client *Client) input() {
 	if err != nil && err != io.EOF && !closing {
 		log.Error("rpcx: client protocol error:", err)
 	}
+}
+
+func (client *Client) handleServerRequest(msg *protocol.Message) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Errorf("ServerMessageChan may be closed so client remove it. Please add it again if you want to handle server requests. error is %v", r)
+			client.ServerMessageChan = nil
+		}
+	}()
+
+	t := time.NewTimer(5 * time.Second)
+	select {
+	case client.ServerMessageChan <- msg:
+	case <-t.C:
+		log.Warnf("ServerMessageChan may be full so the server request %d has been dropped", msg.Seq())
+	}
+	t.Stop()
 }
 
 func (client *Client) heartbeat() {
