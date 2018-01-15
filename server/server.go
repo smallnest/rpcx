@@ -47,6 +47,8 @@ var (
 	RemoteConnContextKey = &contextKey{"remote-conn"}
 	// StartRequestContextKey records the start time
 	StartRequestContextKey = &contextKey{"start-parse-request"}
+	// StartSendRequestContextKey records the start time
+	StartSendRequestContextKey = &contextKey{"start-send-request"}
 )
 
 // Server is rpcx server that use TCP or UDP.
@@ -113,6 +115,9 @@ func (s *Server) Address() net.Addr {
 //
 // servicePath, serviceMethod, metadata can be set to zero values.
 func (s *Server) SendMessage(conn net.Conn, servicePath, serviceMethod string, metadata map[string]string, data []byte) error {
+	ctx := context.WithValue(context.Background(), StartSendRequestContextKey, time.Now().UnixNano())
+	s.Plugins.DoPreWriteRequest(ctx)
+
 	req := protocol.GetPooledMsg()
 	req.SetMessageType(protocol.Request)
 
@@ -126,8 +131,9 @@ func (s *Server) SendMessage(conn net.Conn, servicePath, serviceMethod string, m
 	req.Payload = data
 
 	reqData := req.Encode()
-	protocol.FreeMsg(req)
 	_, err := conn.Write(reqData)
+	s.Plugins.DoPostWriteRequest(ctx, req, err)
+	protocol.FreeMsg(req)
 	return err
 }
 
