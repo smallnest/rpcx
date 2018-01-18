@@ -46,7 +46,6 @@ var DefaultOption = Option{
 	Retries:        3,
 	RPCPath:        share.DefaultRPCPath,
 	ConnectTimeout: 10 * time.Second,
-	Breaker:        CircuitBreaker,
 	SerializeType:  protocol.MsgPack,
 	CompressType:   protocol.None,
 }
