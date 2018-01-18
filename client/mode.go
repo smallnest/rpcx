@@ -10,6 +10,8 @@ const (
 	Failfast
 	//Failtry use current client again
 	Failtry
+	//Failbackup select another server if the first server doesn't respon in specified time and use the fast response.
+	Failbackup
 )
 
 // SelectMode defines the algorithm of selecting a services from candidates.

@@ -352,7 +352,55 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 		}
 
 		return err
+	case Failbackup:
+		ctx, cancelFn := context.WithCancel(ctx)
+		defer cancelFn()
+		call1 := make(chan *Call, 10)
+		call2 := make(chan *Call, 10)
+		reply1 := reflect.New(reflect.ValueOf(reply).Elem().Type()).Interface()
+		reply2 := reflect.New(reflect.ValueOf(reply).Elem().Type()).Interface()
 
+		_, err1 := c.Go(ctx, serviceMethod, args, reply1, call1)
+
+		t := time.NewTimer(c.option.BackupLatency)
+		select {
+		case <-ctx.Done(): //cancel by context
+			err = ctx.Err()
+			return err
+		case call := <-call1:
+			err = call.Error
+			if err == nil {
+				reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(reply1).Elem())
+			}
+			return err
+		case <-t.C:
+
+		}
+		_, err2 := c.Go(ctx, serviceMethod, args, reply2, call2)
+		if err2 != nil {
+			if _, ok := err.(ServiceError); !ok {
+				c.removeClient(k, client)
+			}
+			err = err1
+			return err
+		}
+
+		select {
+		case <-ctx.Done(): //cancel by context
+			err = ctx.Err()
+		case call := <-call1:
+			err = call.Error
+			if err == nil {
+				reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(reply1).Elem())
+			}
+		case call := <-call2:
+			err = call.Error
+			if err == nil {
+				reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(reply2).Elem())
+			}
+		}
+
+		return err
 	default: //Failfast
 		err = c.wrapCall(ctx, client, serviceMethod, args, reply)
 		if err != nil {
@@ -557,7 +605,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 			err = c.wrapCall(ctx, client, serviceMethod, args, clonedReply)
 			done <- (err == nil)
 			if err == nil {
-				reflect.ValueOf(reply).Set(reflect.ValueOf(clonedReply))
+				reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(clonedReply).Elem())
 			}
 		}()
 	}

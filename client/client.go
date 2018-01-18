@@ -48,6 +48,7 @@ var DefaultOption = Option{
 	ConnectTimeout: 10 * time.Second,
 	SerializeType:  protocol.MsgPack,
 	CompressType:   protocol.None,
+	BackupLatency:  10 * time.Millisecond,
 }
 
 // Breaker is a CircuitBreaker interface.
@@ -131,6 +132,9 @@ type Option struct {
 	ReadTimeout time.Duration
 	// WriteTimeout sets writedeadline for underlying net.Conns
 	WriteTimeout time.Duration
+
+	// BackupLatency is used for Failbackup mode. rpcx will sends another request if the first response doesn't return in BackupLatency time.
+	BackupLatency time.Duration
 
 	// Breaker is used to config CircuitBreaker
 	Breaker Breaker
