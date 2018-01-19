@@ -20,8 +20,10 @@ func GetPooledMsg() *Message {
 
 // FreeMsg puts a msg into the pool.
 func FreeMsg(msg *Message) {
-	msg.Reset()
-	msgPool.Put(msg)
+	if msg != nil {
+		msg.Reset()
+		msgPool.Put(msg)
+	}
 }
 
 var poolUint32Data = sync.Pool{

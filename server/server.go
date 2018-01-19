@@ -160,6 +160,10 @@ func (s *Server) Serve(network, address string) (err error) {
 		s.serveByHTTP(ln, "")
 		return nil
 	}
+
+	// try to start gateway
+	ln = s.startGateway(network, ln)
+
 	return s.serveListener(ln)
 }
 
