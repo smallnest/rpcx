@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/smallnest/rpcx/protocol"
+	"github.com/smallnest/rpcx/share"
 )
 
 const (
@@ -70,6 +71,14 @@ func HTTPRequest2RpcxRequest(r *http.Request) (*protocol.Message, error) {
 			}
 		}
 		req.Metadata = mm
+	}
+
+	auth := h.Get("Authorization")
+	if auth != "" {
+		if req.Metadata == nil {
+			req.Metadata = make(map[string]string)
+		}
+		req.Metadata[share.AuthKey] = auth
 	}
 
 	sp := h.Get(XServicePath)
