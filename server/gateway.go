@@ -39,7 +39,7 @@ func (s *Server) startHTTP1APIGateway(ln net.Listener) {
 	router.PUT("/*servicePath", s.handleGatewayRequest)
 
 	if err := http.Serve(ln, router); err != nil {
-		log.Fatalf("error in gateway Serve: %s", err)
+		log.Errorf("error in gateway Serve: %s", err)
 	}
 }
 
