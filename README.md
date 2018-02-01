@@ -8,6 +8,8 @@ Official site: [http://rpcx.site](http://rpcx.site/)
 **Notice: You can write clients in any programming languages to call rpcx services via [rpcx-gateway](https://github.com/rpcx-ecosystem/rpcx-gateway)**
 
 
+> If you can write Go methods, you can also write rpc services. It is so easy to write rpc applications with rpcx.
+
 ## Installation
 
 install the basic features:
@@ -74,18 +76,26 @@ There is a UI manager: [rpcx-ui](https://github.com/smallnest/rpcx-ui).
 
 **_Use_**
 - protobuf
-- one machine for the client and the server
+- the client and the server on the same server
 - 581 bytes payload
-- 5000 concurrent clients
+- 500/2000/5000 concurrent clients
+- mock processing time: 0ms, 10ms and 30ms
 
 **_Test Result_**
 
-| |rpcx| grpc-go|
-|------------|----------|------------|
-|**TPS**|192300 request/second| 106886 request/second|
-|**Mean latency**|25 ms| 46 ms|
-|**Median latency**|12 ms|41 ms|
-|**P99**|246ms|170ms|
+### 0ms process time
+
+<table><tr><th>Throughputs</th><th>Mean Latency</th><th>P99 Latency</th></tr><tr><td width="30%">![](http://colobu.com/2018/01/31/benchmark-2018-spring-of-popular-rpc-frameworks/p0-throughput.png)</td><td width="30%">![](http://colobu.com/2018/01/31/benchmark-2018-spring-of-popular-rpc-frameworks/p0-latency.png)</td><td width="30%">![](http://colobu.com/2018/01/31/benchmark-2018-spring-of-popular-rpc-frameworks/p0-p99.png)</td></tr></table>
+
+
+### 10ms process time
+
+<table><tr><th>Throughputs</th><th>Mean Latency</th><th>P99 Latency</th></tr><tr><td width="30%">![](http://colobu.com/2018/01/31/benchmark-2018-spring-of-popular-rpc-frameworks/p10-throughput.png)</td><td width="30%">![](http://colobu.com/2018/01/31/benchmark-2018-spring-of-popular-rpc-frameworks/p10-latency.png)</td><td width="30%">![](http://colobu.com/2018/01/31/benchmark-2018-spring-of-popular-rpc-frameworks/p10-p99.png)</td></tr></table>
+
+
+### 30ms process time
+
+<table><tr><th>Throughputs</th><th>Mean Latency</th><th>P99 Latency</th></tr><tr><td width="30%">![](http://colobu.com/2018/01/31/benchmark-2018-spring-of-popular-rpc-frameworks/p30-throughput.png)</td><td width="30%">![](http://colobu.com/2018/01/31/benchmark-2018-spring-of-popular-rpc-frameworks/p30-latency.png)</td><td width="30%">![](http://colobu.com/2018/01/31/benchmark-2018-spring-of-popular-rpc-frameworks/p30-p99.png)</td></tr></table>
 
 
 ## Examples
