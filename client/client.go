@@ -117,6 +117,10 @@ func NewClient(option Option) *Client {
 
 // Option contains all options for creating clients.
 type Option struct {
+	// Group is used to select the services in the same group. Services set group info in their meta.
+	// If it is empty, clients will ignore group.
+	Group string
+
 	// Retries retries to send
 	Retries int
 

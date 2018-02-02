@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"errors"
+	"net/url"
 	"reflect"
 	"strings"
 	"sync"
@@ -94,6 +95,8 @@ func NewXClient(servicePath string, failMode FailMode, selectMode SelectMode, di
 	for _, p := range pairs {
 		servers[p.Key] = p.Value
 	}
+	filterByStateAndGroup(client.option.Group, servers)
+
 	client.servers = servers
 	if selectMode != Closest && selectMode != SelectByUser {
 		client.selector = newSelector(selectMode, servers)
@@ -127,6 +130,7 @@ func NewBidirectionalXClient(servicePath string, failMode FailMode, selectMode S
 	for _, p := range pairs {
 		servers[p.Key] = p.Value
 	}
+	filterByStateAndGroup(client.option.Group, servers)
 	client.servers = servers
 	if selectMode != Closest && selectMode != SelectByUser {
 		client.selector = newSelector(selectMode, servers)
@@ -177,6 +181,7 @@ func (c *xClient) watch(ch chan []*KVPair) {
 			servers[p.Key] = p.Value
 		}
 		c.mu.Lock()
+		filterByStateAndGroup(c.option.Group, servers)
 		c.servers = servers
 
 		if c.selector != nil {
@@ -184,6 +189,18 @@ func (c *xClient) watch(ch chan []*KVPair) {
 		}
 
 		c.mu.Unlock()
+	}
+}
+func filterByStateAndGroup(group string, servers map[string]string) {
+	for k, v := range servers {
+		if values, err := url.ParseQuery(v); err == nil {
+			if state := values.Get("state"); state == "inactive" {
+				delete(servers, k)
+			}
+			if group != "" && group != values.Get("group") {
+				delete(servers, k)
+			}
+		}
 	}
 }
 
