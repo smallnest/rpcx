@@ -254,6 +254,39 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 	return client, nil
 }
 
+func (c *xClient) getCachedClientWithoutLock(k string) (RPCClient, error) {
+	client := c.cachedClient[k]
+	if client != nil {
+		if !client.IsClosing() && !client.IsShutdown() {
+			return client, nil
+		}
+	}
+
+	//double check
+	client = c.cachedClient[k]
+	if client == nil {
+		network, addr := splitNetworkAndAddress(k)
+		if network == "inprocess" {
+			client = InprocessClient
+		} else {
+			client = &Client{
+				option:  c.option,
+				Plugins: c.Plugins,
+			}
+			err := client.Connect(network, addr)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		client.RegisterServerMessageChan(c.serverMessageChan)
+
+		c.cachedClient[k] = client
+	}
+
+	return client, nil
+}
+
 func (c *xClient) removeClient(k string, client RPCClient) {
 	c.mu.Lock()
 	cl := c.cachedClient[k]
@@ -539,7 +572,7 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 	var clients []RPCClient
 	c.mu.RLock()
 	for k := range c.servers {
-		client, err := c.getCachedClient(k)
+		client, err := c.getCachedClientWithoutLock(k)
 		if err != nil {
 			c.mu.RUnlock()
 			return err
@@ -599,7 +632,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 	var clients []RPCClient
 	c.mu.RLock()
 	for k := range c.servers {
-		client, err := c.getCachedClient(k)
+		client, err := c.getCachedClientWithoutLock(k)
 		if err != nil {
 			c.mu.RUnlock()
 			return err
@@ -607,7 +640,6 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 		clients = append(clients, client)
 	}
 	c.mu.RUnlock()
-
 	if len(clients) == 0 {
 		return ErrXClientNoServer
 	}
