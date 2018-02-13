@@ -119,6 +119,7 @@ var (
 
 	mainFn = mainFn + `
 	basePath = flag.String("base", "/rpcx", "prefix path")
+)
 	
 func main() {
 	flag.Parse()
