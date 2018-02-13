@@ -190,14 +190,13 @@ func main() {
 
 	if useRegistry {
 		fmt.Fprintln(w, `
-			err := r.Start()
-			if err != nil {
-				//log.Fatal(err)
-			}
-			s.Plugins.Add(r)`)
+	err := r.Start()
+	if err != nil {
+		//log.Fatal(err)
+	}
+	s.Plugins.Add(r)`)
 	}
 
-	fmt.Fprintln(w, `
-}`)
+	fmt.Fprintln(w, `}`)
 	return nil
 }
