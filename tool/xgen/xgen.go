@@ -16,7 +16,7 @@ var (
 	processPkg    = flag.Bool("pkg", false, "process the whole package instead of just the given file")
 	specifiedName = flag.String("o", "", "specify the filename of the output")
 	buildTags     = flag.String("tags", "", "build tags to add to generated file")
-	registry      = flag.String("r", "etcd", "registry type. support etcd, consul, zookeeper, mdns")
+	registry      = flag.String("r", "", "registry type. support etcd, consul, zookeeper, mdns")
 )
 
 func main() {
@@ -92,7 +92,6 @@ func generate(parsers []*parser.Parser) error {
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "import (")
 	fmt.Fprintln(w, `  "flag"`)
-	fmt.Fprintln(w, `  "log"`)
 	fmt.Fprintln(w, `  "time"`)
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, `  metrics "github.com/rcrowley/go-metrics"`)
@@ -124,6 +123,10 @@ var (
 func main() {
 	flag.Parse()
 
+	_ = time.Second
+	_ = metrics.UseNilMetrics
+	_ = serverplugin.GetFunctionName
+
 	s := server.NewServer()
 	addRegistryPlugin(s)
 
@@ -142,6 +145,8 @@ func main() {
 
 	fmt.Fprintln(w, `}`)
 
+	useRegistry := false
+
 	fmt.Fprintln(w, `func addRegistryPlugin(s *server.Server) {`)
 	switch *registry {
 	case "etcd":
@@ -153,6 +158,7 @@ func main() {
 		Metrics:        metrics.NewRegistry(),
 		UpdateInterval: time.Minute,
 	}`)
+		useRegistry = true
 	case "consul":
 		fmt.Fprintln(w, `	// add registery
 	r := &serverplugin.ConsulRegisterPlugin{
@@ -162,6 +168,7 @@ func main() {
 		Metrics:        metrics.NewRegistry(),
 		UpdateInterval: time.Minute,
 	}`)
+		useRegistry = true
 	case "zookeeper":
 		fmt.Fprintln(w, `	// add registery
 	r := &serverplugin.ZooKeeperRegisterPlugin{
@@ -171,21 +178,26 @@ func main() {
 		Metrics:          metrics.NewRegistry(),
 		UpdateInterval:   time.Minute,
 	}`)
+		useRegistry = true
 	case "mdns":
 		fmt.Fprintln(w, `
 			r := serverplugin.NewMDNSRegisterPlugin("tcp@"+*addr, 8972, metrics.NewRegistry(), time.Minute, "")`)
+		useRegistry = true
 	default:
 		fmt.Fprintln(w, `
-		}`)
+		`)
+	}
+
+	if useRegistry {
+		fmt.Fprintln(w, `
+			err := r.Start()
+			if err != nil {
+				//log.Fatal(err)
+			}
+			s.Plugins.Add(r)`)
 	}
 
 	fmt.Fprintln(w, `
-	err := r.Start()
-	if err != nil {
-		log.Fatal(err)
-	}
-	s.Plugins.Add(r)
 }`)
-
 	return nil
 }
