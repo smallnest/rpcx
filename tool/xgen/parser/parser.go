@@ -15,7 +15,7 @@ type Parser struct {
 	PkgPath     string
 	PkgName     string
 	PkgFullName string
-	StructNames []string
+	StructNames map[string]bool
 }
 
 type visitor struct {
@@ -45,13 +45,31 @@ func (v *visitor) Visit(n ast.Node) (w ast.Visitor) {
 
 		// Allow to specify non-structs explicitly independent of '-all' flag.
 		if v.explicit {
-			v.StructNames = append(v.StructNames, v.name)
+			v.StructNames[v.name] = true
 			return nil
 		}
 		return v
 	case *ast.StructType:
 		if isExported(v.name) {
-			v.StructNames = append(v.StructNames, v.name)
+			//fmt.Printf("@@@@%s: %s\n", v.name, pretty.Sprint(n.Fields))
+			//v.StructNames = append(v.StructNames, v.name)
+		}
+		return nil
+	case *ast.FuncDecl:
+		if isExported(v.name) {
+			if n.Type.Params.NumFields() == 3 {
+				params := n.Type.Params.List
+
+				if p, ok := params[0].Type.(*ast.SelectorExpr); ok {
+					x := p.X.(*ast.Ident)
+					s := p.Sel
+
+					if x.Name+"."+s.Name == "context.Context" {
+						v.StructNames[v.name] = true
+					}
+				}
+			}
+
 		}
 		return nil
 	}

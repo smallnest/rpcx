@@ -55,7 +55,7 @@ func main() {
 			return
 		}
 
-		p := &parser.Parser{PkgFullName: relDir}
+		p := &parser.Parser{PkgFullName: relDir, StructNames: make(map[string]bool)}
 		if err := p.Parse(fname, fInfo.IsDir()); err != nil {
 			fmt.Printf("Error parsing %v: %v", fname, err)
 			return
@@ -134,7 +134,7 @@ func main() {
 
 	fmt.Fprintln(w, `func registerServices(s *server.Server) {`)
 	for _, p := range parsers {
-		for _, n := range p.StructNames {
+		for n := range p.StructNames {
 			fmt.Fprintln(w, `	s.Register(new(`+p.PkgName+"."+n+`), "")`)
 		}
 	}
