@@ -48,6 +48,13 @@ func main() {
 			panic(err)
 		}
 
+		if !filepath.IsAbs(fname) {
+			fname, err = filepath.Abs(fname)
+			if err != nil {
+				panic(err)
+			}
+		}
+
 		relDir, err := filepath.Rel(filepath.Join(build.Default.GOPATH, "src"), fname)
 		if err != nil {
 			fmt.Printf("provided directory not under GOPATH (%s): %v",

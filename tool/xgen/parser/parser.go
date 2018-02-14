@@ -57,8 +57,13 @@ func (v *visitor) Visit(n ast.Node) (w ast.Visitor) {
 		return nil
 	case *ast.FuncDecl:
 		if isExported(v.name) {
-			if n.Type.Params.NumFields() == 3 {
+			if n.Type.Params.NumFields() == 3 && n.Type.Results.NumFields() == 1 {
 				params := n.Type.Params.List
+				result := n.Type.Results.List[0]
+
+				if result.Type.(*ast.Ident).Name != "error" {
+					return nil
+				}
 
 				if p, ok := params[0].Type.(*ast.SelectorExpr); ok {
 					x := p.X.(*ast.Ident)
