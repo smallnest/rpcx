@@ -461,9 +461,10 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		}
 	}
 
+	isOneway := req.IsOneway()
 	protocol.FreeMsg(req)
 
-	if req.IsOneway() {
+	if isOneway {
 		client.mutex.Lock()
 		call = client.pending[seq]
 		delete(client.pending, seq)
