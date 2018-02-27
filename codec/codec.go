@@ -30,7 +30,7 @@ func (c ByteCodec) Encode(i interface{}) ([]byte, error) {
 
 // Decode returns raw slice of bytes.
 func (c ByteCodec) Decode(data []byte, i interface{}) error {
-	reflect.ValueOf(i).SetBytes(data)
+	reflect.Indirect(reflect.ValueOf(i)).SetBytes(data)
 	return nil
 }
 
