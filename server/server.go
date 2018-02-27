@@ -427,7 +427,11 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 
 	replyv := argsReplyPools.Get(mtype.ReplyType)
 
-	err = service.call(ctx, mtype, reflect.ValueOf(argv), reflect.ValueOf(replyv))
+	if mtype.ArgType.Kind() != reflect.Ptr {
+		err = service.call(ctx, mtype, reflect.ValueOf(argv).Elem(), reflect.ValueOf(replyv))
+	} else {
+		err = service.call(ctx, mtype, reflect.ValueOf(argv), reflect.ValueOf(replyv))
+	}
 
 	argsReplyPools.Put(mtype.ArgType, argv)
 	if err != nil {
