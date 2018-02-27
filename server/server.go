@@ -314,15 +314,18 @@ func (s *Server) serveConn(conn net.Conn) {
 		ctx = context.WithValue(ctx, StartRequestContextKey, time.Now().UnixNano())
 		err = s.auth(ctx, req)
 		if err != nil {
-			s.Plugins.DoPreWriteResponse(ctx, req)
+
 			if !req.IsOneway() {
 				res := req.Clone()
 				res.SetMessageType(protocol.Response)
 				handleError(res, err)
 				data := res.Encode()
+				s.Plugins.DoPreWriteResponse(ctx, req, res)
 				conn.Write(data)
 				s.Plugins.DoPostWriteResponse(ctx, req, res, err)
 				protocol.FreeMsg(res)
+			} else {
+				s.Plugins.DoPreWriteResponse(ctx, req, nil)
 			}
 
 			protocol.FreeMsg(req)
@@ -346,7 +349,7 @@ func (s *Server) serveConn(conn net.Conn) {
 				log.Warnf("rpcx: failed to handle request: %v", err)
 			}
 
-			s.Plugins.DoPreWriteResponse(newCtx, req)
+			s.Plugins.DoPreWriteResponse(newCtx, req, res)
 			if !req.IsOneway() {
 				if len(resMetadata) > 0 { //copy meta in context to request
 					meta := res.Metadata

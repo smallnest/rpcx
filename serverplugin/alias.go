@@ -59,7 +59,7 @@ func (p *AliasPlugin) PostReadRequest(ctx context.Context, r *protocol.Message, 
 }
 
 // PreWriteResponse restore servicePath and serviceMethod.
-func (p *AliasPlugin) PreWriteResponse(ctx context.Context, r *protocol.Message) error {
+func (p *AliasPlugin) PreWriteResponse(ctx context.Context, r *protocol.Message, res *protocol.Message) error {
 	if r.Metadata[aliasAppliedKey] != "true" {
 		return nil
 	}
@@ -72,6 +72,10 @@ func (p *AliasPlugin) PreWriteResponse(ctx context.Context, r *protocol.Message)
 			r.ServicePath = pm.servicePath
 			r.ServiceMethod = pm.serviceMethod
 			delete(r.Metadata, aliasAppliedKey)
+			if res != nil {
+				res.ServicePath = pm.servicePath
+				res.ServiceMethod = pm.serviceMethod
+			}
 		}
 	}
 	return nil
