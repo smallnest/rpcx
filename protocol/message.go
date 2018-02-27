@@ -160,7 +160,7 @@ func (h Header) CompressType() CompressType {
 
 // SetCompressType sets the compression type.
 func (h *Header) SetCompressType(ct CompressType) {
-	h[2] = h[2] | ((byte(ct) << 2) & 0x1C)
+	h[2] = (h[2] &^ 0x1C) | ((byte(ct) << 2) & 0x1C)
 }
 
 // MessageStatusType returns the message status type.
@@ -170,7 +170,7 @@ func (h Header) MessageStatusType() MessageStatusType {
 
 // SetMessageStatusType sets message status type.
 func (h *Header) SetMessageStatusType(mt MessageStatusType) {
-	h[2] = h[2] | (byte(mt) & 0x03)
+	h[2] = (h[2] &^ 0x03) | (byte(mt) & 0x03)
 }
 
 // SerializeType returns serialization type of payload.
@@ -180,7 +180,7 @@ func (h Header) SerializeType() SerializeType {
 
 // SetSerializeType sets the serialization type.
 func (h *Header) SetSerializeType(st SerializeType) {
-	h[3] = h[3] | (byte(st) << 4)
+	h[3] = (h[3] &^ 0xF0) | (byte(st) << 4)
 }
 
 // Seq returns sequence number of messages.
