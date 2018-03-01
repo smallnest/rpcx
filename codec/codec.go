@@ -24,6 +24,9 @@ func (c ByteCodec) Encode(i interface{}) ([]byte, error) {
 	if data, ok := i.([]byte); ok {
 		return data, nil
 	}
+	if data, ok := i.(*[]byte); ok {
+		return *data, nil
+	}
 
 	return nil, fmt.Errorf("%T is not a []byte", i)
 }
