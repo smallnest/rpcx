@@ -43,30 +43,30 @@ rpcx is a RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan]
 **rpcx 3.0** has been refactored for targets:
 1. **Simple**: easy to learn, easy to develop, easy to intergate and easy to deploy
 2. **Performance**: high perforamnce (>= grpc-go)
-3. **Cross-platform**: support _raw slice of bytes_, _JSON_, _Protobuf_ and _MessagePack_. Theoretically it can be use in java, php, python, c/c++, node.js, c# and other platforms
-4. **Service discovery and service governance.**: support zookeeper, etcd and consul.
+3. **Cross-platform**: support _raw slice of bytes_, _JSON_, _Protobuf_ and _MessagePack_. Theoretically it can be used with java, php, python, c/c++, node.js, c# and other platforms
+4. **Service discovery and service governance**: support zookeeper, etcd and consul.
 
 
 It contains below features
-- Support raw Go functions,. No need to define proto files.
+- Support raw Go functions. There's no need to define proto files.
 - Pluggable. Features can be extended such as service discovery, tracing.
 - Support TCP, HTTP, [QUIC](https://en.wikipedia.org/wiki/QUIC) and [KCP](https://github.com/skywind3000/kcp)
-- Support multiple codecs such as JSON、[Protobuf](https://github.com/skywind3000/kcp)、[MessagePack](https://msgpack.org/index.html) and raw bytes.
+- Support multiple codecs such as JSON, [Protobuf](https://github.com/skywind3000/kcp), [MessagePack](https://msgpack.org/index.html) and raw bytes.
 - Service discovery. Support peer2peer, configured peers, [zookeeper](https://zookeeper.apache.org), [etcd](https://github.com/coreos/etcd), [consul](https://www.consul.io) and [mDNS](https://en.wikipedia.org/wiki/Multicast_DNS).
-- Fault tolerance：Failover、Failfast、Failtry.
+- Fault tolerance：Failover, Failfast, Failtry.
 - Load banlancing：support Random, RoundRobin, Consistent hashing, Weighted, network quality and Geography.
 - Support Compression.
 - Support passing metadata.
 - Support Authorization.
 - Support heartbeat and one-way request.
-- Other features: metrics, log, timeout, alias, CircuitBreaker.
+- Other features: metrics, log, timeout, alias, circuit breaker.
 - Support bidirectional communication.
-- Support access via HTTP so you can write clients in any programming languages
+- Support access via HTTP so you can write clients in any programming languages.
 - Support API gateway.
 - Support backup request, forking and broadcast.
 
 
-rpcx uses a binary protocol and platform-independent, that means you can develop services in other languages such as Java, python, nodejs, and you can use other prorgramming languages to invoke services developed in Go.
+rpcx uses a binary protocol and platform-independent, which means you can develop services in other languages such as Java, python, nodejs, and you can use other prorgramming languages to invoke services developed in Go.
 
 There is a UI manager: [rpcx-ui](https://github.com/smallnest/rpcx-ui).
 
@@ -141,7 +141,7 @@ The below is a simple example.
 - [Storm of the Three Kingdoms](https://www.juxia.com/sjwy/game-2747.html): game
 
 
-If you or your company is using rpcx, welcome to tell me and I will add more in this.
+If you or your company is using rpcx, welcome to tell me and I will add more here.
 
 ## Contribute
 
