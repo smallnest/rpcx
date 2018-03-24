@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"net/url"
+	"sort"
 	"strconv"
 	"time"
 
@@ -259,6 +260,7 @@ func (s *consistentHashSelector) UpdateServer(servers map[string]string) {
 		ss = append(ss, k)
 	}
 
+	sort.Slice(ss, func(i, j int) bool { return ss[i] < ss[j] })
 	s.servers = ss
 }
 
