@@ -242,6 +242,7 @@ func newConsistentHashSelector(servers map[string]string) Selector {
 		ss = append(ss, k)
 	}
 
+	sort.Slice(ss, func(i, j int) bool { return ss[i] < ss[j] })
 	return &consistentHashSelector{servers: ss}
 }
 
