@@ -415,6 +415,10 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	req := protocol.GetPooledMsg()
 	req.SetMessageType(protocol.Request)
 	req.SetSeq(seq)
+	if call.Reply == nil {
+		req.SetOneway(true)
+	}
+
 	// heartbeat
 	if call.ServicePath == "" && call.ServiceMethod == "" {
 		req.SetHeartbeat(true)
