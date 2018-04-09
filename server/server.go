@@ -375,11 +375,17 @@ func (s *Server) serveConn(conn net.Conn) {
 }
 
 func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Message, err error) {
-	s.Plugins.DoPreReadRequest(ctx)
+	err = s.Plugins.DoPreReadRequest(ctx)
+	if err != nil {
+		return nil, err
+	}
 	// pool req?
 	req = protocol.GetPooledMsg()
 	err = req.Decode(r)
-	s.Plugins.DoPostReadRequest(ctx, req, err)
+	perr := s.Plugins.DoPostReadRequest(ctx, req, err)
+	if err == nil {
+		err = perr
+	}
 	return req, err
 }
 
