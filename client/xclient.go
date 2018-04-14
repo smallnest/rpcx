@@ -229,7 +229,7 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 	//double check
 	c.mu.Lock()
 	client = c.cachedClient[k]
-	if client == nil {
+	if client == nil || client.IsShutdown() {
 		network, addr := splitNetworkAndAddress(k)
 		if network == "inprocess" {
 			client = InprocessClient

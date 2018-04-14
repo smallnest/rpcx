@@ -478,6 +478,10 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		}
 	}
 
+	if client.option.WriteTimeout != 0 {
+		client.Conn.SetWriteDeadline(time.Now().Add(client.option.WriteTimeout))
+	}
+
 }
 
 func (client *Client) input() {
@@ -485,6 +489,10 @@ func (client *Client) input() {
 	var res = protocol.NewMessage()
 
 	for err == nil {
+		if client.option.ReadTimeout != 0 {
+			client.Conn.SetReadDeadline(time.Now().Add(client.option.ReadTimeout))
+		}
+
 		err = res.Decode(client.r)
 		//res, err = protocol.Read(client.r)
 
