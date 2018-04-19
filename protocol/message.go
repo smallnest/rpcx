@@ -21,8 +21,8 @@ const (
 var (
 	// ErrMetaKVMissing some keys or values are mssing.
 	ErrMetaKVMissing = errors.New("wrong metadata lines. some keys or values are missing")
-	// ErrMessageToLong message is too long
-	ErrMessageToLong = errors.New("message is too long")
+	// ErrMessageTooLong message is too long
+	ErrMessageTooLong = errors.New("message is too long")
 )
 
 const (
@@ -372,15 +372,20 @@ func (m *Message) Decode(r io.Reader) error {
 	poolUint32Data.Put(lenData)
 
 	if MaxMessageLength > 0 && int(l) > MaxMessageLength {
-		return ErrMessageToLong
+		return ErrMessageTooLong
 	}
 
-	data := make([]byte, int(l))
+	totalL := int(l)
+	if cap(m.data) >= totalL { //reuse data
+		m.data = m.data[:totalL]
+	} else {
+		m.data = make([]byte, totalL)
+	}
+	data := m.data
 	_, err = io.ReadFull(r, data)
 	if err != nil {
 		return err
 	}
-	m.data = data
 
 	n := 0
 	// parse servicePath
@@ -423,7 +428,7 @@ func (m *Message) Decode(r io.Reader) error {
 func (m *Message) Reset() {
 	resetHeader(m.Header)
 	m.Metadata = nil
-	m.Payload = m.Payload[:0]
+	m.Payload = []byte{}
 	m.data = m.data[:0]
 	m.ServicePath = ""
 	m.ServiceMethod = ""
