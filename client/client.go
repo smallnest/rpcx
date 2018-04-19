@@ -514,6 +514,7 @@ func (client *Client) input() {
 			if isServerMessage {
 				if client.ServerMessageChan != nil {
 					go client.handleServerRequest(res)
+					res = protocol.NewMessage()
 				}
 				continue
 			}
