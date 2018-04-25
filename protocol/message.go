@@ -234,7 +234,6 @@ func (m Message) Encode() []byte {
 				payload = m.Payload
 			}
 		}
-
 	}
 
 	totalL := (4 + spL) + (4 + smL) + (4 + len(meta)) + (4 + len(payload))

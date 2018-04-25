@@ -366,6 +366,9 @@ func (s *Server) serveConn(conn net.Conn) {
 					}
 				}
 
+				if len(res.Payload) > 1024 && req.CompressType() != protocol.None {
+					res.SetCompressType(req.CompressType())
+				}
 				data := res.Encode()
 				conn.Write(data)
 				//res.WriteTo(conn)

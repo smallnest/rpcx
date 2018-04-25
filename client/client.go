@@ -17,7 +17,6 @@ import (
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
-	"github.com/smallnest/rpcx/util"
 )
 
 const (
@@ -530,13 +529,6 @@ func (client *Client) input() {
 			} else {
 				data := res.Payload
 				if len(data) > 0 {
-					if res.CompressType() == protocol.Gzip {
-						data, err = util.Unzip(data)
-						if err != nil {
-							call.Error = ServiceError("unzip payload: " + err.Error())
-						}
-					}
-
 					codec := share.Codecs[res.SerializeType()]
 					if codec == nil {
 						call.Error = ServiceError(ErrUnsupportedCodec.Error())
