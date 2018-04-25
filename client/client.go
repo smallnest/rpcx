@@ -300,6 +300,7 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 			call.Error = err
 			call.done()
 		}
+		return nil, nil, err
 	}
 	if r.IsOneway() {
 		client.mutex.Lock()
@@ -309,6 +310,7 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 		if call != nil {
 			call.done()
 		}
+		return nil, nil, nil
 	}
 
 	var m map[string]string
@@ -437,8 +439,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 			call.done()
 			return
 		}
-		if len(data) > 1024 && client.option.CompressType == protocol.Gzip {
-			data, err = util.Zip(data)
+		if len(data) > 1024 && client.option.CompressType != protocol.None {
 			if err != nil {
 				call.Error = err
 				call.done()
@@ -463,6 +464,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 			call.Error = err
 			call.done()
 		}
+		return
 	}
 
 	isOneway := req.IsOneway()

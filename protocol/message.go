@@ -9,6 +9,14 @@ import (
 	"github.com/smallnest/rpcx/util"
 )
 
+var (
+	// Compressors are compressors supported by rpcx. You can add customized compressor in Compressors.
+	Compressors = map[CompressType]Compressor{
+		None: &RawDataCompressor{},
+		Gzip: &GzipCompressor{},
+	}
+)
+
 // MaxMessageLength is the max length of a message.
 // Default is 0 that means does not limit length of messages.
 // It is used to validate when read messages from io.Reader.
@@ -23,6 +31,8 @@ var (
 	ErrMetaKVMissing = errors.New("wrong metadata lines. some keys or values are missing")
 	// ErrMessageTooLong message is too long
 	ErrMessageTooLong = errors.New("message is too long")
+
+	ErrUnsupportedCompressor = errors.New("unsupported compressor")
 )
 
 const (
@@ -197,6 +207,7 @@ func (h *Header) SetSeq(seq uint64) {
 func (m Message) Clone() *Message {
 	header := *m.Header
 	c := GetPooledMsg()
+	header.SetCompressType(None)
 	c.Header = &header
 	c.ServicePath = m.ServicePath
 	c.ServiceMethod = m.ServiceMethod
@@ -210,7 +221,23 @@ func (m Message) Encode() []byte {
 	spL := len(m.ServicePath)
 	smL := len(m.ServiceMethod)
 
-	totalL := (4 + spL) + (4 + smL) + (4 + len(meta)) + (4 + len(m.Payload))
+	var err error
+	payload := m.Payload
+	if m.CompressType() != None {
+		compressor := Compressors[m.CompressType()]
+		if compressor == nil {
+			m.SetCompressType(None)
+		} else {
+			payload, err = compressor.Zip(m.Payload)
+			if err != nil {
+				m.SetCompressType(None)
+				payload = m.Payload
+			}
+		}
+
+	}
+
+	totalL := (4 + spL) + (4 + smL) + (4 + len(meta)) + (4 + len(payload))
 
 	// header + dataLen + spLen + sp + smLen + sm + metaL + meta + payloadLen + payload
 	metaStart := 12 + 4 + (4 + spL) + (4 + smL)
@@ -233,8 +260,8 @@ func (m Message) Encode() []byte {
 	binary.BigEndian.PutUint32(data[metaStart:metaStart+4], uint32(len(meta)))
 	copy(data[metaStart+4:], meta)
 
-	binary.BigEndian.PutUint32(data[payLoadStart:payLoadStart+4], uint32(len(m.Payload)))
-	copy(data[payLoadStart+4:], m.Payload)
+	binary.BigEndian.PutUint32(data[payLoadStart:payLoadStart+4], uint32(len(payload)))
+	copy(data[payLoadStart+4:], payload)
 
 	return data
 }
@@ -251,7 +278,19 @@ func (m Message) WriteTo(w io.Writer) error {
 	spL := len(m.ServicePath)
 	smL := len(m.ServiceMethod)
 
-	totalL := (4 + spL) + (4 + smL) + (4 + len(meta)) + (4 + len(m.Payload))
+	payload := m.Payload
+	if m.CompressType() != None {
+		compressor := Compressors[m.CompressType()]
+		if compressor == nil {
+			return ErrUnsupportedCompressor
+		}
+		payload, err = compressor.Zip(m.Payload)
+		if err != nil {
+			return err
+		}
+	}
+
+	totalL := (4 + spL) + (4 + smL) + (4 + len(meta)) + (4 + len(payload))
 	err = binary.Write(w, binary.BigEndian, uint32(totalL))
 	if err != nil {
 		return err
@@ -286,12 +325,12 @@ func (m Message) WriteTo(w io.Writer) error {
 	}
 
 	//write payload
-	err = binary.Write(w, binary.BigEndian, uint32(len(m.Payload)))
+	err = binary.Write(w, binary.BigEndian, uint32(len(payload)))
 	if err != nil {
 		return err
 	}
 
-	_, err = w.Write(m.Payload)
+	_, err = w.Write(payload)
 	return err
 }
 
@@ -420,6 +459,17 @@ func (m *Message) Decode(r io.Reader) error {
 	_ = l
 	n = n + 4
 	m.Payload = data[n:]
+
+	if m.CompressType() != None {
+		compressor := Compressors[m.CompressType()]
+		if compressor == nil {
+			return ErrUnsupportedCompressor
+		}
+		m.Payload, err = compressor.Unzip(m.Payload)
+		if err != nil {
+			return err
+		}
+	}
 
 	return err
 }

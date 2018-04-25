@@ -14,7 +14,7 @@ const (
 )
 
 var (
-	// Codecs are codecs supported by rpcx.
+	// Codecs are codecs supported by rpcx. You can add customized codecs in Codecs.
 	Codecs = map[protocol.SerializeType]codec.Codec{
 		protocol.SerializeNone: &codec.ByteCodec{},
 		protocol.JSON:          &codec.JSONCodec{},

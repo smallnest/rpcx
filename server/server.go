@@ -318,8 +318,12 @@ func (s *Server) serveConn(conn net.Conn) {
 			if !req.IsOneway() {
 				res := req.Clone()
 				res.SetMessageType(protocol.Response)
+				if len(res.Payload) > 1024 && req.CompressType() != protocol.None {
+					res.SetCompressType(req.CompressType())
+				}
 				handleError(res, err)
 				data := res.Encode()
+
 				s.Plugins.DoPreWriteResponse(ctx, req, res)
 				conn.Write(data)
 				s.Plugins.DoPostWriteResponse(ctx, req, res, err)
