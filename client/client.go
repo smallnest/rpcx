@@ -440,12 +440,6 @@ func (client *Client) send(ctx context.Context, call *Call) {
 			return
 		}
 		if len(data) > 1024 && client.option.CompressType != protocol.None {
-			if err != nil {
-				call.Error = err
-				call.done()
-				return
-			}
-
 			req.SetCompressType(client.option.CompressType)
 		}
 
