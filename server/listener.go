@@ -10,9 +10,9 @@ var makeListeners = make(map[string]MakeListener)
 
 func init() {
 	makeListeners["tcp"] = tcpMakeListener
-	makeListeners["tcp4"] = tcpMakeListener
-	makeListeners["tcp6"] = tcp4MakeListener
-	makeListeners["http"] = tcp6MakeListener
+	makeListeners["tcp4"] = tcp4MakeListener
+	makeListeners["tcp6"] = tcp6MakeListener
+	makeListeners["http"] = tcpMakeListener
 }
 
 // RegisterMakeListener registers a MakeListener for network.
