@@ -395,13 +395,17 @@ func (m *Message) Decode(r io.Reader) error {
 	// validate rest length for each step?
 
 	// parse header
-	_, err := io.ReadFull(r, m.Header[:])
+	_, err := io.ReadFull(r, m.Header[:1])
 	if err != nil {
 		return err
 	}
-
 	if !m.Header.CheckMagicNumber() {
-		return fmt.Errorf("wrong magic numer: %v", m.Header[0])
+		return fmt.Errorf("wrong magic number: %v", m.Header[0])
+	}
+
+	_, err = io.ReadFull(r, m.Header[1:])
+	if err != nil {
+		return err
 	}
 
 	//total
