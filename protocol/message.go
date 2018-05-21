@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/smallnest/rpcx/util"
@@ -397,6 +398,10 @@ func (m *Message) Decode(r io.Reader) error {
 	_, err := io.ReadFull(r, m.Header[:])
 	if err != nil {
 		return err
+	}
+
+	if !m.Header.CheckMagicNumber() {
+		return fmt.Errorf("wrong magic numer: %v", m.Header[0])
 	}
 
 	//total
