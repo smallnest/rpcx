@@ -53,6 +53,9 @@ var DefaultOption = Option{
 // Breaker is a CircuitBreaker interface.
 type Breaker interface {
 	Call(func() error, time.Duration) error
+	Fail()
+	Success()
+	Ready() bool
 }
 
 // CircuitBreaker is a default circuit breaker (RateBreaker(0.95, 100)).
@@ -140,7 +143,7 @@ type Option struct {
 	BackupLatency time.Duration
 
 	// Breaker is used to config CircuitBreaker
-	Breaker Breaker
+	GenBreaker func() Breaker
 
 	SerializeType protocol.SerializeType
 	CompressType  protocol.CompressType
@@ -224,12 +227,6 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
 func (client *Client) Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error {
-	if client.option.Breaker != nil {
-		return client.option.Breaker.Call(func() error {
-			return client.call(ctx, servicePath, serviceMethod, args, reply)
-		}, 0)
-	}
-
 	return client.call(ctx, servicePath, serviceMethod, args, reply)
 }
 

@@ -58,6 +58,7 @@ type xClient struct {
 	failMode      FailMode
 	selectMode    SelectMode
 	cachedClient  map[string]RPCClient
+	breakers      sync.Map
 	servicePath   string
 	serviceMethod string
 	option        Option
@@ -210,13 +211,18 @@ func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod s
 	if k == "" {
 		return "", nil, ErrXClientNoServer
 	}
-
 	client, err := c.getCachedClient(k)
 	return k, client, err
 }
 
 func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 	c.mu.RLock()
+	breaker, ok := c.breakers.Load(k)
+	if ok && !breaker.(Breaker).Ready() {
+		c.mu.RUnlock()
+		return nil, ErrBreakerOpen
+	}
+
 	client := c.cachedClient[k]
 	if client != nil {
 		if !client.IsClosing() && !client.IsShutdown() {
@@ -238,8 +244,16 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 				option:  c.option,
 				Plugins: c.Plugins,
 			}
+
+			var breaker interface{}
+			if c.option.GenBreaker != nil {
+				breaker, _ = c.breakers.LoadOrStore(k, c.option.GenBreaker())
+			}
 			err := client.Connect(network, addr)
 			if err != nil {
+				if breaker != nil {
+					breaker.(Breaker).Fail()
+				}
 				c.mu.Unlock()
 				return nil, err
 			}
@@ -353,10 +367,6 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 	k, client, err := c.selectClient(ctx, c.servicePath, serviceMethod, args)
 	if err != nil {
 		if c.failMode == Failfast {
-			return err
-		}
-
-		if _, ok := err.(ServiceError); ok {
 			return err
 		}
 	}
@@ -554,6 +564,7 @@ func (c *xClient) wrapCall(ctx context.Context, client RPCClient, serviceMethod 
 	c.Plugins.DoPreCall(ctx, c.servicePath, serviceMethod, args)
 	err := client.Call(ctx, c.servicePath, serviceMethod, args, reply)
 	c.Plugins.DoPostCall(ctx, c.servicePath, serviceMethod, args, reply, err)
+
 	return err
 }
 

@@ -81,6 +81,17 @@ func (cb *ConsecCircuitBreaker) fail() {
 	cb.lastFailureTime = time.Now()
 }
 
+func (cb *ConsecCircuitBreaker) Success() {
+	cb.success()
+}
+func (cb *ConsecCircuitBreaker) Fail() {
+	cb.fail()
+}
+
+func (cb *ConsecCircuitBreaker) Ready() bool {
+	return cb.ready()
+}
+
 func (cb *ConsecCircuitBreaker) reset() {
 	atomic.StoreUint64(&cb.failures, 0)
 	cb.lastFailureTime = time.Now()
