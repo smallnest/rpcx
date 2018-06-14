@@ -150,3 +150,29 @@ func (p *MDNSRegisterPlugin) Register(name string, rcvr interface{}, metadata st
 	p.server.SetText([]string{s})
 	return
 }
+
+func (p *MDNSRegisterPlugin) Unregister(name string) (err error) {
+	if "" == strings.TrimSpace(name) {
+		err = errors.New("Register service `name` can't be empty")
+		return
+	}
+
+	var services = make([]*serviceMeta, 0, len(p.Services)-1)
+	for _, meta := range p.Services {
+		if meta.Service != name {
+			services = append(services, meta)
+		}
+	}
+	p.Services = services
+
+	ss, _ := json.Marshal(p.Services)
+	s := url.QueryEscape(string(ss))
+	p.server.SetText([]string{s})
+
+	// if p.server != nil {
+	// 	p.server.Shutdown()
+	// 	return
+	// }
+
+	return
+}

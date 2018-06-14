@@ -17,6 +17,7 @@ type PluginContainer interface {
 
 	DoRegister(name string, rcvr interface{}, metadata string) error
 	DoRegisterFunction(name string, fn interface{}, metadata string) error
+	DoUnregister(name string) error
 
 	DoPostConnAccept(net.Conn) (net.Conn, bool)
 
@@ -38,6 +39,7 @@ type (
 	// RegisterPlugin is .
 	RegisterPlugin interface {
 		Register(name string, rcvr interface{}, metadata string) error
+		Unregister(name string) error
 	}
 
 	// RegisterFunctionPlugin is .
@@ -137,6 +139,24 @@ func (p *pluginContainer) DoRegisterFunction(name string, fn interface{}, metada
 	for _, rp := range p.plugins {
 		if plugin, ok := rp.(RegisterFunctionPlugin); ok {
 			err := plugin.RegisterFunction(name, fn, metadata)
+			if err != nil {
+				es = append(es, err)
+			}
+		}
+	}
+
+	if len(es) > 0 {
+		return errors.NewMultiError(es)
+	}
+	return nil
+}
+
+// DoUnregister invokes RegisterPlugin.
+func (p *pluginContainer) DoUnregister(name string) error {
+	var es []error
+	for _, rp := range p.plugins {
+		if plugin, ok := rp.(RegisterPlugin); ok {
+			err := plugin.Unregister(name)
 			if err != nil {
 				es = append(es, err)
 			}

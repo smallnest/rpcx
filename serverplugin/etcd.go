@@ -158,3 +158,57 @@ func (p *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata st
 	p.metasLock.Unlock()
 	return
 }
+
+func (p *EtcdRegisterPlugin) Unregister(name string) (err error) {
+	if "" == strings.TrimSpace(name) {
+		err = errors.New("Register service `name` can't be empty")
+		return
+	}
+
+	if p.kv == nil {
+		etcd.Register()
+		kv, err := libkv.NewStore(store.ETCD, p.EtcdServers, nil)
+		if err != nil {
+			log.Errorf("cannot create etcd registry: %v", err)
+			return err
+		}
+		p.kv = kv
+	}
+
+	err = p.kv.Put(p.BasePath, []byte("rpcx_path"), &store.WriteOptions{IsDir: true})
+	if err != nil && !strings.Contains(err.Error(), "Not a file") {
+		log.Errorf("cannot create etcd path %s: %v", p.BasePath, err)
+		return err
+	}
+
+	nodePath := fmt.Sprintf("%s/%s", p.BasePath, name)
+	err = p.kv.Put(nodePath, []byte(name), &store.WriteOptions{IsDir: true})
+	if err != nil && !strings.Contains(err.Error(), "Not a file") {
+		log.Errorf("cannot create etcd path %s: %v", nodePath, err)
+		return err
+	}
+
+	nodePath = fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
+
+	err = p.kv.Delete(nodePath)
+	if err != nil {
+		log.Errorf("cannot create consul path %s: %v", nodePath, err)
+		return err
+	}
+
+	var services = make([]string, 0, len(p.Services)-1)
+	for _, s := range p.Services {
+		if s != name {
+			services = append(services, s)
+		}
+	}
+	p.Services = services
+
+	p.metasLock.Lock()
+	if p.metas == nil {
+		p.metas = make(map[string]string)
+	}
+	delete(p.metas, name)
+	p.metasLock.Unlock()
+	return
+}
