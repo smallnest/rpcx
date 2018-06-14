@@ -99,14 +99,11 @@ func (p *pluginContainer) Remove(plugin Plugin) {
 		return
 	}
 
-	var plugins []Plugin
-	for _, p := range p.plugins {
-		if p != plugin {
-			plugins = append(plugins, p)
+	for i, p := range p.plugins {
+		if p == plugin {
+			p.plugins = append(p.plugins[:i], p.plugins[i+1:]...)
 		}
 	}
-
-	p.plugins = plugins
 }
 
 func (p *pluginContainer) All() []Plugin {
