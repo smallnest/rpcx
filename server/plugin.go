@@ -20,6 +20,7 @@ type PluginContainer interface {
 	DoUnregister(name string) error
 
 	DoPostConnAccept(net.Conn) (net.Conn, bool)
+	DoPostConnClose(net.Conn) bool
 
 	DoPreReadRequest(ctx context.Context) error
 	DoPostReadRequest(ctx context.Context, r *protocol.Message, e error) error
@@ -52,6 +53,11 @@ type (
 	// and this conn has been closed.
 	PostConnAcceptPlugin interface {
 		HandleConnAccept(net.Conn) (net.Conn, bool)
+	}
+
+	// PostConnClosePlugin represents client connection close plugin.
+	PostConnClosePlugin interface {
+		HandleConnClose(net.Conn) bool
 	}
 
 	//PreReadRequestPlugin represents .
@@ -182,6 +188,20 @@ func (p *pluginContainer) DoPostConnAccept(conn net.Conn) (net.Conn, bool) {
 		}
 	}
 	return conn, true
+}
+
+//DoPostConnClose handles closed conn
+func (p *pluginContainer) DoPostConnClose(conn net.Conn) bool {
+	var flag bool
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(PostConnClosePlugin); ok {
+			flag = plugin.HandleConnClose(conn)
+			if !flag {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // DoPreReadRequest invokes PreReadRequest plugin.

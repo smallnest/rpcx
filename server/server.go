@@ -270,6 +270,12 @@ func (s *Server) serveConn(conn net.Conn) {
 		delete(s.activeConn, conn)
 		s.mu.Unlock()
 		conn.Close()
+
+		if s.Plugins == nil {
+			s.Plugins = &pluginContainer{}
+		}
+
+		s.Plugins.DoPostConnClose(conn)
 	}()
 
 	if tlsConn, ok := conn.(*tls.Conn); ok {
@@ -572,6 +578,7 @@ func (s *Server) Close() error {
 	for c := range s.activeConn {
 		c.Close()
 		delete(s.activeConn, c)
+		s.Plugins.DoPostConnClose(c)
 	}
 	return err
 }
