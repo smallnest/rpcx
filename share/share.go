@@ -20,6 +20,7 @@ var (
 		protocol.JSON:          &codec.JSONCodec{},
 		protocol.ProtoBuffer:   &codec.PBCodec{},
 		protocol.MsgPack:       &codec.MsgpackCodec{},
+		protocol.Thrift:        &codec.ThriftCodec{},
 	}
 )
 
