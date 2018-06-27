@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/smallnest/rpcx/server"
+	"github.com/smallnest/rpcx/protocol"
 )
 
 func TestXClient_IT(t *testing.T) {
@@ -52,5 +53,20 @@ func TestXClient_filterByStateAndGroup(t *testing.T) {
 	}
 	if _, ok := servers["d"]; !ok {
 		t.Error("node must be removed")
+	}
+}
+
+
+func TestDynamicCall(t *testing.T) {
+	param := protocol.NewRpcParam()
+	param.PutValue("a", 1)
+	param.PutValue("b", 2)
+	reply := protocol.RpcResult{}
+	d := NewPeer2PeerDiscovery("tcp@127.0.0.1:8999", "desc=a test service")
+	client := NewXClient("Arith", Failtry, RandomSelect, d, DefaultOption)
+	client.Call(context.Background(), "DynamicMul", param, &reply)
+	c := reply.Int64Value()
+	if c != 3 {
+		t.Fatalf("expect 3 but got %d", c)
 	}
 }
