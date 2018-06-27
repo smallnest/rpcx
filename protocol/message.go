@@ -83,6 +83,9 @@ const (
 	ProtoBuffer
 	// MsgPack for payload
 	MsgPack
+	// Thrift
+	// Thrift for payload
+	Thrift
 )
 
 // Message is the generic type of Request and Response.

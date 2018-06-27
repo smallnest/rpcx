@@ -7,6 +7,7 @@ import (
 
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
+	"github.com/smallnest/rpcx/_testutils"
 )
 
 type Args struct {
@@ -24,6 +25,21 @@ func (t *Arith) Mul(ctx context.Context, args *Args, reply *Reply) error {
 	reply.C = args.A * args.B
 	return nil
 }
+
+func (t *Arith) ThriftMul(ctx context.Context, args *testutils.ThriftArgs_, reply *testutils.ThriftReply) error {
+	reply.C = args.A * args.B
+	return nil
+}
+
+
+func TestThrift(t *testing.T) {
+	s := NewServer()
+	s.RegisterName("Arith", new(Arith), "")
+	s.Serve("tcp", ":8999")
+	s.Register(new(Arith), "")
+}
+
+
 
 func TestHandleRequest(t *testing.T) {
 	//use jsoncodec
