@@ -25,6 +25,23 @@ func (t *Arith) Mul(ctx context.Context, args *Args, reply *Reply) error {
 	return nil
 }
 
+func (t *Arith) DynamicMul(ctx context.Context, param protocol.RpcParam, reply *protocol.RpcResult) error {
+	a := param.Int64Value("a")
+	b := param.Int64Value("b")
+	c := a+b
+	reply.Set(0, "Success", c)
+	return nil
+}
+
+
+func TestServer(t *testing.T) {
+	s := NewServer()
+	s.RegisterName("Arith", new(Arith), "")
+	s.Serve("tcp", ":8999")
+	s.Register(new(Arith), "")
+}
+
+
 func TestHandleRequest(t *testing.T) {
 	//use jsoncodec
 
