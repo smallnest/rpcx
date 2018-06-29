@@ -20,6 +20,9 @@ import (
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 // ErrServerClosed is returned by the Server's Serve, ListenAndServe after a call to Shutdown or Close.
@@ -65,7 +68,7 @@ type Server struct {
 	doneChan   chan struct{}
 	seq        uint64
 
-	// inShutdown int32
+	inShutdown int32
 	onShutdown []func()
 
 	// TLSConfig for creating tls tcp connection.
@@ -81,6 +84,10 @@ type Server struct {
 
 	// AuthFunc can be used to auth.
 	AuthFunc func(ctx context.Context, req *protocol.Message, token string) error
+
+	ShutdownFunc func(s *Server)
+
+	HandleMsgChan chan struct{}
 }
 
 // NewServer returns a server.
@@ -89,6 +96,8 @@ func NewServer(options ...OptionFn) *Server {
 		Plugins: &pluginContainer{},
 		options: make(map[string]interface{}),
 	}
+
+	s.HandleMsgChan = make(chan struct{}, 100000)
 
 	for _, op := range options {
 		op(s)
@@ -147,9 +156,25 @@ func (s *Server) getDoneChan() <-chan struct{} {
 	return s.doneChan
 }
 
+func (s *Server)startShutdownListener() {
+	go func(s *Server) {
+		log.Info("server pid:", os.Getpid())
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGTERM)
+		si := <-c
+		if si.String() == "terminated" {
+			if nil != s.ShutdownFunc {
+				s.ShutdownFunc(s)
+			}
+			os.Exit(0)
+		}
+	}(s)
+}
+
 // Serve starts and listens RPC requests.
 // It is blocked until receiving connectings from clients.
 func (s *Server) Serve(network, address string) (err error) {
+	s.startShutdownListener()
 	var ln net.Listener
 	ln, err = s.makeListener(network, address)
 	if err != nil {
@@ -215,6 +240,7 @@ func (s *Server) serveListener(ln net.Listener) error {
 		if tc, ok := conn.(*net.TCPConn); ok {
 			tc.SetKeepAlive(true)
 			tc.SetKeepAlivePeriod(3 * time.Minute)
+			tc.SetLinger(10)
 		}
 
 		s.mu.Lock()
@@ -278,6 +304,11 @@ func (s *Server) serveConn(conn net.Conn) {
 		s.Plugins.DoPostConnClose(conn)
 	}()
 
+	if isShutdown(s) {
+		closeChannel(s,conn)
+		return
+	}
+
 	if tlsConn, ok := conn.(*tls.Conn); ok {
 		if d := s.readTimeout; d != 0 {
 			conn.SetReadDeadline(time.Now().Add(d))
@@ -292,9 +323,13 @@ func (s *Server) serveConn(conn net.Conn) {
 	}
 
 	r := bufio.NewReaderSize(conn, ReaderBuffsize)
-	//w := bufio.NewWriterSize(conn, WriterBuffsize)
 
 	for {
+		if isShutdown(s) {
+			closeChannel(s,conn)
+			return
+		}
+
 		t0 := time.Now()
 		if s.readTimeout != 0 {
 			conn.SetReadDeadline(t0.Add(s.readTimeout))
@@ -313,6 +348,8 @@ func (s *Server) serveConn(conn net.Conn) {
 			return
 		}
 
+		s.HandleMsgChan <- struct{}{}
+
 		if s.writeTimeout != 0 {
 			conn.SetWriteDeadline(t0.Add(s.writeTimeout))
 		}
@@ -320,7 +357,6 @@ func (s *Server) serveConn(conn net.Conn) {
 		ctx = context.WithValue(ctx, StartRequestContextKey, time.Now().UnixNano())
 		err = s.auth(ctx, req)
 		if err != nil {
-
 			if !req.IsOneway() {
 				res := req.Clone()
 				res.SetMessageType(protocol.Response)
@@ -337,11 +373,14 @@ func (s *Server) serveConn(conn net.Conn) {
 			} else {
 				s.Plugins.DoPreWriteResponse(ctx, req, nil)
 			}
-
+			<-s.HandleMsgChan
 			protocol.FreeMsg(req)
 			continue
 		}
 		go func() {
+			defer func(){
+				<-s.HandleMsgChan
+			}()
 			if req.IsHeartbeat() {
 				req.SetMessageType(protocol.Response)
 				data := req.Encode()
@@ -385,6 +424,17 @@ func (s *Server) serveConn(conn net.Conn) {
 			protocol.FreeMsg(res)
 		}()
 	}
+}
+
+func isShutdown(s *Server) (bool) {
+	return atomic.LoadInt32(&s.inShutdown) == 1
+}
+
+func closeChannel(s *Server,conn net.Conn) {
+	s.mu.Lock()
+	delete(s.activeConn, conn)
+	s.mu.Unlock()
+	conn.Close()
 }
 
 func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Message, err error) {
@@ -567,14 +617,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // Close immediately closes all active net.Listeners.
 func (s *Server) Close() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.closeDoneChanLocked()
 	var err error
 	if s.ln != nil {
 		err = s.ln.Close()
 	}
-
 	for c := range s.activeConn {
 		c.Close()
 		delete(s.activeConn, c)
@@ -591,7 +638,7 @@ func (s *Server) RegisterOnShutdown(f func()) {
 	s.mu.Unlock()
 }
 
-// var shutdownPollInterval = 500 * time.Millisecond
+var shutdownPollInterval = 500 * time.Millisecond
 
 // // Shutdown gracefully shuts down the server without interrupting any
 // // active connections. Shutdown works by first closing the
@@ -600,51 +647,35 @@ func (s *Server) RegisterOnShutdown(f func()) {
 // // If the provided context expires before the shutdown is complete,
 // // Shutdown returns the context's error, otherwise it returns any
 // // error returned from closing the Server's underlying Listener.
-// func (s *Server) Shutdown(ctx context.Context) error {
-// 	atomic.AddInt32(&s.inShutdown, 1)
-// 	defer atomic.AddInt32(&s.inShutdown, -1)
+func (s *Server) Shutdown(ctx context.Context) error {
+	if atomic.CompareAndSwapInt32(&s.inShutdown, 0, 1) {
+		log.Info("shutdown begin")
+		ticker := time.NewTicker(shutdownPollInterval)
+		defer ticker.Stop()
+		for {
+			if s.checkProcessMsg() {
+				break
+			}
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-ticker.C:
+			}
+		}
+		s.Close()
+		log.Info("shutdown end")
+	}
+	return nil
+}
 
-// 	s.mu.Lock()
-// 	err := s.ln.Close()
-// 	s.closeDoneChanLocked()
-// 	for _, f := range s.onShutdown {
-// 		go f()
-// 	}
-// 	s.mu.Unlock()
-
-// 	ticker := time.NewTicker(shutdownPollInterval)
-// 	defer ticker.Stop()
-// 	for {
-// 		if s.closeIdleConns() {
-// 			return err
-// 		}
-// 		select {
-// 		case <-ctx.Done():
-// 			return ctx.Err()
-// 		case <-ticker.C:
-// 		}
-// 	}
-// }
-
-// func (s *Server) closeIdleConns() {
-// 	s.mu.Lock()
-// 	defer s.mu.Unlock()
-// 	quiescent := true
-
-// 	for c := range s.activeConn {
-// 		// check whether the conn is idle
-// 		st, ok := c.curState.Load().(ConnState)
-// 		if !ok || st != StateIdle {
-// 			quiescent = false
-// 			continue
-// 		}
-
-// 		s.Close()
-// 		delete(s.activeConn, c)
-// 	}
-
-// 	return quiescent
-// }
+func (s *Server) checkProcessMsg() (bool) {
+	size := len(s.HandleMsgChan)
+	log.Info("need handle msg size:",size)
+	if  size == 0 {
+		return true
+	}
+	return false
+}
 
 func (s *Server) closeDoneChanLocked() {
 	ch := s.getDoneChanLocked()
