@@ -85,7 +85,7 @@ type Server struct {
 	// AuthFunc can be used to auth.
 	AuthFunc func(ctx context.Context, req *protocol.Message, token string) error
 
-	HandleMsgChan chan struct{}
+	handlerMsgNum int32
 }
 
 // NewServer returns a server.
@@ -94,8 +94,6 @@ func NewServer(options ...OptionFn) *Server {
 		Plugins: &pluginContainer{},
 		options: make(map[string]interface{}),
 	}
-
-	s.HandleMsgChan = make(chan struct{}, 100000)
 
 	for _, op := range options {
 		op(s)
@@ -348,7 +346,6 @@ func (s *Server) serveConn(conn net.Conn) {
 			return
 		}
 
-		s.HandleMsgChan <- struct{}{}
 
 		if s.writeTimeout != 0 {
 			conn.SetWriteDeadline(t0.Add(s.writeTimeout))
@@ -373,13 +370,13 @@ func (s *Server) serveConn(conn net.Conn) {
 			} else {
 				s.Plugins.DoPreWriteResponse(ctx, req, nil)
 			}
-			<-s.HandleMsgChan
 			protocol.FreeMsg(req)
 			continue
 		}
 		go func() {
-			defer func(){
-				<-s.HandleMsgChan
+			atomic.AddInt32(&s.handlerMsgNum, 1)
+			defer func() {
+				atomic.AddInt32(&s.handlerMsgNum, -1)
 			}()
 			if req.IsHeartbeat() {
 				req.SetMessageType(protocol.Response)
@@ -672,7 +669,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func (s *Server) checkProcessMsg() (bool) {
-	size := len(s.HandleMsgChan)
+	size := s.handlerMsgNum
 	log.Info("need handle msg size:",size)
 	if  size == 0 {
 		return true
