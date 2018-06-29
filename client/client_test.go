@@ -33,6 +33,11 @@ func (t *PBArith) Mul(ctx context.Context, args *testutils.ProtoArgs, reply *tes
 	return nil
 }
 
+func (t *Arith) ThriftMul(ctx context.Context, args *testutils.ThriftArgs_, reply *testutils.ThriftReply) error {
+	reply.C = args.A * args.B
+	return nil
+}
+
 func TestClient_IT(t *testing.T) {
 	server.UsePool = false
 

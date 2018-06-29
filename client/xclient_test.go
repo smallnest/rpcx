@@ -5,46 +5,23 @@ import (
 	"testing"
 	"time"
 
+	"fmt"
+
+	"github.com/smallnest/rpcx/_testutils"
+	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/server"
 	"github.com/smallnest/rpcx/share"
-	"github.com/smallnest/rpcx/protocol"
-	"github.com/smallnest/rpcx/_testutils"
-	"fmt"
 )
 
-
-func TestShutdownHook(t *testing.T) {
-	opt := Option{
-		Retries:        1,
-		RPCPath:        share.DefaultRPCPath,
-		ConnectTimeout: 10 * time.Second,
-		SerializeType:  protocol.Thrift,
-		CompressType:   protocol.None,
-		BackupLatency:  10 * time.Millisecond,
-	}
-
-	d := NewPeer2PeerDiscovery("tcp@127.0.0.1:8995", "desc=a test service")
-	xclient := NewXClient("Arith", Failtry, RandomSelect, d, opt)
-
-	defer xclient.Close()
-
-
-	tick := time.NewTicker(2*time.Second)
-	for ti := range tick.C {
-		fmt.Println(ti)
-		args := testutils.ThriftArgs_{}
-		args.A = 200
-		args.B = 100
-		go func(){
-			reply := testutils.ThriftReply{}
-			err := xclient.Call(context.Background(), "ConsumingOperation", &args, &reply)
-			fmt.Println(reply.C,err)
-		}()
-	}
-
-}
-
 func TestXClient_Thrift(t *testing.T) {
+	s := server.NewServer()
+	s.RegisterName("Arith", new(Arith), "")
+	go s.Serve("tcp", "127.0.0.1:0")
+	defer s.Close()
+	time.Sleep(500 * time.Millisecond)
+
+	addr := s.Address().String()
+
 	opt := Option{
 		Retries:        1,
 		RPCPath:        share.DefaultRPCPath,
@@ -54,7 +31,7 @@ func TestXClient_Thrift(t *testing.T) {
 		BackupLatency:  10 * time.Millisecond,
 	}
 
-	d := NewPeer2PeerDiscovery("tcp@127.0.0.1:8999", "desc=a test service")
+	d := NewPeer2PeerDiscovery("tcp@"+addr, "desc=a test service")
 	xclient := NewXClient("Arith", Failtry, RandomSelect, d, opt)
 
 	defer xclient.Close()
@@ -75,7 +52,6 @@ func TestXClient_Thrift(t *testing.T) {
 		t.Fatalf("expect 20000 but got %d", reply.C)
 	}
 }
-
 
 func TestXClient_IT(t *testing.T) {
 	s := server.NewServer()
