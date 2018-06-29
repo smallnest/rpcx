@@ -13,7 +13,7 @@ import (
 )
 
 
-func TestLoop(t *testing.T) {
+func TestShutdownHook(t *testing.T) {
 	opt := Option{
 		Retries:        1,
 		RPCPath:        share.DefaultRPCPath,
@@ -37,7 +37,7 @@ func TestLoop(t *testing.T) {
 		args.B = 100
 		go func(){
 			reply := testutils.ThriftReply{}
-			err := xclient.Call(context.Background(), "ThriftMul", &args, &reply)
+			err := xclient.Call(context.Background(), "ConsumingOperation", &args, &reply)
 			fmt.Println(reply.C,err)
 		}()
 	}

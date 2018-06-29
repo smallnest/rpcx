@@ -29,7 +29,12 @@ func (t *Arith) Mul(ctx context.Context, args *Args, reply *Reply) error {
 }
 
 func (t *Arith) ThriftMul(ctx context.Context, args *testutils.ThriftArgs_, reply *testutils.ThriftReply) error {
-	reply.C = args.A * args.B + 11111111
+	reply.C = args.A * args.B
+	return nil
+}
+
+func (t *Arith) ConsumingOperation(ctx context.Context, args *testutils.ThriftArgs_, reply *testutils.ThriftReply) error {
+	reply.C = args.A * args.B
 	time.Sleep(10*time.Second)
 	return nil
 }

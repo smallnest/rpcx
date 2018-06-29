@@ -638,7 +638,7 @@ func (s *Server) RegisterOnShutdown(f func(s *Server)) {
 	s.mu.Unlock()
 }
 
-var shutdownPollInterval = 500 * time.Millisecond
+var shutdownPollInterval = 1000 * time.Millisecond
 
 // // Shutdown gracefully shuts down the server without interrupting any
 // // active connections. Shutdown works by first closing the
