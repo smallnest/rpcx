@@ -617,11 +617,14 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // Close immediately closes all active net.Listeners.
 func (s *Server) Close() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.closeDoneChanLocked()
 	var err error
 	if s.ln != nil {
 		err = s.ln.Close()
 	}
+
 	for c := range s.activeConn {
 		c.Close()
 		delete(s.activeConn, c)
