@@ -57,10 +57,10 @@ func TestGo(t *testing.T) {
 
 func TestShutdownHook(t *testing.T) {
 	s := NewServer()
-	s.ShutdownFunc = func(s *Server) {
+	s.RegisterOnShutdown(func(s *Server){
 		ctx, _ := context.WithTimeout(context.Background(), 155*time.Second)
 		s.Shutdown(ctx)
-	}
+	})
 	s.RegisterName("Arith", new(Arith), "")
 	s.Serve("tcp", ":8995")
 	s.Register(new(Arith), "")

@@ -69,7 +69,7 @@ type Server struct {
 	seq        uint64
 
 	inShutdown int32
-	onShutdown []func()
+	onShutdown []func(s *Server)
 
 	// TLSConfig for creating tls tcp connection.
 	tlsConfig *tls.Config
@@ -84,8 +84,6 @@ type Server struct {
 
 	// AuthFunc can be used to auth.
 	AuthFunc func(ctx context.Context, req *protocol.Message, token string) error
-
-	ShutdownFunc func(s *Server)
 
 	HandleMsgChan chan struct{}
 }
@@ -163,8 +161,10 @@ func (s *Server)startShutdownListener() {
 		signal.Notify(c, syscall.SIGTERM)
 		si := <-c
 		if si.String() == "terminated" {
-			if nil != s.ShutdownFunc {
-				s.ShutdownFunc(s)
+			if nil != s.onShutdown && len(s.onShutdown) > 0 {
+				for _,sd := range s.onShutdown {
+					sd(s)
+				}
 			}
 			os.Exit(0)
 		}
@@ -632,7 +632,7 @@ func (s *Server) Close() error {
 
 // RegisterOnShutdown registers a function to call on Shutdown.
 // This can be used to gracefully shutdown connections.
-func (s *Server) RegisterOnShutdown(f func()) {
+func (s *Server) RegisterOnShutdown(f func(s *Server)) {
 	s.mu.Lock()
 	s.onShutdown = append(s.onShutdown, f)
 	s.mu.Unlock()
