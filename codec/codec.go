@@ -2,7 +2,6 @@ package codec
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -113,7 +112,7 @@ func (c ThriftCodec) Encode(i interface{}) ([]byte, error) {
 		Protocol:  p,
 	}
 	t.Transport.Close()
-	return t.Write(context.Background(), i.(thrift.TStruct))
+	return t.Write( i.(thrift.TStruct))
 }
 
 func (c ThriftCodec) Decode(data []byte, i interface{}) error {
