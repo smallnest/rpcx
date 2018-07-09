@@ -1,57 +1,49 @@
 package: github.com/smallnest/rpcx
 import:
+- package: git.apache.org/thrift.git
+  version: 0.11.0
+  subpackages:
+  - lib/go/thrift
+- package: github.com/anacrolix/utp
 - package: github.com/docker/libkv
-  version: ^0.2.1
+  version: v0.2.1
   subpackages:
   - store
   - store/consul
   - store/etcd
   - store/zookeeper
 - package: github.com/fatih/color
-  version: ^1.5.0
+  version: v1.7.0
 - package: github.com/gogo/protobuf
-  version: ^0.5.0
+  version: v1.0.0
   subpackages:
   - proto
 - package: github.com/golang/protobuf
+  version: v1.1.0
   subpackages:
   - proto
 - package: github.com/grandcat/zeroconf
+- package: github.com/hashicorp/go-multierror
 - package: github.com/juju/ratelimit
+  version: 1.0.1
+- package: github.com/julienschmidt/httprouter
+  version: v1.1
 - package: github.com/kavu/go_reuseport
-  version: ^1.2.0
+  version: v1.3.0
 - package: github.com/marten-seemann/quic-conn
 - package: github.com/rcrowley/go-metrics
+  subpackages:
+  - exp
 - package: github.com/rubyist/circuitbreaker
-  version: ^2.2.0
+  version: v2.2.1
+- package: github.com/soheilhy/cmux
+  version: v0.1.4
 - package: github.com/tatsushid/go-fastping
+- package: github.com/u35s/rudp
 - package: github.com/valyala/fastrand
 - package: github.com/vmihailenco/msgpack
-  version: ^3.1.3
+  version: v3.3.3
 - package: github.com/vrischmann/go-metrics-influxdb
 - package: github.com/xtaci/kcp-go
-  version: ^3.19.0
-- package: golang.org/x/net
-  repo: https://github.com/golang/net
-  vcs: git
-- package: golang.org/x/crypto
-  repo: https://github.com/golang/crypto
-  vcs: git
-- package: google.golang.org/appengine
-  repo: https://github.com/golang/appengine
-  vcs: git
-  subpackages:
-  - datastore
-- package: google.golang.org/grpc
-  repo: https://github.com/grpc/grpc-go
-  vcs: git
-- package: golang.org/x/tools
-  repo: https://github.com/golang/tools
-  vcs: git
-- package: golang.org/x/sys
-  repo: https://github.com/golang/sys
-  vcs: git
-- package: golang.org/x/text
-  repo: https://github.com/golang/text
-  vcs: git
-  
+  version: v3.25
+- package: golang.org/x/net/trace

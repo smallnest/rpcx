@@ -56,3 +56,17 @@ build-all:
 
 test:
 	go test -race -tags "reuseport kcp quic zookeeper etcd consul ping utp rudp" ./...
+
+glide-mirror:
+	@glide mirror set https://golang.org/x/net https://github.com/golang/net
+	@glide mirror set https://golang.org/x/tools https://github.com/golang/tools
+	@glide mirror set https://golang.org/x/text https://github.com/golang/text
+	@glide mirror set https://golang.org/x/exp https://github.com/golang/exp
+	@glide mirror set https://golang.org/x/image https://github.com/golang/image
+	@glide mirror set https://golang.org/x/sys https://github.com/golang/sys
+	@glide mirror set https://golang.org/x/crypto https://github.com/golang/crypto
+	@glide mirror set https://golang.org/x/sync https://github.com/golang/sync
+	@glide mirror set https://golang.org/x/time https://github.com/golang/time
+	@glide mirror set https://golang.org/x/oauth2 https://github.com/golang/oauth2
+
+	
