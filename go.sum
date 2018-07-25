@@ -1,6 +1,0 @@
-github.com/influxdata/influxdb v1.6.0 h1:LAEQT8QcsKroxs5VHFsKCIPZAnY49fi3k/p29q+0R3o=
-github.com/influxdata/influxdb v1.6.0/go.mod h1:qZna6X/4elxqT3yI9iZYdZrWWdeFOOprn86kgg4+IzY=
-github.com/rcrowley/go-metrics v0.0.0-20180503174638-e2704e165165 h1:nkcn14uNmFEuGCb2mBZbBb24RdNRL08b/wb+xBOYpuk=
-github.com/rcrowley/go-metrics v0.0.0-20180503174638-e2704e165165/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
-github.com/vrischmann/go-metrics-influxdb v0.0.0-20160917065939-43af8332c303 h1:Va10CytCCYRm4xBTses5ZDeDjeIQjhaiC9nRCe/yflI=
-github.com/vrischmann/go-metrics-influxdb v0.0.0-20160917065939-43af8332c303/go.mod h1:Xdcad1nGVhQfhoV0go+/4WaI/RZkWlvfjkVCdpMTxPY=
