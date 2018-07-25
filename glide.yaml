@@ -1,49 +1,37 @@
 package: github.com/smallnest/rpcx
 import:
 - package: git.apache.org/thrift.git
-  version: 0.11.0
   subpackages:
   - lib/go/thrift
 - package: github.com/anacrolix/utp
 - package: github.com/docker/libkv
-  version: v0.2.1
   subpackages:
   - store
   - store/consul
   - store/etcd
   - store/zookeeper
 - package: github.com/fatih/color
-  version: v1.7.0
 - package: github.com/gogo/protobuf
-  version: v1.0.0
   subpackages:
   - proto
 - package: github.com/golang/protobuf
-  version: v1.1.0
   subpackages:
   - proto
 - package: github.com/grandcat/zeroconf
 - package: github.com/hashicorp/go-multierror
 - package: github.com/juju/ratelimit
-  version: 1.0.1
 - package: github.com/julienschmidt/httprouter
-  version: v1.1
 - package: github.com/kavu/go_reuseport
-  version: v1.3.0
 - package: github.com/marten-seemann/quic-conn
 - package: github.com/rcrowley/go-metrics
   subpackages:
   - exp
 - package: github.com/rubyist/circuitbreaker
-  version: v2.2.1
 - package: github.com/soheilhy/cmux
-  version: v0.1.4
 - package: github.com/tatsushid/go-fastping
 - package: github.com/u35s/rudp
 - package: github.com/valyala/fastrand
 - package: github.com/vmihailenco/msgpack
-  version: v3.3.3
 - package: github.com/vrischmann/go-metrics-influxdb
 - package: github.com/xtaci/kcp-go
-  version: v3.25
 - package: golang.org/x/net/trace
