@@ -28,6 +28,7 @@ type methodType struct {
 	ArgType    reflect.Type
 	ReplyType  reflect.Type
 	// numCalls   uint
+	serviceName string
 }
 
 type functionType struct {
@@ -44,6 +45,8 @@ type service struct {
 	method   map[string]*methodType   // registered methods
 	function map[string]*functionType // registered functions
 }
+
+var OnCallBackFunc reflect.Value
 
 func isExported(name string) bool {
 	rune, _ := utf8.DecodeRuneInString(name)
@@ -311,7 +314,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 			}
 			continue
 		}
-		methods[mname] = &methodType{method: method, ArgType: argType, ReplyType: replyType}
+		methods[mname] = &methodType{method: method, ArgType: argType, ReplyType: replyType,serviceName:typ.Elem().Name()}
 
 		argsReplyPools.Init(argType)
 		argsReplyPools.Init(replyType)
@@ -350,6 +353,9 @@ func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv refl
 	function := mtype.method.Func
 	// Invoke the method, providing a new value for the reply.
 	returnValues := function.Call([]reflect.Value{s.rcvr, reflect.ValueOf(ctx), argv, replyv})
+	if OnCallBackFunc.IsValid(){
+		OnCallBackFunc.Call([]reflect.Value{reflect.ValueOf(mtype.serviceName), reflect.ValueOf(mtype.method.Name), argv, replyv})
+	}
 	// The return value for the method is an error.
 	errInter := returnValues[0].Interface()
 	if errInter != nil {
