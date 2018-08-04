@@ -1,5 +1,3 @@
-// +build etcd
-
 package client
 
 import (
