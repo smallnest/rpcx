@@ -371,6 +371,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 		}
 	}
 
+	var e error
 	switch c.failMode {
 	case Failtry:
 		retries := c.option.Retries
@@ -388,7 +389,10 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 			}
 
 			c.removeClient(k, client)
-			client, err = c.getCachedClient(k)
+			client, e = c.getCachedClient(k)
+		}
+		if err == nil {
+			err = e
 		}
 		return err
 	case Failover:
@@ -408,9 +412,12 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 
 			c.removeClient(k, client)
 			//select another server
-			k, client, err = c.selectClient(ctx, c.servicePath, serviceMethod, args)
+			k, client, e = c.selectClient(ctx, c.servicePath, serviceMethod, args)
 		}
 
+		if err == nil {
+			err = e
+		}
 		return err
 	case Failbackup:
 		ctx, cancelFn := context.WithCancel(ctx)
@@ -505,6 +512,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		}
 	}
 
+	var e error
 	switch c.failMode {
 	case Failtry:
 		retries := c.option.Retries
@@ -521,7 +529,11 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 			}
 
 			c.removeClient(k, client)
-			client, err = c.getCachedClient(k)
+			client, e = c.getCachedClient(k)
+		}
+
+		if err == nil {
+			err = e
 		}
 		return nil, nil, err
 	case Failover:
@@ -540,9 +552,12 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 
 			c.removeClient(k, client)
 			//select another server
-			k, client, err = c.selectClient(ctx, r.ServicePath, r.ServiceMethod, r.Payload)
+			k, client, e = c.selectClient(ctx, r.ServicePath, r.ServiceMethod, r.Payload)
 		}
 
+		if err == nil {
+			err = e
+		}
 		return nil, nil, err
 
 	default: //Failfast
