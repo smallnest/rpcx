@@ -38,9 +38,22 @@ func (s *Server) startHTTP1APIGateway(ln net.Listener) {
 	router.GET("/*servicePath", s.handleGatewayRequest)
 	router.PUT("/*servicePath", s.handleGatewayRequest)
 
-	if err := http.Serve(ln, router); err != nil {
+	s.mu.Lock()
+	s.gatewayHTTPServer = &http.Server{Handler: router}
+	s.mu.Unlock()
+	if err := s.gatewayHTTPServer.Serve(ln); err != nil {
 		log.Errorf("error in gateway Serve: %s", err)
 	}
+}
+
+func (s *Server) closeHTTP1APIGateway(ctx context.Context) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.gatewayHTTPServer != nil {
+		return s.gatewayHTTPServer.Shutdown(ctx)
+	}
+
+	return nil
 }
 
 func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
