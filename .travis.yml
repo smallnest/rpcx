@@ -14,7 +14,7 @@ before_script:
   - go get github.com/mattn/goveralls
 
 script:
- - go test -tags "reuseport quic kcp zookeeper etcd consul ping rudp utp" -v ./...
+ - go test -v ./...
  - goveralls -service=travis-ci
 
 notifications:
