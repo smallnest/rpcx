@@ -40,10 +40,20 @@ type EtcdRegisterPlugin struct {
 
 	Options *store.Config
 	kv      store.Store
+
+	dying chan struct{}
+	done  chan struct{}
 }
 
 // Start starts to connect etcd cluster
 func (p *EtcdRegisterPlugin) Start() error {
+	if p.done == nil {
+		p.done = make(chan struct{})
+	}
+	if p.dying == nil {
+		p.dying = make(chan struct{})
+	}
+
 	if p.kv == nil {
 		kv, err := libkv.NewStore(store.ETCD, p.EtcdServers, p.Options)
 		if err != nil {
@@ -65,39 +75,73 @@ func (p *EtcdRegisterPlugin) Start() error {
 			defer p.kv.Close()
 
 			// refresh service TTL
-			for range ticker.C {
-				var data []byte
-				if p.Metrics != nil {
-					clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
-					data = []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
-				}
-				//set this same metrics for all services at this server
-				for _, name := range p.Services {
-					nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
-					kvPair, err := p.kv.Get(nodePath)
-					if err != nil {
-						log.Infof("can't get data of node: %s, because of %v", nodePath, err.Error())
-
-						p.metasLock.RLock()
-						meta := p.metas[name]
-						p.metasLock.RUnlock()
-
-						err = p.kv.Put(nodePath, []byte(meta), &store.WriteOptions{TTL: p.UpdateInterval * 3})
+			for {
+				select {
+				case <-p.dying:
+					close(p.done)
+					return
+				case <-ticker.C:
+					var data []byte
+					if p.Metrics != nil {
+						clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
+						data = []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
+					}
+					//set this same metrics for all services at this server
+					for _, name := range p.Services {
+						nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
+						kvPair, err := p.kv.Get(nodePath)
 						if err != nil {
-							log.Errorf("cannot re-create etcd path %s: %v", nodePath, err)
-						}
+							log.Infof("can't get data of node: %s, because of %v", nodePath, err.Error())
 
-					} else {
-						v, _ := url.ParseQuery(string(kvPair.Value))
-						v.Set("tps", string(data))
-						p.kv.Put(nodePath, []byte(v.Encode()), &store.WriteOptions{TTL: p.UpdateInterval * 3})
+							p.metasLock.RLock()
+							meta := p.metas[name]
+							p.metasLock.RUnlock()
+
+							err = p.kv.Put(nodePath, []byte(meta), &store.WriteOptions{TTL: p.UpdateInterval * 3})
+							if err != nil {
+								log.Errorf("cannot re-create etcd path %s: %v", nodePath, err)
+							}
+
+						} else {
+							v, _ := url.ParseQuery(string(kvPair.Value))
+							v.Set("tps", string(data))
+							p.kv.Put(nodePath, []byte(v.Encode()), &store.WriteOptions{TTL: p.UpdateInterval * 3})
+						}
 					}
 				}
-
 			}
 		}()
 	}
 
+	return nil
+}
+
+// Stop unregister all services.
+func (p *EtcdRegisterPlugin) Stop() error {
+	close(p.dying)
+	<-p.done
+
+	if p.kv == nil {
+		kv, err := libkv.NewStore(store.ETCD, p.EtcdServers, p.Options)
+		if err != nil {
+			log.Errorf("cannot create etcd registry: %v", err)
+			return err
+		}
+		p.kv = kv
+	}
+
+	for _, name := range p.Services {
+		nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
+		exist, err := p.kv.Exists(nodePath)
+		if err != nil {
+			log.Errorf("cannot delete path %s: %v", nodePath, err)
+			continue
+		}
+		if exist {
+			p.kv.Delete(nodePath)
+			log.Infof("delete path %s", nodePath, err)
+		}
+	}
 	return nil
 }
 

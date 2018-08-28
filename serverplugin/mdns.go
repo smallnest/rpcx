@@ -32,6 +32,9 @@ type MDNSRegisterPlugin struct {
 
 	server *zeroconf.Server
 	domain string
+
+	dying chan struct{}
+	done  chan struct{}
 }
 
 // NewMDNSRegisterPlugin return a new MDNSRegisterPlugin.
@@ -46,6 +49,8 @@ func NewMDNSRegisterPlugin(serviceAddress string, port int, m metrics.Registry, 
 		Metrics:        m,
 		UpdateInterval: updateInterval,
 		domain:         domain,
+		dying:          make(chan struct{}),
+		done:           make(chan struct{}),
 	}
 }
 
@@ -62,9 +67,13 @@ func (p *MDNSRegisterPlugin) Start() error {
 			defer p.server.Shutdown()
 
 			// refresh service TTL
-			for range ticker.C {
+			select {
+			case <-p.dying:
+				close(p.done)
+				return
+			case <-ticker.C:
 				if p.server == nil && len(p.Services) == 0 {
-					continue
+					break
 				}
 
 				var data []byte
@@ -89,6 +98,14 @@ func (p *MDNSRegisterPlugin) Start() error {
 	return nil
 }
 
+// Stop unregister all services.
+func (p *MDNSRegisterPlugin) Stop() error {
+	close(p.dying)
+	<-p.done
+
+	p.server.Shutdown()
+	return nil
+}
 func (p *MDNSRegisterPlugin) initMDNS() {
 	data, _ := json.Marshal(p.Services)
 	s := url.QueryEscape(string(data))

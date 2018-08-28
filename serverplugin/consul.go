@@ -40,10 +40,20 @@ type ConsulRegisterPlugin struct {
 
 	Options *store.Config
 	kv      store.Store
+
+	dying chan struct{}
+	done  chan struct{}
 }
 
 // Start starts to connect consul cluster
 func (p *ConsulRegisterPlugin) Start() error {
+	if p.done == nil {
+		p.done = make(chan struct{})
+	}
+	if p.dying == nil {
+		p.dying = make(chan struct{})
+	}
+
 	if p.kv == nil {
 		kv, err := libkv.NewStore(store.CONSUL, p.ConsulServers, p.Options)
 		if err != nil {
@@ -69,39 +79,77 @@ func (p *ConsulRegisterPlugin) Start() error {
 			defer p.kv.Close()
 
 			// refresh service TTL
-			for range ticker.C {
-				var data []byte
-				if p.Metrics != nil {
-					clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
-					data = []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
-				}
+			for {
+				select {
+				case <-p.dying:
+					close(p.done)
+					return
+				case <-ticker.C:
+					var data []byte
+					if p.Metrics != nil {
+						clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
+						data = []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
+					}
 
-				//set this same metrics for all services at this server
-				for _, name := range p.Services {
-					nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
-					kvPaire, err := p.kv.Get(nodePath)
-					if err != nil {
-						log.Warnf("can't get data of node: %s, will re-create, because of %v", nodePath, err.Error())
-
-						p.metasLock.RLock()
-						meta := p.metas[name]
-						p.metasLock.RUnlock()
-
-						err = p.kv.Put(nodePath, []byte(meta), &store.WriteOptions{TTL: p.UpdateInterval * 3})
+					//set this same metrics for all services at this server
+					for _, name := range p.Services {
+						nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
+						kvPaire, err := p.kv.Get(nodePath)
 						if err != nil {
-							log.Errorf("cannot re-create consul path %s: %v", nodePath, err)
+							log.Warnf("can't get data of node: %s, will re-create, because of %v", nodePath, err.Error())
+
+							p.metasLock.RLock()
+							meta := p.metas[name]
+							p.metasLock.RUnlock()
+
+							err = p.kv.Put(nodePath, []byte(meta), &store.WriteOptions{TTL: p.UpdateInterval * 3})
+							if err != nil {
+								log.Errorf("cannot re-create consul path %s: %v", nodePath, err)
+							}
+						} else {
+							v, _ := url.ParseQuery(string(kvPaire.Value))
+							v.Set("tps", string(data))
+							p.kv.Put(nodePath, []byte(v.Encode()), &store.WriteOptions{TTL: p.UpdateInterval * 3})
 						}
-					} else {
-						v, _ := url.ParseQuery(string(kvPaire.Value))
-						v.Set("tps", string(data))
-						p.kv.Put(nodePath, []byte(v.Encode()), &store.WriteOptions{TTL: p.UpdateInterval * 3})
 					}
 				}
-
 			}
 		}()
 	}
 
+	return nil
+}
+
+// Stop unregister all services.
+func (p *ConsulRegisterPlugin) Stop() error {
+	close(p.dying)
+	<-p.done
+
+	if p.kv == nil {
+		kv, err := libkv.NewStore(store.CONSUL, p.ConsulServers, p.Options)
+		if err != nil {
+			log.Errorf("cannot create consul registry: %v", err)
+			return err
+		}
+		p.kv = kv
+	}
+
+	if p.BasePath[0] == '/' {
+		p.BasePath = p.BasePath[1:]
+	}
+
+	for _, name := range p.Services {
+		nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
+		exist, err := p.kv.Exists(nodePath)
+		if err != nil {
+			log.Errorf("cannot delete path %s: %v", nodePath, err)
+			continue
+		}
+		if exist {
+			p.kv.Delete(nodePath)
+			log.Infof("delete path %s", nodePath, err)
+		}
+	}
 	return nil
 }
 
