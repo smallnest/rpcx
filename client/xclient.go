@@ -230,6 +230,7 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 			return client, nil
 		}
 		delete(c.cachedClient, k)
+		client.Close()
 	}
 	c.mu.RUnlock()
 
@@ -258,6 +259,7 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 				c.mu.Unlock()
 				return nil, err
 			}
+			c.Plugins.DoClientConnected((client.(*Client)).Conn)
 		}
 
 		client.RegisterServerMessageChan(c.serverMessageChan)

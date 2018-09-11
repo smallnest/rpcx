@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"net"
 )
 
 // pluginContainer implements PluginContainer interface.
@@ -66,6 +67,34 @@ func (p *pluginContainer) DoPostCall(ctx context.Context, servicePath, serviceMe
 	return nil
 }
 
+// DoClientConnected is called in case of connected.
+func (p *pluginContainer) DoClientConnected(conn net.Conn) (net.Conn, bool) {
+	var handleOk bool
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(ClientConnectedPlugin); ok {
+			conn, handleOk = plugin.DoClientConnected(conn)
+			if !handleOk {
+				return conn, false
+			}
+		}
+	}
+	return conn, true
+}
+
+// DoClientConnected is called in case of connected.
+func (p *pluginContainer) DoClientConnectionClose(conn net.Conn) bool {
+	var handleOk bool
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(ClientConnectionClosePlugin); ok {
+			handleOk = plugin.DoClientConnectionClose(conn)
+			if !handleOk {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 type (
 	// PreCallPlugin is invoked before the client calls a server.
 	PreCallPlugin interface {
@@ -77,12 +106,25 @@ type (
 		DoPostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error
 	}
 
+	// ClientConnectedPlugin is invoked when the client has connected the server.
+	ClientConnectedPlugin interface {
+		DoClientConnected(net.Conn) (net.Conn, bool)
+	}
+
+	// ClientConnectionClosePlugin is invoked when the connection is closing.
+	ClientConnectionClosePlugin interface {
+		DoClientConnectionClose(net.Conn) bool
+	}
+
 	//PluginContainer represents a plugin container that defines all methods to manage plugins.
 	//And it also defines all extension points.
 	PluginContainer interface {
 		Add(plugin Plugin)
 		Remove(plugin Plugin)
 		All() []Plugin
+
+		DoClientConnected(net.Conn) (net.Conn, bool)
+		DoClientConnectionClose(net.Conn) bool
 
 		DoPreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error
 		DoPostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error

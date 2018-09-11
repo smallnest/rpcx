@@ -99,11 +99,12 @@ type Client struct {
 	r    *bufio.Reader
 	//w    *bufio.Writer
 
-	mutex    sync.Mutex // protects following
-	seq      uint64
-	pending  map[uint64]*Call
-	closing  bool // user has called Close
-	shutdown bool // server has told us to stop
+	mutex        sync.Mutex // protects following
+	seq          uint64
+	pending      map[uint64]*Call
+	closing      bool // user has called Close
+	shutdown     bool // server has told us to stop
+	pluginClosed bool // the plugin has been called
 
 	Plugins PluginContainer
 
@@ -559,6 +560,10 @@ func (client *Client) input() {
 	}
 	// Terminate pending calls.
 	client.mutex.Lock()
+	if !client.pluginClosed {
+		client.Plugins.DoClientConnectionClose(client.Conn)
+		client.pluginClosed = true
+	}
 	client.shutdown = true
 	closing := client.closing
 	if err == io.EOF {
@@ -572,6 +577,9 @@ func (client *Client) input() {
 		call.Error = err
 		call.done()
 	}
+
+	client.Conn.Close()
+
 	client.mutex.Unlock()
 	if err != nil && err != io.EOF && !closing {
 		log.Error("rpcx: client protocol error:", err)
@@ -610,7 +618,7 @@ func (client *Client) heartbeat() {
 	}
 }
 
-// Close calls the underlying codec's Close method. If the connection is already
+// Close calls the underlying connection's Close method. If the connection is already
 // shutting down, ErrShutdown is returned.
 func (client *Client) Close() error {
 	client.mutex.Lock()
@@ -621,6 +629,11 @@ func (client *Client) Close() error {
 			call.Error = ErrShutdown
 			call.done()
 		}
+	}
+
+	if !client.pluginClosed {
+		client.Plugins.DoClientConnectionClose(client.Conn)
+		client.pluginClosed = true
 	}
 
 	if client.closing || client.shutdown {
