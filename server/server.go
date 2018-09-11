@@ -353,7 +353,10 @@ func (s *Server) serveConn(conn net.Conn) {
 		}
 
 		ctx = context.WithValue(ctx, StartRequestContextKey, time.Now().UnixNano())
-		err = s.auth(ctx, req)
+		if !req.IsHeartbeat() {
+			err = s.auth(ctx, req)
+		}
+
 		if err != nil {
 			if !req.IsOneway() {
 				res := req.Clone()
