@@ -561,8 +561,11 @@ func (client *Client) input() {
 	// Terminate pending calls.
 	client.mutex.Lock()
 	if !client.pluginClosed {
-		client.Plugins.DoClientConnectionClose(client.Conn)
+		if client.Plugins != nil {
+			client.Plugins.DoClientConnectionClose(client.Conn)
+		}
 		client.pluginClosed = true
+		client.Conn.Close()
 	}
 	client.shutdown = true
 	closing := client.closing
@@ -577,8 +580,6 @@ func (client *Client) input() {
 		call.Error = err
 		call.done()
 	}
-
-	client.Conn.Close()
 
 	client.mutex.Unlock()
 	if err != nil && err != io.EOF && !closing {
@@ -631,9 +632,14 @@ func (client *Client) Close() error {
 		}
 	}
 
+	var err error
 	if !client.pluginClosed {
-		client.Plugins.DoClientConnectionClose(client.Conn)
+		if client.Plugins != nil {
+			client.Plugins.DoClientConnectionClose(client.Conn)
+		}
+
 		client.pluginClosed = true
+		err = client.Conn.Close()
 	}
 
 	if client.closing || client.shutdown {
@@ -643,5 +649,5 @@ func (client *Client) Close() error {
 
 	client.closing = true
 	client.mutex.Unlock()
-	return client.Conn.Close()
+	return err
 }

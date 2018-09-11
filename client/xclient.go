@@ -259,7 +259,10 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 				c.mu.Unlock()
 				return nil, err
 			}
-			c.Plugins.DoClientConnected((client.(*Client)).Conn)
+			if c.Plugins != nil {
+				c.Plugins.DoClientConnected((client.(*Client)).Conn)
+			}
+
 		}
 
 		client.RegisterServerMessageChan(c.serverMessageChan)
