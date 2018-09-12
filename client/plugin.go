@@ -10,6 +10,10 @@ type pluginContainer struct {
 	plugins []Plugin
 }
 
+func NewPluginContainer() PluginContainer {
+	return &pluginContainer{}
+}
+
 // Plugin is the client plugin interface.
 type Plugin interface {
 }
@@ -72,7 +76,7 @@ func (p *pluginContainer) DoClientConnected(conn net.Conn) (net.Conn, bool) {
 	var handleOk bool
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(ClientConnectedPlugin); ok {
-			conn, handleOk = plugin.DoClientConnected(conn)
+			conn, handleOk = plugin.ClientConnected(conn)
 			if !handleOk {
 				return conn, false
 			}
@@ -86,7 +90,7 @@ func (p *pluginContainer) DoClientConnectionClose(conn net.Conn) bool {
 	var handleOk bool
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(ClientConnectionClosePlugin); ok {
-			handleOk = plugin.DoClientConnectionClose(conn)
+			handleOk = plugin.ClientConnectionClose(conn)
 			if !handleOk {
 				return false
 			}
@@ -108,12 +112,12 @@ type (
 
 	// ClientConnectedPlugin is invoked when the client has connected the server.
 	ClientConnectedPlugin interface {
-		DoClientConnected(net.Conn) (net.Conn, bool)
+		ClientConnected(net.Conn) (net.Conn, bool)
 	}
 
 	// ClientConnectionClosePlugin is invoked when the connection is closing.
 	ClientConnectionClosePlugin interface {
-		DoClientConnectionClose(net.Conn) bool
+		ClientConnectionClose(net.Conn) bool
 	}
 
 	//PluginContainer represents a plugin container that defines all methods to manage plugins.
