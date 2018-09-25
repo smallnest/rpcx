@@ -137,6 +137,14 @@ func (s *Server) SendMessage(conn net.Conn, servicePath, serviceMethod string, m
 	return err
 }
 
+func (s *Server) GetAllConn() []net.Conn{} {
+	var result []net.Conn
+	for clientConn, _ := range s.activeConn{
+		result=append(result,clientConn)
+	}
+        return result
+}
+
 func (s *Server) getDoneChan() <-chan struct{} {
 	s.mu.Lock()
 	defer s.mu.Unlock()
