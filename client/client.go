@@ -491,13 +491,13 @@ func (client *Client) send(ctx context.Context, call *Call) {
 
 func (client *Client) input() {
 	var err error
-	var res = protocol.NewMessage()
+	//var res = protocol.NewMessage()
 
 	for err == nil {
 		if client.option.ReadTimeout != 0 {
 			client.Conn.SetReadDeadline(time.Now().Add(client.option.ReadTimeout))
 		}
-
+		res := protocol.NewMessage()
 		err = res.Decode(client.r)
 		//res, err = protocol.Read(client.r)
 
