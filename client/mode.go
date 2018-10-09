@@ -34,16 +34,3 @@ const (
 	// SelectByUser is selecting by implementation of users
 	SelectByUser = 1000
 )
-
-var selectModeStrs = [...]string{
-	"RandomSelect",
-	"RoundRobin",
-	"WeightedRoundRobin",
-	"WeightedICMP",
-	"ConsistentHash",
-	"Closest",
-}
-
-func (s SelectMode) String() string {
-	return selectModeStrs[s]
-}
