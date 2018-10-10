@@ -622,17 +622,18 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 		return ErrXClientNoServer
 	}
 
-	var err error
+	var err = &ex.MultiError{}
 	l := len(clients)
 	done := make(chan bool, l)
 	for k, client := range clients {
 		k := k
 		client := client
 		go func() {
-			err = c.wrapCall(ctx, client, serviceMethod, args, reply)
-			done <- (err == nil)
-			if err != nil {
+			e := c.wrapCall(ctx, client, serviceMethod, args, reply)
+			done <- (e == nil)
+			if e != nil {
 				c.removeClient(k, client)
+				err.Append(e)
 			}
 		}()
 	}
