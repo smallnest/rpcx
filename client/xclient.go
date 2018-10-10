@@ -648,6 +648,7 @@ check:
 				break check
 			}
 		case <-timeout:
+			err.Append(errors.New(("timeout")))
 			break check
 		}
 	}
@@ -686,7 +687,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 		return ErrXClientNoServer
 	}
 
-	var err error
+	var err = &ex.MultiError{}
 	l := len(clients)
 	done := make(chan bool, l)
 	for k, client := range clients {
@@ -698,13 +699,14 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 				clonedReply = reflect.New(reflect.ValueOf(reply).Elem().Type()).Interface()
 			}
 
-			err = c.wrapCall(ctx, client, serviceMethod, args, clonedReply)
-			if err == nil && reply != nil && clonedReply != nil {
+			e := c.wrapCall(ctx, client, serviceMethod, args, clonedReply)
+			if e == nil && reply != nil && clonedReply != nil {
 				reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(clonedReply).Elem())
 			}
-			done <- (err == nil)
-			if err != nil {
+			done <- (e == nil)
+			if e != nil {
 				c.removeClient(k, client)
+				err.Append(e)
 			}
 
 		}()
@@ -724,6 +726,7 @@ check:
 			}
 
 		case <-timeout:
+			err.Append(errors.New(("timeout")))
 			break check
 		}
 	}
