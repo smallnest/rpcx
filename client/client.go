@@ -561,12 +561,14 @@ func (client *Client) input() {
 	// Terminate pending calls.
 
 	if client.ServerMessageChan != nil {
-		res.SetMessageStatusType(protocol.Error)
-		res.Metadata["server"] = client.Conn.RemoteAddr().String()
-		if res.Metadata == nil {
-			res.Metadata = make(map[string]string)
+		req := protocol.NewMessage()
+		req.SetMessageType(protocol.Request)
+		req.SetMessageStatusType(protocol.Error)
+		req.Metadata["server"] = client.Conn.RemoteAddr().String()
+		if req.Metadata == nil {
+			req.Metadata = make(map[string]string)
 		}
-		go client.handleServerRequest(res)
+		go client.handleServerRequest(req)
 	}
 
 	client.mutex.Lock()
