@@ -559,6 +559,16 @@ func (client *Client) input() {
 		res.Reset()
 	}
 	// Terminate pending calls.
+
+	if client.ServerMessageChan != nil {
+		res.SetMessageStatusType(protocol.Error)
+		res.Metadata["server"] = client.Conn.RemoteAddr().String()
+		if res.Metadata == nil {
+			res.Metadata = make(map[string]string)
+		}
+		go client.handleServerRequest(res)
+	}
+
 	client.mutex.Lock()
 	if !client.pluginClosed {
 		if client.Plugins != nil {
@@ -582,6 +592,7 @@ func (client *Client) input() {
 	}
 
 	client.mutex.Unlock()
+
 	if err != nil && err != io.EOF && !closing {
 		log.Error("rpcx: client protocol error:", err)
 	}
