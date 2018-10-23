@@ -567,6 +567,9 @@ func (client *Client) input() {
 		req.Metadata["server"] = client.Conn.RemoteAddr().String()
 		if req.Metadata == nil {
 			req.Metadata = make(map[string]string)
+			if err != nil {
+				req.Metadata[protocol.ServiceError] = err.Error()
+			}
 		}
 		go client.handleServerRequest(req)
 	}
