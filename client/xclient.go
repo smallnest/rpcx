@@ -653,6 +653,9 @@ check:
 		}
 	}
 
+	if err.Error() == "[]" {
+		return nil
+	}
 	return err
 }
 
@@ -729,6 +732,10 @@ check:
 			err.Append(errors.New(("timeout")))
 			break check
 		}
+	}
+
+	if err.Error() == "[]" {
+		return nil
 	}
 
 	return err
