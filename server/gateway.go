@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"net/url"
@@ -65,7 +66,6 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 		r.Header.Set(XServicePath, servicePath)
 	}
 	servicePath := r.Header.Get(XServicePath)
-
 	wh := w.Header()
 	req, err := HTTPRequest2RpcxRequest(r)
 	defer protocol.FreeMsg(req)
@@ -73,9 +73,24 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 	//set headers
 	wh.Set(XVersion, r.Header.Get(XVersion))
 	wh.Set(XMessageID, r.Header.Get(XMessageID))
-	wh.Set(XServicePath, servicePath)
-	wh.Set(XServiceMethod, r.Header.Get(XServiceMethod))
-	wh.Set(XSerializeType, r.Header.Get(XSerializeType))
+
+	if err == nil && servicePath == "" {
+		err = errors.New("empty servicepath")
+	} else {
+		wh.Set(XServicePath, servicePath)
+	}
+
+	if err == nil && r.Header.Get(XServiceMethod) == "" {
+		err = errors.New("empty servicemethod")
+	} else {
+		wh.Set(XServiceMethod, r.Header.Get(XServiceMethod))
+	}
+
+	if err == nil && r.Header.Get(XSerializeType) == "" {
+		err = errors.New("empty serialized type")
+	} else {
+		wh.Set(XSerializeType, r.Header.Get(XSerializeType))
+	}
 
 	if err != nil {
 		rh := r.Header
