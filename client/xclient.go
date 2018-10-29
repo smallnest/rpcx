@@ -611,8 +611,7 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 	for k := range c.servers {
 		client, err := c.getCachedClientWithoutLock(k)
 		if err != nil {
-			c.mu.RUnlock()
-			return err
+			continue
 		}
 		clients[k] = client
 	}
@@ -680,12 +679,12 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 	for k := range c.servers {
 		client, err := c.getCachedClientWithoutLock(k)
 		if err != nil {
-			c.mu.RUnlock()
-			return err
+			continue
 		}
 		clients[k] = client
 	}
 	c.mu.RUnlock()
+
 	if len(clients) == 0 {
 		return ErrXClientNoServer
 	}
