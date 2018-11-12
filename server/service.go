@@ -346,6 +346,7 @@ func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv refl
 		if r := recover(); r != nil {
 
 			err = fmt.Errorf("[service internal error]: %v", r)
+			log.Handle(err)
 		}
 	}()
 

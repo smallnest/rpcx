@@ -31,6 +31,10 @@ type Logger interface {
 	Panicf(format string, v ...interface{})
 }
 
+type Handler interface {
+	Handle(v ...interface{})
+}
+
 func SetLogger(logger Logger) {
 	l = logger
 }
