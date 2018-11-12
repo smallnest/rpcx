@@ -84,3 +84,9 @@ func Panic(v ...interface{}) {
 func Panicf(format string, v ...interface{}) {
 	l.Panicf(format, v...)
 }
+
+func Handle(v ...interface{}) {
+	if handle, ok := l.(Handler); ok {
+		handle.Handle(v...)
+	}
+}
