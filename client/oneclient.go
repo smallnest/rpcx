@@ -105,7 +105,7 @@ func (c *OneClient) Go(ctx context.Context, servicePath string, serviceMethod st
 
 	if xclient == nil {
 		c.mu.Lock()
-		xclient := c.xclients[servicePath]
+		xclient = c.xclients[servicePath]
 		if xclient == nil {
 			xclient = c.newXClient(servicePath)
 			c.xclients[servicePath] = xclient
@@ -172,7 +172,7 @@ func (c *OneClient) SendRaw(ctx context.Context, r *protocol.Message) (map[strin
 
 	if xclient == nil {
 		c.mu.Lock()
-		xclient := c.xclients[servicePath]
+		xclient = c.xclients[servicePath]
 		if xclient == nil {
 			xclient = c.newXClient(servicePath)
 			c.xclients[servicePath] = xclient
@@ -193,7 +193,7 @@ func (c *OneClient) Broadcast(ctx context.Context, servicePath string, serviceMe
 
 	if xclient == nil {
 		c.mu.Lock()
-		xclient := c.xclients[servicePath]
+		xclient = c.xclients[servicePath]
 		if xclient == nil {
 			xclient = c.newXClient(servicePath)
 			c.xclients[servicePath] = xclient
@@ -213,7 +213,7 @@ func (c *OneClient) Fork(ctx context.Context, servicePath string, serviceMethod 
 
 	if xclient == nil {
 		c.mu.Lock()
-		xclient := c.xclients[servicePath]
+		xclient = c.xclients[servicePath]
 		if xclient == nil {
 			xclient = c.newXClient(servicePath)
 			c.xclients[servicePath] = xclient
