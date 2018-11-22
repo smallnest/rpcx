@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	multierror "github.com/hashicorp/go-multierror"
@@ -104,20 +105,33 @@ func (c *OneClient) Go(ctx context.Context, servicePath string, serviceMethod st
 	c.mu.RUnlock()
 
 	if xclient == nil {
+		var err error
 		c.mu.Lock()
 		xclient = c.xclients[servicePath]
 		if xclient == nil {
-			xclient = c.newXClient(servicePath)
+			xclient, err = c.newXClient(servicePath)
 			c.xclients[servicePath] = xclient
 		}
 		c.mu.Unlock()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return xclient.Go(ctx, serviceMethod, args, reply, done)
 }
 
-func (c *OneClient) newXClient(servicePath string) XClient {
-	var xclient XClient
+func (c *OneClient) newXClient(servicePath string) (xclient XClient, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if e, ok := r.(error); ok {
+				err = e
+			} else {
+				err = fmt.Errorf("%v", r)
+			}
+		}
+	}()
+
 	if c.serverMessageChan == nil {
 		xclient = NewXClient(servicePath, c.failMode, c.selectMode, c.discovery.Clone(servicePath), c.option)
 	} else {
@@ -140,7 +154,7 @@ func (c *OneClient) newXClient(servicePath string) XClient {
 		xclient.Auth(c.auth)
 	}
 
-	return xclient
+	return xclient, err
 }
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
@@ -151,13 +165,17 @@ func (c *OneClient) Call(ctx context.Context, servicePath string, serviceMethod 
 	c.mu.RUnlock()
 
 	if xclient == nil {
+		var err error
 		c.mu.Lock()
 		xclient = c.xclients[servicePath]
 		if xclient == nil {
-			xclient = c.newXClient(servicePath)
+			xclient, err = c.newXClient(servicePath)
 			c.xclients[servicePath] = xclient
 		}
 		c.mu.Unlock()
+		if err != nil {
+			return err
+		}
 	}
 
 	return xclient.Call(ctx, serviceMethod, args, reply)
@@ -171,13 +189,18 @@ func (c *OneClient) SendRaw(ctx context.Context, r *protocol.Message) (map[strin
 	c.mu.RUnlock()
 
 	if xclient == nil {
+		var err error
 		c.mu.Lock()
 		xclient = c.xclients[servicePath]
 		if xclient == nil {
-			xclient = c.newXClient(servicePath)
+			xclient, err = c.newXClient(servicePath)
 			c.xclients[servicePath] = xclient
 		}
 		c.mu.Unlock()
+
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	return xclient.SendRaw(ctx, r)
@@ -192,13 +215,17 @@ func (c *OneClient) Broadcast(ctx context.Context, servicePath string, serviceMe
 	c.mu.RUnlock()
 
 	if xclient == nil {
+		var err error
 		c.mu.Lock()
 		xclient = c.xclients[servicePath]
 		if xclient == nil {
-			xclient = c.newXClient(servicePath)
+			xclient, err = c.newXClient(servicePath)
 			c.xclients[servicePath] = xclient
 		}
 		c.mu.Unlock()
+		if err != nil {
+			return err
+		}
 	}
 
 	return xclient.Broadcast(ctx, serviceMethod, args, reply)
@@ -212,13 +239,17 @@ func (c *OneClient) Fork(ctx context.Context, servicePath string, serviceMethod 
 	c.mu.RUnlock()
 
 	if xclient == nil {
+		var err error
 		c.mu.Lock()
 		xclient = c.xclients[servicePath]
 		if xclient == nil {
-			xclient = c.newXClient(servicePath)
+			xclient, err = c.newXClient(servicePath)
 			c.xclients[servicePath] = xclient
 		}
 		c.mu.Unlock()
+		if err != nil {
+			return err
+		}
 	}
 
 	return xclient.Fork(ctx, serviceMethod, args, reply)
