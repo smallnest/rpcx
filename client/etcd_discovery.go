@@ -60,6 +60,9 @@ func NewEtcdDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	var pairs = make([]*KVPair, 0, len(ps))
 	prefix := d.basePath + "/"
 	for _, p := range ps {
+		if len(prefix) > 1 && strings.HasPrefix(p.Key, "/") {
+			prefix = "/" + prefix
+		}
 		k := strings.TrimPrefix(p.Key, prefix)
 		pairs = append(pairs, &KVPair{Key: k, Value: string(p.Value)})
 	}
@@ -164,6 +167,9 @@ func (d *EtcdDiscovery) watch() {
 				var pairs []*KVPair // latest servers
 				prefix := d.basePath + "/"
 				for _, p := range ps {
+					if len(prefix) > 1 && strings.HasPrefix(p.Key, "/") {
+						prefix = "/" + prefix
+					}
 					k := strings.TrimPrefix(p.Key, prefix)
 					pairs = append(pairs, &KVPair{Key: k, Value: string(p.Value)})
 				}
