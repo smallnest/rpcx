@@ -58,9 +58,16 @@ func NewEtcdDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 		panic(err)
 	}
 	var pairs = make([]*KVPair, 0, len(ps))
-	prefix := d.basePath + "/"
+	var prefix *string
+	prefix0 := d.basePath + "/"
+	prefix1 := "/" + prefix0
 	for _, p := range ps {
-		k := strings.TrimPrefix(p.Key, prefix)
+		if len(prefix0) > 1 && strings.HasPrefix(p.Key, "/") {
+			prefix = &prefix1
+		} else {
+			prefix = &prefix0
+		}
+		k := strings.TrimPrefix(p.Key, *prefix)
 		pairs = append(pairs, &KVPair{Key: k, Value: string(p.Value)})
 	}
 	d.pairs = pairs
@@ -162,9 +169,16 @@ func (d *EtcdDiscovery) watch() {
 					break readChanges
 				}
 				var pairs []*KVPair // latest servers
-				prefix := d.basePath + "/"
+				var prefix *string
+				prefix0 := d.basePath + "/"
+				prefix1 := "/" + prefix0
 				for _, p := range ps {
-					k := strings.TrimPrefix(p.Key, prefix)
+					if len(prefix0) > 1 && strings.HasPrefix(p.Key, "/") {
+						prefix = &prefix1
+					} else {
+						prefix = &prefix0
+					}
+					k := strings.TrimPrefix(p.Key, *prefix)
 					pairs = append(pairs, &KVPair{Key: k, Value: string(p.Value)})
 				}
 				d.pairs = pairs
