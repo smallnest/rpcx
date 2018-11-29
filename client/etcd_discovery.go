@@ -60,11 +60,19 @@ func NewEtcdDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	var pairs = make([]*KVPair, 0, len(ps))
 	var prefix string
 	for _, p := range ps {
-		if prefix == "" && strings.HasPrefix(p.Key, "/") {
-			if strings.HasPrefix(d.basePath, "/") {
-				prefix = d.basePath + "/"
+		if prefix == "" {
+			if strings.HasPrefix(p.Key, "/") {
+				if strings.HasPrefix(d.basePath, "/") {
+					prefix = d.basePath + "/"
+				} else {
+					prefix = "/" + d.basePath + "/"
+				}
 			} else {
-				prefix = "/" + d.basePath + "/"
+				if strings.HasPrefix(d.basePath, "/") {
+					prefix = d.basePath[1:] + "/"
+				} else {
+					prefix = d.basePath + "/"
+				}
 			}
 		}
 		k := strings.TrimPrefix(p.Key, prefix)
@@ -171,11 +179,19 @@ func (d *EtcdDiscovery) watch() {
 				var pairs []*KVPair // latest servers
 				var prefix string
 				for _, p := range ps {
-					if prefix == "" && strings.HasPrefix(p.Key, "/") {
-						if strings.HasPrefix(d.basePath, "/") {
-							prefix = d.basePath + "/"
+					if prefix == "" {
+						if strings.HasPrefix(p.Key, "/") {
+							if strings.HasPrefix(d.basePath, "/") {
+								prefix = d.basePath + "/"
+							} else {
+								prefix = "/" + d.basePath + "/"
+							}
 						} else {
-							prefix = "/" + d.basePath + "/"
+							if strings.HasPrefix(d.basePath, "/") {
+								prefix = d.basePath[1:] + "/"
+							} else {
+								prefix = d.basePath + "/"
+							}
 						}
 					}
 					k := strings.TrimPrefix(p.Key, prefix)
