@@ -58,16 +58,16 @@ func NewEtcdDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 		panic(err)
 	}
 	var pairs = make([]*KVPair, 0, len(ps))
-	var prefix *string
-	prefix0 := d.basePath + "/"
-	prefix1 := "/" + prefix0
+	var prefix string
 	for _, p := range ps {
-		if len(prefix0) > 1 && strings.HasPrefix(p.Key, "/") {
-			prefix = &prefix1
-		} else {
-			prefix = &prefix0
+		if prefix == "" && strings.HasPrefix(p.Key, "/") {
+			if strings.HasPrefix(d.basePath, "/") {
+				prefix = d.basePath + "/"
+			} else {
+				prefix = "/" + d.basePath + "/"
+			}
 		}
-		k := strings.TrimPrefix(p.Key, *prefix)
+		k := strings.TrimPrefix(p.Key, prefix)
 		pairs = append(pairs, &KVPair{Key: k, Value: string(p.Value)})
 	}
 	d.pairs = pairs
@@ -169,16 +169,16 @@ func (d *EtcdDiscovery) watch() {
 					break readChanges
 				}
 				var pairs []*KVPair // latest servers
-				var prefix *string
-				prefix0 := d.basePath + "/"
-				prefix1 := "/" + prefix0
+				var prefix string
 				for _, p := range ps {
-					if len(prefix0) > 1 && strings.HasPrefix(p.Key, "/") {
-						prefix = &prefix1
-					} else {
-						prefix = &prefix0
+					if prefix == "" && strings.HasPrefix(p.Key, "/") {
+						if strings.HasPrefix(d.basePath, "/") {
+							prefix = d.basePath + "/"
+						} else {
+							prefix = "/" + d.basePath + "/"
+						}
 					}
-					k := strings.TrimPrefix(p.Key, *prefix)
+					k := strings.TrimPrefix(p.Key, prefix)
 					pairs = append(pairs, &KVPair{Key: k, Value: string(p.Value)})
 				}
 				d.pairs = pairs
