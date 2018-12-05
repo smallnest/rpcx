@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"reflect"
 	"runtime"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"unicode"
@@ -345,7 +344,8 @@ func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv refl
 	defer func() {
 		if r := recover(); r != nil {
 			//log.Errorf("failed to invoke service: %v, stacks: %s", r, string(debug.Stack()))
-			err = fmt.Errorf("[service internal error]: %v, stacks: %s", r, string(debug.Stack()))
+			err = fmt.Errorf("[service internal error]: %v, method: %s, argv: %+v",
+				r, mtype.method.Name, argv.Interface())
 			log.Handle(err)
 		}
 	}()
@@ -366,7 +366,8 @@ func (s *service) callForFunction(ctx context.Context, ft *functionType, argv, r
 	defer func() {
 		if r := recover(); r != nil {
 			//log.Errorf("failed to invoke service: %v, stacks: %s", r, string(debug.Stack()))
-			err = fmt.Errorf("[service internal error]: %v, stacks: %s", r, string(debug.Stack()))
+			err = fmt.Errorf("[service internal error]: %v, function: %s, argv: %+v",
+				r, runtime.FuncForPC(ft.fn.Pointer()), argv.Interface())
 			log.Handle(err)
 		}
 	}()
