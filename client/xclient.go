@@ -55,13 +55,12 @@ type ServiceDiscovery interface {
 }
 
 type xClient struct {
-	failMode      FailMode
-	selectMode    SelectMode
-	cachedClient  map[string]RPCClient
-	breakers      sync.Map
-	servicePath   string
-	serviceMethod string
-	option        Option
+	failMode     FailMode
+	selectMode   SelectMode
+	cachedClient map[string]RPCClient
+	breakers     sync.Map
+	servicePath  string
+	option       Option
 
 	mu        sync.RWMutex
 	servers   map[string]string
