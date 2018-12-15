@@ -606,7 +606,7 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 	}
 
 	var clients = make(map[string]RPCClient)
-	c.mu.RLock()
+	c.mu.Lock()
 	for k := range c.servers {
 		client, err := c.getCachedClientWithoutLock(k)
 		if err != nil {
@@ -614,7 +614,7 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 		}
 		clients[k] = client
 	}
-	c.mu.RUnlock()
+	c.mu.Unlock()
 
 	if len(clients) == 0 {
 		return ErrXClientNoServer
@@ -674,7 +674,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 	}
 
 	var clients = make(map[string]RPCClient)
-	c.mu.RLock()
+	c.mu.Lock()
 	for k := range c.servers {
 		client, err := c.getCachedClientWithoutLock(k)
 		if err != nil {
@@ -682,7 +682,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 		}
 		clients[k] = client
 	}
-	c.mu.RUnlock()
+	c.mu.Unlock()
 
 	if len(clients) == 0 {
 		return ErrXClientNoServer
