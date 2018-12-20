@@ -136,7 +136,9 @@ func (p *pluginContainer) DoRegister(name string, rcvr interface{}, metadata str
 	}
 
 	if len(es) > 0 {
-		return errors.NewMultiError(es)
+		err := errors.NewMultiError(es)
+		log.Handle(err)
+		return err
 	}
 	return nil
 }
@@ -154,7 +156,9 @@ func (p *pluginContainer) DoRegisterFunction(name string, fn interface{}, metada
 	}
 
 	if len(es) > 0 {
-		return errors.NewMultiError(es)
+		err := errors.NewMultiError(es)
+		log.Handle(err)
+		return err
 	}
 	return nil
 }
@@ -172,7 +176,9 @@ func (p *pluginContainer) DoUnregister(name string) error {
 	}
 
 	if len(es) > 0 {
-		return errors.NewMultiError(es)
+		err := errors.NewMultiError(es)
+		log.Handle(err)
+		return err
 	}
 	return nil
 }
