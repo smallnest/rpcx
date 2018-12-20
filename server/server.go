@@ -465,7 +465,10 @@ func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Me
 func (s *Server) auth(ctx context.Context, req *protocol.Message) error {
 	if s.AuthFunc != nil {
 		token := req.Metadata[share.AuthKey]
-		return s.AuthFunc(ctx, req, token)
+		if err := s.AuthFunc(ctx, req, token); err != nil {
+			log.Handle(err)
+			return err
+		}
 	}
 
 	return nil
