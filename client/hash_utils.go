@@ -36,14 +36,18 @@ type HashServiceAndArgs func(len int, options ...interface{}) int
 // Return service address, like "tcp@127.0.0.1:8970"
 type ConsistentAddrStrFunction func(options ...interface{}) string
 
-// JumpConsistentHash selects a server by serviceMethod and args
-func JumpConsistentHash(len int, options ...interface{}) int {
+func genKey(options ...interface{}) uint64 {
 	keyString := ""
 	for _, opt := range options {
 		keyString = keyString + "/" + toString(opt)
 	}
-	key := HashString(keyString)
-	return int(Hash(key, int32(len)))
+
+	return HashString(keyString)
+}
+
+// JumpConsistentHash selects a server by serviceMethod and args
+func JumpConsistentHash(len int, options ...interface{}) int {
+	return int(Hash(genKey(options...), int32(len)))
 }
 
 func toString(obj interface{}) string {

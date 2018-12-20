@@ -525,9 +525,15 @@ func (client *Client) input() {
 				continue
 			}
 		case res.MessageStatusType() == protocol.Error:
-			// We've got an error response. Give this to the request;
-			call.Error = ServiceError(res.Metadata[protocol.ServiceError])
-			call.ResMetadata = res.Metadata
+			// We've got an error response. Give this to the request
+			if len(res.Metadata) > 0 {
+				meta := make(map[string]string, len(res.Metadata))
+				for k, v := range res.Metadata {
+					meta[k] = v
+				}
+				call.ResMetadata = meta
+				call.Error = ServiceError(meta[protocol.ServiceError])
+			}
 
 			if call.Raw {
 				call.Metadata, call.Reply, _ = convertRes2Raw(res)
@@ -550,7 +556,14 @@ func (client *Client) input() {
 						}
 					}
 				}
-				call.ResMetadata = res.Metadata
+				if len(res.Metadata) > 0 {
+					meta := make(map[string]string, len(res.Metadata))
+					for k, v := range res.Metadata {
+						meta[k] = v
+					}
+					call.ResMetadata = res.Metadata
+				}
+
 			}
 
 			call.done()
