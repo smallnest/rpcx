@@ -366,7 +366,7 @@ func decodeMetadata(l uint32, data []byte) (map[string]string, error) {
 		if n+sl > l-4 {
 			return m, ErrMetaKVMissing
 		}
-		k := util.SliceByteToString(data[n : n+sl])
+		k := string(data[n : n+sl])
 		n = n + sl
 
 		// value
@@ -375,7 +375,7 @@ func decodeMetadata(l uint32, data []byte) (map[string]string, error) {
 		if n+sl > l {
 			return m, ErrMetaKVMissing
 		}
-		v := util.SliceByteToString(data[n : n+sl])
+		v := string(data[n : n+sl])
 		n = n + sl
 		m[k] = v
 	}

@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/edwingeng/doublejump"
+
 	"github.com/valyala/fastrand"
 )
 
@@ -233,6 +235,7 @@ func createGeoServer(servers map[string]string) []*geoServer {
 
 // consistentHashSelector selects based on JumpConsistentHash.
 type consistentHashSelector struct {
+	h       *doublejump.Hash
 	servers []string
 }
 
@@ -243,7 +246,7 @@ func newConsistentHashSelector(servers map[string]string) Selector {
 	}
 
 	sort.Slice(ss, func(i, j int) bool { return ss[i] < ss[j] })
-	return &consistentHashSelector{servers: ss}
+	return &consistentHashSelector{servers: ss, h: doublejump.NewHash()}
 }
 
 func (s consistentHashSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
@@ -251,18 +254,27 @@ func (s consistentHashSelector) Select(ctx context.Context, servicePath, service
 	if len(ss) == 0 {
 		return ""
 	}
-	i := JumpConsistentHash(len(ss), servicePath, serviceMethod, args)
-	return ss[i]
+
+	key := genKey(servicePath, serviceMethod, args)
+	return s.h.Get(key).(string)
 }
 
 func (s *consistentHashSelector) UpdateServer(servers map[string]string) {
 	var ss = make([]string, 0, len(servers))
 	for k := range servers {
+		s.h.Add(k)
 		ss = append(ss, k)
 	}
 
 	sort.Slice(ss, func(i, j int) bool { return ss[i] < ss[j] })
+
+	for _, k := range s.servers {
+		if servers[k] == "" { //remove
+			s.h.Remove(k)
+		}
+	}
 	s.servers = ss
+
 }
 
 // weightedICMPSelector selects servers with ping result.
