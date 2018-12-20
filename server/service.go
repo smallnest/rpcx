@@ -344,7 +344,6 @@ func (s *Server) UnregisterAll() error {
 func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv reflect.Value) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-
 			err = fmt.Errorf("[service internal error]: %v", r)
 			log.Handle(err)
 		}

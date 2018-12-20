@@ -4,6 +4,8 @@ import (
 	"context"
 	"net"
 
+	"github.com/smallnest/rpcx/log"
+
 	"github.com/smallnest/rpcx/errors"
 	"github.com/smallnest/rpcx/protocol"
 )
@@ -210,6 +212,7 @@ func (p *pluginContainer) DoPreReadRequest(ctx context.Context) error {
 		if plugin, ok := p.plugins[i].(PreReadRequestPlugin); ok {
 			err := plugin.PreReadRequest(ctx)
 			if err != nil {
+				log.Handle(err)
 				return err
 			}
 		}
@@ -224,6 +227,7 @@ func (p *pluginContainer) DoPostReadRequest(ctx context.Context, r *protocol.Mes
 		if plugin, ok := p.plugins[i].(PostReadRequestPlugin); ok {
 			err := plugin.PostReadRequest(ctx, r, e)
 			if err != nil {
+				log.Handle(err)
 				return err
 			}
 		}
@@ -238,6 +242,7 @@ func (p *pluginContainer) DoPreWriteResponse(ctx context.Context, req *protocol.
 		if plugin, ok := p.plugins[i].(PreWriteResponsePlugin); ok {
 			err := plugin.PreWriteResponse(ctx, req, res)
 			if err != nil {
+				log.Handle(err)
 				return err
 			}
 		}
@@ -252,6 +257,7 @@ func (p *pluginContainer) DoPostWriteResponse(ctx context.Context, req *protocol
 		if plugin, ok := p.plugins[i].(PostWriteResponsePlugin); ok {
 			err := plugin.PostWriteResponse(ctx, req, resp, e)
 			if err != nil {
+				log.Handle(err)
 				return err
 			}
 		}
@@ -266,6 +272,7 @@ func (p *pluginContainer) DoPreWriteRequest(ctx context.Context) error {
 		if plugin, ok := p.plugins[i].(PreWriteRequestPlugin); ok {
 			err := plugin.PreWriteRequest(ctx)
 			if err != nil {
+				log.Handle(err)
 				return err
 			}
 		}
@@ -280,6 +287,7 @@ func (p *pluginContainer) DoPostWriteRequest(ctx context.Context, r *protocol.Me
 		if plugin, ok := p.plugins[i].(PostWriteRequestPlugin); ok {
 			err := plugin.PostWriteRequest(ctx, r, e)
 			if err != nil {
+				log.Handle(err)
 				return err
 			}
 		}
