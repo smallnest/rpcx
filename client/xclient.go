@@ -3,15 +3,24 @@ package client
 import (
 	"context"
 	"errors"
+	"io"
+	"net"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/juju/ratelimit"
 	ex "github.com/smallnest/rpcx/errors"
 	"github.com/smallnest/rpcx/protocol"
+	"github.com/smallnest/rpcx/serverplugin"
 	"github.com/smallnest/rpcx/share"
+)
+
+const (
+	FileTransferBufferSize = 1024
 )
 
 var (
@@ -36,6 +45,7 @@ type XClient interface {
 	Broadcast(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Fork(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error)
+	Sendfile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error
 	Close() error
 }
 
@@ -737,6 +747,83 @@ check:
 	}
 
 	return err
+}
+
+// Sendfile sends a local file to the server.
+// fileName is the path of local file.
+// rateInBytesPerSecond can limit bandwidth of sending,  0 means does not limit the bandwidth, unit is bytes / second.
+func (c *xClient) Sendfile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return err
+	}
+
+	fi, err := os.Stat(fileName)
+	if err != nil {
+		return err
+	}
+
+	args := serverplugin.FileTransferArgs{
+		FileName: fi.Name(),
+		FileSize: fi.Size(),
+	}
+
+	reply := &serverplugin.FileTransferReply{}
+	err = c.Call(ctx, "TransferFile", args, reply)
+	if err != nil {
+		return err
+	}
+
+	conn, err := net.DialTimeout("tcp", reply.Addr, c.option.ConnectTimeout)
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close()
+
+	_, err = conn.Write(reply.Token)
+	if err != nil {
+		return err
+	}
+
+	var tb *ratelimit.Bucket
+
+	if rateInBytesPerSecond > 0 {
+		tb = ratelimit.NewBucketWithRate(float64(rateInBytesPerSecond), rateInBytesPerSecond)
+	}
+
+	sendBuffer := make([]byte, FileTransferBufferSize)
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+		default:
+			if tb != nil {
+				tb.Wait(FileTransferBufferSize)
+			}
+			n, err := file.Read(sendBuffer)
+			if err != nil {
+				if err == io.EOF {
+					return nil
+				} else {
+					return err
+				}
+			}
+			if n == 0 {
+				break loop
+			}
+			_, err = conn.Write(sendBuffer)
+			if err != nil {
+				if err == io.EOF {
+					return nil
+				} else {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 // Close closes this client and its underlying connnections to services.

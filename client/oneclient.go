@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/smallnest/rpcx/serverplugin"
+
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/smallnest/rpcx/protocol"
 )
@@ -253,6 +255,28 @@ func (c *OneClient) Fork(ctx context.Context, servicePath string, serviceMethod 
 	}
 
 	return xclient.Fork(ctx, serviceMethod, args, reply)
+}
+
+func (c *OneClient) Sendfile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error {
+	c.mu.RLock()
+	xclient := c.xclients[serverplugin.SendFileServiceName]
+	c.mu.RUnlock()
+
+	if xclient == nil {
+		var err error
+		c.mu.Lock()
+		xclient = c.xclients[serverplugin.SendFileServiceName]
+		if xclient == nil {
+			xclient, err = c.newXClient(serverplugin.SendFileServiceName)
+			c.xclients[serverplugin.SendFileServiceName] = xclient
+		}
+		c.mu.Unlock()
+		if err != nil {
+			return err
+		}
+	}
+
+	return xclient.Sendfile(ctx, fileName, rateInBytesPerSecond)
 }
 
 // Close closes all xclients and its underlying connnections to services.
