@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"io"
@@ -45,7 +46,8 @@ type XClient interface {
 	Broadcast(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Fork(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error)
-	Sendfile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error
+	SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error
+	DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer) error
 	Close() error
 }
 
@@ -749,10 +751,10 @@ check:
 	return err
 }
 
-// Sendfile sends a local file to the server.
+// SendFile sends a local file to the server.
 // fileName is the path of local file.
 // rateInBytesPerSecond can limit bandwidth of sending,  0 means does not limit the bandwidth, unit is bytes / second.
-func (c *xClient) Sendfile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error {
+func (c *xClient) SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return err
@@ -824,6 +826,57 @@ loop:
 	}
 
 	return nil
+}
+
+func (c *xClient) DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer) error {
+	args := serverplugin.DownloadFileArgs{
+		FileName: requestFileName,
+	}
+
+	reply := &serverplugin.FileTransferReply{}
+	err := c.Call(ctx, "DownloadFile", args, reply)
+	if err != nil {
+		return err
+	}
+
+	conn, err := net.DialTimeout("tcp", reply.Addr, c.option.ConnectTimeout)
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close()
+
+	_, err = conn.Write(reply.Token)
+	if err != nil {
+		return err
+	}
+
+	buf := make([]byte, FileTransferBufferSize)
+	r := bufio.NewReader(conn)
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+		default:
+			n, er := r.Read(buf)
+			if n > 0 {
+				_, ew := saveTo.Write(buf[0:n])
+				if ew != nil {
+					err = ew
+					break loop
+				}
+			}
+			if er != nil {
+				if er != io.EOF {
+					err = er
+				}
+				break loop
+			}
+		}
+
+	}
+
+	return err
 }
 
 // Close closes this client and its underlying connnections to services.

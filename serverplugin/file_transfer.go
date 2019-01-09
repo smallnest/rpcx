@@ -17,7 +17,11 @@ var (
 	SendFileServiceName = "_filetransfer"
 )
 
+// FileTransferHandler handles uploading file. Must close the connection after it finished.
 type FileTransferHandler func(conn net.Conn, args *FileTransferArgs)
+
+// DownloadFileHandler handles downloading file. Must close the connection after it finished.
+type DownloadFileHandler func(conn net.Conn, args *DownloadFileArgs)
 
 // FileTransferArgs args from clients.
 type FileTransferArgs struct {
@@ -32,19 +36,30 @@ type FileTransferReply struct {
 	Addr  string `json:"addr,omitempty"`
 }
 
+// DownloadFileArgs args from clients.
+type DownloadFileArgs struct {
+	FileName string `json:"file_name,omitempty"`
+}
+
 type tokenInfo struct {
 	token []byte
 	args  *FileTransferArgs
+}
+
+type downloadTokenInfo struct {
+	token []byte
+	args  *DownloadFileArgs
 }
 
 // FileTransfer support transfer files from clients.
 // It registers a file transfer service and listens a on the given port.
 // Clients will invokes this service to get the token and send the token and the file to this port.
 type FileTransfer struct {
-	Addr         string
-	handler      FileTransferHandler
-	cachedTokens *lru.Cache
-	service      *FileTransferService
+	Addr                string
+	handler             FileTransferHandler
+	downloadFileHandler DownloadFileHandler
+	cachedTokens        *lru.Cache
+	service             *FileTransferService
 
 	startOnce sync.Once
 
@@ -56,16 +71,15 @@ type FileTransferService struct {
 }
 
 // NewFileTransfer creates a FileTransfer with given parameters.
-func NewFileTransfer(addr string, handler FileTransferHandler, waitNum int) *FileTransfer {
-	if handler == nil {
-		panic("must set file transfer handler")
-	}
+func NewFileTransfer(addr string, handler FileTransferHandler, downloadFileHandler DownloadFileHandler, waitNum int) *FileTransfer {
+
 	cachedTokens, _ := lru.New(waitNum)
 
 	fi := &FileTransfer{
-		Addr:         addr,
-		handler:      handler,
-		cachedTokens: cachedTokens,
+		Addr:                addr,
+		handler:             handler,
+		downloadFileHandler: downloadFileHandler,
+		cachedTokens:        cachedTokens,
 	}
 
 	fi.service = &FileTransferService{
@@ -94,6 +108,22 @@ func (s *FileTransferService) TransferFile(ctx context.Context, args *FileTransf
 	}
 
 	s.FileTransfer.cachedTokens.Add(string(token), &tokenInfo{token, args})
+	return nil
+}
+
+func (s *FileTransferService) DownloadFile(ctx context.Context, args *DownloadFileArgs, reply *FileTransferReply) error {
+	token := make([]byte, 32)
+	_, err := rand.Read(token)
+	if err != nil {
+		return err
+	}
+
+	*reply = FileTransferReply{
+		Token: token,
+		Addr:  s.FileTransfer.Addr,
+	}
+
+	s.FileTransfer.cachedTokens.Add(string(token), &downloadTokenInfo{token, args})
 	return nil
 }
 
@@ -161,9 +191,24 @@ func (s *FileTransfer) start() error {
 				continue
 			}
 			s.cachedTokens.Remove(tokenStr)
-			ti := info.(*tokenInfo)
 
-			go s.handler(conn, ti.args)
+			switch ti := info.(type) {
+			case *tokenInfo:
+				if s.handler == nil {
+					conn.Close()
+					continue
+				}
+				go s.handler(conn, ti.args)
+			case *downloadTokenInfo:
+				if s.downloadFileHandler == nil {
+					conn.Close()
+					continue
+				}
+				go s.downloadFileHandler(conn, ti.args)
+			default:
+				conn.Close()
+			}
+
 		}
 
 	}

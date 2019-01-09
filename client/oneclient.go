@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"io"
 	"sync"
 
 	"github.com/smallnest/rpcx/serverplugin"
@@ -257,7 +258,7 @@ func (c *OneClient) Fork(ctx context.Context, servicePath string, serviceMethod 
 	return xclient.Fork(ctx, serviceMethod, args, reply)
 }
 
-func (c *OneClient) Sendfile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error {
+func (c *OneClient) SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error {
 	c.mu.RLock()
 	xclient := c.xclients[serverplugin.SendFileServiceName]
 	c.mu.RUnlock()
@@ -276,7 +277,29 @@ func (c *OneClient) Sendfile(ctx context.Context, fileName string, rateInBytesPe
 		}
 	}
 
-	return xclient.Sendfile(ctx, fileName, rateInBytesPerSecond)
+	return xclient.SendFile(ctx, fileName, rateInBytesPerSecond)
+}
+
+func (c *OneClient) DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer) error {
+	c.mu.RLock()
+	xclient := c.xclients[serverplugin.SendFileServiceName]
+	c.mu.RUnlock()
+
+	if xclient == nil {
+		var err error
+		c.mu.Lock()
+		xclient = c.xclients[serverplugin.SendFileServiceName]
+		if xclient == nil {
+			xclient, err = c.newXClient(serverplugin.SendFileServiceName)
+			c.xclients[serverplugin.SendFileServiceName] = xclient
+		}
+		c.mu.Unlock()
+		if err != nil {
+			return err
+		}
+	}
+
+	return xclient.DownloadFile(ctx, requestFileName, saveTo)
 }
 
 // Close closes all xclients and its underlying connnections to services.
