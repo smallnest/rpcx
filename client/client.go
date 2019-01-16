@@ -577,13 +577,13 @@ func (client *Client) input() {
 		req := protocol.NewMessage()
 		req.SetMessageType(protocol.Request)
 		req.SetMessageStatusType(protocol.Error)
-		req.Metadata["server"] = client.Conn.RemoteAddr().String()
 		if req.Metadata == nil {
 			req.Metadata = make(map[string]string)
 			if err != nil {
 				req.Metadata[protocol.ServiceError] = err.Error()
 			}
 		}
+		req.Metadata["server"] = client.Conn.RemoteAddr().String()
 		go client.handleServerRequest(req)
 	}
 

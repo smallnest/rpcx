@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"reflect"
 	"runtime"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"unicode"
@@ -262,7 +261,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 		// Method needs four ins: receiver, context.Context, *args, *reply.
 		if mtype.NumIn() != 4 {
 			if reportErr {
-				log.Info("method", mname, "has wrong number of ins:", mtype.NumIn())
+				log.Info("method", mname, " has wrong number of ins:", mtype.NumIn())
 			}
 			continue
 		}
@@ -279,7 +278,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 		argType := mtype.In(2)
 		if !isExportedOrBuiltinType(argType) {
 			if reportErr {
-				log.Info(mname, "parameter type not exported:", argType)
+				log.Info(mname, " parameter type not exported: ", argType)
 			}
 			continue
 		}
@@ -287,28 +286,28 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 		replyType := mtype.In(3)
 		if replyType.Kind() != reflect.Ptr {
 			if reportErr {
-				log.Info("method", mname, "reply type not a pointer:", replyType)
+				log.Info("method", mname, " reply type not a pointer:", replyType)
 			}
 			continue
 		}
 		// Reply type must be exported.
 		if !isExportedOrBuiltinType(replyType) {
 			if reportErr {
-				log.Info("method", mname, "reply type not exported:", replyType)
+				log.Info("method", mname, " reply type not exported:", replyType)
 			}
 			continue
 		}
 		// Method needs one out.
 		if mtype.NumOut() != 1 {
 			if reportErr {
-				log.Info("method", mname, "has wrong number of outs:", mtype.NumOut())
+				log.Info("method", mname, " has wrong number of outs:", mtype.NumOut())
 			}
 			continue
 		}
 		// The return type of the method must be error.
 		if returnType := mtype.Out(0); returnType != typeOfError {
 			if reportErr {
-				log.Info("method", mname, "returns", returnType.String(), "not error")
+				log.Info("method", mname, " returns ", returnType.String(), " not error")
 			}
 			continue
 		}
@@ -344,8 +343,9 @@ func (s *Server) UnregisterAll() error {
 func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv reflect.Value) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-
-			err = fmt.Errorf("[service internal error]: %v", r)
+			//log.Errorf("failed to invoke service: %v, stacks: %s", r, string(debug.Stack()))
+			err = fmt.Errorf("[service internal error]: %v, method: %s, argv: %+v",
+				r, mtype.method.Name, argv.Interface())
 			log.Handle(err)
 		}
 	}()
@@ -365,8 +365,10 @@ func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv refl
 func (s *service) callForFunction(ctx context.Context, ft *functionType, argv, replyv reflect.Value) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Errorf("failed to invoke service: %v, stacks: %s", r, string(debug.Stack()))
-			err = fmt.Errorf("[service internal error]: %v, stacks: %s", r, string(debug.Stack()))
+			//log.Errorf("failed to invoke service: %v, stacks: %s", r, string(debug.Stack()))
+			err = fmt.Errorf("[service internal error]: %v, function: %s, argv: %+v",
+				r, runtime.FuncForPC(ft.fn.Pointer()), argv.Interface())
+			log.Handle(err)
 		}
 	}()
 

@@ -114,10 +114,11 @@ func (s *Server) Address() net.Addr {
 	return s.ln.Addr()
 }
 
+// ActiveClientConn returns active connections.
 func (s *Server) ActiveClientConn() []net.Conn {
 	var result []net.Conn
 
-	for clientConn, _ := range s.activeConn {
+	for clientConn := range s.activeConn {
 		result = append(result, clientConn)
 	}
 	return result

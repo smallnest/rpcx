@@ -1,17 +1,27 @@
 package client
 
 import (
+	"bufio"
 	"context"
 	"errors"
+	"io"
+	"net"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/juju/ratelimit"
 	ex "github.com/smallnest/rpcx/errors"
 	"github.com/smallnest/rpcx/protocol"
+	"github.com/smallnest/rpcx/serverplugin"
 	"github.com/smallnest/rpcx/share"
+)
+
+const (
+	FileTransferBufferSize = 1024
 )
 
 var (
@@ -36,6 +46,8 @@ type XClient interface {
 	Broadcast(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Fork(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error)
+	SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error
+	DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer) error
 	Close() error
 }
 
@@ -55,13 +67,12 @@ type ServiceDiscovery interface {
 }
 
 type xClient struct {
-	failMode      FailMode
-	selectMode    SelectMode
-	cachedClient  map[string]RPCClient
-	breakers      sync.Map
-	servicePath   string
-	serviceMethod string
-	option        Option
+	failMode     FailMode
+	selectMode   SelectMode
+	cachedClient map[string]RPCClient
+	breakers     sync.Map
+	servicePath  string
+	option       Option
 
 	mu        sync.RWMutex
 	servers   map[string]string
@@ -207,7 +218,9 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 
 // selects a client from candidates base on c.selectMode
 func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, RPCClient, error) {
+	c.mu.Lock()
 	k := c.selector.Select(ctx, servicePath, serviceMethod, args)
+	c.mu.Unlock()
 	if k == "" {
 		return "", nil, ErrXClientNoServer
 	}
@@ -611,7 +624,7 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 	}
 
 	var clients = make(map[string]RPCClient)
-	c.mu.RLock()
+	c.mu.Lock()
 	for k := range c.servers {
 		client, err := c.getCachedClientWithoutLock(k)
 		if err != nil {
@@ -619,7 +632,7 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 		}
 		clients[k] = client
 	}
-	c.mu.RUnlock()
+	c.mu.Unlock()
 
 	if len(clients) == 0 {
 		return ErrXClientNoServer
@@ -680,7 +693,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 	}
 
 	var clients = make(map[string]RPCClient)
-	c.mu.RLock()
+	c.mu.Lock()
 	for k := range c.servers {
 		client, err := c.getCachedClientWithoutLock(k)
 		if err != nil {
@@ -688,7 +701,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 		}
 		clients[k] = client
 	}
-	c.mu.RUnlock()
+	c.mu.Unlock()
 
 	if len(clients) == 0 {
 		return ErrXClientNoServer
@@ -740,6 +753,134 @@ check:
 
 	if err.Error() == "[]" {
 		return nil
+	}
+
+	return err
+}
+
+// SendFile sends a local file to the server.
+// fileName is the path of local file.
+// rateInBytesPerSecond can limit bandwidth of sending,  0 means does not limit the bandwidth, unit is bytes / second.
+func (c *xClient) SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return err
+	}
+
+	fi, err := os.Stat(fileName)
+	if err != nil {
+		return err
+	}
+
+	args := serverplugin.FileTransferArgs{
+		FileName: fi.Name(),
+		FileSize: fi.Size(),
+	}
+
+	reply := &serverplugin.FileTransferReply{}
+	err = c.Call(ctx, "TransferFile", args, reply)
+	if err != nil {
+		return err
+	}
+
+	conn, err := net.DialTimeout("tcp", reply.Addr, c.option.ConnectTimeout)
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close()
+
+	_, err = conn.Write(reply.Token)
+	if err != nil {
+		return err
+	}
+
+	var tb *ratelimit.Bucket
+
+	if rateInBytesPerSecond > 0 {
+		tb = ratelimit.NewBucketWithRate(float64(rateInBytesPerSecond), rateInBytesPerSecond)
+	}
+
+	sendBuffer := make([]byte, FileTransferBufferSize)
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+		default:
+			if tb != nil {
+				tb.Wait(FileTransferBufferSize)
+			}
+			n, err := file.Read(sendBuffer)
+			if err != nil {
+				if err == io.EOF {
+					return nil
+				} else {
+					return err
+				}
+			}
+			if n == 0 {
+				break loop
+			}
+			_, err = conn.Write(sendBuffer)
+			if err != nil {
+				if err == io.EOF {
+					return nil
+				} else {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (c *xClient) DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer) error {
+	args := serverplugin.DownloadFileArgs{
+		FileName: requestFileName,
+	}
+
+	reply := &serverplugin.FileTransferReply{}
+	err := c.Call(ctx, "DownloadFile", args, reply)
+	if err != nil {
+		return err
+	}
+
+	conn, err := net.DialTimeout("tcp", reply.Addr, c.option.ConnectTimeout)
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close()
+
+	_, err = conn.Write(reply.Token)
+	if err != nil {
+		return err
+	}
+
+	buf := make([]byte, FileTransferBufferSize)
+	r := bufio.NewReader(conn)
+loop:
+	for {
+		select {
+		case <-ctx.Done():
+		default:
+			n, er := r.Read(buf)
+			if n > 0 {
+				_, ew := saveTo.Write(buf[0:n])
+				if ew != nil {
+					err = ew
+					break loop
+				}
+			}
+			if er != nil {
+				if er != io.EOF {
+					err = er
+				}
+				break loop
+			}
+		}
+
 	}
 
 	return err

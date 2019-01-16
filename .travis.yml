@@ -2,7 +2,7 @@ language: go
 
 
 go:
-  - 1.9.x
+  - tip
   - 1.10.x
   - 1.11.x
 
@@ -10,6 +10,7 @@ env:
   - GO111MODULE=on
 
 before_script:
+  - rm -f go.sum
   - go get -tags "reuseport quic kcp zookeeper etcd consul ping rudp utp" -t -v github.com/smallnest/rpcx/...
   - go get github.com/mattn/goveralls
 
