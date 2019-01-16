@@ -340,7 +340,8 @@ func (c *xClient) Go(ctx context.Context, serviceMethod string, args interface{}
 	if c.auth != "" {
 		metadata := ctx.Value(share.ReqMetaDataKey)
 		if metadata == nil {
-			return nil, errors.New("must set ReqMetaDataKey in context")
+			metadata = map[string]string{}
+			ctx = context.WithValue(ctx,share.ReqMetaDataKey,metadata)
 		}
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth
@@ -363,7 +364,8 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 	if c.auth != "" {
 		metadata := ctx.Value(share.ReqMetaDataKey)
 		if metadata == nil {
-			return errors.New("must set ReqMetaDataKey in context")
+			metadata = map[string]string{}
+			ctx = context.WithValue(ctx,share.ReqMetaDataKey,metadata)
 		}
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth
@@ -499,7 +501,8 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 	if c.auth != "" {
 		metadata := ctx.Value(share.ReqMetaDataKey)
 		if metadata == nil {
-			return nil, nil, errors.New("must set ReqMetaDataKey in context")
+			metadata = map[string]string{}
+			ctx = context.WithValue(ctx,share.ReqMetaDataKey,metadata)
 		}
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth
@@ -600,7 +603,8 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 	if c.auth != "" {
 		metadata := ctx.Value(share.ReqMetaDataKey)
 		if metadata == nil {
-			return errors.New("must set ReqMetaDataKey in context")
+			metadata = map[string]string{}
+			ctx = context.WithValue(ctx,share.ReqMetaDataKey,metadata)
 		}
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth
@@ -668,7 +672,8 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 	if c.auth != "" {
 		metadata := ctx.Value(share.ReqMetaDataKey)
 		if metadata == nil {
-			return errors.New("must set ReqMetaDataKey in context")
+			metadata = map[string]string{}
+			ctx = context.WithValue(ctx,share.ReqMetaDataKey,metadata)
 		}
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth
