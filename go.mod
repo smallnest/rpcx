@@ -5,6 +5,7 @@ require (
 	github.com/DataDog/datadog-go v0.0.0-20180822151419-281ae9f2d895 // indirect
 	github.com/anacrolix/sync v0.0.0-20180808010631-44578de4e778 // indirect
 	github.com/anacrolix/utp v0.0.0-20180219060659-9e0e1d1d0572
+	github.com/apache/thrift v0.12.0
 	github.com/armon/go-metrics v0.0.0-20180713145231-3c58d8115a78 // indirect
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/bifurcation/mint v0.0.0-20180715133206-93c51c6ce115 // indirect
@@ -45,12 +46,13 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.0.0-20180718195005-e651d75abec6 // indirect
 	github.com/hashicorp/go-rootcerts v0.0.0-20160503143440-6bb64b370b90 // indirect
 	github.com/hashicorp/go-sockaddr v0.0.0-20180320115054-6d291a969b86 // indirect
+	github.com/hashicorp/golang-lru v0.5.0
 	github.com/hashicorp/memberlist v0.1.0 // indirect
 	github.com/hashicorp/serf v0.8.1 // indirect
 	github.com/hashicorp/yamux v0.0.0-20180826203732-cc6d2ea263b2 // indirect
 	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/huandu/xstrings v1.1.0 // indirect
-	github.com/influxdata/influxdb v1.6.2 // indirect
+	github.com/influxdata/influxdb1-client v0.0.0-20190118215656-f8cdb5d5f175
 	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/juju/ratelimit v1.0.1
 	github.com/julienschmidt/httprouter v0.0.0-20180715161854-348b672cd90d
@@ -94,7 +96,6 @@ require (
 	github.com/ugorji/go v1.1.1 // indirect
 	github.com/valyala/fastrand v0.0.0-20170531153657-19dd0f0bf014
 	github.com/vmihailenco/msgpack v4.0.0+incompatible
-	github.com/vrischmann/go-metrics-influxdb v0.0.0-20160917065939-43af8332c303
 	github.com/xiang90/probing v0.0.0-20160813154853-07dd2e8dfe18 // indirect
 	github.com/xtaci/kcp-go v2.0.3+incompatible
 	golang.org/x/crypto v0.0.0-20180904163835-0709b304e793 // indirect
@@ -113,6 +114,8 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/vmihailenco/msgpack.v2 v2.9.1 // indirect
 	gopkg.in/yaml.v2 v2.2.1 // indirect
+	labix.org/v2/mgo v0.0.0-20140701140051-000000000287 // indirect
+	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 )
 
 replace (
