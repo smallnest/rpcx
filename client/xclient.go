@@ -293,11 +293,13 @@ func (c *xClient) getCachedClientWithoutLock(k string) (RPCClient, error) {
 		if !client.IsClosing() && !client.IsShutdown() {
 			return client, nil
 		}
+		delete(c.cachedClient, k)
+		client.Close()
 	}
 
 	//double check
 	client = c.cachedClient[k]
-	if client == nil {
+	if client == nil || client.IsShutdown(){
 		network, addr := splitNetworkAndAddress(k)
 		if network == "inprocess" {
 			client = InprocessClient
