@@ -299,7 +299,7 @@ func (c *xClient) getCachedClientWithoutLock(k string) (RPCClient, error) {
 
 	//double check
 	client = c.cachedClient[k]
-	if client == nil || client.IsShutdown(){
+	if client == nil || client.IsShutdown() {
 		network, addr := splitNetworkAndAddress(k)
 		if network == "inprocess" {
 			client = InprocessClient
@@ -356,7 +356,7 @@ func (c *xClient) Go(ctx context.Context, serviceMethod string, args interface{}
 		metadata := ctx.Value(share.ReqMetaDataKey)
 		if metadata == nil {
 			metadata = map[string]string{}
-			ctx = context.WithValue(ctx,share.ReqMetaDataKey,metadata)
+			ctx = context.WithValue(ctx, share.ReqMetaDataKey, metadata)
 		}
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth
@@ -380,7 +380,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 		metadata := ctx.Value(share.ReqMetaDataKey)
 		if metadata == nil {
 			metadata = map[string]string{}
-			ctx = context.WithValue(ctx,share.ReqMetaDataKey,metadata)
+			ctx = context.WithValue(ctx, share.ReqMetaDataKey, metadata)
 		}
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth
@@ -517,7 +517,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		metadata := ctx.Value(share.ReqMetaDataKey)
 		if metadata == nil {
 			metadata = map[string]string{}
-			ctx = context.WithValue(ctx,share.ReqMetaDataKey,metadata)
+			ctx = context.WithValue(ctx, share.ReqMetaDataKey, metadata)
 		}
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth
@@ -600,6 +600,8 @@ func (c *xClient) wrapCall(ctx context.Context, client RPCClient, serviceMethod 
 	if client == nil {
 		return ErrServerUnavailable
 	}
+
+	ctx = share.NewContext(ctx)
 	c.Plugins.DoPreCall(ctx, c.servicePath, serviceMethod, args)
 	err := client.Call(ctx, c.servicePath, serviceMethod, args, reply)
 	c.Plugins.DoPostCall(ctx, c.servicePath, serviceMethod, args, reply, err)
@@ -619,7 +621,7 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 		metadata := ctx.Value(share.ReqMetaDataKey)
 		if metadata == nil {
 			metadata = map[string]string{}
-			ctx = context.WithValue(ctx,share.ReqMetaDataKey,metadata)
+			ctx = context.WithValue(ctx, share.ReqMetaDataKey, metadata)
 		}
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth
@@ -688,7 +690,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 		metadata := ctx.Value(share.ReqMetaDataKey)
 		if metadata == nil {
 			metadata = map[string]string{}
-			ctx = context.WithValue(ctx,share.ReqMetaDataKey,metadata)
+			ctx = context.WithValue(ctx, share.ReqMetaDataKey, metadata)
 		}
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth

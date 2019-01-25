@@ -11,6 +11,11 @@ const (
 
 	// AuthKey is used in metadata.
 	AuthKey = "__AUTH"
+
+	// OpentracingSpanServerKey key in service context
+	OpentracingSpanServerKey = "opentracing_span_server_key"
+	// OpentracingSpanClientKey key in client context
+	OpentracingSpanClientKey = "opentracing_span_client_key"
 )
 
 var (

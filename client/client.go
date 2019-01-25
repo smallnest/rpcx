@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	opentracing "github.com/opentracing/opentracing-go"
 	circuit "github.com/rubyist/circuitbreaker"
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
@@ -208,6 +209,12 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 	if meta != nil { //copy meta in context to meta in requests
 		call.Metadata = meta.(map[string]string)
 	}
+
+	if _, ok := ctx.(*share.Context); !ok {
+		ctx = share.NewContext(ctx)
+	}
+	client.injectSpan(ctx, call)
+
 	call.Args = args
 	call.Reply = reply
 	if done == nil {
@@ -224,6 +231,32 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 	call.Done = done
 	client.send(ctx, call)
 	return call
+}
+
+func (client *Client) injectSpan(ctx context.Context, call *Call) {
+	var rpcxContext *share.Context
+	var ok bool
+	if rpcxContext, ok = ctx.(*share.Context); !ok {
+		return
+	}
+	sp := rpcxContext.Value(share.OpentracingSpanClientKey)
+	if sp == nil { // have not config opentracing plugin
+		return
+	}
+
+	span := sp.(opentracing.Span)
+	if call.Metadata == nil {
+		call.Metadata = make(map[string]string)
+	}
+	meta := call.Metadata
+
+	err := opentracing.GlobalTracer().Inject(
+		span.Context(),
+		opentracing.TextMap,
+		opentracing.TextMapCarrier(meta))
+	if err != nil {
+		log.Errorf("failed to inject span: %v", err)
+	}
 }
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
