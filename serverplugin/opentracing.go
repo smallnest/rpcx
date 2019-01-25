@@ -44,7 +44,7 @@ func (p OpenTracingPlugin) PostConnAccept(conn net.Conn) (net.Conn, bool) {
 
 func (p OpenTracingPlugin) PreHandleRequest(ctx context.Context, r *protocol.Message) error {
 	wireContext, err := share.GetSpanContextFromContext(ctx)
-	if err != nil {
+	if err != nil || wireContext == nil {
 		return err
 	}
 	span1 := opentracing.StartSpan(

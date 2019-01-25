@@ -18,6 +18,7 @@ import (
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
+	"go.opencensus.io/trace"
 )
 
 const (
@@ -213,7 +214,10 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 	if _, ok := ctx.(*share.Context); !ok {
 		ctx = share.NewContext(ctx)
 	}
-	client.injectSpan(ctx, call)
+
+	// TODO: should implement as plugin
+	client.injectOpenTracingSpan(ctx, call)
+	client.injectOpenCensusSpan(ctx, call)
 
 	call.Args = args
 	call.Reply = reply
@@ -233,7 +237,7 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 	return call
 }
 
-func (client *Client) injectSpan(ctx context.Context, call *Call) {
+func (client *Client) injectOpenTracingSpan(ctx context.Context, call *Call) {
 	var rpcxContext *share.Context
 	var ok bool
 	if rpcxContext, ok = ctx.(*share.Context); !ok {
@@ -257,6 +261,33 @@ func (client *Client) injectSpan(ctx context.Context, call *Call) {
 	if err != nil {
 		log.Errorf("failed to inject span: %v", err)
 	}
+}
+
+func (client *Client) injectOpenCensusSpan(ctx context.Context, call *Call) {
+	var rpcxContext *share.Context
+	var ok bool
+	if rpcxContext, ok = ctx.(*share.Context); !ok {
+		return
+	}
+	sp := rpcxContext.Value(share.OpencensusSpanClientKey)
+	if sp == nil { // have not config opencensus plugin
+		return
+	}
+
+	span := sp.(*trace.Span)
+	if span == nil {
+		return
+	}
+	if call.Metadata == nil {
+		call.Metadata = make(map[string]string)
+	}
+	meta := call.Metadata
+
+	spanContext := span.SpanContext()
+	scData := make([]byte, 24)
+	copy(scData[:16], spanContext.TraceID[:])
+	copy(scData[16:24], spanContext.SpanID[:])
+	meta[share.OpencensusSpanRequestKey] = string(scData)
 }
 
 // Call invokes the named function, waits for it to complete, and returns its error status.

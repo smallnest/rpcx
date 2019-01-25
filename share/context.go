@@ -2,10 +2,12 @@ package share
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 
 	opentracing "github.com/opentracing/opentracing-go"
+	"go.opencensus.io/trace"
 )
 
 // var _ context.Context = &Context{}
@@ -66,4 +68,22 @@ func GetSpanContextFromContext(ctx context.Context) (opentracing.SpanContext, er
 	return opentracing.GlobalTracer().Extract(
 		opentracing.TextMap,
 		opentracing.TextMapCarrier(reqMeta))
+}
+
+// GetOpencensusSpanContextFromContext get opencensus.trace.SpanContext from context.Context.
+func GetOpencensusSpanContextFromContext(ctx context.Context) (*trace.SpanContext, error) {
+	reqMeta := ctx.Value(ReqMetaDataKey).(map[string]string)
+	spanKey := reqMeta[OpencensusSpanRequestKey]
+	if spanKey != "" {
+		return nil, errors.New("key not found")
+	}
+
+	data := []byte(spanKey)
+	_ = data[23]
+
+	t := &trace.SpanContext{}
+	copy(t.TraceID[:], data[:16])
+	copy(t.SpanID[:], data[16:24])
+
+	return t, nil
 }
