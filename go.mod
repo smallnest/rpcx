@@ -88,7 +88,7 @@ require (
 	github.com/xtaci/kcp-go v2.0.3+incompatible
 	go.opencensus.io v0.19.0
 	golang.org/x/crypto v0.0.0-20181001203147-e3636079e1a4 // indirect
-	golang.org/x/net v0.0.0-20181217023233-e147a9138326
+	golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect

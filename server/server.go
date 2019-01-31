@@ -461,6 +461,9 @@ func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Me
 	// pool req?
 	req = protocol.GetPooledMsg()
 	err = req.Decode(r)
+	if err == io.EOF {
+		return req, err
+	}
 	perr := s.Plugins.DoPostReadRequest(ctx, req, err)
 	if err == nil {
 		err = perr

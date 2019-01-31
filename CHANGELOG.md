@@ -1,5 +1,10 @@
 # [rpcx](http://rpcx.site)
 
+## 5.0 (developing)
+
+- support opentracing and opencensus
+- upload/download files by streaming
+
 ## 4.0
 
 - Support utp and rudp
