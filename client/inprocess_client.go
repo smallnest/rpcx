@@ -153,3 +153,10 @@ func (client *inprocessClient) Register(name string, rcvr interface{}, metadata 
 	client.Unlock()
 	return
 }
+
+func (client *inprocessClient) Unregister(name string) error {
+	client.Lock()
+	delete(client.services, name)
+	client.Unlock()
+	return nil
+}
