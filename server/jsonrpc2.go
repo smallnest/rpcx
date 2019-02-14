@@ -97,6 +97,7 @@ func writeResponse(w http.ResponseWriter, res *jsonrpcRespone) {
 }
 
 func (s *Server) startJSONRPC2(ln net.Listener) {
-	http.HandleFunc("/", s.jsonrpcHandler)
-	go http.Serve(ln, nil)
+	newServer := http.NewServeMux()
+	newServer.HandleFunc("/", s.jsonrpcHandler)
+	go http.Serve(ln, newServer)
 }
