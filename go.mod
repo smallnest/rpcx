@@ -91,10 +91,10 @@ require (
 	golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
+	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/vmihailenco/msgpack.v2 v2.9.1 // indirect
 	labix.org/v2/mgo v0.0.0-20140701140051-000000000287 // indirect
-	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 )
 
 replace (
@@ -107,4 +107,5 @@ replace (
 	google.golang.org/appengine v1.1.0 => github.com/golang/appengine v1.1.0
 	google.golang.org/genproto v0.0.0-20180831171423-11092d34479b => github.com/google/go-genproto v0.0.0-20180831171423-11092d34479b
 	google.golang.org/grpc v1.14.0 => github.com/grpc/grpc-go v1.14.0
+	labix.org/v2/mgo v0.0.0-20140701140051-000000000287 => gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
 )
