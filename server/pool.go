@@ -28,7 +28,7 @@ var argsReplyPools = &typePools{
 }
 
 type typePools struct {
-	lock  sync.Mutex
+	mu    sync.RWMutex
 	pools map[reflect.Type]*sync.Pool
 	New   func(t reflect.Type) interface{}
 }
@@ -38,8 +38,8 @@ func (p *typePools) Init(t reflect.Type) {
 	tp.New = func() interface{} {
 		return p.New(t)
 	}
-	p.lock.Lock()
-	defer p.lock.Unlock()
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	p.pools[t] = tp
 }
 
@@ -50,12 +50,20 @@ func (p *typePools) Put(t reflect.Type, x interface{}) {
 	if o, ok := x.(Reset); ok {
 		o.Reset()
 	}
-	p.pools[t].Put(x)
+
+	p.mu.RLock()
+	pool := p.pools[t]
+	p.mu.RUnlock()
+	pool.Put(x)
 }
 
 func (p *typePools) Get(t reflect.Type) interface{} {
 	if !UsePool {
 		return p.New(t)
 	}
-	return p.pools[t].Get()
+	p.mu.RLock()
+	pool := p.pools[t]
+	p.mu.RUnlock()
+
+	return pool.Get()
 }
