@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -24,15 +25,24 @@ func (s *Server) startGateway(network string, ln net.Listener) net.Listener {
 
 	m := cmux.New(ln)
 
+	rpcxLn := m.Match(rpcxPrefixByteMatcher())
 	jsonrpc2Ln := m.Match(cmux.HTTP1HeaderField("X-JSONRPC-2.0", "true"))
 	httpLn := m.Match(cmux.HTTP1Fast())
-	rpcxLn := m.Match(cmux.Any())
 
 	go s.startJSONRPC2(jsonrpc2Ln)
 	go s.startHTTP1APIGateway(httpLn)
 	go m.Serve()
 
 	return rpcxLn
+}
+
+func rpcxPrefixByteMatcher() cmux.Matcher {
+	magic := protocol.MagicNumber()
+	return func(r io.Reader) bool {
+		buf := make([]byte, 1)
+		n, _ := r.Read(buf)
+		return n == 1 && buf[0] == magic
+	}
 }
 
 func (s *Server) startHTTP1APIGateway(ln net.Listener) {

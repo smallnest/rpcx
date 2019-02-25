@@ -27,6 +27,10 @@ const (
 	magicNumber byte = 0x08
 )
 
+func MagicNumber() byte {
+	return magicNumber
+}
+
 var (
 	// ErrMetaKVMissing some keys or values are mssing.
 	ErrMetaKVMissing = errors.New("wrong metadata lines. some keys or values are missing")
