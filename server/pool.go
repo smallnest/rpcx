@@ -27,8 +27,8 @@ var argsReplyPools = &typePools{
 	},
 }
 
-// this struct is not gororutine-safe.
 type typePools struct {
+	lock  sync.Mutex
 	pools map[reflect.Type]*sync.Pool
 	New   func(t reflect.Type) interface{}
 }
@@ -38,6 +38,8 @@ func (p *typePools) Init(t reflect.Type) {
 	tp.New = func() interface{} {
 		return p.New(t)
 	}
+	p.lock.Lock()
+	defer p.lock.Unlock()
 	p.pools[t] = tp
 }
 
