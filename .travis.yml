@@ -11,7 +11,7 @@ env:
 
 before_script:
   - rm -f go.sum
-  - go get -u -tags "reuseport quic kcp zookeeper etcd consul ping rudp utp" -t -v github.com/smallnest/rpcx/...
+  - go get -tags "reuseport quic kcp zookeeper etcd consul ping rudp utp" -t -v github.com/smallnest/rpcx/...
   - go get github.com/mattn/goveralls
 
 script:
