@@ -98,6 +98,7 @@ require (
 )
 
 replace (
+	github.com/coreos/etcd v3.3.9+incompatible => github.com/etcd-io/etcd v3.3.9+incompatible
 	golang.org/x/crypto v0.0.0-20180904163835-0709b304e793 => github.com/golang/crypto v0.0.0-20180904163835-0709b304e793
 	golang.org/x/net v0.0.0-20180826012351-8a410e7b638d => github.com/golang/net v0.0.0-20180826012351-8a410e7b638d
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f => github.com/golang/sync v0.0.0-20180314180146-1d60e4601c6f
