@@ -702,6 +702,7 @@ func (client *Client) heartbeat() {
 
 	for range t.C {
 		if client.shutdown || client.closing {
+			t.Stop()
 			return
 		}
 
