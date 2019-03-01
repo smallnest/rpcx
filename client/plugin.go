@@ -115,6 +115,20 @@ func (p *pluginContainer) DoClientBeforeEncode(req *protocol.Message) bool {
 	return true
 }
 
+// DoClientBeforeEncode is called when requests are encoded and sent.
+func (p *pluginContainer) DoClientAfterDecode(req *protocol.Message) bool {
+	var handleOk bool
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(ClientAfterDecodePlugin); ok {
+			handleOk = plugin.ClientAfterDecode(req)
+			if !handleOk {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 type (
 	// PreCallPlugin is invoked before the client calls a server.
 	PreCallPlugin interface {
@@ -141,6 +155,11 @@ type (
 		ClientBeforeEncode(*protocol.Message) bool
 	}
 
+	// ClientAfterDecodePlugin is invoked when the message is decoded.
+	ClientAfterDecodePlugin interface {
+		ClientAfterDecode(*protocol.Message) bool
+	}
+
 	//PluginContainer represents a plugin container that defines all methods to manage plugins.
 	//And it also defines all extension points.
 	PluginContainer interface {
@@ -155,5 +174,6 @@ type (
 		DoPostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error
 
 		DoClientBeforeEncode(*protocol.Message) bool
+		DoClientAfterDecode(*protocol.Message) bool
 	}
 )

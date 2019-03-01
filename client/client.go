@@ -567,11 +567,13 @@ func (client *Client) input() {
 		}
 
 		err = res.Decode(client.r)
-		//res, err = protocol.Read(client.r)
-
 		if err != nil {
 			break
 		}
+		if client.Plugins != nil {
+			client.Plugins.DoClientAfterDecode(res)
+		}
+
 		seq := res.Seq()
 		var call *Call
 		isServerMessage := (res.MessageType() == protocol.Request && !res.IsHeartbeat() && res.IsOneway())
