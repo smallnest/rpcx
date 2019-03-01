@@ -229,26 +229,24 @@ func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod s
 }
 
 func (c *xClient) getCachedClient(k string) (RPCClient, error) {
-	c.mu.RLock()
+	// TODO: improve the lock
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	breaker, ok := c.breakers.Load(k)
 	if ok && !breaker.(Breaker).Ready() {
-		c.mu.RUnlock()
 		return nil, ErrBreakerOpen
 	}
 
 	client := c.cachedClient[k]
 	if client != nil {
 		if !client.IsClosing() && !client.IsShutdown() {
-			c.mu.RUnlock()
 			return client, nil
 		}
 		delete(c.cachedClient, k)
 		client.Close()
 	}
-	c.mu.RUnlock()
 
-	//double check
-	c.mu.Lock()
 	client = c.cachedClient[k]
 	if client == nil || client.IsShutdown() {
 		network, addr := splitNetworkAndAddress(k)
@@ -269,7 +267,6 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 				if breaker != nil {
 					breaker.(Breaker).Fail()
 				}
-				c.mu.Unlock()
 				return nil, err
 			}
 			if c.Plugins != nil {
@@ -282,7 +279,6 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 
 		c.cachedClient[k] = client
 	}
-	c.mu.Unlock()
 
 	return client, nil
 }
