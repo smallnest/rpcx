@@ -178,7 +178,6 @@ func (s *Server) startShutdownListener() {
 					sd(s)
 				}
 			}
-			os.Exit(0)
 		}
 	}(s)
 }
