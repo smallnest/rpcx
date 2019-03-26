@@ -57,4 +57,8 @@ build-all:
 test:
 	go test -race -tags "reuseport kcp quic zookeeper etcd consul ping utp rudp" ./...
 
-	
+update-libs:
+	GIT_TERMINAL_PROMPT=1 GO111MODULE=on go get -u -v .
+
+mod-tidy:
+	GIT_TERMINAL_PROMPT=1 GO111MODULE=on go mod tidy

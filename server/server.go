@@ -79,10 +79,9 @@ type Server struct {
 	tlsConfig *tls.Config
 	// BlockCrypt for kcp.BlockCrypt
 	options map[string]interface{}
-	// // use for KCP
-	// KCPConfig KCPConfig
-	// // for QUIC
-	// QUICConfig QUICConfig
+
+	// CORS options
+	corsOptions *CORSOptions
 
 	Plugins PluginContainer
 

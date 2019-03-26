@@ -73,6 +73,7 @@ require (
 	github.com/prometheus/common v0.0.0-20190107103113-2998b132700a // indirect
 	github.com/prometheus/procfs v0.0.0-20190104112138-b1a0a9a36d74 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20180503174638-e2704e165165
+	github.com/rs/cors v1.6.0
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
 	github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
@@ -91,6 +92,7 @@ require (
 	golang.org/x/net v0.0.0-20190125091013-d26f9f9a57f3
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
+	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/vmihailenco/msgpack.v2 v2.9.1 // indirect
 	labix.org/v2/mgo v0.0.0-20140701140051-000000000287 // indirect
