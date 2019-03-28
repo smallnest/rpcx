@@ -13,6 +13,8 @@ tools:
 	go get github.com/fzipp/gocyclo
 	go get github.com/golang/lint/golint
 	go get github.com/alexkohler/prealloc
+	go get github.com/axw/gocov/gocov
+	go get -u gopkg.in/matm/v1/gocov-html
 
 gometalinter:
 	gometalinter --enable-all ./...
@@ -56,6 +58,10 @@ build-all:
 
 test:
 	go test -race -tags "reuseport kcp quic zookeeper etcd consul ping utp rudp" ./...
+
+cover:
+	gocov test ./... | gocov-html > cover.html
+	open cover.html
 
 update-libs:
 	GIT_TERMINAL_PROMPT=1 GO111MODULE=on go get -u -v .
