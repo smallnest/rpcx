@@ -74,7 +74,7 @@ func GetSpanContextFromContext(ctx context.Context) (opentracing.SpanContext, er
 func GetOpencensusSpanContextFromContext(ctx context.Context) (*trace.SpanContext, error) {
 	reqMeta := ctx.Value(ReqMetaDataKey).(map[string]string)
 	spanKey := reqMeta[OpencensusSpanRequestKey]
-	if spanKey != "" {
+	if spanKey == "" {
 		return nil, errors.New("key not found")
 	}
 
