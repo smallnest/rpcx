@@ -11,7 +11,6 @@ env:
 
 before_script:
   - rm -f go.sum
-  - go get github.com/jfrog/goc
   - go get -tags "reuseport quic kcp zookeeper etcd consul ping rudp utp" -v github.com/smallnest/rpcx/...
   - go get github.com/mattn/goveralls
 
