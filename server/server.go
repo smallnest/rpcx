@@ -119,9 +119,11 @@ func (s *Server) Address() net.Addr {
 func (s *Server) ActiveClientConn() []net.Conn {
 	var result []net.Conn
 
+	s.mu.RLock()
 	for clientConn := range s.activeConn {
 		result = append(result, clientConn)
 	}
+	s.mu.RUnlock()
 	return result
 }
 
