@@ -662,8 +662,8 @@ func (client *Client) input() {
 			client.Plugins.DoClientConnectionClose(client.Conn)
 		}
 		client.pluginClosed = true
-		client.Conn.Close()
 	}
+	client.Conn.Close()
 	client.shutdown = true
 	closing := client.closing
 	if err == io.EOF {
