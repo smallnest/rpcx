@@ -1,5 +1,14 @@
 # [rpcx](http://rpcx.site)
 
+## 5.0 (developing)
+
+- support jsonrpc 2.0
+- support CORS for jsonrpc 2.0
+- support opentracing and opencensus
+- upload/download files by streaming
+- add Pool for XClient and OneClient
+
+
 ## 4.0
 
 - Support utp and rudp

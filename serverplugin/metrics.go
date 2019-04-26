@@ -9,7 +9,6 @@ import (
 	"github.com/rcrowley/go-metrics/exp"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/server"
-	influxdb "github.com/vrischmann/go-metrics-influxdb"
 )
 
 // MetricsPlugin has an issue. It changes seq of requests and it is wrong!!!!
@@ -111,7 +110,7 @@ func (p *MetricsPlugin) Graphite(freq time.Duration, prefix string, addr *net.TC
 // 	p.InfluxDB(10e9, "http://127.0.0.1:8086","metrics", "test","test"})
 //
 func (p *MetricsPlugin) InfluxDB(freq time.Duration, url, database, username, password string) {
-	go influxdb.InfluxDB(p.Registry, freq, url, database, username, password)
+	go InfluxDB(p.Registry, freq, url, database, username, password)
 }
 
 // InfluxDBWithTags reports metrics into influxdb with tags.
@@ -120,7 +119,7 @@ func (p *MetricsPlugin) InfluxDB(freq time.Duration, url, database, username, pa
 // 	p.InfluxDBWithTags(10e9, "http://127.0.0.1:8086","metrics", "test","test", map[string]string{"host":"127.0.0.1"})
 //
 func (p *MetricsPlugin) InfluxDBWithTags(freq time.Duration, url, database, username, password string, tags map[string]string) {
-	go influxdb.InfluxDBWithTags(p.Registry, freq, url, database, username, password, tags)
+	go InfluxDBWithTags(p.Registry, freq, url, database, username, password, tags)
 }
 
 // Exp uses the same mechanism as the official expvar but exposed under /debug/metrics,

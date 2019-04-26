@@ -2,8 +2,7 @@
 
 Official site: [http://rpcx.site](http://rpcx.site/)
 
-[![License](https://img.shields.io/:license-apache%202-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![GoDoc](https://godoc.org/github.com/smallnest/rpcx?status.png)](http://godoc.org/github.com/smallnest/rpcx)  [![travis](https://travis-ci.org/smallnest/rpcx.svg?branch=master)](https://travis-ci.org/smallnest/rpcx) [![Go Report Card](https://goreportcard.com/badge/github.com/smallnest/rpcx)](https://goreportcard.com/report/github.com/smallnest/rpcx) [![coveralls](https://coveralls.io/repos/smallnest/rpcx/badge.svg?branch=master&service=github)](https://coveralls.io/github/smallnest/rpcx?branch=master) [![QQ群](https://img.shields.io/:QQ群-398044387-blue.svg)](_documents/rpcx_dev_qq.png) [![QQ企业群](https://img.shields.io/:QQ企业群-562326538-green.svg)](_documents/rpcx_tech_support.png)  [![sourcegraph](https://sourcegraph.com/github.com/smallnest/rpcx/-/badge.svg)](https://sourcegraph.com/github.com/smallnest/rpcx?badge)
-
+[![License](https://img.shields.io/:license-apache%202-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![GoDoc](https://godoc.org/github.com/smallnest/rpcx?status.png)](http://godoc.org/github.com/smallnest/rpcx)  [![travis](https://travis-ci.org/smallnest/rpcx.svg?branch=master)](https://travis-ci.org/smallnest/rpcx) [![Go Report Card](https://goreportcard.com/badge/github.com/smallnest/rpcx)](https://goreportcard.com/report/github.com/smallnest/rpcx) [![coveralls](https://coveralls.io/repos/smallnest/rpcx/badge.svg?branch=master&service=github)](https://coveralls.io/github/smallnest/rpcx?branch=master) [![QQ群](https://img.shields.io/:QQ群-398044387-blue.svg)](_documents/rpcx_dev_qq.png)
 
 ## Cross-Languages
 you can use other programming languages besides Go to access rpcx services.
@@ -51,7 +50,7 @@ It contains below features
 - Support raw Go functions. There's no need to define proto files.
 - Pluggable. Features can be extended such as service discovery, tracing.
 - Support TCP, HTTP, [QUIC](https://en.wikipedia.org/wiki/QUIC) and [KCP](https://github.com/skywind3000/kcp)
-- Support multiple codecs such as JSON, [Protobuf](https://github.com/skywind3000/kcp), [MessagePack](https://msgpack.org/index.html) and raw bytes.
+- Support multiple codecs such as JSON, Protobuf, [MessagePack](https://msgpack.org/index.html) and raw bytes.
 - Service discovery. Support peer2peer, configured peers, [zookeeper](https://zookeeper.apache.org), [etcd](https://github.com/coreos/etcd), [consul](https://www.consul.io) and [mDNS](https://en.wikipedia.org/wiki/Multicast_DNS).
 - Fault tolerance：Failover, Failfast, Failtry.
 - Load banlancing：support Random, RoundRobin, Consistent hashing, Weighted, network quality and Geography.
@@ -136,14 +135,6 @@ The below is a simple example.
 	defer xclient.Close()
 	err := xclient.Call(context.Background(), "Mul", args, reply, nil)
 ```
-
-## Productions
-
-- Cluster defense project： 4 billion of calls per day (2 server, 8 clients)
-- [Storm of the Three Kingdoms](https://www.juxia.com/sjwy/game-2747.html): game
-
-
-If you or your company is using rpcx, welcome to tell me and I will add more here.
 
 ## Contribute
 

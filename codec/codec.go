@@ -11,7 +11,7 @@ import (
 	pb "github.com/golang/protobuf/proto"
 	"github.com/vmihailenco/msgpack"
 
-	"git.apache.org/thrift.git/lib/go/thrift"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 // Codec defines the interface that decode/encode payload.

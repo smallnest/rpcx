@@ -9,10 +9,10 @@ import (
 var makeListeners = make(map[string]MakeListener)
 
 func init() {
-	makeListeners["tcp"] = tcpMakeListener
-	makeListeners["tcp4"] = tcp4MakeListener
-	makeListeners["tcp6"] = tcp6MakeListener
-	makeListeners["http"] = tcpMakeListener
+	makeListeners["tcp"] = tcpMakeListener("tcp")
+	makeListeners["tcp4"] = tcpMakeListener("tcp4")
+	makeListeners["tcp6"] = tcpMakeListener("tcp6")
+	makeListeners["http"] = tcpMakeListener("tcp")
 }
 
 // RegisterMakeListener registers a MakeListener for network.
@@ -33,32 +33,15 @@ func (s *Server) makeListener(network, address string) (ln net.Listener, err err
 	return ml(s, address)
 }
 
-func tcpMakeListener(s *Server, address string) (ln net.Listener, err error) {
-	if s.tlsConfig == nil {
-		ln, err = net.Listen("tcp", address)
-	} else {
-		ln, err = tls.Listen("tcp", address, s.tlsConfig)
+func tcpMakeListener(network string) func(s *Server, address string) (ln net.Listener, err error) {
+	return func(s *Server, address string) (ln net.Listener, err error) {
+		if s.tlsConfig == nil {
+			ln, err = net.Listen(network, address)
+		} else {
+			ln, err = tls.Listen(network, address, s.tlsConfig)
+		}
+
+		return ln, err
 	}
 
-	return ln, err
-}
-
-func tcp4MakeListener(s *Server, address string) (ln net.Listener, err error) {
-	if s.tlsConfig == nil {
-		ln, err = net.Listen("tcp4", address)
-	} else {
-		ln, err = tls.Listen("tcp4", address, s.tlsConfig)
-	}
-
-	return ln, err
-}
-
-func tcp6MakeListener(s *Server, address string) (ln net.Listener, err error) {
-	if s.tlsConfig == nil {
-		ln, err = net.Listen("tcp6", address)
-	} else {
-		ln, err = tls.Listen("tcp6", address, s.tlsConfig)
-	}
-
-	return ln, err
 }
