@@ -73,6 +73,11 @@ There is a UI manager: [rpcx-ui](https://github.com/smallnest/rpcx-ui).
 
 Test results show rpcx has better performance than other rpc framework except standard rpc lib.
 
+
+The benchmark code is at [rpcx-benchmark](https://github.com/rpcx-ecosystem/rpcx-benchmark).
+
+**Listen to others, but test by yourself**.
+
 **_Test Environment_**
 
 - **CPU**: Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz, 32 cores
