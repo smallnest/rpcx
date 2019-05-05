@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
+	"github.com/rs/cors"
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
@@ -51,9 +52,19 @@ func (s *Server) startHTTP1APIGateway(ln net.Listener) {
 	router.GET("/*servicePath", s.handleGatewayRequest)
 	router.PUT("/*servicePath", s.handleGatewayRequest)
 
-	s.mu.Lock()
-	s.gatewayHTTPServer = &http.Server{Handler: router}
-	s.mu.Unlock()
+	if s.corsOptions != nil {
+		opt := cors.Options(*s.corsOptions)
+		c := cors.New(opt)
+		mux := c.Handler(router)
+		s.mu.Lock()
+		s.gatewayHTTPServer = &http.Server{Handler: mux}
+		s.mu.Unlock()
+	} else {
+		s.mu.Lock()
+		s.gatewayHTTPServer = &http.Server{Handler: router}
+		s.mu.Unlock()
+	}
+
 	if err := s.gatewayHTTPServer.Serve(ln); err != nil {
 		log.Errorf("error in gateway Serve: %s", err)
 	}
