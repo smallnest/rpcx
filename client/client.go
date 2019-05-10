@@ -298,7 +298,7 @@ func (client *Client) Call(ctx context.Context, servicePath, serviceMethod strin
 func (client *Client) call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error {
 	seq := new(uint64)
 	ctx = context.WithValue(ctx, seqKey{}, seq)
-	Done := client.Go(ctx, servicePath, serviceMethod, args, reply, make(chan *Call, 1)).Done
+	Done := client.Go(ctx, servicePath, serviceMethod, args, reply, make(chan *Call, 10)).Done
 
 	var err error
 	select {
