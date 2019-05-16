@@ -48,6 +48,13 @@ func (c *Client) Connect(network, address string) error {
 			conn.SetWriteDeadline(time.Now().Add(c.option.WriteTimeout))
 		}
 
+		if c.Plugins != nil {
+			conn, err = c.Plugins.DoConnCreated(conn)
+			if err != nil {
+				return err
+			}
+		}
+
 		c.Conn = conn
 		c.r = bufio.NewReaderSize(conn, ReaderBuffsize)
 		//c.w = bufio.NewWriterSize(conn, WriterBuffsize)

@@ -7,7 +7,9 @@
 - support opentracing and opencensus
 - upload/download files by streaming
 - add Pool for XClient and OneClient
-
+- remove rudp support
+- add ConnCreated plugin. Yu can use it to set KCP UDPSession
+- update client plugins. All plugin returns error instead of bool
 
 ## 4.0
 
