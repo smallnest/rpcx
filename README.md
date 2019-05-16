@@ -24,7 +24,7 @@ install the basic features:
 If you want to use `reuseport`、`quic`、`kcp`, `zookeeper`, `etcd`, `consul` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
 
 ```sh
-go get -u -v -tags "reuseport quic kcp zookeeper etcd consul ping rudp utp" github.com/smallnest/rpcx/...
+go get -u -v -tags "reuseport quic kcp zookeeper etcd consul ping utp" github.com/smallnest/rpcx/...
 ```
 
 **_tags_**:
