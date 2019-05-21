@@ -76,6 +76,10 @@ func (c *OneClient) SetPlugins(plugins PluginContainer) {
 	c.mu.RUnlock()
 }
 
+func (c *OneClient) GetPlugins() PluginContainer {
+	return c.Plugins
+}
+
 // ConfigGeoSelector sets location of client's latitude and longitude,
 // and use newGeoSelector.
 func (c *OneClient) ConfigGeoSelector(latitude, longitude float64) {

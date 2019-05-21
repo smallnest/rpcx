@@ -64,7 +64,7 @@ func NewBidirectionalXClientPool(count int, servicePath string, failMode FailMod
 // Get returns a xclient.
 // It does not remove this xclient from its cache so you don't need to put it back.
 // Don't close this xclient because maybe other goroutines are using this xclient.
-func (p XClientPool) Get() XClient {
+func (p *XClientPool) Get() XClient {
 	i := atomic.AddUint64(&p.index, 1)
 	picked := int(i % p.count)
 	return p.xclients[picked]
@@ -72,7 +72,7 @@ func (p XClientPool) Get() XClient {
 
 // Close this pool.
 // Please make sure it won't be used any more.
-func (p XClientPool) Close() {
+func (p *XClientPool) Close() {
 	for _, c := range p.xclients {
 		c.Close()
 	}

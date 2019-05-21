@@ -37,6 +37,7 @@ var (
 // One XClient is used only for one service. You should create multiple XClient for multiple services.
 type XClient interface {
 	SetPlugins(plugins PluginContainer)
+	GetPlugins() PluginContainer
 	SetSelector(s Selector)
 	ConfigGeoSelector(latitude, longitude float64)
 	Auth(auth string)
@@ -171,6 +172,10 @@ func (c *xClient) SetSelector(s Selector) {
 // SetPlugins sets client's plugins.
 func (c *xClient) SetPlugins(plugins PluginContainer) {
 	c.Plugins = plugins
+}
+
+func (c *xClient) GetPlugins() PluginContainer {
+	return c.Plugins
 }
 
 // ConfigGeoSelector sets location of client's latitude and longitude,
