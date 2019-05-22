@@ -422,7 +422,9 @@ func (s *Server) serveConn(conn net.Conn) {
 						res.Metadata = resMetadata
 					} else {
 						for k, v := range resMetadata {
-							meta[k] = v
+							if meta[k] == "" {
+								meta[k] = v
+							}
 						}
 					}
 				}
