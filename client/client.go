@@ -338,11 +338,14 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 	meta := ctx.Value(share.ReqMetaDataKey)
 
 	rmeta := make(map[string]string)
+
+	// copy meta to rmeta
 	if meta != nil {
 		for k, v := range meta.(map[string]string) {
 			rmeta[k] = v
 		}
 	}
+	// copy r.Metadata to rmeta
 	if r.Metadata != nil {
 		for k, v := range r.Metadata {
 			rmeta[k] = v
@@ -352,6 +355,8 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 	if meta != nil { //copy meta in context to meta in requests
 		call.Metadata = rmeta
 	}
+	r.Metadata = rmeta
+
 	done := make(chan *Call, 10)
 	call.Done = done
 
