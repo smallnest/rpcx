@@ -63,8 +63,11 @@ cover:
 	gocov test ./... | gocov-html > cover.html
 	open cover.html
 
+check-libs:
+	GIT_TERMINAL_PROMPT=1 GO111MODULE=on go list -m -u all | column -t
+
 update-libs:
-	GIT_TERMINAL_PROMPT=1 GO111MODULE=on go get -u -v .
+	GIT_TERMINAL_PROMPT=1 GO111MODULE=on go get -u -v ./...
 
 mod-tidy:
 	GIT_TERMINAL_PROMPT=1 GO111MODULE=on go mod tidy
