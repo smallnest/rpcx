@@ -10,6 +10,7 @@ import (
 
 	"github.com/rs/cors"
 	"github.com/smallnest/rpcx/protocol"
+	"github.com/smallnest/rpcx/share"
 )
 
 func (s *Server) jsonrpcHandler(w http.ResponseWriter, r *http.Request) {
@@ -33,17 +34,21 @@ func (s *Server) jsonrpcHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := context.WithValue(r.Context(), RemoteConnContextKey, r.RemoteAddr)
+
 	if req.ID != nil {
-		res := s.handleJSONRPCRequest(req)
+		res := s.handleJSONRPCRequest(ctx, req, r.Header)
 		writeResponse(w, res)
 		return
 	}
 
 	// notification
-	go s.handleJSONRPCRequest(req)
+	go s.handleJSONRPCRequest(ctx, req, r.Header)
 }
 
-func (s *Server) handleJSONRPCRequest(r *jsonrpcRequest) *jsonrpcRespone {
+func (s *Server) handleJSONRPCRequest(ctx context.Context, r *jsonrpcRequest, header http.Header) *jsonrpcRespone {
+	s.Plugins.DoPreReadRequest(ctx)
+
 	var res = &jsonrpcRespone{}
 	res.ID = r.ID
 
@@ -67,11 +72,40 @@ func (s *Server) handleJSONRPCRequest(r *jsonrpcRequest) *jsonrpcRespone {
 	req.ServiceMethod = pathAndMethod[1]
 	req.Payload = *r.Params
 
+	auth := header.Get("Authorization")
+	if auth != "" {
+		if req.Metadata == nil {
+			req.Metadata = make(map[string]string)
+		}
+		req.Metadata[share.AuthKey] = auth
+	}
+
+	err := s.Plugins.DoPostReadRequest(ctx, req, nil)
+	if err != nil {
+		res.Error = &JSONRPCError{
+			Code:    CodeInternalJSONRPCError,
+			Message: err.Error(),
+		}
+		return res
+	}
+
+	err = s.auth(ctx, req)
+	if err != nil {
+		s.Plugins.DoPreWriteResponse(ctx, req, nil)
+		res.Error = &JSONRPCError{
+			Code:    CodeInternalJSONRPCError,
+			Message: err.Error(),
+		}
+		s.Plugins.DoPostWriteResponse(ctx, req, req.Clone(), err)
+		return res
+	}
+
 	resp, err := s.handleRequest(context.Background(), req)
 	if r.ID == nil {
 		return nil
 	}
 
+	s.Plugins.DoPreWriteResponse(ctx, req, nil)
 	if err != nil {
 		res.Error = &JSONRPCError{
 			Code:    CodeInternalJSONRPCError,
@@ -82,7 +116,7 @@ func (s *Server) handleJSONRPCRequest(r *jsonrpcRequest) *jsonrpcRespone {
 
 	result := json.RawMessage(resp.Payload)
 	res.Result = &result
-
+	s.Plugins.DoPostWriteResponse(ctx, req, req.Clone(), err)
 	return res
 }
 
