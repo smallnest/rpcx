@@ -343,10 +343,16 @@ func (s *Server) UnregisterAll() error {
 func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv reflect.Value) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			//log.Errorf("failed to invoke service: %v, stacks: %s", r, string(debug.Stack()))
+			var buf = make([]byte, 4096)
+			n := runtime.Stack(buf, false)
+			buf = buf[:n]
+
 			err = fmt.Errorf("[service internal error]: %v, method: %s, argv: %+v",
 				r, mtype.method.Name, argv.Interface())
-			log.Handle(err)
+
+			err2 := fmt.Errorf("[service internal error]: %v, method: %s, argv: %+v, stack: %s",
+				r, mtype.method.Name, argv.Interface(), buf)
+			log.Handle(err2)
 		}
 	}()
 
