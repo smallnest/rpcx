@@ -23,15 +23,14 @@ type OneClientPool struct {
 }
 
 // NewOneClientPool creates a fixed size OneClient pool.
-func NewOneClientPool(count int, servicePath string, failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery, option Option) *OneClientPool {
+func NewOneClientPool(count int, failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery, option Option) *OneClientPool {
 	pool := &OneClientPool{
-		count:       uint64(count),
-		oneclients:  make([]*OneClient, count),
-		servicePath: servicePath,
-		failMode:    failMode,
-		selectMode:  selectMode,
-		discovery:   discovery,
-		option:      option,
+		count:      uint64(count),
+		oneclients: make([]*OneClient, count),
+		failMode:   failMode,
+		selectMode: selectMode,
+		discovery:  discovery,
+		option:     option,
 	}
 
 	for i := 0; i < count; i++ {
@@ -42,11 +41,10 @@ func NewOneClientPool(count int, servicePath string, failMode FailMode, selectMo
 }
 
 // NewBidirectionalOneClientPool creates a BidirectionalOneClient pool with fixed size.
-func NewBidirectionalOneClientPool(count int, servicePath string, failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery, option Option, serverMessageChan chan<- *protocol.Message) *OneClientPool {
+func NewBidirectionalOneClientPool(count int, failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery, option Option, serverMessageChan chan<- *protocol.Message) *OneClientPool {
 	pool := &OneClientPool{
 		count:             uint64(count),
 		oneclients:        make([]*OneClient, count),
-		servicePath:       servicePath,
 		failMode:          failMode,
 		selectMode:        selectMode,
 		discovery:         discovery,
