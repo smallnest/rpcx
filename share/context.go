@@ -64,7 +64,10 @@ func WithLocalValue(ctx *Context, key, val interface{}) *Context {
 
 // GetSpanContextFromContext get opentracing.SpanContext from context.Context.
 func GetSpanContextFromContext(ctx context.Context) (opentracing.SpanContext, error) {
-	reqMeta := ctx.Value(ReqMetaDataKey).(map[string]string)
+	reqMeta, ok := ctx.Value(ReqMetaDataKey).(map[string]string)
+	if !ok {
+		return nil, nil
+	}
 	return opentracing.GlobalTracer().Extract(
 		opentracing.TextMap,
 		opentracing.TextMapCarrier(reqMeta))
@@ -72,7 +75,10 @@ func GetSpanContextFromContext(ctx context.Context) (opentracing.SpanContext, er
 
 // GetOpencensusSpanContextFromContext get opencensus.trace.SpanContext from context.Context.
 func GetOpencensusSpanContextFromContext(ctx context.Context) (*trace.SpanContext, error) {
-	reqMeta := ctx.Value(ReqMetaDataKey).(map[string]string)
+	reqMeta, ok := ctx.Value(ReqMetaDataKey).(map[string]string)
+	if !ok {
+		return nil, nil
+	}
 	spanKey := reqMeta[OpencensusSpanRequestKey]
 	if spanKey == "" {
 		return nil, errors.New("key not found")
