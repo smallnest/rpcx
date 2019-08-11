@@ -8,6 +8,11 @@ import (
 	"github.com/smallnest/rpcx/protocol"
 )
 
+
+/*
+ * todo: 插件相关的操作，可是插件是什么呢？
+ */
+
 //PluginContainer represents a plugin container that defines all methods to manage plugins.
 //And it also defines all extension points.
 type PluginContainer interface {

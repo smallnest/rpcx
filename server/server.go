@@ -26,6 +26,15 @@ import (
 	"github.com/smallnest/rpcx/share"
 )
 
+
+/*
+ * server 主要做的工作包括：
+ * 1. 启动监听关闭的监听器
+ * 2. 开启网关，将http请求转换成rpcx请求
+ * 3. 启动服务器的监听器，专门处理客户端的请求
+ */
+
+
 // ErrServerClosed is returned by the Server's Serve, ListenAndServe after a call to Shutdown or Close.
 var ErrServerClosed = errors.New("http: Server closed")
 
@@ -59,6 +68,7 @@ var (
 
 // Server is rpcx server that use TCP or UDP.
 type Server struct {
+	// todo: 监听？？
 	ln                 net.Listener
 	readTimeout        time.Duration
 	writeTimeout       time.Duration
@@ -66,15 +76,18 @@ type Server struct {
 	DisableHTTPGateway bool // should disable http invoke or not.
 	DisableJSONRPC     bool // should disable json rpc or not.
 
+	// 记录服务
 	serviceMapMu sync.RWMutex
 	serviceMap   map[string]*service
 
+	// todo: 和其他的mu有什么区别？？
 	mu         sync.RWMutex
 	activeConn map[net.Conn]struct{}
 	doneChan   chan struct{}
 	seq        uint64
 
 	inShutdown int32
+	// 中断处理函数
 	onShutdown []func(s *Server)
 
 	// TLSConfig for creating tls tcp connection.
@@ -99,7 +112,7 @@ func NewServer(options ...OptionFn) *Server {
 		Plugins: &pluginContainer{},
 		options: make(map[string]interface{}),
 	}
-
+	// 如果指定了相应的函数，则执行对应的函数
 	for _, op := range options {
 		op(s)
 	}
@@ -169,10 +182,13 @@ func (s *Server) getDoneChan() <-chan struct{} {
 	return s.doneChan
 }
 
+
+// 启动监听器监听是否被关闭
 func (s *Server) startShutdownListener() {
 	go func(s *Server) {
 		log.Info("server pid:", os.Getpid())
 		c := make(chan os.Signal, 1)
+		// 监听系统，阻塞直到有事件发生
 		signal.Notify(c, syscall.SIGTERM)
 		si := <-c
 		if si.String() == "terminated" {
@@ -187,6 +203,7 @@ func (s *Server) startShutdownListener() {
 
 // Serve starts and listens RPC requests.
 // It is blocked until receiving connectings from clients.
+// 一直阻塞直到客户端收到连接
 func (s *Server) Serve(network, address string) (err error) {
 	s.startShutdownListener()
 	var ln net.Listener
@@ -201,14 +218,19 @@ func (s *Server) Serve(network, address string) (err error) {
 	}
 
 	// try to start gateway
+	// 开启网关
 	ln = s.startGateway(network, ln)
 
+	// 开始监听客户端请求
 	return s.serveListener(ln)
 }
 
 // serveListener accepts incoming connections on the Listener ln,
 // creating a new service goroutine for each.
 // The service goroutines read requests and then call services to reply to them.
+// 接受监听器ln对应的客户端请求，并且调用相应的服务
+// connection开启一个协程serveConn来处理对应的请求
+// 对应Service的goroutine读取request并调用真正的Service来执行再返回对应的结果
 func (s *Server) serveListener(ln net.Listener) error {
 	if s.Plugins == nil {
 		s.Plugins = &pluginContainer{}
@@ -267,6 +289,7 @@ func (s *Server) serveListener(ln net.Listener) error {
 			continue
 		}
 
+		// 专门处理request
 		go s.serveConn(conn)
 	}
 }
@@ -352,6 +375,7 @@ func (s *Server) serveConn(conn net.Conn) {
 
 		ctx := share.WithValue(context.Background(), RemoteConnContextKey, conn)
 
+		// 读取request
 		req, err := s.readRequest(ctx, r)
 		if err != nil {
 			if err == io.EOF {
@@ -411,6 +435,7 @@ func (s *Server) serveConn(conn net.Conn) {
 
 			s.Plugins.DoPreHandleRequest(newCtx, req)
 
+			// 对相应的request进行相应的操作
 			res, err := s.handleRequest(newCtx, req)
 
 			if err != nil {
@@ -644,6 +669,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 // Close immediately closes all active net.Listeners.
+// 关闭server
 func (s *Server) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -663,6 +689,7 @@ func (s *Server) Close() error {
 
 // RegisterOnShutdown registers a function to call on Shutdown.
 // This can be used to gracefully shutdown connections.
+// 注册一个函数去优雅的关闭连接
 func (s *Server) RegisterOnShutdown(f func(s *Server)) {
 	s.mu.Lock()
 	s.onShutdown = append(s.onShutdown, f)

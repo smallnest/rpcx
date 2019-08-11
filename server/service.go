@@ -41,6 +41,7 @@ type service struct {
 	name     string                   // name of service
 	rcvr     reflect.Value            // receiver of methods for the service
 	typ      reflect.Type             // type of the receiver
+	// todo: 注册的方法和函数？区别是什么
 	method   map[string]*methodType   // registered methods
 	function map[string]*functionType // registered functions
 }
@@ -69,6 +70,7 @@ func isExportedOrBuiltinType(t reflect.Type) bool {
 // no suitable methods. It also logs the error.
 // The client accesses each method using a string of the form "Type.Method",
 // where Type is the receiver's concrete type.
+// 注册服务
 func (s *Server) Register(rcvr interface{}, metadata string) error {
 	sname, err := s.register(rcvr, "", false)
 	if err != nil {
@@ -82,6 +84,7 @@ func (s *Server) Register(rcvr interface{}, metadata string) error {
 
 // RegisterName is like Register but uses the provided name for the type
 // instead of the receiver's concrete type.
+// 注册服务，指定服务名字
 func (s *Server) RegisterName(name string, rcvr interface{}, metadata string) error {
 	if s.Plugins == nil {
 		s.Plugins = &pluginContainer{}
@@ -97,6 +100,7 @@ func (s *Server) RegisterName(name string, rcvr interface{}, metadata string) er
 //	- the third argument is a pointer
 //	- one return value, of type error
 // The client accesses function using a string of the form "servicePath.Method".
+// 注册服务，指定服务路径
 func (s *Server) RegisterFunction(servicePath string, fn interface{}, metadata string) error {
 	fname, err := s.registerFunction(servicePath, fn, "", false)
 	if err != nil {
@@ -111,6 +115,7 @@ func (s *Server) RegisterFunction(servicePath string, fn interface{}, metadata s
 
 // RegisterFunctionName is like RegisterFunction but uses the provided name for the function
 // instead of the function's concrete type.
+// 注册服务，指定服务路径和名字
 func (s *Server) RegisterFunctionName(servicePath string, name string, fn interface{}, metadata string) error {
 	if s.Plugins == nil {
 		s.Plugins = &pluginContainer{}
@@ -121,6 +126,7 @@ func (s *Server) RegisterFunctionName(servicePath string, name string, fn interf
 	return err
 }
 
+// useName: 是否使用名字注册
 func (s *Server) register(rcvr interface{}, name string, useName bool) (string, error) {
 	s.serviceMapMu.Lock()
 	defer s.serviceMapMu.Unlock()
@@ -148,8 +154,10 @@ func (s *Server) register(rcvr interface{}, name string, useName bool) (string, 
 	service.name = sname
 
 	// Install the methods
+	// 服务相关的方法
 	service.method = suitableMethods(service.typ, true)
 
+	// 不允许服务的方法为空
 	if len(service.method) == 0 {
 		var errorStr string
 
@@ -167,6 +175,7 @@ func (s *Server) register(rcvr interface{}, name string, useName bool) (string, 
 	return sname, nil
 }
 
+// 注册函数
 func (s *Server) registerFunction(servicePath string, fn interface{}, name string, useName bool) (string, error) {
 	s.serviceMapMu.Lock()
 	defer s.serviceMapMu.Unlock()
@@ -181,6 +190,7 @@ func (s *Server) registerFunction(servicePath string, fn interface{}, name strin
 		ss.function = make(map[string]*functionType)
 	}
 
+	// 判断fn是否是函数
 	f, ok := fn.(reflect.Value)
 	if !ok {
 		f = reflect.ValueOf(fn)
@@ -189,6 +199,7 @@ func (s *Server) registerFunction(servicePath string, fn interface{}, name strin
 		return "", errors.New("function must be func or bound method")
 	}
 
+	// 获取函数名字
 	fname := runtime.FuncForPC(reflect.Indirect(f).Pointer()).Name()
 	if fname != "" {
 		i := strings.LastIndex(fname, ".")
@@ -206,14 +217,17 @@ func (s *Server) registerFunction(servicePath string, fn interface{}, name strin
 	}
 
 	t := f.Type()
+	// 请求参数个数
 	if t.NumIn() != 3 {
 		return fname, fmt.Errorf("rpcx.registerFunction: has wrong number of ins: %s", f.Type().String())
 	}
+	// 返回参数个数
 	if t.NumOut() != 1 {
 		return fname, fmt.Errorf("rpcx.registerFunction: has wrong number of outs: %s", f.Type().String())
 	}
 
 	// First arg must be context.Context
+	// 检查函数请求参数的类型
 	ctxType := t.In(0)
 	if !ctxType.Implements(typeOfContext) {
 		return fname, fmt.Errorf("function %s must use context as  the first parameter", f.Type().String())
@@ -233,6 +247,7 @@ func (s *Server) registerFunction(servicePath string, fn interface{}, name strin
 	}
 
 	// The return type of the method must be error.
+	// 检查函数返回参数的类型
 	if returnType := t.Out(0); returnType != typeOfError {
 		return fname, fmt.Errorf("function %s returns %s, not error", f.Type().String(), returnType.String())
 	}

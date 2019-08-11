@@ -18,12 +18,19 @@ import (
 	"github.com/soheilhy/cmux"
 )
 
+/*
+ * 网关的作用如下：
+ * 为不同的程序语言，将他们的http请求转化为rpcx请求
+ *
+ */
+
 func (s *Server) startGateway(network string, ln net.Listener) net.Listener {
 	if network != "tcp" && network != "tcp4" && network != "tcp6" {
 		log.Infof("network is not tcp/tcp4/tcp6 so can not start gateway")
 		return ln
 	}
 
+	// 串口多路复用
 	m := cmux.New(ln)
 
 	rpcxLn := m.Match(rpcxPrefixByteMatcher())
@@ -52,8 +59,12 @@ func rpcxPrefixByteMatcher() cmux.Matcher {
 	}
 }
 
+// 开启网关服务
 func (s *Server) startHTTP1APIGateway(ln net.Listener) {
 	router := httprouter.New()
+	// http请求
+	// 这里的第二个参数handle相当于Python中的View处理函数
+	// todo: 是否会立即阻塞在这里 ？？
 	router.POST("/*servicePath", s.handleGatewayRequest)
 	router.GET("/*servicePath", s.handleGatewayRequest)
 	router.PUT("/*servicePath", s.handleGatewayRequest)
@@ -86,6 +97,7 @@ func (s *Server) closeHTTP1APIGateway(ctx context.Context) error {
 	return nil
 }
 
+// 完成gateway的协议转换, view处理函数
 func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	ctx := context.WithValue(r.Context(), RemoteConnContextKey, r.RemoteAddr) // notice: It is a string, different with TCP (net.Conn)
 	err := s.Plugins.DoPreReadRequest(ctx)
