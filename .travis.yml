@@ -3,11 +3,10 @@ language: go
 
 go:
   - tip
-  - 1.10.x
   - 1.12.x
 
 env:
-  - GO111MODULE=on
+  - GO111MODULE=off
 
 before_script:
   - rm -f go.sum
