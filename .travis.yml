@@ -11,8 +11,7 @@ env:
 
 before_script:
   - rm -f go.sum
-  - curl -fL https://getgoc.gocenter.io | sh
-  - ./goc get -tags "reuseport quic kcp zookeeper etcd consul ping utp" -v github.com/smallnest/rpcx/...
+  - go get -tags "reuseport quic kcp zookeeper etcd consul ping utp redis" -v github.com/smallnest/rpcx/...
   - go get github.com/mattn/goveralls
 
 script:
