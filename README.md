@@ -2,7 +2,7 @@
 
 Official site: [http://rpcx.site](http://rpcx.site/)
 
-[![License](https://img.shields.io/:license-apache%202-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![GoDoc](https://godoc.org/github.com/smallnest/rpcx?status.png)](http://godoc.org/github.com/smallnest/rpcx)  [![travis](https://travis-ci.org/smallnest/rpcx.svg?branch=master)](https://travis-ci.org/smallnest/rpcx) [![Go Report Card](https://goreportcard.com/badge/github.com/smallnest/rpcx)](https://goreportcard.com/report/github.com/smallnest/rpcx) [![coveralls](https://coveralls.io/repos/smallnest/rpcx/badge.svg?branch=master&service=github)](https://coveralls.io/github/smallnest/rpcx?branch=master) [![QQ2群](https://img.shields.io/:QQ2群-398044387-blue.svg)](_documents/rpcx_dev_qq2.png) [![QQ群(已满)](https://img.shields.io/:QQ群-398044387-blue.svg)](_documents/rpcx_dev_qq.png) 
+[![License](https://img.shields.io/:license-apache%202-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![GoDoc](https://godoc.org/github.com/smallnest/rpcx?status.png)](http://godoc.org/github.com/smallnest/rpcx)  [![travis](https://travis-ci.org/smallnest/rpcx.svg?branch=master)](https://travis-ci.org/smallnest/rpcx) [![Go Report Card](https://goreportcard.com/badge/github.com/smallnest/rpcx)](https://goreportcard.com/report/github.com/smallnest/rpcx) [![coveralls](https://coveralls.io/repos/smallnest/rpcx/badge.svg?branch=master&service=github)](https://coveralls.io/github/smallnest/rpcx?branch=master) [![QQ2群](https://img.shields.io/:QQ2群-398044387-blue.svg)](_documents/rpcx_dev_qq2.png) [![QQ群(已满)](https://img.shields.io/:QQ群(已满)-398044387-blue.svg)](_documents/rpcx_dev_qq.png) 
 
 ## Announce
 
@@ -28,20 +28,22 @@ install the basic features:
 `go get -u -v github.com/smallnest/rpcx/...`
 
 
-If you want to use `reuseport`、`quic`、`kcp`, `zookeeper`, `etcd`, `consul` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
+If you want to use `reuseport`、`quic`、`kcp`, `zookeeper`, `etcd`, `consul`, `redis` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
 
 ```sh
-go get -u -v -tags "reuseport quic kcp zookeeper etcd consul ping utp" github.com/smallnest/rpcx/...
+go get -u -v -tags "reuseport quic kcp zookeeper etcd consul redis ping utp" github.com/smallnest/rpcx/...
 ```
 
 **_tags_**:
 - **quic**: support quic transport
 - **kcp**: support kcp transport
-- **zookeeper**: support zookeeper register
-- **etcd**: support etcd register
-- **consul**: support consul register
+- **zookeeper**: support zookeeper registry
+- **etcd**: support etcd registry
+- **consul**: support consul registry
+- **redis**: support consul registry
 - **ping**: support network quality load balancing
 - **reuseport**: support reuseport
+- **utp**: support utp transport
 
 ## Features
 rpcx is a RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).
