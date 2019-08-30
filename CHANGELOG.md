@@ -10,6 +10,9 @@
 - remove rudp support
 - add ConnCreated plugin. Yu can use it to set KCP UDPSession
 - update client plugins. All plugin returns error instead of bool
+- support ETCD 3.0 API
+- support redis as registry
+- fix RegisterFunction issues
 
 ## 4.0
 
