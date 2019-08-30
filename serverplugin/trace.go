@@ -20,10 +20,10 @@ package serverplugin
 // 	return nil
 // }
 
-// func (p *TracePlugin) RegisterFunction(name string, fn interface{}, metadata string) error {
+// func (p *TracePlugin) RegisterFunction(serviceName, fname string, fn interface{}, metadata string) error {
 // 	tr := trace.New("rpcx.Server", "RegisterFunction")
 // 	defer tr.Finish()
-// 	tr.LazyPrintf("register %s: %T", name, GetFunctionName(fn))
+// 	tr.LazyPrintf("register %s.%s: %T", serviceName, fname, GetFunctionName(fn))
 // 	return nil
 // }
 

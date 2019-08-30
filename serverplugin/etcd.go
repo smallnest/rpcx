@@ -191,7 +191,6 @@ func (p *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata st
 		log.Errorf("cannot create etcd path %s: %v", nodePath, err)
 		return err
 	}
-
 	p.Services = append(p.Services, name)
 
 	p.metasLock.Lock()
@@ -201,6 +200,10 @@ func (p *EtcdRegisterPlugin) Register(name string, rcvr interface{}, metadata st
 	p.metas[name] = metadata
 	p.metasLock.Unlock()
 	return
+}
+
+func (p *EtcdRegisterPlugin) RegisterFunction(serviceName, fname string, fn interface{}, metadata string) error {
+	return p.Register(serviceName, fn, metadata)
 }
 
 func (p *EtcdRegisterPlugin) Unregister(name string) (err error) {

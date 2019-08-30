@@ -16,7 +16,7 @@ type PluginContainer interface {
 	All() []Plugin
 
 	DoRegister(name string, rcvr interface{}, metadata string) error
-	DoRegisterFunction(name string, fn interface{}, metadata string) error
+	DoRegisterFunction(serviceName, fname string, fn interface{}, metadata string) error
 	DoUnregister(name string) error
 
 	DoPostConnAccept(net.Conn) (net.Conn, bool)
@@ -47,7 +47,7 @@ type (
 
 	// RegisterFunctionPlugin is .
 	RegisterFunctionPlugin interface {
-		RegisterFunction(name string, fn interface{}, metadata string) error
+		RegisterFunction(serviceName, fname string, fn interface{}, metadata string) error
 	}
 
 	// PostConnAcceptPlugin represents connection accept plugin.
@@ -147,11 +147,11 @@ func (p *pluginContainer) DoRegister(name string, rcvr interface{}, metadata str
 }
 
 // DoRegisterFunction invokes DoRegisterFunction plugin.
-func (p *pluginContainer) DoRegisterFunction(name string, fn interface{}, metadata string) error {
+func (p *pluginContainer) DoRegisterFunction(serviceName, fname string, fn interface{}, metadata string) error {
 	var es []error
 	for _, rp := range p.plugins {
 		if plugin, ok := rp.(RegisterFunctionPlugin); ok {
-			err := plugin.RegisterFunction(name, fn, metadata)
+			err := plugin.RegisterFunction(serviceName, fname, fn, metadata)
 			if err != nil {
 				es = append(es, err)
 			}

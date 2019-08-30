@@ -170,6 +170,10 @@ func (p *MDNSRegisterPlugin) Register(name string, rcvr interface{}, metadata st
 	return
 }
 
+func (p *MDNSRegisterPlugin) RegisterFunction(serviceName, fname string, fn interface{}, metadata string) error {
+	return p.Register(serviceName, fn, metadata)
+}
+
 func (p *MDNSRegisterPlugin) Unregister(name string) (err error) {
 	if "" == strings.TrimSpace(name) {
 		err = errors.New("Register service `name` can't be empty")

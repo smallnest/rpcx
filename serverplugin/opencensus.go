@@ -21,11 +21,11 @@ func (p OpenCensusPlugin) Register(name string, rcvr interface{}, metadata strin
 	return nil
 }
 
-func (p OpenCensusPlugin) RegisterFunction(name string, fn interface{}, metadata string) error {
+func (p OpenCensusPlugin) RegisterFunction(serviceName, fname string, fn interface{}, metadata string) error {
 	_, span := trace.StartSpan(context.Background(), "rpcx.RegisterFunction")
 	defer span.End()
 
-	span.AddAttributes(trace.StringAttribute("register_function", name))
+	span.AddAttributes(trace.StringAttribute("register_function", serviceName+"."+fname))
 	return nil
 }
 

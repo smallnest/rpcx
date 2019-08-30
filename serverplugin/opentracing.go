@@ -24,12 +24,12 @@ func (p OpenTracingPlugin) Register(name string, rcvr interface{}, metadata stri
 	return nil
 }
 
-func (p OpenTracingPlugin) RegisterFunction(name string, fn interface{}, metadata string) error {
+func (p OpenTracingPlugin) RegisterFunction(serviceName, fname string, fn interface{}, metadata string) error {
 	span1 := opentracing.StartSpan(
 		"rpcx.RegisterFunction")
 	defer span1.Finish()
 
-	span1.LogFields(log.String("register_function", name))
+	span1.LogFields(log.String("register_function", serviceName+"."+fname))
 	return nil
 }
 

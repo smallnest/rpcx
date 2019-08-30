@@ -215,6 +215,10 @@ func (p *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}, metada
 	return
 }
 
+func (p *ZooKeeperRegisterPlugin) RegisterFunction(serviceName, fname string, fn interface{}, metadata string) error {
+	return p.Register(serviceName, fn, metadata)
+}
+
 func (p *ZooKeeperRegisterPlugin) Unregister(name string) (err error) {
 	if "" == strings.TrimSpace(name) {
 		err = errors.New("Register service `name` can't be empty")
