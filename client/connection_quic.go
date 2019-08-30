@@ -6,7 +6,7 @@ import (
 	"crypto/tls"
 	"net"
 
-	quicconn "github.com/marten-seemann/quic-conn"
+	quicconn "github.com/rpcx-ecosystem/quic-conn"
 )
 
 func newDirectQuicConn(c *Client, network, address string) (net.Conn, error) {
