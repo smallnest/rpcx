@@ -190,11 +190,15 @@ func (client *Client) UnregisterServerMessageChan() {
 
 // IsClosing client is closing or not.
 func (client *Client) IsClosing() bool {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
 	return client.closing
 }
 
 // IsShutdown client is shutdown or not.
 func (client *Client) IsShutdown() bool {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
 	return client.shutdown
 }
 
@@ -711,7 +715,7 @@ func (client *Client) heartbeat() {
 	t := time.NewTicker(client.option.HeartbeatInterval)
 
 	for range t.C {
-		if client.shutdown || client.closing {
+		if client.IsShutdown() || client.IsClosing() {
 			t.Stop()
 			return
 		}

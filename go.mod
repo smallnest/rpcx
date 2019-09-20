@@ -26,7 +26,7 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/peterbourgon/g2s v0.0.0-20170223122336-d4e7ad98afea // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563
-	github.com/rpcx-ecosystem/quic-conn v0.0.0-20190830034555-28ef71d38a15
+	github.com/rpcx-ecosystem/quic-conn v0.0.0-20190920095804-3967ef162525
 	github.com/rs/cors v1.7.0
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
 	github.com/smallnest/libkv-etcdv3-store v0.0.0-20190919063216-0c1616a1351d
