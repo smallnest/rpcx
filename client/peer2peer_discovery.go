@@ -17,6 +17,11 @@ func (d Peer2PeerDiscovery) Clone(servicePath string) ServiceDiscovery {
 	return &d
 }
 
+// SetFilter sets the filer.
+func (d Peer2PeerDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
+
+}
+
 // GetServices returns the static server
 func (d Peer2PeerDiscovery) GetServices() []*KVPair {
 	return []*KVPair{&KVPair{Key: d.server, Value: d.metadata}}

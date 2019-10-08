@@ -29,6 +29,8 @@ type MDNSDiscovery struct {
 
 	mu sync.Mutex
 
+	filter ServiceDiscoveryFilter
+
 	stopCh chan struct{}
 }
 
@@ -61,6 +63,11 @@ func NewMDNSDiscoveryTemplate(timeout time.Duration, watchInterval time.Duration
 // Clone clones this ServiceDiscovery with new servicePath.
 func (d MDNSDiscovery) Clone(servicePath string) ServiceDiscovery {
 	return NewMDNSDiscovery(servicePath, d.Timeout, d.WatchInterval, d.domain)
+}
+
+// SetFilter sets the filer.
+func (d MDNSDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
+	d.filter = filter
 }
 
 // GetServices returns the servers
@@ -146,10 +153,15 @@ func (d *MDNSDiscovery) browse() ([]*KVPair, error) {
 			}
 
 			for _, sm := range services {
-				totalServices = append(totalServices, &KVPair{
+
+				pair := &KVPair{
 					Key:   sm.ServiceAddress,
 					Value: sm.Meta,
-				})
+				}
+				if d.filter != nil && !d.filter(pair) {
+					continue
+				}
+				totalServices = append(totalServices, pair)
 			}
 		}
 

@@ -13,6 +13,7 @@
 - support ETCD 3.0 API
 - support redis as registry
 - fix RegisterFunction issues
+- add Filter for clients
 
 ## 4.0
 

@@ -12,7 +12,8 @@ import (
 type MultipleServersDiscovery struct {
 	pairs []*KVPair
 	chans []chan []*KVPair
-	mu    sync.Mutex
+
+	mu sync.Mutex
 }
 
 // NewMultipleServersDiscovery returns a new MultipleServersDiscovery.
@@ -25,6 +26,11 @@ func NewMultipleServersDiscovery(pairs []*KVPair) ServiceDiscovery {
 // Clone clones this ServiceDiscovery with new servicePath.
 func (d MultipleServersDiscovery) Clone(servicePath string) ServiceDiscovery {
 	return &d
+}
+
+// SetFilter sets the filer.
+func (d MultipleServersDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
+
 }
 
 // GetServices returns the configured server

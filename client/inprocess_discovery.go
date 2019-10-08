@@ -15,6 +15,11 @@ func (d InprocessDiscovery) Clone(servicePath string) ServiceDiscovery {
 	return &d
 }
 
+// SetFilter sets the filer.
+func (d InprocessDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
+
+}
+
 // GetServices returns the static server
 func (d InprocessDiscovery) GetServices() []*KVPair {
 	return []*KVPair{&KVPair{Key: "inprocess@127.0.0.1:0", Value: ""}}

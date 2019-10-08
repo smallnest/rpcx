@@ -29,6 +29,8 @@ type ZookeeperDiscovery struct {
 	// -1 means it always retry to watch until zookeeper is ok, 0 means no retry.
 	RetriesAfterWatchFailed int
 
+	filter ServiceDiscoveryFilter
+
 	stopCh chan struct{}
 }
 
@@ -67,7 +69,11 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDisc
 
 	var pairs = make([]*KVPair, 0, len(ps))
 	for _, p := range ps {
-		pairs = append(pairs, &KVPair{Key: p.Key, Value: string(p.Value)})
+		pair := &KVPair{Key: p.Key, Value: string(p.Value)}
+		if d.filter != nil && !d.filter(pair) {
+			continue
+		}
+		pairs = append(pairs, pair)
 	}
 	d.pairs = pairs
 	d.RetriesAfterWatchFailed = -1
@@ -98,6 +104,11 @@ func NewZookeeperDiscoveryTemplate(basePath string, zkAddr []string, options *st
 // Clone clones this ServiceDiscovery with new servicePath.
 func (d ZookeeperDiscovery) Clone(servicePath string) ServiceDiscovery {
 	return NewZookeeperDiscoveryWithStore(d.basePath+"/"+servicePath, d.kv)
+}
+
+// SetFilter sets the filer.
+func (d ZookeeperDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
+	d.filter = filter
 }
 
 // GetServices returns the servers
@@ -177,7 +188,11 @@ func (d *ZookeeperDiscovery) watch() {
 				}
 				var pairs []*KVPair // latest servers
 				for _, p := range ps {
-					pairs = append(pairs, &KVPair{Key: p.Key, Value: string(p.Value)})
+					pair := &KVPair{Key: p.Key, Value: string(p.Value)}
+					if d.filter != nil && !d.filter(pair) {
+						continue
+					}
+					pairs = append(pairs, pair)
 				}
 				d.pairs = pairs
 
