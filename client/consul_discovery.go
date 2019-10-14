@@ -1,5 +1,3 @@
-// +build consul
-
 package client
 
 import (

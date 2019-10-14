@@ -1,5 +1,3 @@
-// +build zookeeper
-
 package client
 
 import (

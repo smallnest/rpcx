@@ -1,5 +1,3 @@
-// +build redis
-
 package serverplugin
 
 import (

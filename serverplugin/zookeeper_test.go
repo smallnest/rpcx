@@ -1,5 +1,3 @@
-// +build zookeeper
-
 package serverplugin
 
 import (
