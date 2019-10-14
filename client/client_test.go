@@ -130,8 +130,8 @@ func TestClient_IT_Concurrency(t *testing.T) {
 	defer client.Close()
 
 	var wg sync.WaitGroup
-	wg.Add(2)
-	for i := 0; i < 2; i++ {
+	wg.Add(100)
+	for i := 0; i < 100; i++ {
 		i := i
 		go testSendRaw(t, client, uint64(i), rand.Int31(), rand.Int31(), &wg)
 	}
