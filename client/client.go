@@ -447,7 +447,9 @@ func convertRes2Raw(res *protocol.Message) (map[string]string, []byte, error) {
 	m[XServicePath] = res.ServicePath
 	m[XServiceMethod] = res.ServiceMethod
 
-	return m, res.Payload, nil
+	var payload = make([]byte, len(res.Payload))
+	copy(payload, res.Payload)
+	return m, payload, nil
 }
 
 func urlencode(data map[string]string) string {
