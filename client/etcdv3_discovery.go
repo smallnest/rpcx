@@ -100,7 +100,7 @@ func NewEtcdV3DiscoveryTemplate(basePath string, etcdAddr []string, options *sto
 		basePath = basePath[:len(basePath)-1]
 	}
 
-	kv, err := libkv.NewStore(store.ETCD, etcdAddr, options)
+	kv, err := libkv.NewStore(etcd.ETCDV3, etcdAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
 		panic(err)
