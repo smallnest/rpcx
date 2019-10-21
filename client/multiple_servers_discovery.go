@@ -40,6 +40,9 @@ func (d MultipleServersDiscovery) GetServices() []*KVPair {
 
 // WatchService returns a nil chan.
 func (d *MultipleServersDiscovery) WatchService() chan []*KVPair {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	ch := make(chan []*KVPair, 10)
 	d.chans = append(d.chans, ch)
 	return ch
@@ -63,6 +66,9 @@ func (d *MultipleServersDiscovery) RemoveWatcher(ch chan []*KVPair) {
 
 // Update is used to update servers at runtime.
 func (d *MultipleServersDiscovery) Update(pairs []*KVPair) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	for _, ch := range d.chans {
 		ch := ch
 		go func() {

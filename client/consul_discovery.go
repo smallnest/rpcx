@@ -113,6 +113,9 @@ func (d ConsulDiscovery) GetServices() []*KVPair {
 
 // WatchService returns a nil chan.
 func (d *ConsulDiscovery) WatchService() chan []*KVPair {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	ch := make(chan []*KVPair, 10)
 	d.chans = append(d.chans, ch)
 	return ch
@@ -189,6 +192,7 @@ func (d *ConsulDiscovery) watch() {
 				}
 				d.pairs = pairs
 
+				d.mu.Lock()
 				for _, ch := range d.chans {
 					ch := ch
 					go func() {
@@ -204,6 +208,7 @@ func (d *ConsulDiscovery) watch() {
 						}
 					}()
 				}
+				d.mu.Unlock()
 			}
 		}
 

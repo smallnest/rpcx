@@ -116,6 +116,9 @@ func (d ZookeeperDiscovery) GetServices() []*KVPair {
 
 // WatchService returns a nil chan.
 func (d *ZookeeperDiscovery) WatchService() chan []*KVPair {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	ch := make(chan []*KVPair, 10)
 	d.chans = append(d.chans, ch)
 	return ch
@@ -194,6 +197,7 @@ func (d *ZookeeperDiscovery) watch() {
 				}
 				d.pairs = pairs
 
+				d.mu.Lock()
 				for _, ch := range d.chans {
 					ch := ch
 					go func() {
@@ -209,6 +213,7 @@ func (d *ZookeeperDiscovery) watch() {
 						}
 					}()
 				}
+				d.mu.Unlock()
 			}
 		}
 
