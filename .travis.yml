@@ -1,9 +1,8 @@
 language: go
 
-
 go:
   - tip
-  - 1.12.x
+  - 1.13.x
 
 env:
   - GO111MODULE=off
@@ -14,8 +13,8 @@ before_script:
   - go get github.com/mattn/goveralls
 
 script:
- - go test -v ./...
- - goveralls -service=travis-ci
+  - go test -v ./...
+  - goveralls -service=travis-ci
 
 notifications:
   email:
