@@ -22,7 +22,7 @@ type ConsulDiscovery struct {
 	kv       store.Store
 	pairs    []*KVPair
 	chans    []chan []*KVPair
-	mu       sync.Locker
+	mu       sync.Mutex
 	// -1 means it always retry to watch until zookeeper is ok, 0 means no retry.
 	RetriesAfterWatchFailed int
 
