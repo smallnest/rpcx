@@ -30,6 +30,7 @@ require (
 	github.com/rs/cors v1.7.0
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
 	github.com/smallnest/libkv-etcdv3-store v0.0.0-20190919063216-0c1616a1351d
+	github.com/smallnest/valkeyrie v0.0.0-20191030064635-54a884e4b303
 	github.com/soheilhy/cmux v0.1.4
 	github.com/tatsushid/go-fastping v0.0.0-20160109021039-d7bb493dee3e
 	github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161 // indirect
