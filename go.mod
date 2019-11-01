@@ -8,12 +8,14 @@ require (
 	github.com/apache/thrift v0.12.0
 	github.com/cenk/backoff v2.2.1+incompatible // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
+	github.com/coreos/etcd v3.3.17+incompatible // indirect
 	github.com/docker/libkv v0.2.1
 	github.com/edwingeng/doublejump v0.0.0-20190102103700-461a0155c7be
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fatih/color v1.7.0
-	github.com/gogo/protobuf v1.2.1
+	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.2
+	github.com/google/uuid v1.1.1 // indirect
 	github.com/grandcat/zeroconf v0.0.0-20190424104450-85eadb44205c
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/golang-lru v0.5.3
@@ -29,7 +31,7 @@ require (
 	github.com/rpcx-ecosystem/quic-conn v0.0.0-20190920095804-3967ef162525
 	github.com/rs/cors v1.7.0
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
-	github.com/smallnest/libkv-etcdv3-store v0.0.0-20190919063216-0c1616a1351d
+	github.com/smallnest/libkv-etcdv3-store v0.0.0-20191101045330-f92940446965
 	github.com/smallnest/valkeyrie v0.0.0-20191030064635-54a884e4b303
 	github.com/soheilhy/cmux v0.1.4
 	github.com/tatsushid/go-fastping v0.0.0-20160109021039-d7bb493dee3e
@@ -40,7 +42,14 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/xtaci/kcp-go v5.4.4+incompatible
 	github.com/xtaci/lossyconn v0.0.0-20190602105132-8df528c0c9ae // indirect
+	go.etcd.io/etcd v3.3.17+incompatible // indirect
 	go.opencensus.io v0.22.0
+	go.uber.org/zap v1.12.0 // indirect
+	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271 // indirect
+	golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c // indirect
+	golang.org/x/tools v0.0.0-20191031220737-6d8f1af9ccc0 // indirect
+	google.golang.org/genproto v0.0.0-20191028173616-919d9bdd9fe6 // indirect
+	google.golang.org/grpc v1.24.0 // indirect
 )
 
 go 1.13

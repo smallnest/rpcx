@@ -12,6 +12,7 @@
 - update client plugins. All plugin returns error instead of bool
 - support ETCD 3.0 API
 - support redis as registry
+- support redis DB selection
 - fix RegisterFunction issues
 - add Filter for clients
 
