@@ -28,7 +28,7 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/peterbourgon/g2s v0.0.0-20170223122336-d4e7ad98afea // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20190826022208-cac0b30c2563
-	github.com/rpcx-ecosystem/quic-conn v0.0.0-20190920095804-3967ef162525
+	github.com/rpcx-ecosystem/quic-conn v0.0.0-20191111101101-e8320ca0c034
 	github.com/rs/cors v1.7.0
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
 	github.com/smallnest/libkv-etcdv3-store v0.0.0-20191101045330-f92940446965
@@ -46,10 +46,10 @@ require (
 	go.opencensus.io v0.22.0
 	go.uber.org/zap v1.12.0 // indirect
 	golang.org/x/net v0.0.0-20191028085509-fe3aa8a45271 // indirect
-	golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c // indirect
 	golang.org/x/tools v0.0.0-20191031220737-6d8f1af9ccc0 // indirect
 	google.golang.org/genproto v0.0.0-20191028173616-919d9bdd9fe6 // indirect
 	google.golang.org/grpc v1.24.0 // indirect
+	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
 go 1.13
