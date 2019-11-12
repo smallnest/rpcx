@@ -2,12 +2,13 @@ package client
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"fmt"
 
-	"github.com/smallnest/rpcx/_testutils"
+	testutils "github.com/smallnest/rpcx/_testutils"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/server"
 	"github.com/smallnest/rpcx/share"
@@ -97,5 +98,25 @@ func TestXClient_filterByStateAndGroup(t *testing.T) {
 	}
 	if _, ok := servers["d"]; !ok {
 		t.Error("node must be removed")
+	}
+}
+
+func TestUncoverError(t *testing.T) {
+	var e error = ServiceError("error")
+	if uncoverError(e) {
+		t.Fatalf("expect false but get true")
+	}
+
+	if uncoverError(context.DeadlineExceeded) {
+		t.Fatalf("expect false but get true")
+	}
+
+	if uncoverError(context.Canceled) {
+		t.Fatalf("expect false but get true")
+	}
+
+	e = errors.New("error")
+	if !uncoverError(e) {
+		t.Fatalf("expect true but get false")
 	}
 }
