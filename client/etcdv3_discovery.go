@@ -209,7 +209,7 @@ func (d *EtcdV3Discovery) watch() {
 							}
 						}
 					}
-					if p.Key == prefix[:len(prefix)-1] {
+					if p.Key == prefix[:len(prefix)-1] || !strings.HasPrefix(p.Key, prefix) {
 						continue
 					}
 
