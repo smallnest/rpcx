@@ -1,5 +1,7 @@
 module github.com/smallnest/rpcx
 
+go 1.13
+
 require (
 	github.com/abronan/valkeyrie v0.0.0-20190822142731-f2e1850dc905
 	github.com/anacrolix/envpprof v1.0.1 // indirect
@@ -51,5 +53,3 @@ require (
 	google.golang.org/grpc v1.24.0 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
-
-go 1.13
