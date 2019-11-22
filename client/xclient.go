@@ -290,7 +290,6 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 			if c.Plugins != nil {
 				needCallPlugin = true
 			}
-
 		}
 
 		client.RegisterServerMessageChan(c.serverMessageChan)

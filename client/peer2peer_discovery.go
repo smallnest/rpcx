@@ -13,22 +13,22 @@ func NewPeer2PeerDiscovery(server, metadata string) ServiceDiscovery {
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d Peer2PeerDiscovery) Clone(servicePath string) ServiceDiscovery {
-	return &d
+func (d *Peer2PeerDiscovery) Clone(servicePath string) ServiceDiscovery {
+	return d
 }
 
 // SetFilter sets the filer.
-func (d Peer2PeerDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
+func (d *Peer2PeerDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 
 }
 
 // GetServices returns the static server
-func (d Peer2PeerDiscovery) GetServices() []*KVPair {
+func (d *Peer2PeerDiscovery) GetServices() []*KVPair {
 	return []*KVPair{&KVPair{Key: d.server, Value: d.metadata}}
 }
 
 // WatchService returns a nil chan.
-func (d Peer2PeerDiscovery) WatchService() chan []*KVPair {
+func (d *Peer2PeerDiscovery) WatchService() chan []*KVPair {
 	return nil
 }
 

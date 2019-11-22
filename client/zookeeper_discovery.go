@@ -100,17 +100,17 @@ func NewZookeeperDiscoveryTemplate(basePath string, zkAddr []string, options *st
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d ZookeeperDiscovery) Clone(servicePath string) ServiceDiscovery {
+func (d *ZookeeperDiscovery) Clone(servicePath string) ServiceDiscovery {
 	return NewZookeeperDiscoveryWithStore(d.basePath+"/"+servicePath, d.kv)
 }
 
 // SetFilter sets the filer.
-func (d ZookeeperDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
+func (d *ZookeeperDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 	d.filter = filter
 }
 
 // GetServices returns the servers
-func (d ZookeeperDiscovery) GetServices() []*KVPair {
+func (d *ZookeeperDiscovery) GetServices() []*KVPair {
 	return d.pairs
 }
 
@@ -147,7 +147,7 @@ func (d *ZookeeperDiscovery) watch() {
 		var tempDelay time.Duration
 
 		retry := d.RetriesAfterWatchFailed
-		for d.RetriesAfterWatchFailed == -1 || retry >= 0 {
+		for retry >= 0 {
 			c, err = d.kv.WatchTree(d.basePath, nil)
 			if err != nil {
 				if d.RetriesAfterWatchFailed > 0 {

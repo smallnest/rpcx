@@ -219,8 +219,7 @@ func (p *ZooKeeperRegisterPlugin) RegisterFunction(serviceName, fname string, fn
 
 func (p *ZooKeeperRegisterPlugin) Unregister(name string) (err error) {
 	if "" == strings.TrimSpace(name) {
-		err = errors.New("Register service `name` can't be empty")
-		return
+		return errors.New("Register service `name` can't be empty")
 	}
 
 	if p.kv == nil {
@@ -271,5 +270,6 @@ func (p *ZooKeeperRegisterPlugin) Unregister(name string) (err error) {
 	}
 	delete(p.metas, name)
 	p.metasLock.Unlock()
-	return
+
+	return nil
 }

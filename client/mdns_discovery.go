@@ -61,17 +61,17 @@ func NewMDNSDiscoveryTemplate(timeout time.Duration, watchInterval time.Duration
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d MDNSDiscovery) Clone(servicePath string) ServiceDiscovery {
+func (d *MDNSDiscovery) Clone(servicePath string) ServiceDiscovery {
 	return NewMDNSDiscovery(servicePath, d.Timeout, d.WatchInterval, d.domain)
 }
 
 // SetFilter sets the filer.
-func (d MDNSDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
+func (d *MDNSDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 	d.filter = filter
 }
 
 // GetServices returns the servers
-func (d MDNSDiscovery) GetServices() []*KVPair {
+func (d *MDNSDiscovery) GetServices() []*KVPair {
 	return d.pairs
 }
 
