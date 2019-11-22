@@ -61,6 +61,18 @@ func NewNacosDiscovery(servicePath string, cluster string, clientConfig constant
 	return d
 }
 
+func NewNacosDiscoveryWithClient(servicePath string, namingClient naming_client.INamingClient) ServiceDiscovery {
+	d := &NacosDiscovery{
+		servicePath: servicePath,
+	}
+
+	d.namingClient = namingClient
+
+	d.fetch()
+	go d.watch()
+	return d
+}
+
 func (d *NacosDiscovery) fetch() {
 	service, err := d.namingClient.GetService(vo.GetServiceParam{
 		ServiceName: d.servicePath,
