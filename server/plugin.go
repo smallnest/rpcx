@@ -114,7 +114,7 @@ func (p *pluginContainer) Remove(plugin Plugin) {
 		return
 	}
 
-	var plugins []Plugin
+	plugins := make([]Plugin, 0, len(p.plugins))
 	for _, p := range p.plugins {
 		if p != plugin {
 			plugins = append(plugins, p)

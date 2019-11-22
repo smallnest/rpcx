@@ -74,19 +74,12 @@ func (s *Server) Register(rcvr interface{}, metadata string) error {
 	if err != nil {
 		return err
 	}
-	if s.Plugins == nil {
-		s.Plugins = &pluginContainer{}
-	}
 	return s.Plugins.DoRegister(sname, rcvr, metadata)
 }
 
 // RegisterName is like Register but uses the provided name for the type
 // instead of the receiver's concrete type.
 func (s *Server) RegisterName(name string, rcvr interface{}, metadata string) error {
-	if s.Plugins == nil {
-		s.Plugins = &pluginContainer{}
-	}
-
 	s.Plugins.DoRegister(name, rcvr, metadata)
 	_, err := s.register(rcvr, name, true)
 	return err
@@ -102,9 +95,6 @@ func (s *Server) RegisterFunction(servicePath string, fn interface{}, metadata s
 	if err != nil {
 		return err
 	}
-	if s.Plugins == nil {
-		s.Plugins = &pluginContainer{}
-	}
 
 	return s.Plugins.DoRegisterFunction(servicePath, fname, fn, metadata)
 }
@@ -112,10 +102,6 @@ func (s *Server) RegisterFunction(servicePath string, fn interface{}, metadata s
 // RegisterFunctionName is like RegisterFunction but uses the provided name for the function
 // instead of the function's concrete type.
 func (s *Server) RegisterFunctionName(servicePath string, name string, fn interface{}, metadata string) error {
-	if s.Plugins == nil {
-		s.Plugins = &pluginContainer{}
-	}
-
 	s.Plugins.DoRegisterFunction(servicePath, name, fn, metadata)
 	_, err := s.registerFunction(servicePath, fn, name, true)
 	return err
@@ -124,9 +110,6 @@ func (s *Server) RegisterFunctionName(servicePath string, name string, fn interf
 func (s *Server) register(rcvr interface{}, name string, useName bool) (string, error) {
 	s.serviceMapMu.Lock()
 	defer s.serviceMapMu.Unlock()
-	if s.serviceMap == nil {
-		s.serviceMap = make(map[string]*service)
-	}
 
 	service := new(service)
 	service.typ = reflect.TypeOf(rcvr)
@@ -170,9 +153,6 @@ func (s *Server) register(rcvr interface{}, name string, useName bool) (string, 
 func (s *Server) registerFunction(servicePath string, fn interface{}, name string, useName bool) (string, error) {
 	s.serviceMapMu.Lock()
 	defer s.serviceMapMu.Unlock()
-	if s.serviceMap == nil {
-		s.serviceMap = make(map[string]*service)
-	}
 
 	ss := s.serviceMap[servicePath]
 	if ss == nil {
@@ -322,10 +302,6 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 // UnregisterAll unregisters all services.
 // You can call this method when you want to shutdown/upgrade this node.
 func (s *Server) UnregisterAll() error {
-	if s.Plugins == nil {
-		s.Plugins = &pluginContainer{}
-	}
-
 	var es []error
 	for k := range s.serviceMap {
 		err := s.Plugins.DoUnregister(k)

@@ -83,7 +83,7 @@ func TestHandleRequest(t *testing.T) {
 
 	req.Payload = data
 
-	server := &Server{}
+	server := NewServer()
 	server.RegisterName("Arith", new(Arith), "")
 	res, err := server.handleRequest(context.Background(), req)
 	if err != nil {

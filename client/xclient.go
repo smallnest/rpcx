@@ -109,8 +109,8 @@ func NewXClient(servicePath string, failMode FailMode, selectMode SelectMode, di
 		option:       option,
 	}
 
-	servers := make(map[string]string)
 	pairs := discovery.GetServices()
+	servers := make(map[string]string,len(pairs))
 	for _, p := range pairs {
 		servers[p.Key] = p.Value
 	}
@@ -144,8 +144,8 @@ func NewBidirectionalXClient(servicePath string, failMode FailMode, selectMode S
 		serverMessageChan: serverMessageChan,
 	}
 
-	servers := make(map[string]string)
 	pairs := discovery.GetServices()
+	servers := make(map[string]string,len(pairs))
 	for _, p := range pairs {
 		servers[p.Key] = p.Value
 	}
@@ -199,7 +199,7 @@ func (c *xClient) Auth(auth string) {
 // watch changes of service and update cached clients.
 func (c *xClient) watch(ch chan []*KVPair) {
 	for pairs := range ch {
-		servers := make(map[string]string)
+		servers := make(map[string]string,len(pairs))
 		for _, p := range pairs {
 			servers[p.Key] = p.Value
 		}
