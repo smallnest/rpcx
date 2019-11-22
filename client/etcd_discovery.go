@@ -105,17 +105,17 @@ func NewEtcdDiscoveryTemplate(basePath string, etcdAddr []string, options *store
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d EtcdDiscovery) Clone(servicePath string) ServiceDiscovery {
+func (d *EtcdDiscovery) Clone(servicePath string) ServiceDiscovery {
 	return NewEtcdDiscoveryStore(d.basePath+"/"+servicePath, d.kv)
 }
 
 // SetFilter sets the filer.
-func (d EtcdDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
+func (d *EtcdDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 	d.filter = filter
 }
 
 // GetServices returns the servers
-func (d EtcdDiscovery) GetServices() []*KVPair {
+func (d *EtcdDiscovery) GetServices() []*KVPair {
 	return d.pairs
 }
 
@@ -152,7 +152,7 @@ func (d *EtcdDiscovery) watch() {
 		var tempDelay time.Duration
 
 		retry := d.RetriesAfterWatchFailed
-		for d.RetriesAfterWatchFailed == -1 || retry >= 0 {
+		for retry >= 0 {
 			c, err = d.kv.WatchTree(d.basePath, nil)
 			if err != nil {
 				if d.RetriesAfterWatchFailed > 0 {

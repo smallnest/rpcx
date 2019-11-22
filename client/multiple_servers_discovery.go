@@ -24,17 +24,17 @@ func NewMultipleServersDiscovery(pairs []*KVPair) ServiceDiscovery {
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d MultipleServersDiscovery) Clone(servicePath string) ServiceDiscovery {
-	return &d
+func (d *MultipleServersDiscovery) Clone(servicePath string) ServiceDiscovery {
+	return d
 }
 
 // SetFilter sets the filer.
-func (d MultipleServersDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
+func (d *MultipleServersDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 
 }
 
 // GetServices returns the configured server
-func (d MultipleServersDiscovery) GetServices() []*KVPair {
+func (d *MultipleServersDiscovery) GetServices() []*KVPair {
 	return d.pairs
 }
 

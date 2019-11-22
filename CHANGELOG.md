@@ -16,6 +16,7 @@
 - fix RegisterFunction issues
 - add Filter for clients
 - remove most of build tags such as etcd, zookeeper,consul,reuseport
+- add Nacos as registry http://nacos.io
 
 ## 4.0
 

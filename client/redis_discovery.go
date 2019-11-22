@@ -108,17 +108,17 @@ func NewRedisDiscoveryTemplate(basePath string, etcdAddr []string, options *stor
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d RedisDiscovery) Clone(servicePath string) ServiceDiscovery {
+func (d *RedisDiscovery) Clone(servicePath string) ServiceDiscovery {
 	return NewRedisDiscoveryStore(d.basePath+"/"+servicePath, d.kv)
 }
 
 // SetFilter sets the filer.
-func (d RedisDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
+func (d *RedisDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 	d.filter = filter
 }
 
 // GetServices returns the servers
-func (d RedisDiscovery) GetServices() []*KVPair {
+func (d *RedisDiscovery) GetServices() []*KVPair {
 	return d.pairs
 }
 
@@ -155,7 +155,7 @@ func (d *RedisDiscovery) watch() {
 		var tempDelay time.Duration
 
 		retry := d.RetriesAfterWatchFailed
-		for d.RetriesAfterWatchFailed == -1 || retry >= 0 {
+		for retry >= 0 {
 			c, err = d.kv.WatchTree(d.basePath, nil, nil)
 			if err != nil {
 				if d.RetriesAfterWatchFailed > 0 {

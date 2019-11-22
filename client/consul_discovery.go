@@ -97,17 +97,17 @@ func NewConsulDiscoveryTemplate(basePath string, consulAddr []string, options *s
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d ConsulDiscovery) Clone(servicePath string) ServiceDiscovery {
+func (d *ConsulDiscovery) Clone(servicePath string) ServiceDiscovery {
 	return NewConsulDiscoveryStore(d.basePath+"/"+servicePath, d.kv)
 }
 
 // SetFilter sets the filer.
-func (d ConsulDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
+func (d *ConsulDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 	d.filter = filter
 }
 
 // GetServices returns the servers
-func (d ConsulDiscovery) GetServices() []*KVPair {
+func (d *ConsulDiscovery) GetServices() []*KVPair {
 	return d.pairs
 }
 
@@ -143,7 +143,7 @@ func (d *ConsulDiscovery) watch() {
 		var tempDelay time.Duration
 
 		retry := d.RetriesAfterWatchFailed
-		for d.RetriesAfterWatchFailed == -1 || retry >= 0 {
+		for retry >= 0 {
 			c, err = d.kv.WatchTree(d.basePath, nil)
 			if err != nil {
 				if d.RetriesAfterWatchFailed > 0 {

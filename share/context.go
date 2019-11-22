@@ -19,9 +19,12 @@ type Context struct {
 }
 
 func NewContext(ctx context.Context) *Context {
-	tags := make(map[interface{}]interface{})
-	return &Context{Context: ctx, tags: tags}
+	return &Context{
+		Context: ctx,
+		tags:    make(map[interface{}]interface{}),
+	}
 }
+
 func (c *Context) Value(key interface{}) interface{} {
 	if v, ok := c.tags[key]; ok {
 		return v
