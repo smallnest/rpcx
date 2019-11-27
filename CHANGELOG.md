@@ -17,6 +17,7 @@
 - add Filter for clients
 - remove most of build tags such as etcd, zookeeper,consul,reuseport
 - add Nacos as registry http://nacos.io
+- support blacklist and whitlist
 
 ## 4.0
 
