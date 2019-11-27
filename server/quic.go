@@ -6,7 +6,7 @@ import (
 	"errors"
 	"net"
 
-	quicconn "github.com/rpcx-ecosystem/quic-conn"
+	quicconn "github.com/marten-seemann/quic-conn"
 )
 
 func init() {
