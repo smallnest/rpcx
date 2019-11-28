@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	makeConnMap["utp"] = newDirectUTPConn
+	ConnFactories["utp"] = newDirectUTPConn
 }
 
 func newDirectUTPConn(c *Client, network, address string) (net.Conn, error) {
