@@ -110,7 +110,7 @@ func NewXClient(servicePath string, failMode FailMode, selectMode SelectMode, di
 	}
 
 	pairs := discovery.GetServices()
-	servers := make(map[string]string,len(pairs))
+	servers := make(map[string]string, len(pairs))
 	for _, p := range pairs {
 		servers[p.Key] = p.Value
 	}
@@ -145,7 +145,7 @@ func NewBidirectionalXClient(servicePath string, failMode FailMode, selectMode S
 	}
 
 	pairs := discovery.GetServices()
-	servers := make(map[string]string,len(pairs))
+	servers := make(map[string]string, len(pairs))
 	for _, p := range pairs {
 		servers[p.Key] = p.Value
 	}
@@ -199,7 +199,7 @@ func (c *xClient) Auth(auth string) {
 // watch changes of service and update cached clients.
 func (c *xClient) watch(ch chan []*KVPair) {
 	for pairs := range ch {
-		servers := make(map[string]string,len(pairs))
+		servers := make(map[string]string, len(pairs))
 		for _, p := range pairs {
 			servers[p.Key] = p.Value
 		}
@@ -411,7 +411,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 	switch c.failMode {
 	case Failtry:
 		retries := c.option.Retries
-		for retries > 0 {
+		for retries >= 0 {
 			retries--
 
 			if client != nil {
@@ -435,7 +435,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 		return err
 	case Failover:
 		retries := c.option.Retries
-		for retries > 0 {
+		for retries >= 0 {
 			retries--
 
 			if client != nil {
@@ -572,7 +572,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 	switch c.failMode {
 	case Failtry:
 		retries := c.option.Retries
-		for retries > 0 {
+		for retries >= 0 {
 			retries--
 			if client != nil {
 				m, payload, err := client.SendRaw(ctx, r)
@@ -596,7 +596,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		return nil, nil, err
 	case Failover:
 		retries := c.option.Retries
-		for retries > 0 {
+		for retries >= 0 {
 			retries--
 			if client != nil {
 				m, payload, err := client.SendRaw(ctx, r)
