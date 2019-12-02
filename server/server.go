@@ -247,15 +247,15 @@ func (s *Server) serveListener(ln net.Listener) error {
 			tc.SetLinger(10)
 		}
 
-		s.mu.Lock()
-		s.activeConn[conn] = struct{}{}
-		s.mu.Unlock()
-
 		conn, ok := s.Plugins.DoPostConnAccept(conn)
 		if !ok {
 			closeChannel(s, conn)
 			continue
 		}
+
+		s.mu.Lock()
+		s.activeConn[conn] = struct{}{}
+		s.mu.Unlock()
 
 		go s.serveConn(conn)
 	}
