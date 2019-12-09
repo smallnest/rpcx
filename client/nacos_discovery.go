@@ -181,7 +181,7 @@ func (d *NacosDiscovery) watch() {
 	if err != nil {
 		var tempDelay time.Duration
 		retry := d.RetriesAfterWatchFailed
-		for retry >= 0 {
+		for d.RetriesAfterWatchFailed < 0 || retry >= 0 {
 			err := d.namingClient.Subscribe(param)
 			if err != nil {
 				if d.RetriesAfterWatchFailed > 0 {

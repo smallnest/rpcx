@@ -155,7 +155,7 @@ func (d *RedisDiscovery) watch() {
 		var tempDelay time.Duration
 
 		retry := d.RetriesAfterWatchFailed
-		for retry >= 0 {
+		for d.RetriesAfterWatchFailed < 0 || retry >= 0 {
 			c, err = d.kv.WatchTree(d.basePath, nil, nil)
 			if err != nil {
 				if d.RetriesAfterWatchFailed > 0 {
