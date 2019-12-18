@@ -544,6 +544,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 			call.Error = err
 			call.done()
 		}
+		protocol.FreeMsg(req)
 		return
 	}
 

@@ -371,7 +371,7 @@ func (s *Server) serveConn(conn net.Conn) {
 			protocol.FreeMsg(req)
 			// auth failed, closed the connection
 			if closeConn {
-				log.Info("auth failed for conn %s: %v", conn.RemoteAddr().String(), err)
+				log.Infof("auth failed for conn %s: %v", conn.RemoteAddr().String(), err)
 				return
 			}
 			continue
