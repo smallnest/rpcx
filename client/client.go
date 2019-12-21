@@ -518,6 +518,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 
 		data, err := codec.Encode(call.Args)
 		if err != nil {
+			delete(client.pending, seq)
 			call.Error = err
 			call.done()
 			return
