@@ -378,9 +378,8 @@ func (s *Server) serveConn(conn net.Conn) {
 		}
 		go func() {
 			atomic.AddInt32(&s.handlerMsgNum, 1)
-			defer func() {
-				atomic.AddInt32(&s.handlerMsgNum, -1)
-			}()
+			defer atomic.AddInt32(&s.handlerMsgNum, -1)
+
 			if req.IsHeartbeat() {
 				req.SetMessageType(protocol.Response)
 				data := req.Encode()
@@ -630,17 +629,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (s *Server) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.closeDoneChanLocked()
+
 	var err error
 	if s.ln != nil {
 		err = s.ln.Close()
 	}
-
 	for c := range s.activeConn {
 		c.Close()
 		delete(s.activeConn, c)
 		s.Plugins.DoPostConnClose(c)
 	}
+	s.closeDoneChanLocked()
 	return err
 }
 
@@ -662,8 +661,20 @@ var shutdownPollInterval = 1000 * time.Millisecond
 // Shutdown returns the context's error, otherwise it returns any
 // error returned from closing the Server's underlying Listener.
 func (s *Server) Shutdown(ctx context.Context) error {
+	var err error
 	if atomic.CompareAndSwapInt32(&s.inShutdown, 0, 1) {
 		log.Info("shutdown begin")
+
+		s.mu.Lock()
+		s.ln.Close()
+		for conn := range s.activeConn {
+			if tcpConn, ok := conn.(*net.TCPConn); ok {
+				tcpConn.CloseRead()
+			}
+		}
+		s.mu.Unlock()
+
+		// wait all in-processing requests finish.
 		ticker := time.NewTicker(shutdownPollInterval)
 		defer ticker.Stop()
 		for {
@@ -672,11 +683,11 @@ func (s *Server) Shutdown(ctx context.Context) error {
 			}
 			select {
 			case <-ctx.Done():
-				return ctx.Err()
+				err = ctx.Err()
+				break
 			case <-ticker.C:
 			}
 		}
-		s.Close()
 
 		if s.gatewayHTTPServer != nil {
 			if err := s.closeHTTP1APIGateway(ctx); err != nil {
@@ -685,14 +696,25 @@ func (s *Server) Shutdown(ctx context.Context) error {
 				log.Info("closed gateway")
 			}
 		}
+
+		s.mu.Lock()
+		for conn := range s.activeConn {
+			conn.Close()
+			delete(s.activeConn, conn)
+			s.Plugins.DoPostConnClose(conn)
+		}
+		s.closeDoneChanLocked()
+		s.mu.Unlock()
+
 		log.Info("shutdown end")
+
 	}
-	return nil
+	return err
 }
 
 func (s *Server) checkProcessMsg() bool {
-	size := s.handlerMsgNum
-	log.Info("need handle msg size:", size)
+	size := atomic.LoadInt32(&s.handlerMsgNum)
+	log.Info("need handle in-processing msg size:", size)
 	if size == 0 {
 		return true
 	}
