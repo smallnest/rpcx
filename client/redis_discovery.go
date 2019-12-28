@@ -15,8 +15,8 @@ func init() {
 	redis.Register()
 }
 
-// RedisDiscovery is a etcd service discovery.
-// It always returns the registered servers in etcd.
+// RedisDiscovery is a redis service discovery.
+// It always returns the registered servers in redis.
 type RedisDiscovery struct {
 	basePath string
 	kv       store.Store
@@ -98,7 +98,7 @@ func NewRedisDiscoveryTemplate(basePath string, etcdAddr []string, options *stor
 		basePath = basePath[:len(basePath)-1]
 	}
 
-	kv, err := valkeyrie.NewStore(store.ETCD, etcdAddr, options)
+	kv, err := valkeyrie.NewStore(store.REDIS, etcdAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
 		panic(err)
