@@ -13,14 +13,9 @@ import (
 	"github.com/smallnest/rpcx/share"
 )
 
-type ConnFactoryFn func(c *Client, network, address string) (net.Conn, error)
+type makeConnFn func(c *Client, network, address string) (net.Conn, error)
 
-var ConnFactories = map[string]ConnFactoryFn{
-	"http": newDirectHTTPConn,
-	"kcp":  newDirectKCPConn,
-	"quic": newDirectQuicConn,
-	"unix": newDirectConn,
-}
+var makeConnMap = make(map[string]makeConnFn)
 
 // Connect connects the server via specified network.
 func (c *Client) Connect(network, address string) error {
@@ -37,7 +32,7 @@ func (c *Client) Connect(network, address string) error {
 	case "unix":
 		conn, err = newDirectConn(c, network, address)
 	default:
-		fn := ConnFactories[network]
+		fn := makeConnMap[network]
 		if fn != nil {
 			conn, err = fn(c, network, address)
 		} else {
@@ -65,6 +60,7 @@ func (c *Client) Connect(network, address string) error {
 		//c.w = bufio.NewWriterSize(conn, WriterBuffsize)
 
 		// start reading and writing since connected
+		go c.output()
 		go c.input()
 
 		if c.option.Heartbeat && c.option.HeartbeatInterval > 0 {

@@ -93,6 +93,11 @@ type RPCClient interface {
 	IsShutdown() bool
 }
 
+type sendInfo struct {
+	call *Call
+	msg  *protocol.Message
+}
+
 // Client represents a RPC client.
 type Client struct {
 	option Option
@@ -103,7 +108,8 @@ type Client struct {
 
 	mutex        sync.Mutex // protects following
 	seq          uint64
-	pending      map[uint64]*Call
+	pending      map[uint64]*sendInfo
+	pendSeq      []uint64
 	closing      bool // user has called Close
 	shutdown     bool // server has told us to stop
 	pluginClosed bool // the plugin has been called
@@ -111,12 +117,14 @@ type Client struct {
 	Plugins PluginContainer
 
 	ServerMessageChan chan<- *protocol.Message
+	outputChan        chan uint64
 }
 
 // NewClient returns a new Client with the option.
 func NewClient(option Option) *Client {
 	return &Client{
-		option: option,
+		option:     option,
+		outputChan: make(chan uint64),
 	}
 }
 
@@ -308,12 +316,12 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 	select {
 	case <-ctx.Done(): //cancel by context
 		client.mutex.Lock()
-		call := client.pending[*seq]
+		info := client.pending[*seq]
 		delete(client.pending, *seq)
 		client.mutex.Unlock()
-		if call != nil {
-			call.Error = ctx.Err()
-			call.done()
+		if info != nil {
+			info.call.Error = ctx.Err()
+			info.call.done()
 		}
 
 		return ctx.Err()
@@ -335,7 +343,9 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error) {
 	ctx = context.WithValue(ctx, seqKey{}, r.Seq())
 
+	done := make(chan *Call, 10)
 	call := new(Call)
+	call.Done = done
 	call.Raw = true
 	call.ServicePath = r.ServicePath
 	call.ServiceMethod = r.ServiceMethod
@@ -361,53 +371,40 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 	}
 	r.Metadata = rmeta
 
-	done := make(chan *Call, 10)
-	call.Done = done
+	client.mutex.Lock()
+	if client.shutdown || client.closing {
+		client.mutex.Unlock()
+		return nil, nil, ErrShutdown
+	}
 
 	seq := r.Seq()
-	client.mutex.Lock()
-	if client.pending == nil {
-		client.pending = make(map[uint64]*Call)
+
+	info := &sendInfo{
+		call: call,
+		msg:  r,
 	}
-	client.pending[seq] = call
+
+	client.pushPending(seq, info)
 	client.mutex.Unlock()
 
-	data := r.Encode()
-	_, err := client.Conn.Write(data)
-	if err != nil {
-		client.mutex.Lock()
-		call = client.pending[seq]
-		delete(client.pending, seq)
-		client.mutex.Unlock()
-		if call != nil {
-			call.Error = err
-			call.done()
-		}
-		return nil, nil, err
-	}
-	if r.IsOneway() {
-		client.mutex.Lock()
-		call = client.pending[seq]
-		delete(client.pending, seq)
-		client.mutex.Unlock()
-		if call != nil {
-			call.done()
-		}
-		return nil, nil, nil
+	select {
+	case client.outputChan <- seq:
+	default:
 	}
 
 	var m map[string]string
 	var payload []byte
+	var err error
 
 	select {
 	case <-ctx.Done(): //cancel by context
 		client.mutex.Lock()
-		call := client.pending[seq]
+		info := client.pending[seq]
 		delete(client.pending, seq)
 		client.mutex.Unlock()
-		if call != nil {
-			call.Error = ctx.Err()
-			call.done()
+		if info != nil {
+			info.call.Error = ctx.Err()
+			info.call.done()
 		}
 
 		return nil, nil, ctx.Err()
@@ -450,6 +447,14 @@ func convertRes2Raw(res *protocol.Message) (map[string]string, []byte, error) {
 	return m, res.Payload, nil
 }
 
+func (client *Client) pushPending(seq uint64, info *sendInfo) {
+	if client.pending == nil {
+		client.pending = make(map[uint64]*sendInfo)
+	}
+	client.pending[seq] = info
+	client.pendSeq = append(client.pendSeq, seq)
+}
+
 func urlencode(data map[string]string) string {
 	if len(data) == 0 {
 		return ""
@@ -464,8 +469,8 @@ func urlencode(data map[string]string) string {
 	s := buf.String()
 	return s[0 : len(s)-1]
 }
-func (client *Client) send(ctx context.Context, call *Call) {
 
+func (client *Client) send(ctx context.Context, call *Call) {
 	// Register this call.
 	client.mutex.Lock()
 	if client.shutdown || client.closing {
@@ -475,31 +480,37 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		return
 	}
 
-	codec := share.Codecs[client.option.SerializeType]
-	if codec == nil {
-		call.Error = ErrUnsupportedCodec
-		client.mutex.Unlock()
-		call.done()
-		return
-	}
-
-	if client.pending == nil {
-		client.pending = make(map[uint64]*Call)
+	info := &sendInfo{
+		call: call,
 	}
 
 	seq := client.seq
 	client.seq++
-	client.pending[seq] = call
+	client.pushPending(seq, info)
 	client.mutex.Unlock()
 
 	if cseq, ok := ctx.Value(seqKey{}).(*uint64); ok {
 		*cseq = seq
 	}
 
-	//req := protocol.NewMessage()
+	select {
+	case client.outputChan <- seq:
+	default:
+	}
+
+}
+
+func (client *Client) genMessageFromCall(call *Call) (*protocol.Message, error) {
+	// get codec
+	codec := share.Codecs[client.option.SerializeType]
+	if codec == nil {
+		return nil, ErrUnsupportedCodec
+	}
+
+	// get and fill message
 	req := protocol.GetPooledMsg()
 	req.SetMessageType(protocol.Request)
-	req.SetSeq(seq)
+
 	if call.Reply == nil {
 		req.SetOneway(true)
 	}
@@ -518,10 +529,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 
 		data, err := codec.Encode(call.Args)
 		if err != nil {
-			delete(client.pending, seq)
-			call.Error = err
-			call.done()
-			return
+			return nil, err
 		}
 		if len(data) > 1024 && client.option.CompressType != protocol.None {
 			req.SetCompressType(client.option.CompressType)
@@ -529,43 +537,86 @@ func (client *Client) send(ctx context.Context, call *Call) {
 
 		req.Payload = data
 	}
+	return req, nil
+}
 
-	if client.Plugins != nil {
-		client.Plugins.DoClientBeforeEncode(req)
-	}
-	data := req.Encode()
-
-	_, err := client.Conn.Write(data)
-	if err != nil {
-		client.mutex.Lock()
-		call = client.pending[seq]
-		delete(client.pending, seq)
-		client.mutex.Unlock()
-		if call != nil {
-			call.Error = err
-			call.done()
+func (client *Client) output() {
+	tmr := time.NewTimer(time.Second)
+	for {
+		seq, info := client.pickupCall(tmr)
+		if info == nil {
+			continue
 		}
-		protocol.FreeMsg(req)
-		return
-	}
 
-	isOneway := req.IsOneway()
-	protocol.FreeMsg(req)
+		req := info.msg
+		if req == nil {
+			var err error
+			req, err = client.genMessageFromCall(info.call)
+			if err != nil {
+				client.mutex.Lock()
+				delete(client.pending, seq)
+				client.mutex.Unlock()
 
-	if isOneway {
-		client.mutex.Lock()
-		call = client.pending[seq]
-		delete(client.pending, seq)
-		client.mutex.Unlock()
-		if call != nil {
-			call.done()
+				info.call.Error = err
+				info.call.done()
+				continue
+			}
+			req.SetSeq(seq)
+
+			if client.Plugins != nil {
+				client.Plugins.DoClientBeforeEncode(req)
+			}
+		}
+		data := req.Encode()
+		_, err := client.Conn.Write(data)
+		if info.msg == nil {
+			protocol.FreeMsg(req)
+		}
+
+		isOneway := req.IsOneway()
+		if isOneway || err != nil {
+			client.mutex.Lock()
+			delete(client.pending, seq)
+			client.mutex.Unlock()
+			info.call.Error = err
+			info.call.done()
+			if err != nil {
+				break
+			}
+		}
+
+		if client.option.WriteTimeout != 0 {
+			client.Conn.SetWriteDeadline(time.Now().Add(client.option.WriteTimeout))
 		}
 	}
+}
 
-	if client.option.WriteTimeout != 0 {
-		client.Conn.SetWriteDeadline(time.Now().Add(client.option.WriteTimeout))
+func (client *Client) popCall() (uint64, *sendInfo) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+	if len(client.pendSeq) > 0 {
+		seq := client.pendSeq[0]
+		client.pendSeq = client.pendSeq[1:]
+
+		info := client.pending[seq]
+		if info != nil {
+			return seq, info
+		}
 	}
+	return 0, nil
+}
 
+func (client *Client) pickupCall(tmr *time.Timer) (uint64, *sendInfo) {
+	seq, info := client.popCall()
+	if info == nil {
+		select {
+		case <-tmr.C:
+			tmr.Reset(time.Second)
+		case <-client.outputChan:
+			seq, info = client.popCall()
+		}
+	}
+	return seq, info
 }
 
 func (client *Client) input() {
@@ -586,17 +637,17 @@ func (client *Client) input() {
 		}
 
 		seq := res.Seq()
-		var call *Call
+		var info *sendInfo
 		isServerMessage := (res.MessageType() == protocol.Request && !res.IsHeartbeat() && res.IsOneway())
 		if !isServerMessage {
 			client.mutex.Lock()
-			call = client.pending[seq]
+			info = client.pending[seq]
 			delete(client.pending, seq)
 			client.mutex.Unlock()
 		}
 
 		switch {
-		case call == nil:
+		case info == nil:
 			if isServerMessage {
 				if client.ServerMessageChan != nil {
 					go client.handleServerRequest(res)
@@ -606,38 +657,38 @@ func (client *Client) input() {
 		case res.MessageStatusType() == protocol.Error:
 			// We've got an error response. Give this to the request
 			if len(res.Metadata) > 0 {
-				call.ResMetadata = res.Metadata
-				call.Error = ServiceError(res.Metadata[protocol.ServiceError])
+				info.call.ResMetadata = res.Metadata
+				info.call.Error = ServiceError(res.Metadata[protocol.ServiceError])
 			}
 
-			if call.Raw {
-				call.Metadata, call.Reply, _ = convertRes2Raw(res)
-				call.Metadata[XErrorMessage] = call.Error.Error()
+			if info.call.Raw {
+				info.call.Metadata, info.call.Reply, _ = convertRes2Raw(res)
+				info.call.Metadata[XErrorMessage] = info.call.Error.Error()
 			}
-			call.done()
+			info.call.done()
 		default:
-			if call.Raw {
-				call.Metadata, call.Reply, _ = convertRes2Raw(res)
+			if info.call.Raw {
+				info.call.Metadata, info.call.Reply, _ = convertRes2Raw(res)
 			} else {
 				data := res.Payload
 				if len(data) > 0 {
 					codec := share.Codecs[res.SerializeType()]
 					if codec == nil {
-						call.Error = ServiceError(ErrUnsupportedCodec.Error())
+						info.call.Error = ServiceError(ErrUnsupportedCodec.Error())
 					} else {
-						err = codec.Decode(data, call.Reply)
+						err = codec.Decode(data, info.call.Reply)
 						if err != nil {
-							call.Error = ServiceError(err.Error())
+							info.call.Error = ServiceError(err.Error())
 						}
 					}
 				}
 				if len(res.Metadata) > 0 {
-					call.ResMetadata = res.Metadata
+					info.call.ResMetadata = res.Metadata
 				}
 
 			}
 
-			call.done()
+			info.call.done()
 		}
 	}
 	// Terminate pending calls.
@@ -673,9 +724,9 @@ func (client *Client) input() {
 			err = io.ErrUnexpectedEOF
 		}
 	}
-	for _, call := range client.pending {
-		call.Error = err
-		call.done()
+	for _, info := range client.pending {
+		info.call.Error = err
+		info.call.done()
 	}
 
 	client.mutex.Unlock()
@@ -723,11 +774,11 @@ func (client *Client) heartbeat() {
 func (client *Client) Close() error {
 	client.mutex.Lock()
 
-	for seq, call := range client.pending {
+	for seq, info := range client.pending {
 		delete(client.pending, seq)
-		if call != nil {
-			call.Error = ErrShutdown
-			call.done()
+		if info != nil {
+			info.call.Error = ErrShutdown
+			info.call.done()
 		}
 	}
 
