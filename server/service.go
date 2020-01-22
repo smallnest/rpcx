@@ -241,7 +241,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 		// Method needs four ins: receiver, context.Context, *args, *reply.
 		if mtype.NumIn() != 4 {
 			if reportErr {
-				log.Info("method", mname, " has wrong number of ins:", mtype.NumIn())
+				log.Debug("method ", mname, " has wrong number of ins:", mtype.NumIn())
 			}
 			continue
 		}
@@ -249,7 +249,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 		ctxType := mtype.In(1)
 		if !ctxType.Implements(typeOfContext) {
 			if reportErr {
-				log.Info("method", mname, " must use context.Context as the first parameter")
+				log.Debug("method ", mname, " must use context.Context as the first parameter")
 			}
 			continue
 		}

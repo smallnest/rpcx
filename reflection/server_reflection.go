@@ -78,7 +78,9 @@ func (r *Reflection) Register(name string, rcvr interface{}, metadata string) er
 	if strings.Index(pkg, ".") > 0 {
 		pkg = pkg[strings.LastIndex(pkg, ".")+1:]
 	}
-	si.PkgPath = filepath.Base(pkg)
+	pkg = filepath.Base(pkg)
+	pkg = strings.ReplaceAll(pkg, "-", "_")
+	si.PkgPath = pkg
 
 	for m := 0; m < val.NumMethod(); m++ {
 		method := typ.Method(m)
@@ -131,15 +133,20 @@ func (r *Reflection) Register(name string, rcvr interface{}, metadata string) er
 		mi.ReqName = argType.Name()
 		mi.Req = generateTypeDefination(mi.ReqName, si.PkgPath, generateJSON(argType))
 		mi.ReplyName = replyType.Name()
-		mi.Reply = generateTypeDefination(mi.ReqName, si.PkgPath, generateJSON(replyType))
+		mi.Reply = generateTypeDefination(mi.ReplyName, si.PkgPath, generateJSON(replyType))
 
 		si.Methods = append(si.Methods, mi)
 	}
 
 	if len(si.Methods) > 0 {
-		r.Services[si.Name] = si
+		r.Services[name] = si
 	}
 
+	return nil
+}
+
+func (r *Reflection) Unregister(name string) error {
+	delete(r.Services, name)
 	return nil
 }
 
@@ -174,14 +181,15 @@ func (r *Reflection) GetServices(ctx context.Context, s string, reply *string) e
 }
 
 func generateTypeDefination(name, pkg string, jsonValue string) string {
-	if jsonValue == "" {
+	jsonValue = strings.TrimSpace(jsonValue)
+	if jsonValue == "" || jsonValue == `""` {
 		return ""
 	}
-
 	r := strings.NewReader(jsonValue)
 	output, err := gojson.Generate(r, gojson.ParseJson, name, pkg, nil, false, false)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
+		return ""
 	}
 	rt := strings.ReplaceAll(string(output), "``", "")
 	return strings.ReplaceAll(rt, "package "+pkg+"\n\n", "")
