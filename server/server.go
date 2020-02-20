@@ -252,6 +252,10 @@ func (s *Server) serveListener(ln net.Listener) error {
 				time.Sleep(tempDelay)
 				continue
 			}
+
+			if strings.Contains(e.Error(), "listener closed") {
+				return ErrServerClosed
+			}
 			return e
 		}
 		tempDelay = 0
