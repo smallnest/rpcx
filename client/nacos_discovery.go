@@ -61,9 +61,10 @@ func NewNacosDiscovery(servicePath string, cluster string, clientConfig constant
 	return d
 }
 
-func NewNacosDiscoveryWithClient(servicePath string, namingClient naming_client.INamingClient) ServiceDiscovery {
+func NewNacosDiscoveryWithClient(servicePath string, cluster string, namingClient naming_client.INamingClient) ServiceDiscovery {
 	d := &NacosDiscovery{
 		servicePath: servicePath,
+		Cluster:     cluster,
 	}
 
 	d.namingClient = namingClient
