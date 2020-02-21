@@ -1,6 +1,10 @@
-# [rpcx](http://rpcx.site)
+# [rpcx](http://rpcx.io)
 
-## 5.0 (developing)
+## 6.0 (developing)
+
+- support reflection
+
+## 5.0 
 
 - support jsonrpc 2.0
 - support CORS for jsonrpc 2.0
@@ -30,8 +34,8 @@
 - Support shutdown graceful
 - Add [rpcx-java](https://github.com/smallnest/rpcx-java) to support develop raw java services and clients
 - Support thrift codec 
-- Setup rpcx offcial site: http://rpcx.site
-- Add Chinese document: http://doc.rpcx.site or https://smallnest.gitbooks.io/go-rpc-programming-guide
+- Setup rpcx offcial site: http://rpcx.io
+- Add Chinese document: http://cn.doc.rpcx.io or https://smallnest.gitbooks.io/go-rpc-programming-guide
 
 ## 3.1
 
