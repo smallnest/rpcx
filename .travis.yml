@@ -5,11 +5,11 @@ go:
   - 1.13.x
 
 env:
-  - GO111MODULE=off
+  - GO111MODULE=on
 
 before_script:
   - rm -f go.sum
-  - go get -tags "reuseport quic kcp zookeeper etcd consul ping utp redis" -v github.com/smallnest/rpcx/...
+  - go get -tags "quic kcp ping utp" -v github.com/smallnest/rpcx/...
   - go get github.com/mattn/goveralls
 
 script:

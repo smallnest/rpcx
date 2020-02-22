@@ -28,17 +28,17 @@ install the basic features:
 `go get -u -v github.com/smallnest/rpcx/...`
 
 
-If you want to use `reuseport`、`quic`、`kcp` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
+If you want to use `ping`、`quic`、`kcp`、`utp` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
 
 ```sh
-go get -u -v -tags "reuseport quic kcp ping utp" github.com/smallnest/rpcx/...
+go get -u -v -tags "quic kcp ping utp" github.com/smallnest/rpcx/...
 ```
 
 **_tags_**:
 - **quic**: support quic transport
 - **kcp**: support kcp transport
 - **ping**: support network quality load balancing
-- **reuseport**: support reuseport
+- **utp**: support utp transport
 
 ## Features
 rpcx is a RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).

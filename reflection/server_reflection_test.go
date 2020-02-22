@@ -24,5 +24,5 @@ func TestReflection_Register(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pretty.Println(r.Services["PBArith"].String())
+	pretty.Println(r.Services["Arith"].String())
 }
