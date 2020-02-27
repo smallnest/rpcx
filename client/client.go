@@ -319,13 +319,6 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 		return ctx.Err()
 	case call := <-Done:
 		err = call.Error
-		meta := ctx.Value(share.ResMetaDataKey)
-		if meta != nil && len(call.ResMetadata) > 0 {
-			resMeta := meta.(map[string]string)
-			for k, v := range call.ResMetadata {
-				resMeta[k] = v
-			}
-		}
 	}
 
 	return err
