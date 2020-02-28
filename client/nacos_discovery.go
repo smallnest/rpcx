@@ -155,8 +155,20 @@ func (d *NacosDiscovery) watch() {
 		ServiceName: d.servicePath,
 		Clusters:    []string{d.Cluster},
 		SubscribeCallback: func(services []model.SubscribeService, err error) {
-			time.Sleep(3 * time.Second) // nacos 先发送消息才定时更新cache，所以我们这里延迟3秒再获取全量数据
-			d.fetch()
+			var pairs = make([]*KVPair, 0, len(services))
+			for _, inst := range services {
+				network := inst.Metadata["network"]
+				ip := inst.Ip
+				port := inst.Port
+				key := fmt.Sprintf("%s@%s:%d", network, ip, port)
+				pair := &KVPair{Key: key, Value: util.ConvertMap2String(inst.Metadata)}
+				if d.filter != nil && !d.filter(pair) {
+					continue
+				}
+				pairs = append(pairs, pair)
+			}
+			d.pairs = pairs
+
 			d.mu.Lock()
 			for _, ch := range d.chans {
 				ch := ch
