@@ -13,7 +13,7 @@ require (
 	github.com/buger/jsonparser v0.0.0-20191004114745-ee4c978eae7e // indirect
 	github.com/cenk/backoff v2.2.1+incompatible // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
-	github.com/coreos/etcd v3.3.17+incompatible // indirect
+	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/docker/libkv v0.2.1
 	github.com/edwingeng/doublejump v0.0.0-20190102103700-461a0155c7be
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
@@ -67,6 +67,6 @@ require (
 	golang.org/x/sys v0.0.0-20191128015809-6d18c012aee9 // indirect
 	golang.org/x/tools v0.0.0-20191031220737-6d8f1af9ccc0 // indirect
 	google.golang.org/genproto v0.0.0-20191028173616-919d9bdd9fe6 // indirect
-	google.golang.org/grpc v1.24.0 // indirect
+	google.golang.org/grpc v1.26.0 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
