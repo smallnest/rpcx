@@ -25,13 +25,13 @@ you can use other programming languages besides Go to access rpcx services.
 
 install the basic features:
 
-`go get -u -v github.com/smallnest/rpcx/...`
+`go get -v github.com/smallnest/rpcx/...`
 
 
 If you want to use `ping`、`quic`、`kcp`、`utp` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
 
 ```sh
-go get -u -v -tags "quic kcp ping utp" github.com/smallnest/rpcx/...
+go get -v -tags "quic kcp ping utp" github.com/smallnest/rpcx/...
 ```
 
 **_tags_**:
