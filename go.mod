@@ -80,7 +80,7 @@ require (
 	golang.org/x/tools v0.0.0-20200301222351-066e0c02454c // indirect
 	google.golang.org/appengine v1.6.5 // indirect
 	google.golang.org/genproto v0.0.0-20200228133532-8c2c7df3a383 // indirect
-	google.golang.org/grpc v1.27.1 // indirect
+	google.golang.org/grpc v1.26.0 // indirect
 	gopkg.in/ini.v1 v1.52.0 // indirect
 	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
