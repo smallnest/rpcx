@@ -47,7 +47,7 @@ require (
 	github.com/lestrrat/go-file-rotatelogs v0.0.0-20180223000712-d3151e2a480f // indirect
 	github.com/lestrrat/go-strftime v0.0.0-20180220042222-ba3bf9c1d042 // indirect
 	github.com/lucas-clemente/quic-go v0.15.0 // indirect
-	github.com/marten-seemann/quic-conn v0.0.0-20191204020628-6e719687462b
+	github.com/marten-seemann/quic-conn v0.0.0-20190827120552-a06e62da55b7
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/nacos-group/nacos-sdk-go v0.0.0-20191128082542-fe1b325b125c
 	github.com/opentracing/opentracing-go v1.1.0
