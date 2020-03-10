@@ -85,3 +85,5 @@ require (
 	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
+
+replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
