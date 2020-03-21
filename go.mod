@@ -19,16 +19,17 @@ require (
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
 	github.com/fatih/color v1.9.0
 	github.com/go-errors/errors v1.0.1 // indirect
-	github.com/gogo/protobuf v1.3.1
-	github.com/golang/protobuf v1.3.5
+	github.com/gogo/protobuf v1.2.0
+	github.com/golang/protobuf v1.3.2
 	github.com/grandcat/zeroconf v1.0.0
+	github.com/hashicorp/consul/api v1.4.0 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d
 	github.com/jehiah/go-strftime v0.0.0-20171201141054-1d33003b3869 // indirect
-	github.com/json-iterator/go v1.1.9
+	github.com/json-iterator/go v1.1.7
 	github.com/juju/ratelimit v1.0.1
-	github.com/julienschmidt/httprouter v1.3.0
+	github.com/julienschmidt/httprouter v1.2.0
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/klauspost/cpuid v1.2.3 // indirect
 	github.com/klauspost/reedsolomon v1.9.3 // indirect
@@ -43,8 +44,9 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 	github.com/rs/cors v1.7.0
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
+	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
-	github.com/smallnest/libkv-etcdv3-store v0.0.0-20191101045330-f92940446965
+	github.com/smallnest/libkv-etcdv3-store v1.1.1
 	github.com/smallnest/valkeyrie v0.0.0-20191030065038-13edeca3d026
 	github.com/soheilhy/cmux v0.1.4
 	github.com/tatsushid/go-fastping v0.0.0-20160109021039-d7bb493dee3e
