@@ -46,8 +46,8 @@ type service struct {
 }
 
 func isExported(name string) bool {
-	rune, _ := utf8.DecodeRuneInString(name)
-	return unicode.IsUpper(rune)
+	ch, _ := utf8.DecodeRuneInString(name)
+	return unicode.IsUpper(ch)
 }
 
 func isExportedOrBuiltinType(t reflect.Type) bool {
