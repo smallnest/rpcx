@@ -55,6 +55,8 @@ var (
 	StartSendRequestContextKey = &contextKey{"start-send-request"}
 	// TagContextKey is used to record extra info in handling services. Its value is a map[string]interface{}
 	TagContextKey = &contextKey{"service-tag"}
+	// HttpConnContextKey is used to store http connection.
+	HttpConnContextKey = &contextKey{"http-conn"}
 )
 
 // Server is rpcx server that use TCP or UDP.
