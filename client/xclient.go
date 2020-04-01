@@ -244,12 +244,16 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 	var client RPCClient
 	var needCallPlugin bool
 	c.mu.Lock()
+	defer c.mu.Unlock()
 	defer func() {
 		if needCallPlugin {
 			c.Plugins.DoClientConnected((client.(*Client)).Conn)
 		}
 	}()
-	defer c.mu.Unlock()
+
+	if c.isShutdown {
+		return nil, errors.New("this xclient is closed")
+	}
 
 	breaker, ok := c.breakers.Load(k)
 	if ok && !breaker.(Breaker).Ready() {
@@ -932,10 +936,9 @@ loop:
 
 // Close closes this client and its underlying connnections to services.
 func (c *xClient) Close() error {
-	c.isShutdown = true
-
 	var errs []error
 	c.mu.Lock()
+	c.isShutdown = true
 	for k, v := range c.cachedClient {
 		e := v.Close()
 		if e != nil {
