@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/rs/cors"
@@ -34,7 +35,7 @@ func (s *Server) jsonrpcHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conn := r.Context().Value(HttpConnContextKey).(net.Conn)
-	
+
 	ctx := context.WithValue(r.Context(), RemoteConnContextKey, conn)
 
 	if req.ID != nil {
@@ -54,6 +55,9 @@ func (s *Server) handleJSONRPCRequest(ctx context.Context, r *jsonrpcRequest, he
 	res.ID = r.ID
 
 	req := protocol.GetPooledMsg()
+	if req.Metadata == nil {
+		req.Metadata = make(map[string]string)
+	}
 
 	if r.ID == nil {
 		req.SetOneway(true)
@@ -73,11 +77,19 @@ func (s *Server) handleJSONRPCRequest(ctx context.Context, r *jsonrpcRequest, he
 	req.ServiceMethod = pathAndMethod[1]
 	req.Payload = *r.Params
 
+	// meta
+	meta := header.Get(XMeta)
+	if meta != "" {
+		metadata, _ := url.ParseQuery(meta)
+		for k, v := range metadata {
+			if len(v) > 0 {
+				req.Metadata[k] = v[0]
+			}
+		}
+	}
+
 	auth := header.Get("Authorization")
 	if auth != "" {
-		if req.Metadata == nil {
-			req.Metadata = make(map[string]string)
-		}
 		req.Metadata[share.AuthKey] = auth
 	}
 
@@ -205,17 +217,17 @@ func (s *Server) SetCORS(options *CORSOptions) {
 func (s *Server) startJSONRPC2(ln net.Listener) {
 	newServer := http.NewServeMux()
 	newServer.HandleFunc("/", s.jsonrpcHandler)
-	
-	srv := http.Server{ConnContext: func(ctx context.Context, c net.Conn) context.Context{
+
+	srv := http.Server{ConnContext: func(ctx context.Context, c net.Conn) context.Context {
 		return context.WithValue(ctx, HttpConnContextKey, c)
 	}}
-	
+
 	if s.corsOptions != nil {
 		opt := cors.Options(*s.corsOptions)
 		c := cors.New(opt)
 		mux := c.Handler(newServer)
 		srv.Handler = mux
-		
+
 		go srv.Serve(ln)
 	} else {
 		srv.Handler = newServer
