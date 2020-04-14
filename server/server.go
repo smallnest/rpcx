@@ -698,6 +698,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		// wait all in-processing requests finish.
 		ticker := time.NewTicker(shutdownPollInterval)
 		defer ticker.Stop()
+	outer:
 		for {
 			if s.checkProcessMsg() {
 				break
@@ -705,7 +706,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 			select {
 			case <-ctx.Done():
 				err = ctx.Err()
-				break
+				break outer
 			case <-ticker.C:
 			}
 		}
@@ -736,10 +737,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 func (s *Server) checkProcessMsg() bool {
 	size := atomic.LoadInt32(&s.handlerMsgNum)
 	log.Info("need handle in-processing msg size:", size)
-	if size == 0 {
-		return true
-	}
-	return false
+	return size == 0
 }
 
 func (s *Server) closeDoneChanLocked() {

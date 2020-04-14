@@ -81,7 +81,7 @@ func (p *NacosRegisterPlugin) Stop() error {
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
 func (p *NacosRegisterPlugin) Register(name string, rcvr interface{}, metadata string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		return errors.New("Register service `name` can't be empty")
 	}
 
@@ -122,11 +122,15 @@ func (p *NacosRegisterPlugin) RegisterFunction(serviceName, fname string, fn int
 }
 
 func (p *NacosRegisterPlugin) Unregister(name string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		return errors.New("Unregister service `name` can't be empty")
 	}
 
 	_, ip, port, err := util.ParseRpcxAddress(p.ServiceAddress)
+	if err != nil {
+		log.Errorf("wrong address %s: %v", p.ServiceAddress, err)
+		return err
+	}
 
 	inst := vo.DeregisterInstanceParam{
 		Ip:          ip,

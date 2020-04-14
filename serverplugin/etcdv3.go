@@ -155,7 +155,7 @@ func (p *EtcdV3RegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) 
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
 func (p *EtcdV3RegisterPlugin) Register(name string, rcvr interface{}, metadata string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return
 	}
@@ -206,7 +206,7 @@ func (p *EtcdV3RegisterPlugin) RegisterFunction(serviceName, fname string, fn in
 }
 
 func (p *EtcdV3RegisterPlugin) Unregister(name string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return
 	}

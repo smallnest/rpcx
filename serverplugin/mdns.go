@@ -146,7 +146,7 @@ func (p *MDNSRegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
 func (p *MDNSRegisterPlugin) Register(name string, rcvr interface{}, metadata string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return
 	}
@@ -175,7 +175,7 @@ func (p *MDNSRegisterPlugin) RegisterFunction(serviceName, fname string, fn inte
 }
 
 func (p *MDNSRegisterPlugin) Unregister(name string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return
 	}

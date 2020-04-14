@@ -155,7 +155,7 @@ func (p *RedisRegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
 func (p *RedisRegisterPlugin) Register(name string, rcvr interface{}, metadata string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return
 	}
@@ -202,7 +202,7 @@ func (p *RedisRegisterPlugin) Register(name string, rcvr interface{}, metadata s
 }
 
 func (p *RedisRegisterPlugin) Unregister(name string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return
 	}

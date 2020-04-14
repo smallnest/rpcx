@@ -13,6 +13,7 @@ import (
 
 	"github.com/ChimeraCoder/gojson"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/smallnest/rpcx/log"
 )
 
 var typeOfError = reflect.TypeOf((*error)(nil)).Elem()
@@ -188,7 +189,7 @@ func generateTypeDefination(name, pkg string, jsonValue string) string {
 	r := strings.NewReader(jsonValue)
 	output, err := gojson.Generate(r, gojson.ParseJson, name, pkg, nil, false, false)
 	if err != nil {
-		panic(err)
+		log.Errorf("failed to generate json: %v", err)
 		return ""
 	}
 	rt := strings.ReplaceAll(string(output), "``", "")
