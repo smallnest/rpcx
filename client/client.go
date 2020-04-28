@@ -15,9 +15,9 @@ import (
 
 	opentracing "github.com/opentracing/opentracing-go"
 	circuit "github.com/rubyist/circuitbreaker"
-	"github.com/smallnest/rpcx/log"
-	"github.com/smallnest/rpcx/protocol"
-	"github.com/smallnest/rpcx/share"
+	"github.com/smallnest/rpcx/v5/log"
+	"github.com/smallnest/rpcx/v5/protocol"
+	"github.com/smallnest/rpcx/v5/share"
 	"go.opencensus.io/trace"
 )
 
