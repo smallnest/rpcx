@@ -47,6 +47,7 @@ require (
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/smallnest/libkv-etcdv3-store v1.1.1
+	github.com/smallnest/rpcx/v5 v5.3.0
 	github.com/smallnest/valkeyrie v0.0.0-20191030065038-13edeca3d026
 	github.com/soheilhy/cmux v0.1.4
 	github.com/tatsushid/go-fastping v0.0.0-20160109021039-d7bb493dee3e

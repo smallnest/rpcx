@@ -8,8 +8,8 @@ import (
 	"time"
 
 	testutils "github.com/smallnest/rpcx/_testutils"
-	"github.com/smallnest/rpcx/protocol"
-	"github.com/smallnest/rpcx/share"
+	"github.com/smallnest/rpcx/v5/protocol"
+	"github.com/smallnest/rpcx/v5/share"
 )
 
 type Args struct {
@@ -55,7 +55,10 @@ func TestShutdownHook(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	s.Shutdown(ctx)
 	cancel()
-	cancel1()
+	if cancel1 != nil {
+		cancel1()
+	}
+
 }
 
 func TestHandleRequest(t *testing.T) {

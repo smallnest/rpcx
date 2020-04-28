@@ -327,6 +327,8 @@ github.com/sirupsen/logrus v1.2.0 h1:juTguoYk5qI21pwyTXY3B3Y5cOTH3ZUyZCg1v/mihuo
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/smallnest/libkv-etcdv3-store v1.1.1 h1:Y5qRz0xgFuNLv6Cc4L6yxO5rst2BSklYxKD00Ir3XmA=
 github.com/smallnest/libkv-etcdv3-store v1.1.1/go.mod h1:VAzE2+HQwhZZanve7ObW+IFWdK0WMVoQhxmyuvLCfog=
+github.com/smallnest/rpcx/v5 v5.3.0 h1:Ubh937UYV5S2FXOz/o63RfzX/Q0KmSmJT4vq6jxxXk8=
+github.com/smallnest/rpcx/v5 v5.3.0/go.mod h1:009obAQxGzBJGwYJZpkBZA+xSghQO2/sgyO9Edb3C9E=
 github.com/smallnest/valkeyrie v0.0.0-20191030065038-13edeca3d026 h1:2JZDSZUojMiRtgWzSyO7lZSxCKfTsItI2ilEGTBuSNc=
 github.com/smallnest/valkeyrie v0.0.0-20191030065038-13edeca3d026/go.mod h1:ixoXqhXnCjUFM17O2cOVoJ98KzDnCb2+iGtJDmtC/qs=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d h1:zE9ykElWQ6/NYmHa3jpm/yHnI4xSofP+UP6SpjHcSeM=
