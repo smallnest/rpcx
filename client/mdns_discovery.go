@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/grandcat/zeroconf"
-	"github.com/smallnest/rpcx/v5/log"
+	"github.com/smallnest/rpcx/log"
 )
 
 type serviceMeta struct {
