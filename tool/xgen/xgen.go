@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/smallnest/rpcx/v5/tool/xgen/parser"
+	"github.com/smallnest/rpcx/tool/xgen/parser"
 )
 
 var (
