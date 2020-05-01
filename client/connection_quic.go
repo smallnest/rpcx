@@ -6,7 +6,9 @@ import (
 	"crypto/tls"
 	"net"
 
-	quicconn "github.com/marten-seemann/quic-conn"
+	"github.com/lucas-clemente/quic-go"
+
+	"github.com/smallnest/quick"
 )
 
 func newDirectQuicConn(c *Client, network, address string) (net.Conn, error) {
@@ -15,5 +17,13 @@ func newDirectQuicConn(c *Client, network, address string) (net.Conn, error) {
 		tlsConf = &tls.Config{InsecureSkipVerify: true}
 	}
 
-	return quicconn.Dial(address, tlsConf)
+	if len(tlsConf.NextProtos) == 0 {
+		tlsConf.NextProtos = []string{"rpcx"}
+	}
+
+	quicConfig := &quic.Config{
+		KeepAlive: c.option.Heartbeat,
+	}
+
+	return quick.Dial(address, tlsConf, quicConfig)
 }
