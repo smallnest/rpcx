@@ -11,6 +11,9 @@ import (
 )
 
 var (
+	bufferPool = util.NewLimitedPool(512, 4096)
+)
+var (
 	// Compressors are compressors supported by rpcx. You can add customized compressor in Compressors.
 	Compressors = map[CompressType]Compressor{
 		None: &RawDataCompressor{},
@@ -224,6 +227,12 @@ func (m Message) Clone() *Message {
 
 // Encode encodes messages.
 func (m Message) Encode() []byte {
+	data := m.EncodeSlicePointer()
+	return *data
+}
+
+// EncodeSlicePointer encodes messages as a byte slice poiter we we can use pool to improve.
+func (m Message) EncodeSlicePointer() *[]byte {
 	meta := encodeMetadata(m.Metadata)
 
 	spL := len(m.ServicePath)
@@ -252,25 +261,30 @@ func (m Message) Encode() []byte {
 	payLoadStart := metaStart + (4 + len(meta))
 	l := 12 + 4 + totalL
 
-	data := make([]byte, l)
-	copy(data, m.Header[:])
+	data := bufferPool.Get(l)
+	copy(*data, m.Header[:])
 
 	//totalLen
-	binary.BigEndian.PutUint32(data[12:16], uint32(totalL))
+	binary.BigEndian.PutUint32((*data)[12:16], uint32(totalL))
 
-	binary.BigEndian.PutUint32(data[16:20], uint32(spL))
-	copy(data[20:20+spL], util.StringToSliceByte(m.ServicePath))
+	binary.BigEndian.PutUint32((*data)[16:20], uint32(spL))
+	copy((*data)[20:20+spL], util.StringToSliceByte(m.ServicePath))
 
-	binary.BigEndian.PutUint32(data[20+spL:24+spL], uint32(smL))
-	copy(data[24+spL:metaStart], util.StringToSliceByte(m.ServiceMethod))
+	binary.BigEndian.PutUint32((*data)[20+spL:24+spL], uint32(smL))
+	copy((*data)[24+spL:metaStart], util.StringToSliceByte(m.ServiceMethod))
 
-	binary.BigEndian.PutUint32(data[metaStart:metaStart+4], uint32(len(meta)))
-	copy(data[metaStart+4:], meta)
+	binary.BigEndian.PutUint32((*data)[metaStart:metaStart+4], uint32(len(meta)))
+	copy((*data)[metaStart+4:], meta)
 
-	binary.BigEndian.PutUint32(data[payLoadStart:payLoadStart+4], uint32(len(payload)))
-	copy(data[payLoadStart+4:], payload)
+	binary.BigEndian.PutUint32((*data)[payLoadStart:payLoadStart+4], uint32(len(payload)))
+	copy((*data)[payLoadStart+4:], payload)
 
 	return data
+}
+
+// PutData puts the byte slice into pool.
+func PutData(data *[]byte) {
+	bufferPool.Put(data)
 }
 
 // WriteTo writes message to writers.

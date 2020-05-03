@@ -156,8 +156,10 @@ func (s *Server) SendMessage(conn net.Conn, servicePath, serviceMethod string, m
 	req.Metadata = metadata
 	req.Payload = data
 
-	reqData := req.Encode()
-	_, err := conn.Write(reqData)
+	b := req.EncodeSlicePointer()
+	_, err := conn.Write(*b)
+	protocol.PutData(b)
+
 	s.Plugins.DoPostWriteRequest(ctx, req, err)
 	protocol.FreeMsg(req)
 	return err
@@ -380,10 +382,10 @@ func (s *Server) serveConn(conn net.Conn) {
 					res.SetCompressType(req.CompressType())
 				}
 				handleError(res, err)
-				data := res.Encode()
-
 				s.Plugins.DoPreWriteResponse(ctx, req, res)
-				conn.Write(data)
+				data := res.EncodeSlicePointer()
+				_, err := conn.Write(*data)
+				protocol.PutData(data)
 				s.Plugins.DoPostWriteResponse(ctx, req, res, err)
 				protocol.FreeMsg(res)
 			} else {
@@ -403,8 +405,9 @@ func (s *Server) serveConn(conn net.Conn) {
 
 			if req.IsHeartbeat() {
 				req.SetMessageType(protocol.Response)
-				data := req.Encode()
-				conn.Write(data)
+				data := req.EncodeSlicePointer()
+				conn.Write(*data)
+				protocol.PutData(data)
 				return
 			}
 
@@ -438,9 +441,9 @@ func (s *Server) serveConn(conn net.Conn) {
 				if len(res.Payload) > 1024 && req.CompressType() != protocol.None {
 					res.SetCompressType(req.CompressType())
 				}
-				data := res.Encode()
-				conn.Write(data)
-				//res.WriteTo(conn)
+				data := res.EncodeSlicePointer()
+				conn.Write(*data)
+				protocol.PutData(data)
 			}
 			s.Plugins.DoPostWriteResponse(newCtx, req, res, err)
 
