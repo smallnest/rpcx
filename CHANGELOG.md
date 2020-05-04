@@ -39,7 +39,7 @@
 
 ## 3.1
 
-- Add http gateway: https://github.com/rpcx-ecosystem/rpcx-gateway
+- Add http gateway: https://github.com/rpcxio/rpcx-gateway
 - Add direct http invoke
 - Add bidirectional communication 
 - Add xgen tool to generate codes for services automatically
@@ -52,6 +52,6 @@ fix bugs.
 - Rewrite rpcx. It implements its protocol and won't implemented based on wrapper of go standard rpc lib
 - Add go tags for pluggable plugins
 - Add English document: https://github.com/smallnest/rpcx-programming
-- Add rpcx 3.0 examples: https://github.com/rpcx-ecosystem/rpcx-examples3
+- Add rpcx 3.0 examples: https://github.com/rpcxio/rpcx-examples
 
 rpcx 3.0 is not compatible with rpcx 2.0 and below
