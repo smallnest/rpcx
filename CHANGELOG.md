@@ -3,6 +3,12 @@
 ## 6.0 (developing)
 
 - support reflection
+- add kubernetes config example
+- improve nacos support
+- improve message.Encode performance
+- re-register services in etcd v3
+- avoid duplicated client creation
+- add SelectNodePlugin that can interrupt the Select method
 
 ## 5.0 
 
