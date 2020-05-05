@@ -233,7 +233,11 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 // selects a client from candidates base on c.selectMode
 func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, RPCClient, error) {
 	c.mu.Lock()
-	k := c.selector.Select(ctx, servicePath, serviceMethod, args)
+	var fn = c.selector.Select
+	if c.Plugins != nil {
+		fn = c.Plugins.DoWrapSelect(fn)
+	}
+	k := fn(ctx, servicePath, serviceMethod, args)
 	c.mu.Unlock()
 	if k == "" {
 		return "", nil, ErrXClientNoServer
