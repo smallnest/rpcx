@@ -116,9 +116,6 @@ func (p *EtcdRegisterPlugin) Start() error {
 
 // Stop unregister all services.
 func (p *EtcdRegisterPlugin) Stop() error {
-	close(p.dying)
-	<-p.done
-
 	if p.kv == nil {
 		kv, err := libkv.NewStore(store.ETCD, p.EtcdServers, p.Options)
 		if err != nil {
@@ -140,6 +137,9 @@ func (p *EtcdRegisterPlugin) Stop() error {
 			log.Infof("delete path %s", nodePath, err)
 		}
 	}
+
+	close(p.dying)
+	<-p.done
 	return nil
 }
 

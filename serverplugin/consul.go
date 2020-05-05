@@ -120,9 +120,6 @@ func (p *ConsulRegisterPlugin) Start() error {
 
 // Stop unregister all services.
 func (p *ConsulRegisterPlugin) Stop() error {
-	close(p.dying)
-	<-p.done
-
 	if p.kv == nil {
 		kv, err := libkv.NewStore(store.CONSUL, p.ConsulServers, p.Options)
 		if err != nil {
@@ -148,6 +145,9 @@ func (p *ConsulRegisterPlugin) Stop() error {
 			log.Infof("delete path %s", nodePath, err)
 		}
 	}
+
+	close(p.dying)
+	<-p.done
 	return nil
 }
 

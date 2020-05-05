@@ -102,10 +102,11 @@ func (p *MDNSRegisterPlugin) Start() error {
 
 // Stop unregister all services.
 func (p *MDNSRegisterPlugin) Stop() error {
+	p.server.Shutdown()
+
 	close(p.dying)
 	<-p.done
 
-	p.server.Shutdown()
 	return nil
 }
 func (p *MDNSRegisterPlugin) initMDNS() {

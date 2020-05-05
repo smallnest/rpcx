@@ -120,9 +120,6 @@ func (p *ZooKeeperRegisterPlugin) Start() error {
 
 // Stop unregister all services.
 func (p *ZooKeeperRegisterPlugin) Stop() error {
-	close(p.dying)
-	<-p.done
-
 	if p.kv == nil {
 		kv, err := libkv.NewStore(store.ZK, p.ZooKeeperServers, p.Options)
 		if err != nil {
@@ -148,6 +145,9 @@ func (p *ZooKeeperRegisterPlugin) Stop() error {
 			log.Infof("delete zk path %s", nodePath, err)
 		}
 	}
+
+	close(p.dying)
+	<-p.done
 
 	return nil
 }

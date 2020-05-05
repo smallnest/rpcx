@@ -56,9 +56,6 @@ func (p *NacosRegisterPlugin) Start() error {
 
 // Stop unregister all services.
 func (p *NacosRegisterPlugin) Stop() error {
-	close(p.dying)
-	<-p.done
-
 	_, ip, port, _ := util.ParseRpcxAddress(p.ServiceAddress)
 
 	for _, name := range p.Services {
@@ -75,6 +72,10 @@ func (p *NacosRegisterPlugin) Stop() error {
 			log.Errorf("faield to deregister %s: %v", name, err)
 		}
 	}
+
+	close(p.dying)
+	<-p.done
+
 	return nil
 }
 

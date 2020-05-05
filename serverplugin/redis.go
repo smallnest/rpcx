@@ -116,9 +116,6 @@ func (p *RedisRegisterPlugin) Start() error {
 
 // Stop unregister all services.
 func (p *RedisRegisterPlugin) Stop() error {
-	close(p.dying)
-	<-p.done
-
 	if p.kv == nil {
 		kv, err := valkeyrie.NewStore(store.REDIS, p.RedisServers, p.Options)
 		if err != nil {
@@ -140,6 +137,10 @@ func (p *RedisRegisterPlugin) Stop() error {
 			log.Infof("delete path %s", nodePath, err)
 		}
 	}
+
+	close(p.dying)
+	<-p.done
+
 	return nil
 }
 
