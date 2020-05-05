@@ -60,4 +60,5 @@ require (
 	github.com/xtaci/kcp-go v5.4.20+incompatible
 	github.com/xtaci/lossyconn v0.0.0-20200209145036-adba10fffc37 // indirect
 	go.opencensus.io v0.22.3
+	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
 )

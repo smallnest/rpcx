@@ -18,6 +18,7 @@ import (
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/serverplugin"
 	"github.com/smallnest/rpcx/share"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -85,6 +86,8 @@ type xClient struct {
 	servers   map[string]string
 	discovery ServiceDiscovery
 	selector  Selector
+
+	slGroup singleflight.Group
 
 	isShutdown bool
 
@@ -275,22 +278,15 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 		if network == "inprocess" {
 			client = InprocessClient
 		} else {
-			client = &Client{
-				option:  c.option,
-				Plugins: c.Plugins,
-			}
-
-			var breaker interface{}
-			if c.option.GenBreaker != nil {
-				breaker, _ = c.breakers.LoadOrStore(k, c.option.GenBreaker())
-			}
-			err := client.Connect(network, addr)
+			generatedClient, err, _ := c.slGroup.Do(k, func() (interface{}, error) {
+				return c.generateClient(k, network, addr)
+			})
+			c.slGroup.Forget(k)
 			if err != nil {
-				if breaker != nil {
-					breaker.(Breaker).Fail()
-				}
 				return nil, err
 			}
+
+			client = generatedClient.(RPCClient)
 			if c.Plugins != nil {
 				needCallPlugin = true
 			}
@@ -302,6 +298,27 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 	}
 
 	return client, nil
+}
+
+func (c *xClient) generateClient(k, network, addr string) (client RPCClient, err error) {
+
+	client = &Client{
+		option:  c.option,
+		Plugins: c.Plugins,
+	}
+
+	var breaker interface{}
+	if c.option.GenBreaker != nil {
+		breaker, _ = c.breakers.LoadOrStore(k, c.option.GenBreaker())
+	}
+	err = client.Connect(network, addr)
+	if err != nil {
+		if breaker != nil {
+			breaker.(Breaker).Fail()
+		}
+		return nil, err
+	}
+	return client, err
 }
 
 func (c *xClient) getCachedClientWithoutLock(k string) (RPCClient, error) {
