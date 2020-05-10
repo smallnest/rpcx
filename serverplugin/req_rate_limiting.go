@@ -30,8 +30,8 @@ func NewReqRateLimitingPlugin(fillInterval time.Duration, capacity int64, block 
 	}
 }
 
-// DoPreReadRequest can limit request processing.
-func (plugin *ReqRateLimitingPlugin) DoPreReadRequest(ctx context.Context) error {
+// PreReadRequest can limit request processing.
+func (plugin *ReqRateLimitingPlugin) PreReadRequest(ctx context.Context) error {
 	if plugin.block {
 		plugin.bucket.Wait(1)
 		return nil
