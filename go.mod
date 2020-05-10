@@ -49,6 +49,7 @@ require (
 	github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602
 	github.com/smallnest/valkeyrie v0.0.0-20191030065038-13edeca3d026
 	github.com/soheilhy/cmux v0.1.4
+	github.com/syndtr/goleveldb v1.0.0
 	github.com/tatsushid/go-fastping v0.0.0-20160109021039-d7bb493dee3e
 	github.com/tebeka/strftime v0.1.3 // indirect
 	github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161 // indirect
