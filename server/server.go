@@ -529,7 +529,7 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 
 	replyv := argsReplyPools.Get(mtype.ReplyType)
 
-	argv, err = s.Plugins.DoPreCall(ctx, argv)
+	argv, err = s.Plugins.DoPreCall(ctx, serviceName, methodName, argv)
 	if err != nil {
 		argsReplyPools.Put(mtype.ReplyType, replyv)
 		return handleError(res, err)
@@ -542,7 +542,7 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	}
 
 	if err == nil {
-		replyv, err = s.Plugins.DoPostCall(ctx, argv, replyv)
+		replyv, err = s.Plugins.DoPostCall(ctx, serviceName, methodName, argv, replyv)
 	}
 
 	argsReplyPools.Put(mtype.ArgType, argv)

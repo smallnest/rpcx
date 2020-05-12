@@ -26,8 +26,8 @@ type PluginContainer interface {
 	DoPostReadRequest(ctx context.Context, r *protocol.Message, e error) error
 
 	DoPreHandleRequest(ctx context.Context, req *protocol.Message) error
-	DoPreCall(ctx context.Context, args interface{}) (interface{}, error)
-	DoPostCall(ctx context.Context, args, reply interface{}) (interface{}, error)
+	DoPreCall(ctx context.Context, serviceName, methodName string, args interface{}) (interface{}, error)
+	DoPostCall(ctx context.Context, serviceName, methodName string, args, reply interface{}) (interface{}, error)
 
 	DoPreWriteResponse(context.Context, *protocol.Message, *protocol.Message) error
 	DoPostWriteResponse(context.Context, *protocol.Message, *protocol.Message, error) error
@@ -80,11 +80,11 @@ type (
 	}
 
 	PreCallPlugin interface {
-		PreCall(ctx context.Context, args interface{}) (interface{}, error)
+		PreCall(ctx context.Context, serviceName, methodName string, args interface{}) (interface{}, error)
 	}
 
 	PostCallPlugin interface {
-		PostCall(ctx context.Context, args, reply interface{}) (interface{}, error)
+		PostCall(ctx context.Context, serviceName, methodName string, args, reply interface{}) (interface{}, error)
 	}
 
 	//PreWriteResponsePlugin represents .
@@ -264,11 +264,11 @@ func (p *pluginContainer) DoPreHandleRequest(ctx context.Context, r *protocol.Me
 }
 
 // DoPreCall invokes PreCallPlugin plugin.
-func (p *pluginContainer) DoPreCall(ctx context.Context, args interface{}) (interface{}, error) {
+func (p *pluginContainer) DoPreCall(ctx context.Context, serviceName, methodName string, args interface{}) (interface{}, error) {
 	var err error
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PreCallPlugin); ok {
-			args, err = plugin.PreCall(ctx, args)
+			args, err = plugin.PreCall(ctx, serviceName, methodName, args)
 			if err != nil {
 				return args, err
 			}
@@ -279,11 +279,11 @@ func (p *pluginContainer) DoPreCall(ctx context.Context, args interface{}) (inte
 }
 
 // DoPostCall invokes PostCallPlugin plugin.
-func (p *pluginContainer) DoPostCall(ctx context.Context, args, reply interface{}) (interface{}, error) {
+func (p *pluginContainer) DoPostCall(ctx context.Context, serviceName, methodName string, args, reply interface{}) (interface{}, error) {
 	var err error
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PostCallPlugin); ok {
-			reply, err = plugin.PostCall(ctx, args, reply)
+			reply, err = plugin.PostCall(ctx, serviceName, methodName, args, reply)
 			if err != nil {
 				return reply, err
 			}
