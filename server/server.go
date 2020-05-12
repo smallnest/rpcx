@@ -529,10 +529,20 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 
 	replyv := argsReplyPools.Get(mtype.ReplyType)
 
+	argv, err = s.Plugins.DoPreCall(ctx, argv)
+	if err != nil {
+		argsReplyPools.Put(mtype.ReplyType, replyv)
+		return handleError(res, err)
+	}
+
 	if mtype.ArgType.Kind() != reflect.Ptr {
 		err = service.call(ctx, mtype, reflect.ValueOf(argv).Elem(), reflect.ValueOf(replyv))
 	} else {
 		err = service.call(ctx, mtype, reflect.ValueOf(argv), reflect.ValueOf(replyv))
+	}
+
+	if err == nil {
+		replyv, err = s.Plugins.DoPostCall(ctx, argv, replyv)
 	}
 
 	argsReplyPools.Put(mtype.ArgType, argv)

@@ -26,6 +26,8 @@ type PluginContainer interface {
 	DoPostReadRequest(ctx context.Context, r *protocol.Message, e error) error
 
 	DoPreHandleRequest(ctx context.Context, req *protocol.Message) error
+	DoPreCall(ctx context.Context, args interface{}) (interface{}, error)
+	DoPostCall(ctx context.Context, args, reply interface{}) (interface{}, error)
 
 	DoPreWriteResponse(context.Context, *protocol.Message, *protocol.Message) error
 	DoPostWriteResponse(context.Context, *protocol.Message, *protocol.Message, error) error
@@ -75,6 +77,14 @@ type (
 	//PreHandleRequestPlugin represents .
 	PreHandleRequestPlugin interface {
 		PreHandleRequest(ctx context.Context, r *protocol.Message) error
+	}
+
+	PreCallPlugin interface {
+		PreCall(ctx context.Context, args interface{}) (interface{}, error)
+	}
+
+	PostCallPlugin interface {
+		PostCall(ctx context.Context, args, reply interface{}) (interface{}, error)
 	}
 
 	//PreWriteResponsePlugin represents .
@@ -251,6 +261,36 @@ func (p *pluginContainer) DoPreHandleRequest(ctx context.Context, r *protocol.Me
 	}
 
 	return nil
+}
+
+// DoPreCall invokes PreCallPlugin plugin.
+func (p *pluginContainer) DoPreCall(ctx context.Context, args interface{}) (interface{}, error) {
+	var err error
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(PreCallPlugin); ok {
+			args, err = plugin.PreCall(ctx, args)
+			if err != nil {
+				return args, err
+			}
+		}
+	}
+
+	return args, err
+}
+
+// DoPostCall invokes PostCallPlugin plugin.
+func (p *pluginContainer) DoPostCall(ctx context.Context, args, reply interface{}) (interface{}, error) {
+	var err error
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(PostCallPlugin); ok {
+			reply, err = plugin.PostCall(ctx, args, reply)
+			if err != nil {
+				return reply, err
+			}
+		}
+	}
+
+	return reply, err
 }
 
 // DoPreWriteResponse invokes PreWriteResponse plugin.
