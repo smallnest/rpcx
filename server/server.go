@@ -601,7 +601,11 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 
 	replyv := argsReplyPools.Get(mtype.ReplyType)
 
-	err = service.callForFunction(ctx, mtype, reflect.ValueOf(argv), reflect.ValueOf(replyv))
+	if mtype.ArgType.Kind() != reflect.Ptr {
+		err = service.callForFunction(ctx, mtype, reflect.ValueOf(argv).Elem(), reflect.ValueOf(replyv))
+	} else {
+		err = service.callForFunction(ctx, mtype, reflect.ValueOf(argv), reflect.ValueOf(replyv))
+	}
 
 	argsReplyPools.Put(mtype.ArgType, argv)
 
