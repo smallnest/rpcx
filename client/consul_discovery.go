@@ -144,31 +144,9 @@ func (d *ConsulDiscovery) watch() {
 
 		retry := d.RetriesAfterWatchFailed
 		for d.RetriesAfterWatchFailed < 0 || retry >= 0 {
-			c, err = d.kv.WatchTree(d.basePath, nil)
-			if err != nil {
-				if d.RetriesAfterWatchFailed > 0 {
-					retry--
-				}
-				if tempDelay == 0 {
-					tempDelay = 1 * time.Second
-				} else {
-					tempDelay *= 2
-				}
-				if max := 30 * time.Second; tempDelay > max {
-					tempDelay = max
-				}
-				log.Warnf("can not watchtree (with retry %d, sleep %v): %s: %v", retry, tempDelay, d.basePath, err)
-				time.Sleep(tempDelay)
-				continue
-			}
+			c, _ = d.kv.WatchTree(d.basePath, nil)
 			break
 		}
-
-		if err != nil {
-			log.Errorf("can't watch %s: %v", d.basePath, err)
-			return
-		}
-
 		prefix := d.basePath + "/"
 
 	readChanges:
@@ -192,7 +170,7 @@ func (d *ConsulDiscovery) watch() {
 					}
 					log.Warnf("can not watchtree (with retry %d, sleep %v): %s: %v", retry, tempDelay, d.basePath, err)
 					time.Sleep(tempDelay)
-					continue
+					break readChanges
 				}
 				if ps == nil {
 					break readChanges
