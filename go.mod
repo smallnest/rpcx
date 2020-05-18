@@ -21,6 +21,7 @@ require (
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/gogo/protobuf v1.2.0
 	github.com/golang/protobuf v1.3.2
+	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/hashicorp/consul/api v1.4.0 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
@@ -38,6 +39,7 @@ require (
 	github.com/lestrrat/go-file-rotatelogs v0.0.0-20180223000712-d3151e2a480f // indirect
 	github.com/lestrrat/go-strftime v0.0.0-20180220042222-ba3bf9c1d042 // indirect
 	github.com/marten-seemann/quic-conn v0.0.0-20191204020628-6e719687462b
+	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/nacos-group/nacos-sdk-go v0.0.0-20191128082542-fe1b325b125c
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/peterbourgon/g2s v0.0.0-20170223122336-d4e7ad98afea // indirect
@@ -60,4 +62,5 @@ require (
 	github.com/xtaci/kcp-go v5.4.20+incompatible
 	github.com/xtaci/lossyconn v0.0.0-20200209145036-adba10fffc37 // indirect
 	go.opencensus.io v0.22.3
+	google.golang.org/appengine v1.4.0 // indirect
 )

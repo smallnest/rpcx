@@ -177,7 +177,23 @@ func (d *ConsulDiscovery) watch() {
 			case <-d.stopCh:
 				log.Info("discovery has been closed")
 				return
-			case ps := <-c:
+			case ps, isClosed := <-c:
+				if isClosed {
+					if d.RetriesAfterWatchFailed > 0 {
+						retry--
+					}
+					if tempDelay == 0 {
+						tempDelay = 1 * time.Second
+					} else {
+						tempDelay *= 2
+					}
+					if max := 30 * time.Second; tempDelay > max {
+						tempDelay = max
+					}
+					log.Warnf("can not watchtree (with retry %d, sleep %v): %s: %v", retry, tempDelay, d.basePath, err)
+					time.Sleep(tempDelay)
+					continue
+				}
 				if ps == nil {
 					break readChanges
 				}
