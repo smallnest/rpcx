@@ -158,17 +158,20 @@ func testSendRaw(t *testing.T, client *Client, seq uint64, x, y int32, wg *sync.
 	rpcxReq.Payload = data
 	_, reply, err := client.SendRaw(context.Background(), rpcxReq)
 	if err != nil {
-		t.Fatalf("failed to call SendRaw: %v", err)
+		t.Errorf("failed to call SendRaw: %v", err)
+		return
 	}
 
 	pbReply := &testutils.ProtoReply{}
 	err = pbReply.Unmarshal(reply)
 	if err != nil {
-		t.Fatalf("failed to unmarshal reply: %v", err)
+		t.Errorf("failed to unmarshal reply: %v", err)
+		return
 	}
 
 	if pbReply.C != x*y {
-		t.Fatalf("expect %d but got %d", x*y, pbReply.C)
+		t.Errorf("expect %d but got %d", x*y, pbReply.C)
+		return
 	}
 }
 

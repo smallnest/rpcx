@@ -14,7 +14,6 @@ type OneClientPool struct {
 	index      uint64
 	oneclients []*OneClient
 
-	servicePath       string
 	failMode          FailMode
 	selectMode        SelectMode
 	discovery         ServiceDiscovery

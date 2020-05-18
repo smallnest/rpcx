@@ -11,6 +11,9 @@ import (
 )
 
 var (
+	bufferPool = util.NewLimitedPool(512, 4096)
+)
+var (
 	// Compressors are compressors supported by rpcx. You can add customized compressor in Compressors.
 	Compressors = map[CompressType]Compressor{
 		None: &RawDataCompressor{},
@@ -224,6 +227,12 @@ func (m Message) Clone() *Message {
 
 // Encode encodes messages.
 func (m Message) Encode() []byte {
+	data := m.EncodeSlicePointer()
+	return *data
+}
+
+// EncodeSlicePointer encodes messages as a byte slice poiter we we can use pool to improve.
+func (m Message) EncodeSlicePointer() *[]byte {
 	meta := encodeMetadata(m.Metadata)
 
 	spL := len(m.ServicePath)
@@ -252,32 +261,38 @@ func (m Message) Encode() []byte {
 	payLoadStart := metaStart + (4 + len(meta))
 	l := 12 + 4 + totalL
 
-	data := make([]byte, l)
-	copy(data, m.Header[:])
+	data := bufferPool.Get(l)
+	copy(*data, m.Header[:])
 
 	//totalLen
-	binary.BigEndian.PutUint32(data[12:16], uint32(totalL))
+	binary.BigEndian.PutUint32((*data)[12:16], uint32(totalL))
 
-	binary.BigEndian.PutUint32(data[16:20], uint32(spL))
-	copy(data[20:20+spL], util.StringToSliceByte(m.ServicePath))
+	binary.BigEndian.PutUint32((*data)[16:20], uint32(spL))
+	copy((*data)[20:20+spL], util.StringToSliceByte(m.ServicePath))
 
-	binary.BigEndian.PutUint32(data[20+spL:24+spL], uint32(smL))
-	copy(data[24+spL:metaStart], util.StringToSliceByte(m.ServiceMethod))
+	binary.BigEndian.PutUint32((*data)[20+spL:24+spL], uint32(smL))
+	copy((*data)[24+spL:metaStart], util.StringToSliceByte(m.ServiceMethod))
 
-	binary.BigEndian.PutUint32(data[metaStart:metaStart+4], uint32(len(meta)))
-	copy(data[metaStart+4:], meta)
+	binary.BigEndian.PutUint32((*data)[metaStart:metaStart+4], uint32(len(meta)))
+	copy((*data)[metaStart+4:], meta)
 
-	binary.BigEndian.PutUint32(data[payLoadStart:payLoadStart+4], uint32(len(payload)))
-	copy(data[payLoadStart+4:], payload)
+	binary.BigEndian.PutUint32((*data)[payLoadStart:payLoadStart+4], uint32(len(payload)))
+	copy((*data)[payLoadStart+4:], payload)
 
 	return data
 }
 
+// PutData puts the byte slice into pool.
+func PutData(data *[]byte) {
+	bufferPool.Put(data)
+}
+
 // WriteTo writes message to writers.
-func (m Message) WriteTo(w io.Writer) error {
-	_, err := w.Write(m.Header[:])
+func (m Message) WriteTo(w io.Writer) (int64, error) {
+	nn, err := w.Write(m.Header[:])
+	n := int64(nn)
 	if err != nil {
-		return err
+		return n, err
 	}
 
 	meta := encodeMetadata(m.Metadata)
@@ -289,56 +304,56 @@ func (m Message) WriteTo(w io.Writer) error {
 	if m.CompressType() != None {
 		compressor := Compressors[m.CompressType()]
 		if compressor == nil {
-			return ErrUnsupportedCompressor
+			return n, ErrUnsupportedCompressor
 		}
 		payload, err = compressor.Zip(m.Payload)
 		if err != nil {
-			return err
+			return n, err
 		}
 	}
 
 	totalL := (4 + spL) + (4 + smL) + (4 + len(meta)) + (4 + len(payload))
 	err = binary.Write(w, binary.BigEndian, uint32(totalL))
 	if err != nil {
-		return err
+		return n, err
 	}
 
 	//write servicePath and serviceMethod
 	err = binary.Write(w, binary.BigEndian, uint32(len(m.ServicePath)))
 	if err != nil {
-		return err
+		return n, err
 	}
 	_, err = w.Write(util.StringToSliceByte(m.ServicePath))
 	if err != nil {
-		return err
+		return n, err
 	}
 	err = binary.Write(w, binary.BigEndian, uint32(len(m.ServiceMethod)))
 	if err != nil {
-		return err
+		return n, err
 	}
 	_, err = w.Write(util.StringToSliceByte(m.ServiceMethod))
 	if err != nil {
-		return err
+		return n, err
 	}
 
 	// write meta
 	err = binary.Write(w, binary.BigEndian, uint32(len(meta)))
 	if err != nil {
-		return err
+		return n, err
 	}
 	_, err = w.Write(meta)
 	if err != nil {
-		return err
+		return n, err
 	}
 
 	//write payload
 	err = binary.Write(w, binary.BigEndian, uint32(len(payload)))
 	if err != nil {
-		return err
+		return n, err
 	}
 
-	_, err = w.Write(payload)
-	return err
+	nn, err = w.Write(payload)
+	return int64(nn), err
 }
 
 // len,string,len,string,......

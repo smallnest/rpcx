@@ -120,9 +120,6 @@ func (p *ConsulRegisterPlugin) Start() error {
 
 // Stop unregister all services.
 func (p *ConsulRegisterPlugin) Stop() error {
-	close(p.dying)
-	<-p.done
-
 	if p.kv == nil {
 		kv, err := libkv.NewStore(store.CONSUL, p.ConsulServers, p.Options)
 		if err != nil {
@@ -148,6 +145,9 @@ func (p *ConsulRegisterPlugin) Stop() error {
 			log.Infof("delete path %s", nodePath, err)
 		}
 	}
+
+	close(p.dying)
+	<-p.done
 	return nil
 }
 
@@ -163,7 +163,7 @@ func (p *ConsulRegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) 
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
 func (p *ConsulRegisterPlugin) Register(name string, rcvr interface{}, metadata string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return
 	}
@@ -217,7 +217,7 @@ func (p *ConsulRegisterPlugin) RegisterFunction(serviceName, fname string, fn in
 }
 
 func (p *ConsulRegisterPlugin) Unregister(name string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		err = errors.New("Unregister service `name` can't be empty")
 		return
 	}

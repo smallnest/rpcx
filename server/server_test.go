@@ -7,7 +7,7 @@ import (
 
 	"time"
 
-	"github.com/smallnest/rpcx/_testutils"
+	testutils "github.com/smallnest/rpcx/_testutils"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
 )
@@ -41,8 +41,10 @@ func (t *Arith) ConsumingOperation(ctx context.Context, args *testutils.ThriftAr
 
 func TestShutdownHook(t *testing.T) {
 	s := NewServer()
+	var cancel1 context.CancelFunc
 	s.RegisterOnShutdown(func(s *Server) {
-		ctx, _ := context.WithTimeout(context.Background(), 155*time.Second)
+		var ctx context.Context
+		ctx, cancel1 = context.WithTimeout(context.Background(), 155*time.Second)
 		s.Shutdown(ctx)
 	})
 	s.RegisterName("Arith2", new(Arith), "")
@@ -53,6 +55,10 @@ func TestShutdownHook(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	s.Shutdown(ctx)
 	cancel()
+	if cancel1 != nil {
+		cancel1()
+	}
+
 }
 
 func TestHandleRequest(t *testing.T) {
