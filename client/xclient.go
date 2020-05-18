@@ -18,6 +18,7 @@ import (
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/serverplugin"
 	"github.com/smallnest/rpcx/share"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -85,6 +86,8 @@ type xClient struct {
 	servers   map[string]string
 	discovery ServiceDiscovery
 	selector  Selector
+
+	slGroup singleflight.Group
 
 	isShutdown bool
 
@@ -230,7 +233,11 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 // selects a client from candidates base on c.selectMode
 func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, RPCClient, error) {
 	c.mu.Lock()
-	k := c.selector.Select(ctx, servicePath, serviceMethod, args)
+	var fn = c.selector.Select
+	if c.Plugins != nil {
+		fn = c.Plugins.DoWrapSelect(fn)
+	}
+	k := fn(ctx, servicePath, serviceMethod, args)
 	c.mu.Unlock()
 	if k == "" {
 		return "", nil, ErrXClientNoServer
@@ -275,22 +282,15 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 		if network == "inprocess" {
 			client = InprocessClient
 		} else {
-			client = &Client{
-				option:  c.option,
-				Plugins: c.Plugins,
-			}
-
-			var breaker interface{}
-			if c.option.GenBreaker != nil {
-				breaker, _ = c.breakers.LoadOrStore(k, c.option.GenBreaker())
-			}
-			err := client.Connect(network, addr)
+			generatedClient, err, _ := c.slGroup.Do(k, func() (interface{}, error) {
+				return c.generateClient(k, network, addr)
+			})
+			c.slGroup.Forget(k)
 			if err != nil {
-				if breaker != nil {
-					breaker.(Breaker).Fail()
-				}
 				return nil, err
 			}
+
+			client = generatedClient.(RPCClient)
 			if c.Plugins != nil {
 				needCallPlugin = true
 			}
@@ -302,6 +302,27 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 	}
 
 	return client, nil
+}
+
+func (c *xClient) generateClient(k, network, addr string) (client RPCClient, err error) {
+
+	client = &Client{
+		option:  c.option,
+		Plugins: c.Plugins,
+	}
+
+	var breaker interface{}
+	if c.option.GenBreaker != nil {
+		breaker, _ = c.breakers.LoadOrStore(k, c.option.GenBreaker())
+	}
+	err = client.Connect(network, addr)
+	if err != nil {
+		if breaker != nil {
+			breaker.(Breaker).Fail()
+		}
+		return nil, err
+	}
+	return client, err
 }
 
 func (c *xClient) getCachedClientWithoutLock(k string) (RPCClient, error) {
@@ -952,9 +973,7 @@ func (c *xClient) Close() error {
 
 	go func() {
 		defer func() {
-			if r := recover(); r != nil {
-
-			}
+			recover()
 		}()
 
 		c.discovery.RemoveWatcher(c.ch)

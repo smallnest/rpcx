@@ -6,7 +6,7 @@ import (
 	"errors"
 	"net"
 
-	quicconn "github.com/marten-seemann/quic-conn"
+	"github.com/smallnest/quick"
 )
 
 func init() {
@@ -17,5 +17,10 @@ func quicMakeListener(s *Server, address string) (ln net.Listener, err error) {
 	if s.tlsConfig == nil {
 		return nil, errors.New("TLSConfig must be configured in server.Options")
 	}
-	return quicconn.Listen("udp", address, s.tlsConfig)
+
+	if len(s.tlsConfig.NextProtos) == 0 {
+		s.tlsConfig.NextProtos = []string{"rpcx"}
+	}
+
+	return quick.Listen("udp", address, s.tlsConfig, nil)
 }

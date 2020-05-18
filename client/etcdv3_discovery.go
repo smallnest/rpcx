@@ -227,9 +227,7 @@ func (d *EtcdV3Discovery) watch() {
 					ch := ch
 					go func() {
 						defer func() {
-							if r := recover(); r != nil {
-
-							}
+							recover()
 						}()
 
 						select {

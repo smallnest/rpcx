@@ -100,9 +100,7 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 
 	if r.Header.Get(XServicePath) == "" {
 		servicePath := params.ByName("servicePath")
-		if strings.HasPrefix(servicePath, "/") {
-			servicePath = servicePath[1:]
-		}
+		servicePath = strings.TrimPrefix(servicePath, "/")
 		r.Header.Set(XServicePath, servicePath)
 	}
 	servicePath := r.Header.Get(XServicePath)

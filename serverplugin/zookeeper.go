@@ -120,9 +120,6 @@ func (p *ZooKeeperRegisterPlugin) Start() error {
 
 // Stop unregister all services.
 func (p *ZooKeeperRegisterPlugin) Stop() error {
-	close(p.dying)
-	<-p.done
-
 	if p.kv == nil {
 		kv, err := libkv.NewStore(store.ZK, p.ZooKeeperServers, p.Options)
 		if err != nil {
@@ -149,6 +146,9 @@ func (p *ZooKeeperRegisterPlugin) Stop() error {
 		}
 	}
 
+	close(p.dying)
+	<-p.done
+
 	return nil
 }
 
@@ -164,7 +164,7 @@ func (p *ZooKeeperRegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, boo
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
 func (p *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}, metadata string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return
 	}
@@ -218,7 +218,7 @@ func (p *ZooKeeperRegisterPlugin) RegisterFunction(serviceName, fname string, fn
 }
 
 func (p *ZooKeeperRegisterPlugin) Unregister(name string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		return errors.New("Register service `name` can't be empty")
 	}
 

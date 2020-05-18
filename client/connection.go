@@ -108,6 +108,9 @@ func newDirectConn(c *Client, network, address string) (net.Conn, error) {
 var connected = "200 Connected to rpcx"
 
 func newDirectHTTPConn(c *Client, network, address string) (net.Conn, error) {
+	if c == nil {
+		return nil, errors.New("empty client")
+	}
 	path := c.option.RPCPath
 	if path == "" {
 		path = share.DefaultRPCPath
@@ -117,7 +120,7 @@ func newDirectHTTPConn(c *Client, network, address string) (net.Conn, error) {
 	var tlsConn *tls.Conn
 	var err error
 
-	if c != nil && c.option.TLSConfig != nil {
+	if c.option.TLSConfig != nil {
 		dialer := &net.Dialer{
 			Timeout: c.option.ConnectTimeout,
 		}

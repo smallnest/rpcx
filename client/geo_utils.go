@@ -2,44 +2,7 @@ package client
 
 import (
 	"math"
-	"net/url"
-	"strconv"
 )
-
-func getClosestServer(lat1, lon1 float64, servers map[string]string) []string {
-	var server []string
-	min := math.MaxFloat64
-
-	for s, metadata := range servers {
-		if v, err := url.ParseQuery(metadata); err == nil {
-			lat2Str := v.Get("latitude")
-			lon2Str := v.Get("longitude")
-
-			if lat2Str == "" || lon2Str == "" {
-				continue
-			}
-
-			lat2, err := strconv.ParseFloat(lat2Str, 64)
-			if err != nil {
-				continue
-			}
-			lon2, err := strconv.ParseFloat(lon2Str, 64)
-			if err != nil {
-				continue
-			}
-
-			d := getDistanceFrom(lat1, lon1, lat2, lon2)
-			if d < min {
-				server = []string{s}
-				min = d
-			} else if d == min {
-				server = append(server, s)
-			}
-
-		}
-	}
-	return server
-}
 
 //https://gist.github.com/cdipaolo/d3f8db3848278b49db68
 func getDistanceFrom(lat1, lon1, lat2, lon2 float64) float64 {

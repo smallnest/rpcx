@@ -143,6 +143,18 @@ func (p *pluginContainer) DoClientAfterDecode(req *protocol.Message) error {
 	return nil
 }
 
+// DoWrapSelect is called when select a node.
+func (p *pluginContainer) DoWrapSelect(fn SelectFunc) SelectFunc {
+	var rt = fn
+	for i := range p.plugins {
+		if pn, ok := p.plugins[i].(SelectNodePlugin); ok {
+			rt = pn.WrapSelect(rt)
+		}
+	}
+
+	return rt
+}
+
 type (
 	// PreCallPlugin is invoked before the client calls a server.
 	PreCallPlugin interface {
@@ -179,6 +191,11 @@ type (
 		ClientAfterDecode(*protocol.Message) error
 	}
 
+	// SelectNodePlugin can interrupt selecting of xclient and add customized logics such as skipping some nodes.
+	SelectNodePlugin interface {
+		WrapSelect(SelectFunc) SelectFunc
+	}
+
 	//PluginContainer represents a plugin container that defines all methods to manage plugins.
 	//And it also defines all extension points.
 	PluginContainer interface {
@@ -195,5 +212,7 @@ type (
 
 		DoClientBeforeEncode(*protocol.Message) error
 		DoClientAfterDecode(*protocol.Message) error
+
+		DoWrapSelect(SelectFunc) SelectFunc
 	}
 )

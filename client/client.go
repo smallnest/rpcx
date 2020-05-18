@@ -372,8 +372,10 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 	client.pending[seq] = call
 	client.mutex.Unlock()
 
-	data := r.Encode()
-	_, err := client.Conn.Write(data)
+	data := r.EncodeSlicePointer()
+	_, err := client.Conn.Write(*data)
+	protocol.PutData(data)
+
 	if err != nil {
 		client.mutex.Lock()
 		call = client.pending[seq]
@@ -533,9 +535,11 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	if client.Plugins != nil {
 		client.Plugins.DoClientBeforeEncode(req)
 	}
-	data := req.Encode()
 
-	_, err := client.Conn.Write(data)
+	data := req.EncodeSlicePointer()
+	_, err := client.Conn.Write(*data)
+	protocol.PutData(data)
+
 	if err != nil {
 		client.mutex.Lock()
 		call = client.pending[seq]

@@ -14,9 +14,11 @@ import (
 	"github.com/valyala/fastrand"
 )
 
+type SelectFunc func(ctx context.Context, servicePath, serviceMethod string, args interface{}) string
+
 // Selector defines selector that selects one service from candidates.
 type Selector interface {
-	Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string
+	Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string // SelectFunc
 	UpdateServer(servers map[string]string)
 }
 
