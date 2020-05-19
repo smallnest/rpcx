@@ -394,6 +394,8 @@ github.com/smallnest/libkv-etcdv3-store v1.1.1 h1:Y5qRz0xgFuNLv6Cc4L6yxO5rst2BSk
 github.com/smallnest/libkv-etcdv3-store v1.1.1/go.mod h1:VAzE2+HQwhZZanve7ObW+IFWdK0WMVoQhxmyuvLCfog=
 github.com/smallnest/libkv-etcdv3-store v1.1.2 h1:NUShCvDdq8WGJs2iBV1BZ1XaYeyptX/7Q6glUDIBP/g=
 github.com/smallnest/libkv-etcdv3-store v1.1.2/go.mod h1:VAzE2+HQwhZZanve7ObW+IFWdK0WMVoQhxmyuvLCfog=
+github.com/smallnest/libkv-etcdv3-store v1.1.3 h1:8IxYIpievRZE3jFtcdpdjgmMBAuIpL6YX7DQ1ONscXY=
+github.com/smallnest/libkv-etcdv3-store v1.1.3/go.mod h1:VAzE2+HQwhZZanve7ObW+IFWdK0WMVoQhxmyuvLCfog=
 github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602 h1:BZz5dtx3R73N0PCSPBGFX+p09wPDvVujwFOGWgu4m80=
 github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602/go.mod h1:pCMr9YKzcruQNKA1483At0JJkkB2oTiw1wSXCcXgDCI=
 github.com/smallnest/valkeyrie v0.0.0-20191030065038-13edeca3d026 h1:2JZDSZUojMiRtgWzSyO7lZSxCKfTsItI2ilEGTBuSNc=
