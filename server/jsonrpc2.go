@@ -65,16 +65,16 @@ func (s *Server) handleJSONRPCRequest(ctx context.Context, r *jsonrpcRequest, he
 	req.SetMessageType(protocol.Request)
 	req.SetSerializeType(protocol.JSON)
 
-	pathAndMethod := strings.Split(r.Method, ".")
-	if len(pathAndMethod) < 2 {
+	lastDot := strings.LastIndex(r.Method, ".")
+	if lastDot <= 0 {
 		res.Error = &JSONRPCError{
 			Code:    CodeMethodNotFound,
 			Message: "must contains servicepath and method",
 		}
 		return res
 	}
-	req.ServicePath = strings.Join(pathAndMethod[:len(pathAndMethod)-1], ".")
-	req.ServiceMethod = pathAndMethod[len(pathAndMethod)-1]
+	req.ServicePath = r.Method[:lastDot]
+	req.ServiceMethod = r.Method[lastDot+1:]
 	req.Payload = *r.Params
 
 	// meta
