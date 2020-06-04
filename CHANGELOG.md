@@ -9,6 +9,7 @@
 - re-register services in etcd v3
 - avoid duplicated client creation
 - add SelectNodePlugin that can interrupt the Select method
+- support TcpCopy by TeePlugin
 
 ## 5.0 
 
