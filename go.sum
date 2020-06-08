@@ -390,12 +390,8 @@ github.com/shurcooL/users v0.0.0-20180125191416-49c67e49c537/go.mod h1:QJTqeLYED
 github.com/shurcooL/webdavfs v0.0.0-20170829043945-18c3829fa133/go.mod h1:hKmq5kWdCj2z2KEozexVbfEZIWiTjhE0+UjmZgPqehw=
 github.com/sirupsen/logrus v1.2.0 h1:juTguoYk5qI21pwyTXY3B3Y5cOTH3ZUyZCg1v/mihuo=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
-github.com/smallnest/libkv-etcdv3-store v1.1.1 h1:Y5qRz0xgFuNLv6Cc4L6yxO5rst2BSklYxKD00Ir3XmA=
-github.com/smallnest/libkv-etcdv3-store v1.1.1/go.mod h1:VAzE2+HQwhZZanve7ObW+IFWdK0WMVoQhxmyuvLCfog=
-github.com/smallnest/libkv-etcdv3-store v1.1.2 h1:NUShCvDdq8WGJs2iBV1BZ1XaYeyptX/7Q6glUDIBP/g=
-github.com/smallnest/libkv-etcdv3-store v1.1.2/go.mod h1:VAzE2+HQwhZZanve7ObW+IFWdK0WMVoQhxmyuvLCfog=
-github.com/smallnest/libkv-etcdv3-store v1.1.3 h1:8IxYIpievRZE3jFtcdpdjgmMBAuIpL6YX7DQ1ONscXY=
-github.com/smallnest/libkv-etcdv3-store v1.1.3/go.mod h1:VAzE2+HQwhZZanve7ObW+IFWdK0WMVoQhxmyuvLCfog=
+github.com/smallnest/libkv-etcdv3-store v1.1.4 h1:S7nbdf27EJb9rwCbANvbxUSqDbfE855ssMCqLLskV+I=
+github.com/smallnest/libkv-etcdv3-store v1.1.4/go.mod h1:VAzE2+HQwhZZanve7ObW+IFWdK0WMVoQhxmyuvLCfog=
 github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602 h1:BZz5dtx3R73N0PCSPBGFX+p09wPDvVujwFOGWgu4m80=
 github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602/go.mod h1:pCMr9YKzcruQNKA1483At0JJkkB2oTiw1wSXCcXgDCI=
 github.com/smallnest/valkeyrie v0.0.0-20191030065038-13edeca3d026 h1:2JZDSZUojMiRtgWzSyO7lZSxCKfTsItI2ilEGTBuSNc=
