@@ -10,7 +10,7 @@ import (
 
 type OpenTracingPlugin struct{}
 
-func (p *OpenTracingPlugin) DoPreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error {
+func (p *OpenTracingPlugin) PreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error {
 	var span1 opentracing.Span
 
 	// if it is called in rpc service in case that a service calls antoher service,
@@ -36,7 +36,7 @@ func (p *OpenTracingPlugin) DoPreCall(ctx context.Context, servicePath, serviceM
 	}
 	return nil
 }
-func (p *OpenTracingPlugin) DoPostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error {
+func (p *OpenTracingPlugin) PostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error {
 	if rpcxContext, ok := ctx.(*share.Context); ok {
 		span1 := rpcxContext.Value(share.OpentracingSpanClientKey)
 		if span1 != nil {
