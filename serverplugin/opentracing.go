@@ -52,7 +52,7 @@ func (p OpenTracingPlugin) PreHandleRequest(ctx context.Context, r *protocol.Mes
 		ext.RPCServerOption(wireContext))
 
 	clientConn := ctx.Value(server.RemoteConnContextKey).(net.Conn)
-	span1.LogFields(log.String("remote_addr", clientConn.RemoteAddr().Network()))
+	span1.LogFields(log.String("remote_addr", clientConn.RemoteAddr().String()))
 
 	if rpcxContext, ok := ctx.(*share.Context); ok {
 		rpcxContext.SetValue(share.OpentracingSpanServerKey, span1)
