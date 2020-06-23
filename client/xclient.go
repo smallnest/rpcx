@@ -250,12 +250,12 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 	// TODO: improve the lock
 	var client RPCClient
 	var needCallPlugin bool
-	c.mu.Lock()
 	defer func() {
 		if needCallPlugin {
 			c.Plugins.DoClientConnected((client.(*Client)).Conn)
 		}
 	}()
+	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	if c.isShutdown {
