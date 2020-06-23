@@ -13,6 +13,7 @@ import (
 )
 
 // OneClient wraps servicesPath and XClients.
+// Users can use a shared oneclient to access multiple services.
 type OneClient struct {
 	xclients map[string]XClient
 	mu       sync.RWMutex

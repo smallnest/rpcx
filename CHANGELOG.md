@@ -10,6 +10,7 @@
 - avoid duplicated client creation
 - add SelectNodePlugin that can interrupt the Select method
 - support TcpCopy by TeePlugin
+- Change two methods' name of client plugin!
 
 ## 5.0 
 

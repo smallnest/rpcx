@@ -50,7 +50,7 @@ func (p *pluginContainer) All() []Plugin {
 func (p *pluginContainer) DoPreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PreCallPlugin); ok {
-			err := plugin.DoPreCall(ctx, servicePath, serviceMethod, args)
+			err := plugin.PreCall(ctx, servicePath, serviceMethod, args)
 			if err != nil {
 				return err
 			}
@@ -64,7 +64,7 @@ func (p *pluginContainer) DoPreCall(ctx context.Context, servicePath, serviceMet
 func (p *pluginContainer) DoPostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PostCallPlugin); ok {
-			err = plugin.DoPostCall(ctx, servicePath, serviceMethod, args, reply, err)
+			err = plugin.PostCall(ctx, servicePath, serviceMethod, args, reply, err)
 			if err != nil {
 				return err
 			}
@@ -158,12 +158,12 @@ func (p *pluginContainer) DoWrapSelect(fn SelectFunc) SelectFunc {
 type (
 	// PreCallPlugin is invoked before the client calls a server.
 	PreCallPlugin interface {
-		DoPreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error
+		PreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error
 	}
 
 	// PostCallPlugin is invoked after the client calls a server.
 	PostCallPlugin interface {
-		DoPostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error
+		PostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error
 	}
 
 	// ConnCreatedPlugin is invoked when the client connection has created.
