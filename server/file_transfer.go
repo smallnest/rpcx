@@ -1,4 +1,4 @@
-package serverplugin
+package server
 
 import (
 	"context"
@@ -8,47 +8,26 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hashicorp/golang-lru"
-	"github.com/smallnest/rpcx/log"
-	"github.com/smallnest/rpcx/server"
-)
+	"github.com/smallnest/rpcx/share"
 
-var (
-	SendFileServiceName = "_filetransfer"
+	lru "github.com/hashicorp/golang-lru"
+	"github.com/smallnest/rpcx/log"
 )
 
 // FileTransferHandler handles uploading file. Must close the connection after it finished.
-type FileTransferHandler func(conn net.Conn, args *FileTransferArgs)
+type FileTransferHandler func(conn net.Conn, args *share.FileTransferArgs)
 
 // DownloadFileHandler handles downloading file. Must close the connection after it finished.
-type DownloadFileHandler func(conn net.Conn, args *DownloadFileArgs)
-
-// FileTransferArgs args from clients.
-type FileTransferArgs struct {
-	FileName string            `json:"file_name,omitempty"`
-	FileSize int64             `json:"file_size,omitempty"`
-	Meta     map[string]string `json:"meta,omitempty"`
-}
-
-// FileTransferReply response to token and addr to clients.
-type FileTransferReply struct {
-	Token []byte `json:"token,omitempty"`
-	Addr  string `json:"addr,omitempty"`
-}
-
-// DownloadFileArgs args from clients.
-type DownloadFileArgs struct {
-	FileName string `json:"file_name,omitempty"`
-}
+type DownloadFileHandler func(conn net.Conn, args *share.DownloadFileArgs)
 
 type tokenInfo struct {
 	token []byte
-	args  *FileTransferArgs
+	args  *share.FileTransferArgs
 }
 
 type downloadTokenInfo struct {
 	token []byte
-	args  *DownloadFileArgs
+	args  *share.DownloadFileArgs
 }
 
 // FileTransfer support transfer files from clients.
@@ -89,20 +68,23 @@ func NewFileTransfer(addr string, handler FileTransferHandler, downloadFileHandl
 	return fi
 }
 
-// RegisterFileTransfer register filetransfer service into the server.
-func RegisterFileTransfer(s *server.Server, fileTransfer *FileTransfer) {
+// EnableFileTransfer supports filetransfer service in this server.
+func (s *Server) EnableFileTransfer(serviceName string, fileTransfer *FileTransfer) {
+	if serviceName == "" {
+		serviceName = share.SendFileServiceName
+	}
 	fileTransfer.Start()
-	s.RegisterName(SendFileServiceName, fileTransfer.service, "")
+	s.RegisterName(serviceName, fileTransfer.service, "")
 }
 
-func (s *FileTransferService) TransferFile(ctx context.Context, args *FileTransferArgs, reply *FileTransferReply) error {
+func (s *FileTransferService) TransferFile(ctx context.Context, args *share.FileTransferArgs, reply *share.FileTransferReply) error {
 	token := make([]byte, 32)
 	_, err := rand.Read(token)
 	if err != nil {
 		return err
 	}
 
-	*reply = FileTransferReply{
+	*reply = share.FileTransferReply{
 		Token: token,
 		Addr:  s.FileTransfer.Addr,
 	}
@@ -111,14 +93,14 @@ func (s *FileTransferService) TransferFile(ctx context.Context, args *FileTransf
 	return nil
 }
 
-func (s *FileTransferService) DownloadFile(ctx context.Context, args *DownloadFileArgs, reply *FileTransferReply) error {
+func (s *FileTransferService) DownloadFile(ctx context.Context, args *share.DownloadFileArgs, reply *share.FileTransferReply) error {
 	token := make([]byte, 32)
 	_, err := rand.Read(token)
 	if err != nil {
 		return err
 	}
 
-	*reply = FileTransferReply{
+	*reply = share.FileTransferReply{
 		Token: token,
 		Addr:  s.FileTransfer.Addr,
 	}

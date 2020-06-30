@@ -16,7 +16,6 @@ import (
 	"github.com/juju/ratelimit"
 	ex "github.com/smallnest/rpcx/errors"
 	"github.com/smallnest/rpcx/protocol"
-	"github.com/smallnest/rpcx/serverplugin"
 	"github.com/smallnest/rpcx/share"
 	"golang.org/x/sync/singleflight"
 )
@@ -841,12 +840,12 @@ func (c *xClient) SendFile(ctx context.Context, fileName string, rateInBytesPerS
 		return err
 	}
 
-	args := serverplugin.FileTransferArgs{
+	args := share.FileTransferArgs{
 		FileName: fi.Name(),
 		FileSize: fi.Size(),
 	}
 
-	reply := &serverplugin.FileTransferReply{}
+	reply := &share.FileTransferReply{}
 	err = c.Call(ctx, "TransferFile", args, reply)
 	if err != nil {
 		return err
@@ -905,11 +904,11 @@ loop:
 }
 
 func (c *xClient) DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer) error {
-	args := serverplugin.DownloadFileArgs{
+	args := share.DownloadFileArgs{
 		FileName: requestFileName,
 	}
 
-	reply := &serverplugin.FileTransferReply{}
+	reply := &share.FileTransferReply{}
 	err := c.Call(ctx, "DownloadFile", args, reply)
 	if err != nil {
 		return err

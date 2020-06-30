@@ -6,7 +6,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/smallnest/rpcx/serverplugin"
+	"github.com/smallnest/rpcx/share"
 
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/smallnest/rpcx/protocol"
@@ -265,16 +265,16 @@ func (c *OneClient) Fork(ctx context.Context, servicePath string, serviceMethod 
 
 func (c *OneClient) SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error {
 	c.mu.RLock()
-	xclient := c.xclients[serverplugin.SendFileServiceName]
+	xclient := c.xclients[share.SendFileServiceName]
 	c.mu.RUnlock()
 
 	if xclient == nil {
 		var err error
 		c.mu.Lock()
-		xclient = c.xclients[serverplugin.SendFileServiceName]
+		xclient = c.xclients[share.SendFileServiceName]
 		if xclient == nil {
-			xclient, err = c.newXClient(serverplugin.SendFileServiceName)
-			c.xclients[serverplugin.SendFileServiceName] = xclient
+			xclient, err = c.newXClient(share.SendFileServiceName)
+			c.xclients[share.SendFileServiceName] = xclient
 		}
 		c.mu.Unlock()
 		if err != nil {
@@ -287,16 +287,16 @@ func (c *OneClient) SendFile(ctx context.Context, fileName string, rateInBytesPe
 
 func (c *OneClient) DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer) error {
 	c.mu.RLock()
-	xclient := c.xclients[serverplugin.SendFileServiceName]
+	xclient := c.xclients[share.SendFileServiceName]
 	c.mu.RUnlock()
 
 	if xclient == nil {
 		var err error
 		c.mu.Lock()
-		xclient = c.xclients[serverplugin.SendFileServiceName]
+		xclient = c.xclients[share.SendFileServiceName]
 		if xclient == nil {
-			xclient, err = c.newXClient(serverplugin.SendFileServiceName)
-			c.xclients[serverplugin.SendFileServiceName] = xclient
+			xclient, err = c.newXClient(share.SendFileServiceName)
+			c.xclients[share.SendFileServiceName] = xclient
 		}
 		c.mu.Unlock()
 		if err != nil {
