@@ -89,7 +89,7 @@ func (p *EtcdV3RegisterPlugin) Start() error {
 						nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
 						kvPair, err := p.kv.Get(nodePath)
 						if err != nil {
-							log.Infof("can't get data of node: %s, because of %v", nodePath, err.Error())
+							log.Warnf("can't get data of node: %s, because of %v", nodePath, err)
 
 							p.metasLock.RLock()
 							meta := p.metas[name]

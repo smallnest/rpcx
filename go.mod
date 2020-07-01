@@ -45,7 +45,7 @@ require (
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
-	github.com/smallnest/libkv-etcdv3-store v1.1.4
+	github.com/smallnest/libkv-etcdv3-store v1.1.5
 	github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602
 	github.com/smallnest/valkeyrie v0.0.0-20191030065038-13edeca3d026
 	github.com/soheilhy/cmux v0.1.4
