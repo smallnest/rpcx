@@ -20,7 +20,7 @@ import (
 
 func (s *Server) startGateway(network string, ln net.Listener) net.Listener {
 	if network != "tcp" && network != "tcp4" && network != "tcp6" {
-		log.Infof("network is not tcp/tcp4/tcp6 so can not start gateway")
+		// log.Infof("network is not tcp/tcp4/tcp6 so can not start gateway")
 		return ln
 	}
 

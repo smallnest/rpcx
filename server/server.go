@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
 
@@ -749,6 +750,46 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 	}
 	return err
+}
+
+// Restart restarts this server gracefully.
+// It starts a new rpcx server with the same port with SO_REUSEPORT socket option,
+// and shutdown this rpcx server gracefully.
+func (s *Server) Restart(ctx context.Context) error {
+	pid, err := s.startProcess()
+	if err != nil {
+		return err
+	}
+	log.Infof("restart a new rpcx server: %d", pid)
+
+	// TODO: is it necessary?
+	time.Sleep(3 * time.Second)
+	return s.Shutdown(ctx)
+}
+
+func (s *Server) startProcess() (int, error) {
+	argv0, err := exec.LookPath(os.Args[0])
+	if err != nil {
+		return 0, err
+	}
+
+	// Pass on the environment and replace the old count key with the new one.
+	var env []string
+	for _, v := range os.Environ() {
+		env = append(env, v)
+	}
+
+	var originalWD, _ = os.Getwd()
+	allFiles := append([]*os.File{os.Stdin, os.Stdout, os.Stderr})
+	process, err := os.StartProcess(argv0, os.Args, &os.ProcAttr{
+		Dir:   originalWD,
+		Env:   env,
+		Files: allFiles,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return process.Pid, nil
 }
 
 func (s *Server) checkProcessMsg() bool {
