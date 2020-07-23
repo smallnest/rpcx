@@ -149,6 +149,7 @@ func (d *EtcdV3Discovery) RemoveWatcher(ch chan []*KVPair) {
 }
 
 func (d *EtcdV3Discovery) watch() {
+rewatch:
 	for {
 		var err error
 		var c <-chan []*store.KVPair
@@ -181,7 +182,6 @@ func (d *EtcdV3Discovery) watch() {
 			return
 		}
 
-	readChanges:
 		for {
 			select {
 			case <-d.stopCh:
@@ -189,7 +189,8 @@ func (d *EtcdV3Discovery) watch() {
 				return
 			case ps := <-c:
 				if ps == nil {
-					break readChanges
+					log.Warnf("rewatch %s", d.basePath)
+					goto rewatch
 				}
 				var pairs []*KVPair // latest servers
 				var prefix string
