@@ -125,12 +125,12 @@ func (s *Server) Address() net.Addr {
 
 // ActiveClientConn returns active connections.
 func (s *Server) ActiveClientConn() []net.Conn {
-	result := make([]net.Conn, 0, len(s.activeConn))
 	s.mu.RLock()
+	defer s.mu.RUnlock()
+	result := make([]net.Conn, 0, len(s.activeConn))
 	for clientConn := range s.activeConn {
 		result = append(result, clientConn)
 	}
-	s.mu.RUnlock()
 	return result
 }
 
