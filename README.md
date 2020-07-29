@@ -158,12 +158,3 @@ Welcome to contribute:
 ## License
 
 Apache License, Version 2.0 
-
-
-## 赞助
-
-如果本项目帮助过你，如果您想赞助以便帮助持续开发这些项目,用来支付域名年费、服务器租用等费用，欢迎你选择下面的一种方式进行赞助，感谢。
-
-| paypal | 微信 | 支付宝 |
-|----|-----|-----|
-|[![](https://www.paypalobjects.com/webstatic/paypalme/images/pp_logo_small.png)](https://paypal.me/colobu)|![](https://github.com/smallnest/sponsors/blob/master/wechat.png)|![](https://github.com/smallnest/sponsors/blob/master/alipay.jpg)|
