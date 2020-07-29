@@ -26,6 +26,10 @@ func NewContext(ctx context.Context) *Context {
 }
 
 func (c *Context) Value(key interface{}) interface{} {
+	if c.tags == nil {
+		c.tags = make(map[interface{}]interface{})
+	}
+
 	if v, ok := c.tags[key]; ok {
 		return v
 	}
@@ -33,6 +37,9 @@ func (c *Context) Value(key interface{}) interface{} {
 }
 
 func (c *Context) SetValue(key, val interface{}) {
+	if c.tags == nil {
+		c.tags = make(map[interface{}]interface{})
+	}
 	c.tags[key] = val
 }
 
@@ -59,6 +66,10 @@ func WithLocalValue(ctx *Context, key, val interface{}) *Context {
 	}
 	if !reflect.TypeOf(key).Comparable() {
 		panic("key is not comparable")
+	}
+
+	if ctx.tags == nil {
+		ctx.tags = make(map[interface{}]interface{})
 	}
 
 	ctx.tags[key] = val
