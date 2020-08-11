@@ -18,8 +18,9 @@ require (
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
 	github.com/fatih/color v1.9.0
-	github.com/gogo/protobuf v1.2.0
+	github.com/gogo/protobuf v1.2.1
 	github.com/golang/protobuf v1.4.2
+	github.com/google/uuid v1.1.1 // indirect
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/hashicorp/consul/api v1.4.0 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
@@ -49,6 +50,8 @@ require (
 	github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602
 	github.com/smallnest/valkeyrie v0.0.0-20200811110245-15a06a9896aa
 	github.com/soheilhy/cmux v0.1.4
+	github.com/spf13/cobra v1.0.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/tatsushid/go-fastping v0.0.0-20160109021039-d7bb493dee3e
 	github.com/tebeka/strftime v0.1.3 // indirect
@@ -63,3 +66,5 @@ require (
 	go.opencensus.io v0.22.3
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
 )
+
+replace google.golang.org/grpc => google.golang.org/grpc v1.29.0 
