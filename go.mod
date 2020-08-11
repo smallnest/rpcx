@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/ChimeraCoder/gojson v1.1.0
-	github.com/abronan/valkeyrie v0.0.0-20200127174252-ef4277a138cd
+	github.com/abronan/valkeyrie v0.1.0
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.69 // indirect
 	github.com/anacrolix/envpprof v1.1.0 // indirect
 	github.com/anacrolix/sync v0.2.0 // indirect
@@ -47,7 +47,7 @@ require (
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/smallnest/libkv-etcdv3-store v1.1.6
 	github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602
-	github.com/smallnest/valkeyrie v0.0.0-20191030065038-13edeca3d026
+	github.com/smallnest/valkeyrie v0.0.0-20200811085505-e5ca84e2b295
 	github.com/soheilhy/cmux v0.1.4
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/tatsushid/go-fastping v0.0.0-20160109021039-d7bb493dee3e
