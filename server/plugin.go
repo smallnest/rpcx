@@ -111,7 +111,7 @@ type (
 
 	// HeartbeatPlugin is .
 	HeartbeatPlugin interface {
-		OnHeartbeat(ctx context.Context, req *protocol.Message) error
+		HeartbeatRequest(ctx context.Context, req *protocol.Message) error
 	}
 )
 
@@ -360,7 +360,7 @@ func (p *pluginContainer) DoPostWriteRequest(ctx context.Context, r *protocol.Me
 func (p *pluginContainer) DoHeartbeatRequest(ctx context.Context, r *protocol.Message) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(HeartbeatPlugin); ok {
-			err := plugin.OnHeartbeat(ctx, r)
+			err := plugin.HeartbeatRequest(ctx, r)
 			if err != nil {
 				return err
 			}

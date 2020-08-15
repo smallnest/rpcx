@@ -12,7 +12,7 @@ import (
 
 type HeartbeatHandler struct{}
 
-func (h *HeartbeatHandler) OnHeartbeat(ctx context.Context, req *protocol.Message) error {
+func (h *HeartbeatHandler) HeartbeatRequest(ctx context.Context, req *protocol.Message) error {
 	conn := ctx.Value(RemoteConnContextKey).(net.Conn)
 	println("OnHeartbeat:", conn.RemoteAddr().String())
 	return nil
@@ -38,6 +38,8 @@ func TestPluginHeartbeat(t *testing.T) {
 		}
 	}()
 	go func() {
+		// wait for server start complete
+		time.Sleep(time.Second)
 		defer wg.Done()
 		// client
 		opts := client.DefaultOption
