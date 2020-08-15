@@ -34,6 +34,8 @@ type PluginContainer interface {
 
 	DoPreWriteRequest(ctx context.Context) error
 	DoPostWriteRequest(ctx context.Context, r *protocol.Message, e error) error
+
+	DoHeartbeatRequest(ctx context.Context, req *protocol.Message) error
 }
 
 // Plugin is the server plugin interface.
@@ -105,6 +107,11 @@ type (
 	//PostWriteRequestPlugin represents .
 	PostWriteRequestPlugin interface {
 		PostWriteRequest(ctx context.Context, r *protocol.Message, e error) error
+	}
+
+	// HeartbeatPlugin is .
+	HeartbeatPlugin interface {
+		OnHeartbeat(ctx context.Context, req *protocol.Message) error
 	}
 )
 
@@ -340,6 +347,20 @@ func (p *pluginContainer) DoPostWriteRequest(ctx context.Context, r *protocol.Me
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PostWriteRequestPlugin); ok {
 			err := plugin.PostWriteRequest(ctx, r, e)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// DoHeartbeatRequest invokes HeartbeatRequest plugin.
+func (p *pluginContainer) DoHeartbeatRequest(ctx context.Context, r *protocol.Message) error {
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(HeartbeatPlugin); ok {
+			err := plugin.OnHeartbeat(ctx, r)
 			if err != nil {
 				return err
 			}

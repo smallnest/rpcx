@@ -405,6 +405,7 @@ func (s *Server) serveConn(conn net.Conn) {
 			defer atomic.AddInt32(&s.handlerMsgNum, -1)
 
 			if req.IsHeartbeat() {
+				s.Plugins.DoHeartbeatRequest(ctx, req)
 				req.SetMessageType(protocol.Response)
 				data := req.EncodeSlicePointer()
 				conn.Write(*data)
