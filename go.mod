@@ -46,7 +46,7 @@ require (
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
-	github.com/smallnest/libkv-etcdv3-store v1.1.6
+	github.com/smallnest/libkv-etcdv3-store v1.1.7
 	github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602
 	github.com/smallnest/valkeyrie v0.0.0-20200811110245-15a06a9896aa
 	github.com/soheilhy/cmux v0.1.4
@@ -67,4 +67,4 @@ require (
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
 )
 
-replace google.golang.org/grpc => google.golang.org/grpc v1.29.0 
+replace google.golang.org/grpc => google.golang.org/grpc v1.29.0
