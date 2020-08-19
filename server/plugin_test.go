@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
-	"github.com/smallnest/rpcx/client"
-	"github.com/smallnest/rpcx/protocol"
+	"github.com/smallnest/rpcx/v5/client"
+	"github.com/smallnest/rpcx/v5/protocol"
 	"net"
 	"sync"
 	"testing"

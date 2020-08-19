@@ -13,7 +13,7 @@ import (
 
 	"github.com/ChimeraCoder/gojson"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/smallnest/rpcx/log"
+	"github.com/smallnest/rpcx/v5/log"
 )
 
 var typeOfError = reflect.TypeOf((*error)(nil)).Elem()

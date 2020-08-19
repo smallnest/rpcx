@@ -3,7 +3,7 @@ package client
 import (
 	"sync/atomic"
 
-	"github.com/smallnest/rpcx/protocol"
+	"github.com/smallnest/rpcx/v5/protocol"
 )
 
 // XClientPool is a xclient pool with fixed size.

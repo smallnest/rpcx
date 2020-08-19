@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/smallnest/rpcx/tool/xgen/parser"
+	"github.com/smallnest/rpcx/v5/tool/xgen/parser"
 )
 
 var (
@@ -102,8 +102,8 @@ func generate(parsers []*parser.Parser) error {
 	fmt.Fprintln(w, `  "time"`)
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, `  metrics "github.com/rcrowley/go-metrics"`)
-	fmt.Fprintln(w, `  "github.com/smallnest/rpcx/server"`)
-	fmt.Fprintln(w, `  "github.com/smallnest/rpcx/serverplugin"`)
+	fmt.Fprintln(w, `  "github.com/smallnest/rpcx/v5/server"`)
+	fmt.Fprintln(w, `  "github.com/smallnest/rpcx/v5/serverplugin"`)
 
 	var importedPackages = make(map[string]bool)
 	for _, p := range parsers {

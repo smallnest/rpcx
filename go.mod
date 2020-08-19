@@ -1,4 +1,4 @@
-module github.com/smallnest/rpcx
+module github.com/smallnest/rpcx/v5
 
 go 1.14
 
