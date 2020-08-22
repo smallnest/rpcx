@@ -29,7 +29,7 @@ type PluginContainer interface {
 	DoPreCall(ctx context.Context, serviceName, methodName string, args interface{}) (interface{}, error)
 	DoPostCall(ctx context.Context, serviceName, methodName string, args, reply interface{}) (interface{}, error)
 
-	DoPreWriteResponse(context.Context, *protocol.Message, *protocol.Message) error
+	DoPreWriteResponse(context.Context, *protocol.Message, *protocol.Message, error) error
 	DoPostWriteResponse(context.Context, *protocol.Message, *protocol.Message, error) error
 
 	DoPreWriteRequest(ctx context.Context) error
@@ -91,7 +91,7 @@ type (
 
 	//PreWriteResponsePlugin represents .
 	PreWriteResponsePlugin interface {
-		PreWriteResponse(context.Context, *protocol.Message, *protocol.Message) error
+		PreWriteResponse(context.Context, *protocol.Message, *protocol.Message, error) error
 	}
 
 	//PostWriteResponsePlugin represents .
@@ -301,10 +301,10 @@ func (p *pluginContainer) DoPostCall(ctx context.Context, serviceName, methodNam
 }
 
 // DoPreWriteResponse invokes PreWriteResponse plugin.
-func (p *pluginContainer) DoPreWriteResponse(ctx context.Context, req *protocol.Message, res *protocol.Message) error {
+func (p *pluginContainer) DoPreWriteResponse(ctx context.Context, req *protocol.Message, res *protocol.Message, err error) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PreWriteResponsePlugin); ok {
-			err := plugin.PreWriteResponse(ctx, req, res)
+			err := plugin.PreWriteResponse(ctx, req, res, err)
 			if err != nil {
 				return err
 			}

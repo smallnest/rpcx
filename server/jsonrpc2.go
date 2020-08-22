@@ -104,7 +104,7 @@ func (s *Server) handleJSONRPCRequest(ctx context.Context, r *jsonrpcRequest, he
 
 	err = s.auth(ctx, req)
 	if err != nil {
-		s.Plugins.DoPreWriteResponse(ctx, req, nil)
+		s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
 		res.Error = &JSONRPCError{
 			Code:    CodeInternalJSONRPCError,
 			Message: err.Error(),
@@ -118,7 +118,7 @@ func (s *Server) handleJSONRPCRequest(ctx context.Context, r *jsonrpcRequest, he
 		return nil
 	}
 
-	s.Plugins.DoPreWriteResponse(ctx, req, nil)
+	s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
 	if err != nil {
 		res.Error = &JSONRPCError{
 			Code:    CodeInternalJSONRPCError,

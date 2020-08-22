@@ -151,7 +151,7 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 	ctx = context.WithValue(ctx, StartRequestContextKey, time.Now().UnixNano())
 	err = s.auth(ctx, req)
 	if err != nil {
-		s.Plugins.DoPreWriteResponse(ctx, req, nil)
+		s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
 		wh.Set(XMessageStatusType, "Error")
 		wh.Set(XErrorMessage, err.Error())
 		w.WriteHeader(401)
@@ -174,7 +174,7 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 		return
 	}
 
-	s.Plugins.DoPreWriteResponse(newCtx, req, nil)
+	s.Plugins.DoPreWriteResponse(newCtx, req, nil, nil)
 	if len(resMetadata) > 0 { //copy meta in context to request
 		meta := res.Metadata
 		if meta == nil {
