@@ -439,9 +439,9 @@ func convertRes2Raw(res *protocol.Message) (map[string]string, []byte, error) {
 		m[XMessageStatusType] = "Normal"
 	}
 
-	if res.CompressType() == protocol.Gzip {
-		m["Content-Encoding"] = "gzip"
-	}
+	// if res.CompressType() == protocol.Gzip {
+	// 	m["Content-Encoding"] = "gzip"
+	// }
 
 	m[XMeta] = urlencode(res.Metadata)
 	m[XSerializeType] = strconv.Itoa(int(res.SerializeType()))
