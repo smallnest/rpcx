@@ -46,11 +46,8 @@ func (c *Client) Connect(network, address string) error {
 	}
 
 	if err == nil && conn != nil {
-		if c.option.ReadTimeout != 0 {
-			conn.SetReadDeadline(time.Now().Add(c.option.ReadTimeout))
-		}
-		if c.option.WriteTimeout != 0 {
-			conn.SetWriteDeadline(time.Now().Add(c.option.WriteTimeout))
+		if c.option.IdleTimeout != 0 {
+			conn.SetDeadline(time.Now().Add(c.option.IdleTimeout))
 		}
 
 		if c.Plugins != nil {

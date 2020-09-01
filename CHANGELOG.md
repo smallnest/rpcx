@@ -12,6 +12,8 @@
 - support TcpCopy by TeePlugin
 - Change two methods' name of client plugin!
 - Broken API: add error parameter in `PreWriteResponse`(#486)
+- Broken API: change ReadTimeout/WriteTimeout to IdleTimeout
+
 
 ## 5.0 
 
