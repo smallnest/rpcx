@@ -7,13 +7,13 @@ Official site: [http://rpcx.io](http://rpcx.io/)
 
 **Notice: etcd/grpc problem**
 
-`etcd` still has some problem if you use go module, please add the below in your go.mod:
+`etcd` still has some problems if you use go module, please add the below line in your go.mod:
 ```
 replace google.golang.org/grpc => google.golang.org/grpc v1.29.0
 ```
-Will remove etcd plugin into a indenpendent project in future.
+Will remove etcd plugin into an indenpendent project in future.
 
-`etcd`一直不是很好的支持go module方式，尤其是和grpc的版本兼容问题，至少目前的rpcx可以通过在你的go.mod中加入以下上面解决依赖问题。
+`etcd`一直不是很好的支持go module方式，尤其是和grpc的版本兼容问题，至少目前的rpcx可以通过在你的go.mod中加入以上一行上面解决依赖问题。
 
 
 ## Announce
