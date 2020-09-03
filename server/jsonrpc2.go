@@ -113,7 +113,7 @@ func (s *Server) handleJSONRPCRequest(ctx context.Context, r *jsonrpcRequest, he
 		return res
 	}
 
-	resp, err := s.handleRequest(context.Background(), req)
+	resp, err := s.handleRequest(ctx, req)
 	if r.ID == nil {
 		return nil
 	}
