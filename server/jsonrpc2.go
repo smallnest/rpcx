@@ -36,7 +36,7 @@ func (s *Server) jsonrpcHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	conn := r.Context().Value(HttpConnContextKey).(net.Conn)
 
-	ctx := context.WithValue(r.Context(), RemoteConnContextKey, conn)
+	ctx := share.WithValue(r.Context(), RemoteConnContextKey, conn)
 
 	if req.ID != nil {
 		res := s.handleJSONRPCRequest(ctx, req, r.Header)
