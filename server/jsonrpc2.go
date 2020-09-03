@@ -124,6 +124,7 @@ func (s *Server) handleJSONRPCRequest(ctx context.Context, r *jsonrpcRequest, he
 			Code:    CodeInternalJSONRPCError,
 			Message: err.Error(),
 		}
+		s.Plugins.DoPostWriteResponse(ctx, req, req.Clone(), err)
 		return res
 	}
 
