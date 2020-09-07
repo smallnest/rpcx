@@ -1,6 +1,7 @@
 package serverplugin
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -78,16 +79,18 @@ func (p *MDNSRegisterPlugin) Start() error {
 						break
 					}
 
-					var data []byte
+					extra := make(map[string]string)
 					if p.Metrics != nil {
-						clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
-						data = []byte(fmt.Sprintf("newconnected=%.2f", clientMeter.RateMean()))
+						extra["calls"] = fmt.Sprintf("%.2f", metrics.GetOrRegisterMeter("calls", p.Metrics).RateMean())
+						extra["connections"] = fmt.Sprintf("%.2f", metrics.GetOrRegisterMeter("connections", p.Metrics).RateMean())
 					}
 
 					//set this same metrics for all services at this server
 					for _, sm := range p.Services {
 						v, _ := url.ParseQuery(string(sm.Meta))
-						v.Set("tps", string(data))
+						for key, value := range extra {
+							v.Set(key, value)
+						}
 						sm.Meta = v.Encode()
 					}
 					ss, _ := json.Marshal(p.Services)
@@ -139,10 +142,17 @@ func (p *MDNSRegisterPlugin) initMDNS() {
 // HandleConnAccept handles connections from clients
 func (p *MDNSRegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
 	if p.Metrics != nil {
-		clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
-		clientMeter.Mark(1)
+		metrics.GetOrRegisterMeter("connections", p.Metrics).Mark(1)
 	}
 	return conn, true
+}
+
+// PreCall handles rpc call from clients
+func (p *MDNSRegisterPlugin) PreCall(_ context.Context, _, _ string, args interface{}) (interface{}, error) {
+	if p.Metrics != nil {
+		metrics.GetOrRegisterMeter("calls", p.Metrics).Mark(1)
+	}
+	return args, nil
 }
 
 // Register handles registering event.
