@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -81,7 +80,7 @@ func (p *EtcdV3RegisterPlugin) Start() error {
 					var data []byte
 					if p.Metrics != nil {
 						clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
-						data = []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
+						data = []byte(fmt.Sprintf("newconnected=%.2f", clientMeter.RateMean()))
 					}
 					//set this same metrics for all services at this server
 					for _, name := range p.Services {

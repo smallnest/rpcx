@@ -3,6 +3,7 @@ package serverplugin
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/url"
 	"os"
@@ -80,7 +81,7 @@ func (p *MDNSRegisterPlugin) Start() error {
 					var data []byte
 					if p.Metrics != nil {
 						clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
-						data = []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
+						data = []byte(fmt.Sprintf("newconnected=%.2f", clientMeter.RateMean()))
 					}
 
 					//set this same metrics for all services at this server
