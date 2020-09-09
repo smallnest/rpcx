@@ -5,7 +5,7 @@ package client
 import (
 	"net"
 
-	kcp "github.com/xtaci/kcp-go"
+	kcp "github.com/xtaci/kcp-go/v5"
 )
 
 func newDirectKCPConn(c *Client, network, address string) (net.Conn, error) {

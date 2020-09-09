@@ -20,7 +20,6 @@ require (
 	github.com/fatih/color v1.9.0
 	github.com/gogo/protobuf v1.2.1
 	github.com/golang/protobuf v1.4.2
-	github.com/google/uuid v1.1.1 // indirect
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/hashicorp/consul/api v1.4.0 // indirect
 	github.com/hashicorp/go-multierror v1.0.0
@@ -31,8 +30,6 @@ require (
 	github.com/juju/ratelimit v1.0.1
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/kavu/go_reuseport v1.5.0
-	github.com/klauspost/cpuid v1.2.3 // indirect
-	github.com/klauspost/reedsolomon v1.9.3 // indirect
 	github.com/kr/pretty v0.2.0
 	github.com/lestrrat/go-envload v0.0.0-20180220120943-6ed08b54a570 // indirect
 	github.com/lestrrat/go-file-rotatelogs v0.0.0-20180223000712-d3151e2a480f // indirect
@@ -50,21 +47,16 @@ require (
 	github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602
 	github.com/smallnest/valkeyrie v0.0.0-20200811110245-15a06a9896aa
 	github.com/soheilhy/cmux v0.1.4
-	github.com/spf13/cobra v1.0.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/tatsushid/go-fastping v0.0.0-20160109021039-d7bb493dee3e
 	github.com/tebeka/strftime v0.1.3 // indirect
-	github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161 // indirect
-	github.com/templexxx/xor v0.0.0-20191217153810-f85b25db303b // indirect
-	github.com/tjfoc/gmsm v1.3.0 // indirect
 	github.com/toolkits/concurrent v0.0.0-20150624120057-a4371d70e3e3 // indirect
 	github.com/valyala/fastrand v1.0.0
-	github.com/vmihailenco/msgpack v4.0.4+incompatible
-	github.com/xtaci/kcp-go v5.4.20+incompatible
+	github.com/vmihailenco/msgpack/v4 v4.3.12
+	github.com/xtaci/kcp-go/v5 v5.5.15
 	github.com/xtaci/lossyconn v0.0.0-20200209145036-adba10fffc37 // indirect
 	go.opencensus.io v0.22.3
-	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
+	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 )
 
 replace google.golang.org/grpc => google.golang.org/grpc v1.29.0
