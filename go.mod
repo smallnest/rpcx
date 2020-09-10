@@ -57,7 +57,7 @@ require (
 	github.com/tebeka/strftime v0.1.3 // indirect
 	github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161 // indirect
 	github.com/templexxx/xor v0.0.0-20191217153810-f85b25db303b // indirect
-	github.com/tjfoc/gmsm v1.3.0 // indirect
+	github.com/tjfoc/gmsm v1.3.2 // indirect
 	github.com/toolkits/concurrent v0.0.0-20150624120057-a4371d70e3e3 // indirect
 	github.com/valyala/fastrand v1.0.0
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
