@@ -25,7 +25,7 @@ func (s *Server) startGateway(network string, ln net.Listener) net.Listener {
 	}
 
 	m := cmux.New(ln)
-=
+
 	rpcxLn := m.Match(rpcxPrefixByteMatcher())
 
 	if !s.DisableJSONRPC {
