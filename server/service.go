@@ -102,9 +102,12 @@ func (s *Server) RegisterFunction(servicePath string, fn interface{}, metadata s
 // RegisterFunctionName is like RegisterFunction but uses the provided name for the function
 // instead of the function's concrete type.
 func (s *Server) RegisterFunctionName(servicePath string, name string, fn interface{}, metadata string) error {
-	s.Plugins.DoRegisterFunction(servicePath, name, fn, metadata)
 	_, err := s.registerFunction(servicePath, fn, name, true)
-	return err
+	if err != nil {
+		return err
+	}
+	
+	return s.Plugins.DoRegisterFunction(servicePath, name, fn, metadata)
 }
 
 func (s *Server) register(rcvr interface{}, name string, useName bool) (string, error) {
