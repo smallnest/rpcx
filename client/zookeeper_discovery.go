@@ -65,7 +65,7 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDisc
 		panic(err)
 	}
 
-	var pairs = make([]*KVPair, 0, len(ps))
+	pairs := make([]*KVPair, 0, len(ps))
 	for _, p := range ps {
 		pair := &KVPair{Key: p.Key, Value: string(p.Value)}
 		if d.filter != nil && !d.filter(pair) {
@@ -141,6 +141,10 @@ func (d *ZookeeperDiscovery) RemoveWatcher(ch chan []*KVPair) {
 }
 
 func (d *ZookeeperDiscovery) watch() {
+	defer func() {
+		d.kv.Close()
+	}()
+
 	for {
 		var err error
 		var c <-chan []*store.KVPair

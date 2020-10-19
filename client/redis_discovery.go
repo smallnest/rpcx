@@ -57,7 +57,7 @@ func NewRedisDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 		log.Infof("cannot get services of from registry: %v, err: %v", basePath, err)
 		panic(err)
 	}
-	var pairs = make([]*KVPair, 0, len(ps))
+	pairs := make([]*KVPair, 0, len(ps))
 	var prefix string
 	for _, p := range ps {
 		if prefix == "" {
@@ -149,6 +149,10 @@ func (d *RedisDiscovery) RemoveWatcher(ch chan []*KVPair) {
 }
 
 func (d *RedisDiscovery) watch() {
+	defer func() {
+		d.kv.Close()
+	}()
+
 	for {
 		var err error
 		var c <-chan []*store.KVPair
