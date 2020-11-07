@@ -549,6 +549,15 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 
 	argsReplyPools.Put(mtype.ArgType, argv)
 	if err != nil {
+		if replyv != nil {
+			data, err := codec.Encode(replyv)
+			argsReplyPools.Put(mtype.ReplyType, replyv)
+			if err != nil {
+				return handleError(res, err)
+
+			}
+			res.Payload = data
+		}
 		argsReplyPools.Put(mtype.ReplyType, replyv)
 		return handleError(res, err)
 	}
