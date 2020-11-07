@@ -615,6 +615,12 @@ func (client *Client) input() {
 			if call.Raw {
 				call.Metadata, call.Reply, _ = convertRes2Raw(res)
 				call.Metadata[XErrorMessage] = call.Error.Error()
+			} else if len(res.Payload) > 0 {
+				data := res.Payload
+				codec := share.Codecs[res.SerializeType()]
+				if codec != nil {
+					codec.Decode(data, call.Reply)
+				}
 			}
 			call.done()
 		default:
