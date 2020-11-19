@@ -29,6 +29,9 @@ func nextWeighted(servers []*Weighted) (best *Weighted) {
 
 		w.CurrentWeight += w.EffectiveWeight
 		total += w.EffectiveWeight
+		if w.EffectiveWeight < w.Weight {
+			w.EffectiveWeight++
+		}
 
 		if best == nil || w.CurrentWeight > best.CurrentWeight {
 			best = w
