@@ -178,12 +178,12 @@ func (s *Server) startShutdownListener() {
 		signal.Notify(c, syscall.SIGTERM, syscall.SIGHUP)
 		si := <-c
 		var customFuncs []func(s *Server)
-		switch si.String() {
-		case "terminated":
+		switch si {
+		case syscall.SIGTERM:
 			customFuncs = append(s.onShutdown, func(s *Server) {
 				s.Shutdown(context.Background())
 			})
-		case "hangup":
+		case syscall.SIGHUP:
 			customFuncs = append(s.onRestart, func(s *Server) {
 				s.Restart(context.Background())
 			})
