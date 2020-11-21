@@ -188,7 +188,7 @@ func (s *Server) startShutdownListener() {
 				s.Restart(context.Background())
 			})
 		}
-		if nil != customFuncs && len(customFuncs) > 0 {
+		if len(customFuncs) > 0 {
 			for _, fn := range customFuncs {
 				fn(s)
 			}
