@@ -79,6 +79,7 @@ type Server struct {
 
 	inShutdown int32
 	onShutdown []func(s *Server)
+	onRestart  []func(s *Server)
 
 	// TLSConfig for creating tls tcp connection.
 	tlsConfig *tls.Config
@@ -174,13 +175,22 @@ func (s *Server) startShutdownListener() {
 	go func(s *Server) {
 		log.Info("server pid:", os.Getpid())
 		c := make(chan os.Signal, 1)
-		signal.Notify(c, syscall.SIGTERM)
+		signal.Notify(c, syscall.SIGTERM, syscall.SIGHUP)
 		si := <-c
-		if si.String() == "terminated" {
-			if nil != s.onShutdown && len(s.onShutdown) > 0 {
-				for _, sd := range s.onShutdown {
-					sd(s)
-				}
+		var customFuncs []func(s *Server)
+		switch si {
+		case syscall.SIGTERM:
+			customFuncs = append(s.onShutdown, func(s *Server) {
+				s.Shutdown(context.Background())
+			})
+		case syscall.SIGHUP:
+			customFuncs = append(s.onRestart, func(s *Server) {
+				s.Restart(context.Background())
+			})
+		}
+		if len(customFuncs) > 0 {
+			for _, fn := range customFuncs {
+				fn(s)
 			}
 		}
 	}(s)
@@ -697,6 +707,13 @@ func (s *Server) Close() error {
 func (s *Server) RegisterOnShutdown(f func(s *Server)) {
 	s.mu.Lock()
 	s.onShutdown = append(s.onShutdown, f)
+	s.mu.Unlock()
+}
+
+// RegisterOnRestart registers a function to call on Restart.
+func (s *Server) RegisterOnRestart(f func(s *Server)) {
+	s.mu.Lock()
+	s.onRestart = append(s.onRestart, f)
 	s.mu.Unlock()
 }
 
