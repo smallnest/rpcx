@@ -10,6 +10,8 @@
 - avoid duplicated client creation
 - add SelectNodePlugin that can interrupt the Select method
 - support TcpCopy by TeePlugin
+- support reuseport for http invoke
+- return reply even in case of server errors
 - Change two methods' name of client plugin!
 - Broken API: add error parameter in `PreWriteResponse`(#486)
 - Broken API: change ReadTimeout/WriteTimeout to IdleTimeout
