@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -115,7 +116,10 @@ func (c ThriftCodec) Encode(i interface{}) ([]byte, error) {
 		Protocol:  p,
 	}
 	t.Transport.Close()
-	return t.Write(context.Background(), i.(thrift.TStruct))
+	if msg, ok := i.(thrift.TStruct); ok {
+		return t.Write(context.Background(), msg)
+	}
+	return nil, errors.New("type assertion failed")
 }
 
 func (c ThriftCodec) Decode(data []byte, i interface{}) error {

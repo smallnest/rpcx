@@ -1,43 +1,122 @@
 package codec
 
 import (
-	"encoding/json"
-	"reflect"
 	"testing"
+
+	"github.com/smallnest/rpcx/codec/test_data"
 )
 
-func TestCodec_JSON(t *testing.T) {
-	type Something struct {
-		A int
-		B string
-		C int64
-		D float64
-		E map[string]string
-		F json.Number
+type ColorGroup struct {
+	Id     int      `json:"id" xml:"id,attr" msg:"id"`
+	Name   string   `json:"name" xml:"name" msg:"name"`
+	Colors []string `json:"colors" xml:"colors" msg:"colors"`
+}
+
+var group = ColorGroup{
+	Id:     1,
+	Name:   "Reds",
+	Colors: []string{"Crimson", "Red", "Ruby", "Maroon"},
+}
+
+func BenchmarkByteCodec_Encode(b *testing.B) {
+	var raw = make([]byte, 0, 1024)
+	serializer := JSONCodec{}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		raw, _ = serializer.Encode(group)
+	}
+	b.ReportMetric(float64(len(raw)), "bytes")
+}
+
+func BenchmarkPBCodec_Encode(b *testing.B) {
+	var raw = make([]byte, 0, 1024)
+	serializer := PBCodec{}
+	group := test_data.ProtoColorGroup{
+		Id:     1,
+		Name:   "Reds",
+		Colors: []string{"Crimson", "Red", "Ruby", "Maroon"},
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		raw, _ = serializer.Encode(&group)
+	}
+	b.ReportMetric(float64(len(raw)), "bytes")
+}
+
+func BenchmarkMsgpackCodec_Encode(b *testing.B) {
+	var raw = make([]byte, 0, 1024)
+	serializer := MsgpackCodec{}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		raw, _ = serializer.Encode(group)
+	}
+	b.ReportMetric(float64(len(raw)), "bytes")
+}
+
+func BenchmarkThriftCodec_Encode(b *testing.B) {
+	var bb = make([]byte, 0, 1024)
+	serializer := ThriftCodec{}
+	thriftColorGroup := test_data.ThriftColorGroup{
+		ID:     1,
+		Name:   "Reds",
+		Colors: []string{"Crimson", "Red", "Ruby", "Maroon"},
 	}
 
-	st := Something{
-		A: 100,
-		B: "hello world",
-		C: 123456789,
-		D: 1234567.89,
-		E: map[string]string{"name": "Jerry"},
-		F: "123456789",
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		bb, _ = serializer.Encode(&thriftColorGroup)
 	}
 
-	var jsonCodec JSONCodec
-	data, err := jsonCodec.Encode(&st)
-	if err != nil {
-		t.Fatal(err)
-	}
+	b.ReportMetric(float64(len(bb)), "bytes")
+}
 
-	var st2 Something
-	err = jsonCodec.Decode(data, &st2)
-	if err != nil {
-		t.Fatal(err)
-	}
+func BenchmarkByteCodec_Decode(b *testing.B) {
+	serializer := JSONCodec{}
+	bytes, _ := serializer.Encode(group)
+	result := ColorGroup{}
 
-	if !reflect.DeepEqual(st, st2) {
-		t.Fatalf("expect %+v, but got %+v", st, st2)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = serializer.Decode(bytes, &result)
+	}
+}
+
+func BenchmarkPBCodec_Decode(b *testing.B) {
+	serializer := PBCodec{}
+	bytes, _ := serializer.Encode(group)
+	result := ColorGroup{}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = serializer.Decode(bytes, &result)
+	}
+}
+
+func BenchmarkMsgpackCodec_Decode(b *testing.B) {
+	serializer := MsgpackCodec{}
+	bytes, _ := serializer.Encode(group)
+	result := ColorGroup{}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = serializer.Decode(bytes, &result)
+	}
+}
+
+func BenchmarkThriftCodec_Decode(b *testing.B) {
+	serializer := ThriftCodec{}
+	thriftColorGroup := test_data.ThriftColorGroup{
+		ID:     1,
+		Name:   "Reds",
+		Colors: []string{"Crimson", "Red", "Ruby", "Maroon"},
+	}
+	bytes, _ := serializer.Encode(&thriftColorGroup)
+	result := test_data.ThriftColorGroup{}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = serializer.Decode(bytes, &result)
 	}
 }
