@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package test_data;
+
+
+message ProtoColorGroup {
+  int32 id = 1;
+  string name = 2;
+  repeated string colors = 3;
+}
