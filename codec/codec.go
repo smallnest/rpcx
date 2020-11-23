@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -11,7 +12,7 @@ import (
 	pb "github.com/golang/protobuf/proto"
 	"github.com/vmihailenco/msgpack"
 
-	"git.apache.org/thrift.git/lib/go/thrift"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 // Codec defines the interface that decode/encode payload.
@@ -113,7 +114,10 @@ func (c ThriftCodec) Encode(i interface{}) ([]byte, error) {
 		Protocol:  p,
 	}
 	t.Transport.Close()
-	return t.Write(context.Background(), i.(thrift.TStruct))
+	if msg, ok := i.(thrift.TStruct); ok {
+		return t.Write(context.Background(), msg)
+	}
+	return nil, errors.New("type assertion failed")
 }
 
 func (c ThriftCodec) Decode(data []byte, i interface{}) error {
