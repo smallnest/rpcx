@@ -22,8 +22,8 @@ require (
 	github.com/edwingeng/doublejump v0.0.0-20200219153503-7cfc0ed6e836
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fatih/color v1.7.0
-	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
+	github.com/go-redis/redis/v8 v8.4.0 // indirect
 	github.com/gogo/protobuf v1.2.1
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/golang/protobuf v1.4.2
@@ -53,7 +53,7 @@ require (
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/smallnest/libkv-etcdv3-store v1.1.9
 	github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602
-	github.com/smallnest/valkeyrie v0.0.0-20200811110245-15a06a9896aa
+	github.com/smallnest/valkeyrie v0.0.0-20201124111609-8912291d39da
 	github.com/soheilhy/cmux v0.1.4
 	github.com/spf13/cobra v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
