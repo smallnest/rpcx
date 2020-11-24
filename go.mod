@@ -38,9 +38,14 @@ require (
 	github.com/juju/ratelimit v1.0.1
 	github.com/julienschmidt/httprouter v1.2.0
 	github.com/kavu/go_reuseport v1.5.0
+	github.com/klauspost/crc32 v1.2.0 // indirect
+	github.com/klauspost/reedsolomon v1.9.9 // indirect
 	github.com/kr/pretty v0.1.0
+	github.com/lucas-clemente/quic-go v0.15.5
+	github.com/mmcloughlin/avo v0.0.0-20201105074841-5d2f697d268f // indirect
 	github.com/nacos-group/nacos-sdk-go v1.0.1
 	github.com/opentracing/opentracing-go v1.1.1-0.20190913142402-a7454ce5950e
+	github.com/peterbourgon/g2s v0.0.0-20170223122336-d4e7ad98afea // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 	github.com/rs/cors v1.7.0
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
@@ -55,14 +60,13 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/tatsushid/go-fastping v0.0.0-20160109021039-d7bb493dee3e
 	github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926 // indirect
-	github.com/u35s/rudp v0.0.0-20171228014240-b384c469e861
+	github.com/u35s/rudp v0.0.0-20171228014240-b384c469e861 // indirect
 	github.com/valyala/fastrand v0.0.0-20170531153657-19dd0f0bf014
 	github.com/vmihailenco/msgpack v4.0.0+incompatible
-	github.com/vrischmann/go-metrics-influxdb v0.0.0-20160917065939-43af8332c303
+	github.com/vrischmann/go-metrics-influxdb v0.0.0-20160917065939-43af8332c303 // indirect
 	github.com/xtaci/kcp-go v2.0.3+incompatible
 	go.opencensus.io v0.18.0
-	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
-	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
