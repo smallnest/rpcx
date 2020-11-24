@@ -30,8 +30,17 @@ require (
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/grandcat/zeroconf v0.0.0-20180329153754-df75bb3ccae1
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
-	github.com/hashicorp/consul v1.2.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect
+	github.com/hashicorp/go-multierror v1.0.0
+	github.com/hashicorp/golang-lru v0.5.0
+	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab
+	github.com/json-iterator/go v1.1.7
+	github.com/juju/ratelimit v1.0.1
+	github.com/julienschmidt/httprouter v1.2.0
+	github.com/kavu/go_reuseport v1.5.0
+	github.com/kr/pretty v0.1.0
+	github.com/nacos-group/nacos-sdk-go v1.0.1
+	github.com/opentracing/opentracing-go v1.1.1-0.20190913142402-a7454ce5950e
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 	github.com/rs/cors v1.7.0
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
@@ -51,7 +60,9 @@ require (
 	github.com/vmihailenco/msgpack v4.0.0+incompatible
 	github.com/vrischmann/go-metrics-influxdb v0.0.0-20160917065939-43af8332c303
 	github.com/xtaci/kcp-go v2.0.3+incompatible
+	go.opencensus.io v0.18.0
 	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
