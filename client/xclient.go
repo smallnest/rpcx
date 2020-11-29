@@ -426,7 +426,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 	var err error
 	k, client, err := c.selectClient(ctx, c.servicePath, serviceMethod, args)
 	if err != nil {
-		if c.failMode == Failfast {
+		if c.failMode == Failfast || contextCanceled(err) {
 			return err
 		}
 	}
@@ -442,6 +442,9 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 				err = c.wrapCall(ctx, client, serviceMethod, args, reply)
 				if err == nil {
 					return nil
+				}
+				if contextCanceled(err) {
+					return err
 				}
 				if _, ok := err.(ServiceError); ok {
 					return err
@@ -466,6 +469,9 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 				err = c.wrapCall(ctx, client, serviceMethod, args, reply)
 				if err == nil {
 					return nil
+				}
+				if contextCanceled(err) {
+					return err
 				}
 				if _, ok := err.(ServiceError); ok {
 					return err
@@ -564,6 +570,19 @@ func uncoverError(err error) bool {
 
 	return true
 }
+
+func contextCanceled(err error) bool {
+	if err == context.DeadlineExceeded {
+		return true
+	}
+
+	if err == context.Canceled {
+		return true
+	}
+
+	return false
+}
+
 func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error) {
 	if c.isShutdown {
 		return nil, nil, ErrXClientShutdown
@@ -586,7 +605,9 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		if c.failMode == Failfast {
 			return nil, nil, err
 		}
-
+		if contextCanceled(err) {
+			return nil, nil, err
+		}
 		if _, ok := err.(ServiceError); ok {
 			return nil, nil, err
 		}
@@ -602,6 +623,9 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 				m, payload, err := client.SendRaw(ctx, r)
 				if err == nil {
 					return m, payload, nil
+				}
+				if contextCanceled(err) {
+					return nil, nil, err
 				}
 				if _, ok := err.(ServiceError); ok {
 					return nil, nil, err
@@ -626,6 +650,9 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 				m, payload, err := client.SendRaw(ctx, r)
 				if err == nil {
 					return m, payload, nil
+				}
+				if contextCanceled(err) {
+					return nil, nil, err
 				}
 				if _, ok := err.(ServiceError); ok {
 					return nil, nil, err
