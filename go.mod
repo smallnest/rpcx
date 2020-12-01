@@ -19,6 +19,7 @@ require (
 	github.com/go-redis/redis/v8 v8.4.0 // indirect
 	github.com/gogo/protobuf v1.2.1
 	github.com/golang/protobuf v1.4.2
+	github.com/golang/snappy v0.0.2
 	github.com/grandcat/zeroconf v0.0.0-20180329153754-df75bb3ccae1
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/hashicorp/golang-lru v0.5.0
