@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
+	"github.com/rpcxio/libkv"
+	"github.com/rpcxio/libkv/store"
 	etcd "github.com/smallnest/libkv-etcdv3-store"
 	"github.com/smallnest/rpcx/log"
 )

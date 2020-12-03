@@ -10,11 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store/zookeeper"
+	"github.com/rpcxio/libkv"
+	"github.com/rpcxio/libkv/store/zookeeper"
 
-	"github.com/docker/libkv/store"
 	metrics "github.com/rcrowley/go-metrics"
+	"github.com/rpcxio/libkv/store"
 	"github.com/smallnest/rpcx/log"
 )
 
@@ -205,7 +205,7 @@ func (p *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}, metada
 	}
 
 	nodePath = fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
-	err = p.kv.Put(nodePath, []byte(metadata), &store.WriteOptions{TTL: p.UpdateInterval * 2})
+	_, _, err = p.kv.AtomicPut(nodePath, []byte(metadata), nil, &store.WriteOptions{TTL: p.UpdateInterval * 2})
 	if err != nil {
 		log.Errorf("cannot create zk path %s: %v", nodePath, err)
 		return err

@@ -12,7 +12,7 @@ require (
 	github.com/apache/thrift v0.12.0
 	github.com/cenk/backoff v2.0.0+incompatible // indirect
 	github.com/cenkalti/backoff v2.0.0+incompatible // indirect
-	github.com/docker/libkv v0.2.1
+	github.com/rpcxio/libkv v0.3.0
 	github.com/edwingeng/doublejump v0.0.0-20200219153503-7cfc0ed6e836
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fatih/color v1.7.0

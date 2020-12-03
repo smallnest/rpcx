@@ -80,9 +80,14 @@ func (s *Server) Register(rcvr interface{}, metadata string) error {
 // RegisterName is like Register but uses the provided name for the type
 // instead of the receiver's concrete type.
 func (s *Server) RegisterName(name string, rcvr interface{}, metadata string) error {
-	s.Plugins.DoRegister(name, rcvr, metadata)
 	_, err := s.register(rcvr, name, true)
-	return err
+	if err != nil {
+		return err
+	}
+	if s.Plugins == nil {
+		s.Plugins = &pluginContainer{}
+	}
+	return s.Plugins.DoRegister(name, rcvr, metadata)
 }
 
 // RegisterFunction publishes a function that satisfy the following conditions:
@@ -106,7 +111,7 @@ func (s *Server) RegisterFunctionName(servicePath string, name string, fn interf
 	if err != nil {
 		return err
 	}
-	
+
 	return s.Plugins.DoRegisterFunction(servicePath, name, fn, metadata)
 }
 
