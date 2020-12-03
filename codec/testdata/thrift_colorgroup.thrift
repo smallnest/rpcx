@@ -1,4 +1,4 @@
-namespace go test_data
+namespace go testdata
 
 struct ThriftColorGroup {
   1: i32 id = 0,

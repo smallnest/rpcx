@@ -35,7 +35,7 @@ func MagicNumber() byte {
 }
 
 var (
-	// ErrMetaKVMissing some keys or values are mssing.
+	// ErrMetaKVMissing some keys or values are missing.
 	ErrMetaKVMissing = errors.New("wrong metadata lines. some keys or values are missing")
 	// ErrMessageTooLong message is too long
 	ErrMessageTooLong = errors.New("message is too long")
@@ -48,7 +48,7 @@ const (
 	ServiceError = "__rpcx_error__"
 )
 
-// MessageType is message type of requests and resposnes.
+// MessageType is message type of requests and responses.
 type MessageType byte
 
 const (
