@@ -4,7 +4,6 @@ go 1.14
 
 require (
 	github.com/ChimeraCoder/gojson v1.1.0
-	github.com/abronan/valkeyrie v0.1.0
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.69 // indirect
 	github.com/anacrolix/envpprof v1.1.0 // indirect
 	github.com/anacrolix/sync v0.2.0 // indirect
@@ -38,7 +37,6 @@ require (
 	github.com/rpcxio/libkv v0.4.0
 	github.com/rs/cors v1.7.0
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
-	github.com/smallnest/libkv-etcdv3-store v1.1.9
 	github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602
 	github.com/soheilhy/cmux v0.1.4
 	github.com/stretchr/testify v1.6.1
