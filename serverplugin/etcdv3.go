@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
 	metrics "github.com/rcrowley/go-metrics"
-	etcd "github.com/smallnest/libkv-etcdv3-store"
+	"github.com/rpcxio/libkv"
+	"github.com/rpcxio/libkv/store"
+	etcd "github.com/rpcxio/libkv/store/etcdv3"
 	"github.com/smallnest/rpcx/log"
 )
 
