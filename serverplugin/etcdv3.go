@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
 	metrics "github.com/rcrowley/go-metrics"
 	"github.com/rpcxio/libkv"
 	"github.com/rpcxio/libkv/store"
