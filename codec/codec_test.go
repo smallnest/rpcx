@@ -3,7 +3,7 @@ package codec
 import (
 	"testing"
 
-	"github.com/smallnest/rpcx/codec/test_data"
+	"github.com/smallnest/rpcx/codec/testdata"
 )
 
 type ColorGroup struct {
@@ -32,7 +32,7 @@ func BenchmarkByteCodec_Encode(b *testing.B) {
 func BenchmarkPBCodec_Encode(b *testing.B) {
 	var raw = make([]byte, 0, 1024)
 	serializer := PBCodec{}
-	group := test_data.ProtoColorGroup{
+	group := testdata.ProtoColorGroup{
 		Id:     1,
 		Name:   "Reds",
 		Colors: []string{"Crimson", "Red", "Ruby", "Maroon"},
@@ -58,7 +58,7 @@ func BenchmarkMsgpackCodec_Encode(b *testing.B) {
 func BenchmarkThriftCodec_Encode(b *testing.B) {
 	var bb = make([]byte, 0, 1024)
 	serializer := ThriftCodec{}
-	thriftColorGroup := test_data.ThriftColorGroup{
+	thriftColorGroup := testdata.ThriftColorGroup{
 		ID:     1,
 		Name:   "Reds",
 		Colors: []string{"Crimson", "Red", "Ruby", "Maroon"},
@@ -107,13 +107,13 @@ func BenchmarkMsgpackCodec_Decode(b *testing.B) {
 
 func BenchmarkThriftCodec_Decode(b *testing.B) {
 	serializer := ThriftCodec{}
-	thriftColorGroup := test_data.ThriftColorGroup{
+	thriftColorGroup := testdata.ThriftColorGroup{
 		ID:     1,
 		Name:   "Reds",
 		Colors: []string{"Crimson", "Red", "Ruby", "Maroon"},
 	}
 	bytes, _ := serializer.Encode(&thriftColorGroup)
-	result := test_data.ThriftColorGroup{}
+	result := testdata.ThriftColorGroup{}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

@@ -5,10 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/abronan/valkeyrie"
-	"github.com/abronan/valkeyrie/store"
+	"github.com/rpcxio/libkv"
+	"github.com/rpcxio/libkv/store"
+	"github.com/rpcxio/libkv/store/redis"
 	"github.com/smallnest/rpcx/log"
-	"github.com/smallnest/valkeyrie/store/redis"
 )
 
 func init() {
@@ -34,7 +34,7 @@ type RedisDiscovery struct {
 
 // NewRedisDiscovery returns a new RedisDiscovery.
 func NewRedisDiscovery(basePath string, servicePath string, etcdAddr []string, options *store.Config) ServiceDiscovery {
-	kv, err := valkeyrie.NewStore(store.REDIS, etcdAddr, options)
+	kv, err := libkv.NewStore(store.REDIS, etcdAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
 		panic(err)
@@ -52,7 +52,7 @@ func NewRedisDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	d := &RedisDiscovery{basePath: basePath, kv: kv}
 	d.stopCh = make(chan struct{})
 
-	ps, err := kv.List(basePath, nil)
+	ps, err := kv.List(basePath)
 	if err != nil {
 		log.Infof("cannot get services of from registry: %v, err: %v", basePath, err)
 		panic(err)
@@ -98,7 +98,7 @@ func NewRedisDiscoveryTemplate(basePath string, etcdAddr []string, options *stor
 		basePath = basePath[:len(basePath)-1]
 	}
 
-	kv, err := valkeyrie.NewStore(store.REDIS, etcdAddr, options)
+	kv, err := libkv.NewStore(store.REDIS, etcdAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
 		panic(err)
@@ -160,7 +160,7 @@ func (d *RedisDiscovery) watch() {
 
 		retry := d.RetriesAfterWatchFailed
 		for d.RetriesAfterWatchFailed < 0 || retry >= 0 {
-			c, err = d.kv.WatchTree(d.basePath, nil, nil)
+			c, err = d.kv.WatchTree(d.basePath, nil)
 			if err != nil {
 				if d.RetriesAfterWatchFailed > 0 {
 					retry--

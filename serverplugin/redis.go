@@ -10,11 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/abronan/valkeyrie"
-	"github.com/abronan/valkeyrie/store"
 	metrics "github.com/rcrowley/go-metrics"
+	"github.com/rpcxio/libkv"
+	"github.com/rpcxio/libkv/store"
+	"github.com/rpcxio/libkv/store/redis"
 	"github.com/smallnest/rpcx/log"
-	"github.com/smallnest/valkeyrie/store/redis"
 )
 
 func init() {
@@ -53,7 +53,7 @@ func (p *RedisRegisterPlugin) Start() error {
 	}
 
 	if p.kv == nil {
-		kv, err := valkeyrie.NewStore(store.REDIS, p.RedisServers, p.Options)
+		kv, err := libkv.NewStore(store.REDIS, p.RedisServers, p.Options)
 		if err != nil {
 			log.Errorf("cannot create redis registry: %v", err)
 			return err
@@ -87,7 +87,7 @@ func (p *RedisRegisterPlugin) Start() error {
 					//set this same metrics for all services at this server
 					for _, name := range p.Services {
 						nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
-						kvPair, err := p.kv.Get(nodePath, nil)
+						kvPair, err := p.kv.Get(nodePath)
 						if err != nil {
 							log.Infof("can't get data of node: %s, because of %v", nodePath, err.Error())
 
@@ -119,7 +119,7 @@ func (p *RedisRegisterPlugin) Start() error {
 // Stop unregister all services.
 func (p *RedisRegisterPlugin) Stop() error {
 	if p.kv == nil {
-		kv, err := valkeyrie.NewStore(store.REDIS, p.RedisServers, p.Options)
+		kv, err := libkv.NewStore(store.REDIS, p.RedisServers, p.Options)
 		if err != nil {
 			log.Errorf("cannot create redis registry: %v", err)
 			return err
@@ -129,7 +129,7 @@ func (p *RedisRegisterPlugin) Stop() error {
 
 	for _, name := range p.Services {
 		nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
-		exist, err := p.kv.Exists(nodePath, nil)
+		exist, err := p.kv.Exists(nodePath)
 		if err != nil {
 			log.Errorf("cannot delete path %s: %v", nodePath, err)
 			continue
@@ -172,7 +172,7 @@ func (p *RedisRegisterPlugin) Register(name string, rcvr interface{}, metadata s
 
 	if p.kv == nil {
 		redis.Register()
-		kv, err := valkeyrie.NewStore(store.REDIS, p.RedisServers, p.Options)
+		kv, err := libkv.NewStore(store.REDIS, p.RedisServers, p.Options)
 		if err != nil {
 			log.Errorf("cannot create redis registry: %v", err)
 			return err
@@ -219,7 +219,7 @@ func (p *RedisRegisterPlugin) Unregister(name string) (err error) {
 
 	if p.kv == nil {
 		redis.Register()
-		kv, err := valkeyrie.NewStore(store.REDIS, p.RedisServers, p.Options)
+		kv, err := libkv.NewStore(store.REDIS, p.RedisServers, p.Options)
 		if err != nil {
 			log.Errorf("cannot create redis registry: %v", err)
 			return err

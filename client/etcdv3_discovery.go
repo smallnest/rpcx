@@ -7,7 +7,7 @@ import (
 
 	"github.com/rpcxio/libkv"
 	"github.com/rpcxio/libkv/store"
-	etcd "github.com/smallnest/libkv-etcdv3-store"
+	etcd "github.com/rpcxio/libkv/store/etcdv3"
 	"github.com/smallnest/rpcx/log"
 )
 

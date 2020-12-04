@@ -9,11 +9,10 @@ import (
 	"strings"
 	"sync"
 	"time"
-
+	metrics "github.com/rcrowley/go-metrics"
 	"github.com/rpcxio/libkv"
 	"github.com/rpcxio/libkv/store"
 	"github.com/rpcxio/libkv/store/etcd"
-	metrics "github.com/rcrowley/go-metrics"
 	"github.com/smallnest/rpcx/log"
 )
 
