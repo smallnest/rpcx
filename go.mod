@@ -44,7 +44,6 @@ require (
 	github.com/valyala/fastrand v0.0.0-20170531153657-19dd0f0bf014
 	github.com/vmihailenco/msgpack v4.0.0+incompatible
 	github.com/xtaci/kcp-go v2.0.3+incompatible
-	go.etcd.io/etcd v3.4.14+incompatible // indirect
 	go.opencensus.io v0.22.2
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	google.golang.org/protobuf v1.25.0
