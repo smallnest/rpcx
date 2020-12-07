@@ -28,13 +28,13 @@ require (
 	github.com/klauspost/crc32 v1.2.0 // indirect
 	github.com/klauspost/reedsolomon v1.9.9 // indirect
 	github.com/kr/pretty v0.2.0
-	github.com/lucas-clemente/quic-go v0.15.5
+	github.com/lucas-clemente/quic-go v0.18.0
 	github.com/mmcloughlin/avo v0.0.0-20201105074841-5d2f697d268f // indirect
 	github.com/nacos-group/nacos-sdk-go v1.0.1
 	github.com/opentracing/opentracing-go v1.1.1-0.20190913142402-a7454ce5950e
 	github.com/peterbourgon/g2s v0.0.0-20170223122336-d4e7ad98afea // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
-	github.com/rpcxio/libkv v0.4.0
+	github.com/rpcxio/libkv v0.4.1
 	github.com/rs/cors v1.7.0
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
 	github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602
@@ -45,8 +45,9 @@ require (
 	github.com/valyala/fastrand v0.0.0-20170531153657-19dd0f0bf014
 	github.com/vmihailenco/msgpack v4.0.0+incompatible
 	github.com/xtaci/kcp-go v2.0.3+incompatible
-	go.opencensus.io v0.18.0
+	go.opencensus.io v0.22.2
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
+	google.golang.org/grpc v1.33.2 // indirect
 	google.golang.org/protobuf v1.25.0
 )
 

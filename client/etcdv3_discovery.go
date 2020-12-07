@@ -34,7 +34,7 @@ type EtcdV3Discovery struct {
 
 // NewEtcdV3Discovery returns a new EtcdV3Discovery.
 func NewEtcdV3Discovery(basePath string, servicePath string, etcdAddr []string, options *store.Config) ServiceDiscovery {
-	kv, err := libkv.NewStore(etcd.ETCDV3, etcdAddr, options)
+	kv, err := libkv.NewStore(store.ETCDV3, etcdAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
 		panic(err)
@@ -98,7 +98,7 @@ func NewEtcdV3DiscoveryTemplate(basePath string, etcdAddr []string, options *sto
 		basePath = basePath[:len(basePath)-1]
 	}
 
-	kv, err := libkv.NewStore(etcd.ETCDV3, etcdAddr, options)
+	kv, err := libkv.NewStore(store.ETCDV3, etcdAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
 		panic(err)
