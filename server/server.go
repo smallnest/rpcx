@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -424,8 +425,13 @@ func (s *Server) serveConn(conn net.Conn) {
 			}
 
 			resMetadata := make(map[string]string)
-			newCtx := share.WithLocalValue(share.WithLocalValue(ctx, share.ReqMetaDataKey, req.Metadata),
+			var newCtx context.Context = share.WithLocalValue(share.WithLocalValue(ctx, share.ReqMetaDataKey, req.Metadata),
 				share.ResMetaDataKey, resMetadata)
+
+			newCtx, cancelFunc := parseServerTimeout(newCtx, req)
+			if cancelFunc != nil {
+				defer cancelFunc()
+			}
 
 			s.Plugins.DoPreHandleRequest(newCtx, req)
 
@@ -463,6 +469,24 @@ func (s *Server) serveConn(conn net.Conn) {
 			protocol.FreeMsg(res)
 		}()
 	}
+}
+
+func parseServerTimeout(ctx context.Context, req *protocol.Message) (context.Context, context.CancelFunc) {
+	if req == nil || req.Metadata == nil {
+		return ctx, nil
+	}
+
+	st := req.Metadata[share.ServerTimeout]
+	if st == "" {
+		return ctx, nil
+	}
+
+	timeout, err := strconv.ParseInt(st, 10, 64)
+	if err != nil {
+		return ctx, nil
+	}
+
+	return context.WithTimeout(ctx, time.Duration(timeout)*time.Millisecond)
 }
 
 func isShutdown(s *Server) bool {

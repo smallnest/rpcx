@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/url"
@@ -382,6 +383,18 @@ func splitNetworkAndAddress(server string) (string, string) {
 	return ss[0], ss[1]
 }
 
+func setServerTimeout(ctx context.Context) {
+	if deadline, ok := ctx.Deadline(); ok {
+		metadata := ctx.Value(share.ReqMetaDataKey)
+		if metadata == nil {
+			metadata = map[string]string{}
+			ctx = context.WithValue(ctx, share.ReqMetaDataKey, metadata)
+		}
+		m := metadata.(map[string]string)
+		m[share.ServerTimeout] = fmt.Sprintf("%d", time.Since(deadline).Milliseconds())
+	}
+}
+
 // Go invokes the function asynchronously. It returns the Call structure representing the invocation. The done channel will signal when the call is complete by returning the same Call object. If done is nil, Go will allocate a new channel. If non-nil, done must be buffered or Go will deliberately crash.
 // It does not use FailMode.
 func (c *xClient) Go(ctx context.Context, serviceMethod string, args interface{}, reply interface{}, done chan *Call) (*Call, error) {
@@ -398,6 +411,8 @@ func (c *xClient) Go(ctx context.Context, serviceMethod string, args interface{}
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth
 	}
+
+	setServerTimeout(ctx)
 
 	_, client, err := c.selectClient(ctx, c.servicePath, serviceMethod, args)
 	if err != nil {
@@ -422,6 +437,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth
 	}
+	setServerTimeout(ctx)
 
 	var err error
 	k, client, err := c.selectClient(ctx, c.servicePath, serviceMethod, args)
@@ -598,6 +614,8 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		m[share.AuthKey] = c.auth
 	}
 
+	setServerTimeout(ctx)
+
 	var err error
 	k, client, err := c.selectClient(ctx, r.ServicePath, r.ServiceMethod, r.Payload)
 
@@ -714,6 +732,8 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 		m[share.AuthKey] = c.auth
 	}
 
+	setServerTimeout(ctx)
+
 	var clients = make(map[string]RPCClient)
 	c.mu.Lock()
 	for k := range c.servers {
@@ -784,6 +804,8 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 		m := metadata.(map[string]string)
 		m[share.AuthKey] = c.auth
 	}
+
+	setServerTimeout(ctx)
 
 	var clients = make(map[string]RPCClient)
 	c.mu.Lock()
@@ -872,6 +894,8 @@ func (c *xClient) SendFile(ctx context.Context, fileName string, rateInBytesPerS
 		FileSize: fi.Size(),
 	}
 
+	setServerTimeout(ctx)
+
 	reply := &share.FileTransferReply{}
 	err = c.Call(ctx, "TransferFile", args, reply)
 	if err != nil {
@@ -931,6 +955,8 @@ loop:
 }
 
 func (c *xClient) DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer) error {
+	setServerTimeout(ctx)
+
 	args := share.DownloadFileArgs{
 		FileName: requestFileName,
 	}
