@@ -14,7 +14,7 @@ tools:
 	go get github.com/golang/lint/golint
 	go get github.com/alexkohler/prealloc
 	go get github.com/axw/gocov/gocov
-	go get -u gopkg.in/matm/v1/gocov-html
+	go get github.com/matm/gocov-html
 
 gometalinter:
 	gometalinter --enable-all ./...
@@ -60,7 +60,7 @@ test:
 	go test -race -tags "kcp quic ping utp" ./...
 
 cover:
-	gocov test ./... | gocov-html > cover.html
+	gocov test -tags "kcp quic ping" ./... | gocov-html > cover.html
 	open cover.html
 
 check-libs:
