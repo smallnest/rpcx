@@ -8,9 +8,8 @@ require (
 	github.com/anacrolix/envpprof v1.1.0 // indirect
 	github.com/anacrolix/sync v0.2.0 // indirect
 	github.com/anacrolix/utp v0.0.0-20180219060659-9e0e1d1d0572
-	github.com/apache/thrift v0.12.0
+	github.com/apache/thrift v0.13.0
 	github.com/cenk/backoff v2.0.0+incompatible // indirect
-	github.com/cenkalti/backoff v2.0.0+incompatible // indirect
 	github.com/edwingeng/doublejump v0.0.0-20200219153503-7cfc0ed6e836
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fatih/color v1.9.0
@@ -19,11 +18,11 @@ require (
 	github.com/golang/snappy v0.0.2
 	github.com/grandcat/zeroconf v0.0.0-20180329153754-df75bb3ccae1
 	github.com/hashicorp/go-multierror v1.1.0
-	github.com/hashicorp/golang-lru v0.5.0
+	github.com/hashicorp/golang-lru v0.5.1
 	github.com/influxdata/influxdb1-client v0.0.0-20200827194710-b269163b24ab
 	github.com/json-iterator/go v1.1.10
 	github.com/juju/ratelimit v1.0.1
-	github.com/julienschmidt/httprouter v1.2.0
+	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/klauspost/crc32 v1.2.0 // indirect
 	github.com/klauspost/reedsolomon v1.9.9 // indirect
@@ -34,7 +33,7 @@ require (
 	github.com/opentracing/opentracing-go v1.1.1-0.20190913142402-a7454ce5950e
 	github.com/peterbourgon/g2s v0.0.0-20170223122336-d4e7ad98afea // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
-	github.com/rpcxio/libkv v0.4.1
+	github.com/rpcxio/libkv v0.4.2
 	github.com/rs/cors v1.7.0
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
 	github.com/smallnest/quick v0.0.0-20200501131359-9534f3d77602
@@ -45,10 +44,10 @@ require (
 	github.com/valyala/fastrand v0.0.0-20170531153657-19dd0f0bf014
 	github.com/vmihailenco/msgpack v4.0.0+incompatible
 	github.com/xtaci/kcp-go v2.0.3+incompatible
+	go.etcd.io/etcd v3.4.14+incompatible // indirect
 	go.opencensus.io v0.22.2
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
-	google.golang.org/grpc v1.33.2 // indirect
 	google.golang.org/protobuf v1.25.0
 )
 
-replace google.golang.org/grpc => google.golang.org/grpc v1.29.0
+replace google.golang.org/grpc => google.golang.org/grpc v1.29.1
