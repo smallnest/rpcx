@@ -279,21 +279,18 @@ func (c *xClient) getCachedClient(k string) (RPCClient, error) {
 	client = c.cachedClient[k]
 	if client == nil || client.IsShutdown() {
 		network, addr := splitNetworkAndAddress(k)
-		if network == "inprocess" {
-			client = InprocessClient
-		} else {
-			generatedClient, err, _ := c.slGroup.Do(k, func() (interface{}, error) {
-				return c.generateClient(k, network, addr)
-			})
-			c.slGroup.Forget(k)
-			if err != nil {
-				return nil, err
-			}
 
-			client = generatedClient.(RPCClient)
-			if c.Plugins != nil {
-				needCallPlugin = true
-			}
+		generatedClient, err, _ := c.slGroup.Do(k, func() (interface{}, error) {
+			return c.generateClient(k, network, addr)
+		})
+		c.slGroup.Forget(k)
+		if err != nil {
+			return nil, err
+		}
+
+		client = generatedClient.(RPCClient)
+		if c.Plugins != nil {
+			needCallPlugin = true
 		}
 
 		client.RegisterServerMessageChan(c.serverMessageChan)
@@ -339,17 +336,14 @@ func (c *xClient) getCachedClientWithoutLock(k string) (RPCClient, error) {
 	client = c.cachedClient[k]
 	if client == nil || client.IsShutdown() {
 		network, addr := splitNetworkAndAddress(k)
-		if network == "inprocess" {
-			client = InprocessClient
-		} else {
-			client = &Client{
-				option:  c.option,
-				Plugins: c.Plugins,
-			}
-			err := client.Connect(network, addr)
-			if err != nil {
-				return nil, err
-			}
+
+		client = &Client{
+			option:  c.option,
+			Plugins: c.Plugins,
+		}
+		err := client.Connect(network, addr)
+		if err != nil {
+			return nil, err
 		}
 
 		client.RegisterServerMessageChan(c.serverMessageChan)
