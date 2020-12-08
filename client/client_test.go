@@ -44,9 +44,11 @@ func TestClient_IT(t *testing.T) {
 	server.UsePool = false
 
 	s := server.NewServer()
-	s.RegisterName("Arith", new(Arith), "")
-	s.RegisterName("PBArith", new(PBArith), "")
-	go s.Serve("tcp", "127.0.0.1:0")
+	_ = s.RegisterName("Arith", new(Arith), "")
+	_ = s.RegisterName("PBArith", new(PBArith), "")
+	go func() {
+		_ = s.Serve("tcp", "127.0.0.1:0")
+	}()
 	defer s.Close()
 	time.Sleep(500 * time.Millisecond)
 
@@ -112,8 +114,10 @@ func TestClient_IT(t *testing.T) {
 
 func TestClient_IT_Concurrency(t *testing.T) {
 	s := server.NewServer()
-	s.RegisterName("PBArith", new(PBArith), "")
-	go s.Serve("tcp", "127.0.0.1:0")
+	_ = s.RegisterName("PBArith", new(PBArith), "")
+	go func() {
+		_ = s.Serve("tcp", "127.0.0.1:0")
+	}()
 	defer s.Close()
 	time.Sleep(500 * time.Millisecond)
 

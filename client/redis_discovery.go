@@ -20,6 +20,7 @@ func init() {
 type RedisDiscovery struct {
 	basePath string
 	kv       store.Store
+	pairsMu  sync.RWMutex
 	pairs    []*KVPair
 	chans    []chan []*KVPair
 	mu       sync.Mutex
@@ -85,7 +86,9 @@ func NewRedisDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 		}
 		pairs = append(pairs, pair)
 	}
+	d.pairsMu.Lock()
 	d.pairs = pairs
+	d.pairsMu.Unlock()
 	d.RetriesAfterWatchFailed = -1
 
 	go d.watch()
@@ -119,6 +122,9 @@ func (d *RedisDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 
 // GetServices returns the servers
 func (d *RedisDiscovery) GetServices() []*KVPair {
+	d.pairsMu.Lock()
+	defer d.pairsMu.RUnlock()
+
 	return d.pairs
 }
 
@@ -224,7 +230,9 @@ func (d *RedisDiscovery) watch() {
 					}
 					pairs = append(pairs, pair)
 				}
+				d.pairsMu.Lock()
 				d.pairs = pairs
+				d.pairsMu.Unlock()
 
 				d.mu.Lock()
 				for _, ch := range d.chans {

@@ -47,7 +47,7 @@ func (c *SnappyCompressor) Zip(data []byte) ([]byte, error) {
 	}
 
 	var buffer bytes.Buffer
-	writer := snappy.NewWriter(&buffer)
+	writer := snappy.NewBufferedWriter(&buffer)
 	_, err := writer.Write(data)
 	if err != nil {
 		writer.Close()

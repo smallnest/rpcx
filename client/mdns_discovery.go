@@ -24,6 +24,7 @@ type MDNSDiscovery struct {
 	WatchInterval time.Duration
 	domain        string
 	service       string
+	pairsMu       sync.RWMutex
 	pairs         []*KVPair
 	chans         []chan []*KVPair
 
@@ -44,7 +45,9 @@ func NewMDNSDiscovery(service string, timeout time.Duration, watchInterval time.
 	d.stopCh = make(chan struct{})
 
 	var err error
+	d.pairsMu.Lock()
 	d.pairs, err = d.browse()
+	d.pairsMu.Unlock()
 	if err != nil {
 		log.Warnf("failed to browse services: %v", err)
 	}
@@ -72,6 +75,9 @@ func (d *MDNSDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 
 // GetServices returns the servers
 func (d *MDNSDiscovery) GetServices() []*KVPair {
+	d.pairsMu.RLock()
+	defer d.pairsMu.RUnlock()
+
 	return d.pairs
 }
 
@@ -113,7 +119,9 @@ func (d *MDNSDiscovery) watch() {
 		case <-t.C:
 			pairs, err := d.browse()
 			if err == nil {
+				d.pairsMu.Lock()
 				d.pairs = pairs
+				d.pairsMu.Unlock()
 
 				d.mu.Lock()
 				for _, ch := range d.chans {

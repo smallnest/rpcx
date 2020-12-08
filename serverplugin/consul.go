@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+
 	metrics "github.com/rcrowley/go-metrics"
 	"github.com/rpcxio/libkv"
 	"github.com/rpcxio/libkv/store"
@@ -108,7 +109,7 @@ func (p *ConsulRegisterPlugin) Start() error {
 							for key, value := range extra {
 								v.Set(key, value)
 							}
-							p.kv.Put(nodePath, []byte(v.Encode()), &store.WriteOptions{TTL: p.UpdateInterval * 2})
+							_ = p.kv.Put(nodePath, []byte(v.Encode()), &store.WriteOptions{TTL: p.UpdateInterval * 2})
 						}
 					}
 				}
@@ -142,7 +143,7 @@ func (p *ConsulRegisterPlugin) Stop() error {
 			continue
 		}
 		if exist {
-			p.kv.Delete(nodePath)
+			_ = p.kv.Delete(nodePath)
 			log.Infof("delete path %s", nodePath, err)
 		}
 	}

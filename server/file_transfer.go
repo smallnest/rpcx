@@ -73,8 +73,8 @@ func (s *Server) EnableFileTransfer(serviceName string, fileTransfer *FileTransf
 	if serviceName == "" {
 		serviceName = share.SendFileServiceName
 	}
-	fileTransfer.Start()
-	s.RegisterName(serviceName, fileTransfer.service, "")
+	_ = fileTransfer.Start()
+	_ = s.RegisterName(serviceName, fileTransfer.service, "")
 }
 
 func (s *FileTransferService) TransferFile(ctx context.Context, args *share.FileTransferArgs, reply *share.FileTransferReply) error {

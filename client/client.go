@@ -531,7 +531,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	}
 
 	if client.Plugins != nil {
-		client.Plugins.DoClientBeforeEncode(req)
+		_ = client.Plugins.DoClientBeforeEncode(req)
 	}
 
 	data := req.EncodeSlicePointer()
@@ -565,7 +565,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	}
 
 	if client.option.IdleTimeout != 0 {
-		client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
+		_ = client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
 	}
 
 }
@@ -576,7 +576,7 @@ func (client *Client) input() {
 	for err == nil {
 		var res = protocol.NewMessage()
 		if client.option.IdleTimeout != 0 {
-			client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
+			_ = client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
 		}
 
 		err = res.Decode(client.r)
@@ -584,7 +584,7 @@ func (client *Client) input() {
 			break
 		}
 		if client.Plugins != nil {
-			client.Plugins.DoClientAfterDecode(res)
+			_ = client.Plugins.DoClientAfterDecode(res)
 		}
 
 		seq := res.Seq()
@@ -619,7 +619,7 @@ func (client *Client) input() {
 				data := res.Payload
 				codec := share.Codecs[res.SerializeType()]
 				if codec != nil {
-					codec.Decode(data, call.Reply)
+					_ = codec.Decode(data, call.Reply)
 				}
 			}
 			call.done()

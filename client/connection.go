@@ -47,7 +47,7 @@ func (c *Client) Connect(network, address string) error {
 
 	if err == nil && conn != nil {
 		if c.option.IdleTimeout != 0 {
-			conn.SetDeadline(time.Now().Add(c.option.IdleTimeout))
+			_ = conn.SetDeadline(time.Now().Add(c.option.IdleTimeout))
 		}
 
 		if c.Plugins != nil {
@@ -95,8 +95,8 @@ func newDirectConn(c *Client, network, address string) (net.Conn, error) {
 	}
 
 	if tc, ok := conn.(*net.TCPConn); ok {
-		tc.SetKeepAlive(true)
-		tc.SetKeepAlivePeriod(3 * time.Minute)
+		_ = tc.SetKeepAlive(true)
+		_ = tc.SetKeepAlivePeriod(3 * time.Minute)
 	}
 
 	return conn, nil
@@ -133,7 +133,11 @@ func newDirectHTTPConn(c *Client, network, address string) (net.Conn, error) {
 		return nil, err
 	}
 
-	io.WriteString(conn, "CONNECT "+path+" HTTP/1.0\n\n")
+	_, err = io.WriteString(conn, "CONNECT "+path+" HTTP/1.0\n\n")
+	if err != nil {
+		log.Errorf("failed to make CONNECT: %v", err)
+		return nil, err
+	}
 
 	// Require successful HTTP response
 	// before switching to RPC protocol.

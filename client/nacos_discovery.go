@@ -26,9 +26,10 @@ type NacosDiscovery struct {
 
 	namingClient naming_client.INamingClient
 
-	pairs []*KVPair
-	chans []chan []*KVPair
-	mu    sync.Mutex
+	pairsMu sync.RWMutex
+	pairs   []*KVPair
+	chans   []chan []*KVPair
+	mu      sync.Mutex
 
 	filter                  ServiceDiscoveryFilter
 	RetriesAfterWatchFailed int
@@ -97,7 +98,9 @@ func (d *NacosDiscovery) fetch() {
 		pairs = append(pairs, pair)
 	}
 
+	d.pairsMu.Lock()
 	d.pairs = pairs
+	d.pairsMu.Unlock()
 }
 
 // NewNacosDiscoveryTemplate returns a new NacosDiscovery template.
@@ -121,6 +124,9 @@ func (d *NacosDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 
 // GetServices returns the servers
 func (d *NacosDiscovery) GetServices() []*KVPair {
+	d.pairsMu.RLock()
+	defer d.pairsMu.RUnlock()
+
 	return d.pairs
 }
 
@@ -167,7 +173,9 @@ func (d *NacosDiscovery) watch() {
 				}
 				pairs = append(pairs, pair)
 			}
+			d.pairsMu.Lock()
 			d.pairs = pairs
+			d.pairsMu.Unlock()
 
 			d.mu.Lock()
 			for _, ch := range d.chans {

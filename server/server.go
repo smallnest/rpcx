@@ -826,12 +826,10 @@ func (s *Server) startProcess() (int, error) {
 
 	// Pass on the environment and replace the old count key with the new one.
 	var env []string
-	for _, v := range os.Environ() {
-		env = append(env, v)
-	}
+	env = append(env, os.Environ()...)
 
 	var originalWD, _ = os.Getwd()
-	allFiles := append([]*os.File{os.Stdin, os.Stdout, os.Stderr})
+	allFiles := []*os.File{os.Stdin, os.Stdout, os.Stderr}
 	process, err := os.StartProcess(argv0, os.Args, &os.ProcAttr{
 		Dir:   originalWD,
 		Env:   env,

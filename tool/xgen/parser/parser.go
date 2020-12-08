@@ -50,10 +50,10 @@ func (v *visitor) Visit(n ast.Node) (w ast.Visitor) {
 		}
 		return v
 	case *ast.StructType:
-		if isExported(v.name) {
-			//fmt.Printf("@@@@%s: %s\n", v.name, pretty.Sprint(n.Fields))
-			//v.StructNames = append(v.StructNames, v.name)
-		}
+		// if isExported(v.name) {
+		//fmt.Printf("@@@@%s: %s\n", v.name, pretty.Sprint(n.Fields))
+		//v.StructNames = append(v.StructNames, v.name)
+		// }
 		return nil
 	case *ast.FuncDecl:
 		if isExported(v.name) {

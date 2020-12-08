@@ -69,7 +69,7 @@ func main() {
 		}
 
 		parsers = append(parsers, p)
-		generate(parsers)
+		_ = generate(parsers)
 	}
 
 }

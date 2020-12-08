@@ -20,6 +20,7 @@ func init() {
 type ConsulDiscovery struct {
 	basePath string
 	kv       store.Store
+	pairsMu  sync.RWMutex
 	pairs    []*KVPair
 	chans    []chan []*KVPair
 	mu       sync.Mutex
@@ -71,7 +72,9 @@ func NewConsulDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 		}
 		pairs = append(pairs, pair)
 	}
+	d.pairsMu.Lock()
 	d.pairs = pairs
+	d.pairsMu.Unlock()
 	d.RetriesAfterWatchFailed = -1
 	go d.watch()
 	return d
@@ -108,6 +111,8 @@ func (d *ConsulDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 
 // GetServices returns the servers
 func (d *ConsulDiscovery) GetServices() []*KVPair {
+	d.pairsMu.RLock()
+	defer d.pairsMu.RUnlock()
 	return d.pairs
 }
 
@@ -194,7 +199,9 @@ func (d *ConsulDiscovery) watch() {
 					}
 					pairs = append(pairs, pair)
 				}
+				d.pairsMu.Lock()
 				d.pairs = pairs
+				d.pairsMu.Unlock()
 
 				d.mu.Lock()
 				for _, ch := range d.chans {
