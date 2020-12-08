@@ -5,17 +5,16 @@ go 1.14
 require (
 	github.com/ChimeraCoder/gojson v1.1.0
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.69 // indirect
-	github.com/anacrolix/envpprof v1.1.0 // indirect
-	github.com/anacrolix/sync v0.2.0 // indirect
-	github.com/anacrolix/utp v0.0.0-20180219060659-9e0e1d1d0572
 	github.com/apache/thrift v0.13.0
 	github.com/cenk/backoff v2.0.0+incompatible // indirect
 	github.com/edwingeng/doublejump v0.0.0-20200219153503-7cfc0ed6e836
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fatih/color v1.9.0
+	github.com/go-ping/ping v0.0.0-20201115131931-3300c582a663
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.3
 	github.com/golang/snappy v0.0.2
+	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/grandcat/zeroconf v0.0.0-20180329153754-df75bb3ccae1
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/golang-lru v0.5.1
@@ -28,7 +27,6 @@ require (
 	github.com/klauspost/reedsolomon v1.9.9 // indirect
 	github.com/kr/pretty v0.2.0
 	github.com/lucas-clemente/quic-go v0.18.0
-	github.com/matm/gocov-html v0.0.0-20200509184451-71874e2e203b // indirect
 	github.com/mmcloughlin/avo v0.0.0-20201105074841-5d2f697d268f // indirect
 	github.com/nacos-group/nacos-sdk-go v1.0.1
 	github.com/opentracing/opentracing-go v1.1.1-0.20190913142402-a7454ce5950e
@@ -41,7 +39,6 @@ require (
 	github.com/soheilhy/cmux v0.1.4
 	github.com/stretchr/testify v1.6.1
 	github.com/syndtr/goleveldb v1.0.0
-	github.com/tatsushid/go-fastping v0.0.0-20160109021039-d7bb493dee3e
 	github.com/valyala/fastrand v0.0.0-20170531153657-19dd0f0bf014
 	github.com/vmihailenco/msgpack v4.0.0+incompatible
 	github.com/xtaci/kcp-go v2.0.3+incompatible

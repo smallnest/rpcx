@@ -1,14 +1,11 @@
-// +build ping
-
 package client
 
 import (
 	"context"
 	"net"
 	"strings"
-	"time"
 
-	fastping "github.com/tatsushid/go-fastping"
+	ping "github.com/go-ping/ping"
 )
 
 func newWeightedICMPSelector(servers map[string]string) Selector {
@@ -52,21 +49,13 @@ func createICMPWeighted(servers map[string]string) []*Weighted {
 func Ping(host string) (rtt int, err error) {
 	rtt = 1000 //default and timeout is 1000 ms
 
-	p := fastping.NewPinger()
-	p.Network("udp")
-	ra, err := net.ResolveIPAddr("ip4:icmp", host)
+	pinger, err := ping.NewPinger(host)
 	if err != nil {
-		return 0, err
+		return rtt, err
 	}
-	p.AddIPAddr(ra)
-
-	p.OnRecv = func(addr *net.IPAddr, r time.Duration) {
-		rtt = int(r.Nanoseconds() / 1000000)
-	}
-	// p.OnIdle = func() {
-
-	// }
-	err = p.Run()
+	pinger.Count = 3
+	stats := pinger.Statistics()
+	rtt = int(stats.AvgRtt)
 
 	return rtt, err
 }

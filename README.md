@@ -40,10 +40,10 @@ install the basic features:
 `go get -v github.com/smallnest/rpcx/...`
 
 
-If you want to use `ping`、`quic`、`kcp`、`utp` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
+If you want to use `quic`、`kcp` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
 
 ```sh
-go get -v -tags "quic kcp ping utp" github.com/smallnest/rpcx/...
+go get -v -tags "quic kcp" github.com/smallnest/rpcx/...
 ```
 
 **_tags_**:

@@ -8,7 +8,7 @@ env:
 
 before_script:
   - rm -f go.sum
-  - go get -tags "quic kcp ping utp" -v github.com/smallnest/rpcx/...
+  - go get -tags "quic kcp" -v github.com/smallnest/rpcx/...
   - go get github.com/mattn/goveralls
 
 script:
