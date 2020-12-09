@@ -122,7 +122,7 @@ func (d *RedisDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 
 // GetServices returns the servers
 func (d *RedisDiscovery) GetServices() []*KVPair {
-	d.pairsMu.Lock()
+	d.pairsMu.RLock()
 	defer d.pairsMu.RUnlock()
 
 	return d.pairs

@@ -114,7 +114,7 @@ func (d *ZookeeperDiscovery) SetFilter(filter ServiceDiscoveryFilter) {
 
 // GetServices returns the servers
 func (d *ZookeeperDiscovery) GetServices() []*KVPair {
-	d.pairsMu.Lock()
+	d.pairsMu.RLock()
 	defer d.pairsMu.RUnlock()
 
 	return d.pairs
