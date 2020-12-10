@@ -520,7 +520,8 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	// heartbeat
 	if call.ServicePath == "" && call.ServiceMethod == "" {
 		req.SetHeartbeat(true)
-	} else {
+	}
+	{
 		req.SetSerializeType(client.option.SerializeType)
 		if call.Metadata != nil {
 			req.Metadata = call.Metadata
@@ -602,7 +603,7 @@ func (client *Client) input() {
 
 		seq := res.Seq()
 		var call *Call
-		isServerMessage := (res.MessageType() == protocol.Request && !res.IsHeartbeat() && res.IsOneway())
+		isServerMessage := (res.MessageType() == protocol.Request && res.IsHeartbeat() && res.IsOneway())
 		if !isServerMessage {
 			client.mutex.Lock()
 			call = client.pending[seq]
@@ -751,19 +752,18 @@ func (client *Client) heartbeat() {
 
 		ctx, cancel := context.WithTimeout(context.Background(), client.option.MaxWaitForHeartbeat)
 		err := client.Call(ctx, "", "", &request, &reply)
-		cancel()
 		abnormal := false
+		if ctx.Err() != nil {
+			log.Warnf("failed to heartbeat to %s, context err: %v", client.Conn.RemoteAddr().String(), ctx.Err())
+			abnormal = true
+		}
+		cancel()
 		if err != nil {
-			log.Warnf("failed to heartbeat to %s", client.Conn.RemoteAddr().String())
+			log.Warnf("failed to heartbeat to %s: %v", client.Conn.RemoteAddr().String(), err)
 			abnormal = true
 		}
 		if reply != request {
-			log.Warnf("relay in heartbeat to %s is not same to request. relay: %s", client.Conn.RemoteAddr().String(), reply)
-			abnormal = true
-		}
-
-		if ctx.Err() != nil {
-			log.Warnf("failed to heartbeat to %s, err: %v", client.Conn.RemoteAddr().String(), ctx.Err())
+			log.Warnf("reply in heartbeat to %s is not same to request. reply: %s", client.Conn.RemoteAddr().String(), reply)
 			abnormal = true
 		}
 
