@@ -46,6 +46,11 @@ func (c *Client) Connect(network, address string) error {
 	}
 
 	if err == nil && conn != nil {
+		if tc, ok := conn.(*net.TCPConn); ok && c.option.TCPKeepAlivePeriod > 0 {
+			_ = tc.SetKeepAlive(true)
+			_ = tc.SetKeepAlivePeriod(c.option.TCPKeepAlivePeriod)
+		}
+
 		if c.option.IdleTimeout != 0 {
 			_ = conn.SetDeadline(time.Now().Add(c.option.IdleTimeout))
 		}
@@ -92,11 +97,6 @@ func newDirectConn(c *Client, network, address string) (net.Conn, error) {
 	if err != nil {
 		log.Warnf("failed to dial server: %v", err)
 		return nil, err
-	}
-
-	if tc, ok := conn.(*net.TCPConn); ok {
-		_ = tc.SetKeepAlive(true)
-		_ = tc.SetKeepAlivePeriod(3 * time.Minute)
 	}
 
 	return conn, nil
