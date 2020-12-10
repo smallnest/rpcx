@@ -44,13 +44,14 @@ func (e ServiceError) Error() string {
 
 // DefaultOption is a common option configuration for client.
 var DefaultOption = Option{
-	Retries:            3,
-	RPCPath:            share.DefaultRPCPath,
-	ConnectTimeout:     10 * time.Second,
-	SerializeType:      protocol.MsgPack,
-	CompressType:       protocol.None,
-	BackupLatency:      10 * time.Millisecond,
-	TCPKeepAlivePeriod: time.Minute,
+	Retries:             3,
+	RPCPath:             share.DefaultRPCPath,
+	ConnectTimeout:      10 * time.Second,
+	SerializeType:       protocol.MsgPack,
+	CompressType:        protocol.None,
+	BackupLatency:       10 * time.Millisecond,
+	MaxWaitForHeartbeat: 30 * time.Second,
+	TCPKeepAlivePeriod:  time.Minute,
 }
 
 // Breaker is a CircuitBreaker interface.
@@ -151,8 +152,10 @@ type Option struct {
 	CompressType  protocol.CompressType
 
 	// send heartbeat message to service and check responses
-	Heartbeat         bool
-	HeartbeatInterval time.Duration
+	Heartbeat bool
+	// interval for heartbeat
+	HeartbeatInterval   time.Duration
+	MaxWaitForHeartbeat time.Duration
 
 	// TCPKeepAlive, if it is zero we don't set keepalive
 	TCPKeepAlivePeriod time.Duration
@@ -718,15 +721,37 @@ func (client *Client) handleServerRequest(msg *protocol.Message) {
 func (client *Client) heartbeat() {
 	t := time.NewTicker(client.option.HeartbeatInterval)
 
+	if client.option.MaxWaitForHeartbeat == 0 {
+		client.option.MaxWaitForHeartbeat = 30 * time.Second
+	}
+	var request = "rpcx"
+	var reply string
 	for range t.C {
 		if client.IsShutdown() || client.IsClosing() {
 			t.Stop()
 			return
 		}
 
-		err := client.Call(context.Background(), "", "", nil, nil)
+		ctx, cancel := context.WithTimeout(context.Background(), client.option.MaxWaitForHeartbeat)
+		err := client.Call(ctx, "", "", &request, &reply)
+		cancel()
+		abnormal := false
 		if err != nil {
 			log.Warnf("failed to heartbeat to %s", client.Conn.RemoteAddr().String())
+			abnormal = true
+		}
+		if reply != request {
+			log.Warnf("relay in heartbeat to %s is not same to request. relay: %s", client.Conn.RemoteAddr().String(), reply)
+			abnormal = true
+		}
+
+		if ctx.Err() != nil {
+			log.Warnf("failed to heartbeat to %s, err: %v", client.Conn.RemoteAddr().String(), ctx.Err())
+			abnormal = true
+		}
+
+		if abnormal {
+			client.Close()
 		}
 	}
 }
