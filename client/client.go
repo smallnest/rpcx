@@ -742,7 +742,7 @@ func (client *Client) heartbeat() {
 	if client.option.MaxWaitForHeartbeat == 0 {
 		client.option.MaxWaitForHeartbeat = 30 * time.Second
 	}
-	var request = "rpcx"
+	var request = "ping"
 	var reply string
 	for range t.C {
 		if client.IsShutdown() || client.IsClosing() {
@@ -750,6 +750,7 @@ func (client *Client) heartbeat() {
 			return
 		}
 
+		reply = ""
 		ctx, cancel := context.WithTimeout(context.Background(), client.option.MaxWaitForHeartbeat)
 		err := client.Call(ctx, "", "", &request, &reply)
 		abnormal := false
@@ -760,10 +761,6 @@ func (client *Client) heartbeat() {
 		cancel()
 		if err != nil {
 			log.Warnf("failed to heartbeat to %s: %v", client.Conn.RemoteAddr().String(), err)
-			abnormal = true
-		}
-		if reply != request {
-			log.Warnf("reply in heartbeat to %s is not same to request. reply: %s", client.Conn.RemoteAddr().String(), reply)
 			abnormal = true
 		}
 
