@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/url"
@@ -742,15 +743,15 @@ func (client *Client) heartbeat() {
 	if client.option.MaxWaitForHeartbeat == 0 {
 		client.option.MaxWaitForHeartbeat = 30 * time.Second
 	}
-	var request = "ping"
-	var reply string
+
 	for range t.C {
 		if client.IsShutdown() || client.IsClosing() {
 			t.Stop()
 			return
 		}
 
-		reply = ""
+		request := fmt.Sprintf("%d", time.Now().UnixNano())
+		reply := ""
 		ctx, cancel := context.WithTimeout(context.Background(), client.option.MaxWaitForHeartbeat)
 		err := client.Call(ctx, "", "", &request, &reply)
 		abnormal := false
@@ -763,6 +764,8 @@ func (client *Client) heartbeat() {
 			log.Warnf("failed to heartbeat to %s: %v", client.Conn.RemoteAddr().String(), err)
 			abnormal = true
 		}
+
+		// check request == reply
 
 		if abnormal {
 			client.Close()
