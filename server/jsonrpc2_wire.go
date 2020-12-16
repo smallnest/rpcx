@@ -30,7 +30,7 @@ const (
 	CodeInternalJSONRPCError = -32603
 )
 
-// jsonrpcRequest is sent to a server to represent a Call or Notify operaton.
+// jsonrpcRequest is sent to a server to represent a Call or Notify operation.
 type jsonrpcRequest struct {
 	// VersionTag is always encoded as the string "2.0"
 	VersionTag VersionTag `json:"jsonrpc"`

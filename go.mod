@@ -44,6 +44,7 @@ require (
 	github.com/xtaci/kcp-go v2.0.3+incompatible
 	go.opencensus.io v0.22.2
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
+	golang.org/x/tools v0.0.0-20201105001634-bc3cf281b174
 	google.golang.org/protobuf v1.25.0
 )
 

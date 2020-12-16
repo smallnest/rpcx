@@ -175,14 +175,20 @@ func (s *Server) getDoneChan() <-chan struct{} {
 	return s.doneChan
 }
 
+// startShutdownListener start a new goroutine to notify SIGTERM
+// and SIGHUP signals and handle them gracefully
 func (s *Server) startShutdownListener() {
 	go func(s *Server) {
 		log.Info("server pid:", os.Getpid())
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, syscall.SIGTERM, syscall.SIGHUP)
-		si := <-c
+
+		// channel to receive notifications of SIGTERM and SIGHUP
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, syscall.SIGTERM, syscall.SIGHUP)
+
+		// custom functions to handle signal SIGTERM and SIGHUP
 		var customFuncs []func(s *Server)
-		switch si {
+
+		switch <-ch {
 		case syscall.SIGTERM:
 			customFuncs = append(s.onShutdown, func(s *Server) {
 				s.Shutdown(context.Background())
@@ -192,16 +198,15 @@ func (s *Server) startShutdownListener() {
 				s.Restart(context.Background())
 			})
 		}
-		if len(customFuncs) > 0 {
-			for _, fn := range customFuncs {
-				fn(s)
-			}
+
+		for _, fn := range customFuncs {
+			fn(s)
 		}
 	}(s)
 }
 
 // Serve starts and listens RPC requests.
-// It is blocked until receiving connectings from clients.
+// It is blocked until receiving connections from clients.
 func (s *Server) Serve(network, address string) (err error) {
 	s.startShutdownListener()
 	var ln net.Listener
@@ -222,7 +227,7 @@ func (s *Server) Serve(network, address string) (err error) {
 }
 
 // ServeListener listens RPC requests.
-// It is blocked until receiving connectings from clients.
+// It is blocked until receiving connections from clients.
 func (s *Server) ServeListener(network string, ln net.Listener) (err error) {
 	s.startShutdownListener()
 	if network == "http" {
