@@ -5,9 +5,6 @@ go 1.14
 require (
 	github.com/ChimeraCoder/gojson v1.1.0
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.69 // indirect
-	github.com/anacrolix/envpprof v1.1.0 // indirect
-	github.com/anacrolix/sync v0.2.0 // indirect
-	github.com/anacrolix/utp v0.0.0-20180219060659-9e0e1d1d0572
 	github.com/apache/thrift v0.13.0
 	github.com/cenk/backoff v2.0.0+incompatible // indirect
 	github.com/edwingeng/doublejump v0.0.0-20200219153503-7cfc0ed6e836
@@ -16,6 +13,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.4.3
 	github.com/golang/snappy v0.0.2
+	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/grandcat/zeroconf v0.0.0-20180329153754-df75bb3ccae1
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hashicorp/golang-lru v0.5.1
@@ -28,7 +26,6 @@ require (
 	github.com/klauspost/reedsolomon v1.9.9 // indirect
 	github.com/kr/pretty v0.2.0
 	github.com/lucas-clemente/quic-go v0.18.0
-	github.com/matm/gocov-html v0.0.0-20200509184451-71874e2e203b // indirect
 	github.com/mmcloughlin/avo v0.0.0-20201105074841-5d2f697d268f // indirect
 	github.com/nacos-group/nacos-sdk-go v1.0.1
 	github.com/opentracing/opentracing-go v1.1.1-0.20190913142402-a7454ce5950e
@@ -47,6 +44,7 @@ require (
 	github.com/xtaci/kcp-go v2.0.3+incompatible
 	go.opencensus.io v0.22.2
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
+	golang.org/x/tools v0.0.0-20201105001634-bc3cf281b174
 	google.golang.org/protobuf v1.25.0
 )
 

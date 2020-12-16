@@ -39,8 +39,7 @@ type PluginContainer interface {
 }
 
 // Plugin is the server plugin interface.
-type Plugin interface {
-}
+type Plugin interface {}
 
 type (
 	// RegisterPlugin is .
@@ -55,7 +54,7 @@ type (
 	}
 
 	// PostConnAcceptPlugin represents connection accept plugin.
-	// if returns false, it means subsequent IPostConnAcceptPlugins should not contiune to handle this conn
+	// if returns false, it means subsequent IPostConnAcceptPlugins should not continue to handle this conn
 	// and this conn has been closed.
 	PostConnAcceptPlugin interface {
 		HandleConnAccept(net.Conn) (net.Conn, bool)
@@ -66,17 +65,17 @@ type (
 		HandleConnClose(net.Conn) bool
 	}
 
-	//PreReadRequestPlugin represents .
+	// PreReadRequestPlugin represents .
 	PreReadRequestPlugin interface {
 		PreReadRequest(ctx context.Context) error
 	}
 
-	//PostReadRequestPlugin represents .
+	// PostReadRequestPlugin represents .
 	PostReadRequestPlugin interface {
 		PostReadRequest(ctx context.Context, r *protocol.Message, e error) error
 	}
 
-	//PreHandleRequestPlugin represents .
+	// PreHandleRequestPlugin represents .
 	PreHandleRequestPlugin interface {
 		PreHandleRequest(ctx context.Context, r *protocol.Message) error
 	}
@@ -89,22 +88,22 @@ type (
 		PostCall(ctx context.Context, serviceName, methodName string, args, reply interface{}) (interface{}, error)
 	}
 
-	//PreWriteResponsePlugin represents .
+	// PreWriteResponsePlugin represents .
 	PreWriteResponsePlugin interface {
 		PreWriteResponse(context.Context, *protocol.Message, *protocol.Message, error) error
 	}
 
-	//PostWriteResponsePlugin represents .
+	// PostWriteResponsePlugin represents .
 	PostWriteResponsePlugin interface {
 		PostWriteResponse(context.Context, *protocol.Message, *protocol.Message, error) error
 	}
 
-	//PreWriteRequestPlugin represents .
+	// PreWriteRequestPlugin represents .
 	PreWriteRequestPlugin interface {
 		PreWriteRequest(ctx context.Context) error
 	}
 
-	//PostWriteRequestPlugin represents .
+	// PostWriteRequestPlugin represents .
 	PostWriteRequestPlugin interface {
 		PostWriteRequest(ctx context.Context, r *protocol.Message, e error) error
 	}

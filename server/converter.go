@@ -12,7 +12,7 @@ import (
 
 const (
 	XVersion           = "X-RPCX-Version"
-	XMessageType       = "X-RPCX-MesssageType"
+	XMessageType       = "X-RPCX-MessageType"
 	XHeartbeat         = "X-RPCX-Heartbeat"
 	XOneway            = "X-RPCX-Oneway"
 	XMessageStatusType = "X-RPCX-MessageStatusType"
