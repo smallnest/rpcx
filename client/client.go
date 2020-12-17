@@ -44,12 +44,14 @@ func (e ServiceError) Error() string {
 
 // DefaultOption is a common option configuration for client.
 var DefaultOption = Option{
-	Retries:        3,
-	RPCPath:        share.DefaultRPCPath,
-	ConnectTimeout: 10 * time.Second,
-	SerializeType:  protocol.MsgPack,
-	CompressType:   protocol.None,
-	BackupLatency:  10 * time.Millisecond,
+	Retries:             3,
+	RPCPath:             share.DefaultRPCPath,
+	ConnectTimeout:      10 * time.Second,
+	SerializeType:       protocol.MsgPack,
+	CompressType:        protocol.None,
+	BackupLatency:       10 * time.Millisecond,
+	MaxWaitForHeartbeat: 30 * time.Second,
+	TCPKeepAlivePeriod:  time.Minute,
 }
 
 // Breaker is a CircuitBreaker interface.
@@ -110,7 +112,8 @@ type Client struct {
 
 	Plugins PluginContainer
 
-	ServerMessageChan chan<- *protocol.Message
+	ServerMessageChanMu sync.RWMutex
+	ServerMessageChan   chan<- *protocol.Message
 }
 
 // NewClient returns a new Client with the option.
@@ -149,8 +152,14 @@ type Option struct {
 	SerializeType protocol.SerializeType
 	CompressType  protocol.CompressType
 
-	Heartbeat         bool
-	HeartbeatInterval time.Duration
+	// send heartbeat message to service and check responses
+	Heartbeat bool
+	// interval for heartbeat
+	HeartbeatInterval   time.Duration
+	MaxWaitForHeartbeat time.Duration
+
+	// TCPKeepAlive, if it is zero we don't set keepalive
+	TCPKeepAlivePeriod time.Duration
 }
 
 // Call represents an active RPC.
@@ -178,12 +187,16 @@ func (call *Call) done() {
 
 // RegisterServerMessageChan registers the channel that receives server requests.
 func (client *Client) RegisterServerMessageChan(ch chan<- *protocol.Message) {
+	client.ServerMessageChanMu.Lock()
 	client.ServerMessageChan = ch
+	client.ServerMessageChanMu.Unlock()
 }
 
 // UnregisterServerMessageChan removes ServerMessageChan.
 func (client *Client) UnregisterServerMessageChan() {
+	client.ServerMessageChanMu.Lock()
 	client.ServerMessageChan = nil
+	client.ServerMessageChanMu.Unlock()
 }
 
 // IsClosing client is closing or not.
@@ -507,7 +520,8 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	// heartbeat
 	if call.ServicePath == "" && call.ServiceMethod == "" {
 		req.SetHeartbeat(true)
-	} else {
+	}
+	{
 		req.SetSerializeType(client.option.SerializeType)
 		if call.Metadata != nil {
 			req.Metadata = call.Metadata
@@ -531,7 +545,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	}
 
 	if client.Plugins != nil {
-		client.Plugins.DoClientBeforeEncode(req)
+		_ = client.Plugins.DoClientBeforeEncode(req)
 	}
 
 	data := req.EncodeSlicePointer()
@@ -565,7 +579,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	}
 
 	if client.option.IdleTimeout != 0 {
-		client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
+		_ = client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
 	}
 
 }
@@ -576,7 +590,7 @@ func (client *Client) input() {
 	for err == nil {
 		var res = protocol.NewMessage()
 		if client.option.IdleTimeout != 0 {
-			client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
+			_ = client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
 		}
 
 		err = res.Decode(client.r)
@@ -584,12 +598,12 @@ func (client *Client) input() {
 			break
 		}
 		if client.Plugins != nil {
-			client.Plugins.DoClientAfterDecode(res)
+			_ = client.Plugins.DoClientAfterDecode(res)
 		}
 
 		seq := res.Seq()
 		var call *Call
-		isServerMessage := (res.MessageType() == protocol.Request && !res.IsHeartbeat() && res.IsOneway())
+		isServerMessage := (res.MessageType() == protocol.Request && res.IsHeartbeat() && res.IsOneway())
 		if !isServerMessage {
 			client.mutex.Lock()
 			call = client.pending[seq]
@@ -600,8 +614,12 @@ func (client *Client) input() {
 		switch {
 		case call == nil:
 			if isServerMessage {
+				client.ServerMessageChanMu.RLock()
 				if client.ServerMessageChan != nil {
+					client.ServerMessageChanMu.RUnlock()
 					go client.handleServerRequest(res)
+				} else {
+					client.ServerMessageChanMu.RUnlock()
 				}
 				continue
 			}
@@ -619,7 +637,7 @@ func (client *Client) input() {
 				data := res.Payload
 				codec := share.Codecs[res.SerializeType()]
 				if codec != nil {
-					codec.Decode(data, call.Reply)
+					_ = codec.Decode(data, call.Reply)
 				}
 			}
 			call.done()
@@ -650,7 +668,9 @@ func (client *Client) input() {
 	}
 	// Terminate pending calls.
 
+	client.ServerMessageChanMu.RLock()
 	if client.ServerMessageChan != nil {
+		client.ServerMessageChanMu.RUnlock()
 		req := protocol.NewMessage()
 		req.SetMessageType(protocol.Request)
 		req.SetMessageStatusType(protocol.Error)
@@ -662,6 +682,8 @@ func (client *Client) input() {
 		}
 		req.Metadata["server"] = client.Conn.RemoteAddr().String()
 		go client.handleServerRequest(req)
+	} else {
+		client.ServerMessageChanMu.RUnlock()
 	}
 
 	client.mutex.Lock()
@@ -701,9 +723,13 @@ func (client *Client) handleServerRequest(msg *protocol.Message) {
 		}
 	}()
 
+	client.ServerMessageChanMu.RLock()
+	serverMessageChan := client.ServerMessageChan
+	client.ServerMessageChanMu.RUnlock()
+
 	t := time.NewTimer(5 * time.Second)
 	select {
-	case client.ServerMessageChan <- msg:
+	case serverMessageChan <- msg:
 	case <-t.C:
 		log.Warnf("ServerMessageChan may be full so the server request %d has been dropped", msg.Seq())
 	}
@@ -713,15 +739,37 @@ func (client *Client) handleServerRequest(msg *protocol.Message) {
 func (client *Client) heartbeat() {
 	t := time.NewTicker(client.option.HeartbeatInterval)
 
+	if client.option.MaxWaitForHeartbeat == 0 {
+		client.option.MaxWaitForHeartbeat = 30 * time.Second
+	}
+
 	for range t.C {
 		if client.IsShutdown() || client.IsClosing() {
 			t.Stop()
 			return
 		}
 
-		err := client.Call(context.Background(), "", "", nil, nil)
+		request := time.Now().UnixNano()
+		reply := int64(0)
+		ctx, cancel := context.WithTimeout(context.Background(), client.option.MaxWaitForHeartbeat)
+		err := client.Call(ctx, "", "", &request, &reply)
+		abnormal := false
+		if ctx.Err() != nil {
+			log.Warnf("failed to heartbeat to %s, context err: %v", client.Conn.RemoteAddr().String(), ctx.Err())
+			abnormal = true
+		}
+		cancel()
 		if err != nil {
-			log.Warnf("failed to heartbeat to %s", client.Conn.RemoteAddr().String())
+			log.Warnf("failed to heartbeat to %s: %v", client.Conn.RemoteAddr().String(), err)
+			abnormal = true
+		}
+
+		if reply != request {
+			log.Warnf("reply %d in heartbeat to %s is different from request %d: %v", reply, client.Conn.RemoteAddr().String(), request)
+		}
+
+		if abnormal {
+			client.Close()
 		}
 	}
 }

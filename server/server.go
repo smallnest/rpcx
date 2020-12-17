@@ -112,6 +112,9 @@ func NewServer(options ...OptionFn) *Server {
 		op(s)
 	}
 
+	if s.options["TCPKeepAlivePeriod"] == nil {
+		s.options["TCPKeepAlivePeriod"] = 3 * time.Minute
+	}
 	return s
 }
 
@@ -282,9 +285,12 @@ func (s *Server) serveListener(ln net.Listener) error {
 		tempDelay = 0
 
 		if tc, ok := conn.(*net.TCPConn); ok {
-			tc.SetKeepAlive(true)
-			tc.SetKeepAlivePeriod(3 * time.Minute)
-			tc.SetLinger(10)
+			period := s.options["TCPKeepAlivePeriod"]
+			if period != nil {
+				tc.SetKeepAlive(true)
+				tc.SetKeepAlivePeriod(period.(time.Duration))
+				tc.SetLinger(10)
+			}
 		}
 
 		conn, ok := s.Plugins.DoPostConnAccept(conn)
@@ -831,12 +837,10 @@ func (s *Server) startProcess() (int, error) {
 
 	// Pass on the environment and replace the old count key with the new one.
 	var env []string
-	for _, v := range os.Environ() {
-		env = append(env, v)
-	}
+	env = append(env, os.Environ()...)
 
 	var originalWD, _ = os.Getwd()
-	allFiles := append([]*os.File{os.Stdin, os.Stdout, os.Stderr})
+	allFiles := []*os.File{os.Stdin, os.Stdout, os.Stderr}
 	process, err := os.StartProcess(argv0, os.Args, &os.ProcAttr{
 		Dir:   originalWD,
 		Env:   env,

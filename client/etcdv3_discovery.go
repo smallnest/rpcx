@@ -20,6 +20,7 @@ func init() {
 type EtcdV3Discovery struct {
 	basePath string
 	kv       store.Store
+	pairsMu  sync.RWMutex
 	pairs    []*KVPair
 	chans    []chan []*KVPair
 	mu       sync.Mutex
@@ -85,7 +86,9 @@ func NewEtcdV3DiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 		}
 		pairs = append(pairs, pair)
 	}
+	d.pairsMu.Lock()
 	d.pairs = pairs
+	d.pairsMu.Unlock()
 	d.RetriesAfterWatchFailed = -1
 
 	go d.watch()
@@ -119,6 +122,9 @@ func (d *EtcdV3Discovery) SetFilter(filter ServiceDiscoveryFilter) {
 
 // GetServices returns the servers
 func (d *EtcdV3Discovery) GetServices() []*KVPair {
+	d.pairsMu.RLock()
+	defer d.pairsMu.RUnlock()
+
 	return d.pairs
 }
 
@@ -225,7 +231,9 @@ rewatch:
 					}
 					pairs = append(pairs, pair)
 				}
+				d.pairsMu.Lock()
 				d.pairs = pairs
+				d.pairsMu.Unlock()
 
 				d.mu.Lock()
 				for _, ch := range d.chans {
@@ -246,7 +254,7 @@ rewatch:
 			}
 		}
 
-		log.Warn("chan is closed and will rewatch")
+		// log.Warn("chan is closed and will rewatch")
 	}
 }
 

@@ -55,7 +55,7 @@ type (s *{{$name}}) {{.Name}}(ctx context.Context, arg *{{.ReqName}}, reply *{{.
 func (si ServiceInfo) String() string {
 	tpl := template.Must(template.New("service").Parse(siTemplate))
 	var buf bytes.Buffer
-	tpl.Execute(&buf, si)
+	_ = tpl.Execute(&buf, si)
 	return buf.String()
 }
 

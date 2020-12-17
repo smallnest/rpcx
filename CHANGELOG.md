@@ -15,6 +15,9 @@
 - Change two methods' name of client plugin!
 - Broken API: add error parameter in `PreWriteResponse`(#486)
 - Broken API: change ReadTimeout/WriteTimeout to IdleTimeout
+- Support passing Deadline of client contexts to server side
+- remove InprocessClient plugin
+- use heartbeat/tcp_keepalive to avoid client hanging
 
 
 ## 5.0 

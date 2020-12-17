@@ -9,8 +9,8 @@ import (
 	"reflect"
 
 	proto "github.com/gogo/protobuf/proto"
-	pb "github.com/golang/protobuf/proto"
 	"github.com/vmihailenco/msgpack"
+	pb "google.golang.org/protobuf/proto"
 
 	"github.com/apache/thrift/lib/go/thrift"
 )

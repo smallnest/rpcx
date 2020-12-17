@@ -8,9 +8,6 @@ import (
 func TestLimitedPool_findPool(t *testing.T) {
 	pool := NewLimitedPool(512, 4096)
 
-	type args struct {
-		size int
-	}
 	tests := []struct {
 		args int
 		want int
@@ -29,13 +26,13 @@ func TestLimitedPool_findPool(t *testing.T) {
 			got := pool.findPool(tt.args)
 			if got == nil {
 				if tt.want > 0 {
-					fmt.Errorf("expect %d pool but got nil", tt.want)
+					fmt.Printf("expect %d pool but got nil", tt.want)
 				}
 				return
 			}
 
 			if got.size != tt.want {
-				fmt.Errorf("expect %d pool but got %d pool", tt.want, got.size)
+				fmt.Printf("expect %d pool but got %d pool", tt.want, got.size)
 			}
 		})
 	}
@@ -44,9 +41,6 @@ func TestLimitedPool_findPool(t *testing.T) {
 func TestLimitedPool_findPutPool(t *testing.T) {
 	pool := NewLimitedPool(512, 4096)
 
-	type args struct {
-		size int
-	}
 	tests := []struct {
 		args int
 		want int
@@ -65,13 +59,13 @@ func TestLimitedPool_findPutPool(t *testing.T) {
 			got := pool.findPutPool(tt.args)
 			if got == nil {
 				if tt.want > 0 {
-					fmt.Errorf("expect %d pool but got nil", tt.want)
+					fmt.Printf("expect %d pool but got nil", tt.want)
 				}
 				return
 			}
 
 			if got.size != tt.want {
-				fmt.Errorf("expect %d pool but got %d pool", tt.want, got.size)
+				fmt.Printf("expect %d pool but got %d pool", tt.want, got.size)
 			}
 		})
 	}

@@ -34,9 +34,10 @@ type teeConn struct {
 func (t *teeConn) Read(p []byte) (n int, err error) {
 	n, err = t.Conn.Read(p)
 	if n > 0 && t.w != nil {
-		if _, err := t.w.Write(p[:n]); err != nil {
-			// return n, err //discard error
-		}
+		t.w.Write(p[:n])
+		// if _, err := t.w.Write(p[:n]); err != nil {
+		// return n, err //discard error
+		// }
 	}
 	return
 }

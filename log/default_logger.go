@@ -13,44 +13,44 @@ type defaultLogger struct {
 }
 
 func (l *defaultLogger) Debug(v ...interface{}) {
-	l.Output(calldepth, header("DEBUG", fmt.Sprint(v...)))
+	_ = l.Output(calldepth, header("DEBUG", fmt.Sprint(v...)))
 }
 
 func (l *defaultLogger) Debugf(format string, v ...interface{}) {
-	l.Output(calldepth, header("DEBUG", fmt.Sprintf(format, v...)))
+	_ = l.Output(calldepth, header("DEBUG", fmt.Sprintf(format, v...)))
 }
 
 func (l *defaultLogger) Info(v ...interface{}) {
-	l.Output(calldepth, header(color.GreenString("INFO "), fmt.Sprint(v...)))
+	_ = l.Output(calldepth, header(color.GreenString("INFO "), fmt.Sprint(v...)))
 }
 
 func (l *defaultLogger) Infof(format string, v ...interface{}) {
-	l.Output(calldepth, header(color.GreenString("INFO "), fmt.Sprintf(format, v...)))
+	_ = l.Output(calldepth, header(color.GreenString("INFO "), fmt.Sprintf(format, v...)))
 }
 
 func (l *defaultLogger) Warn(v ...interface{}) {
-	l.Output(calldepth, header(color.YellowString("WARN "), fmt.Sprint(v...)))
+	_ = l.Output(calldepth, header(color.YellowString("WARN "), fmt.Sprint(v...)))
 }
 
 func (l *defaultLogger) Warnf(format string, v ...interface{}) {
-	l.Output(calldepth, header(color.YellowString("WARN "), fmt.Sprintf(format, v...)))
+	_ = l.Output(calldepth, header(color.YellowString("WARN "), fmt.Sprintf(format, v...)))
 }
 
 func (l *defaultLogger) Error(v ...interface{}) {
-	l.Output(calldepth, header(color.RedString("ERROR"), fmt.Sprint(v...)))
+	_ = l.Output(calldepth, header(color.RedString("ERROR"), fmt.Sprint(v...)))
 }
 
 func (l *defaultLogger) Errorf(format string, v ...interface{}) {
-	l.Output(calldepth, header(color.RedString("ERROR"), fmt.Sprintf(format, v...)))
+	_ = l.Output(calldepth, header(color.RedString("ERROR"), fmt.Sprintf(format, v...)))
 }
 
 func (l *defaultLogger) Fatal(v ...interface{}) {
-	l.Output(calldepth, header(color.MagentaString("FATAL"), fmt.Sprint(v...)))
+	_ = l.Output(calldepth, header(color.MagentaString("FATAL"), fmt.Sprint(v...)))
 	os.Exit(1)
 }
 
 func (l *defaultLogger) Fatalf(format string, v ...interface{}) {
-	l.Output(calldepth, header(color.MagentaString("FATAL"), fmt.Sprintf(format, v...)))
+	_ = l.Output(calldepth, header(color.MagentaString("FATAL"), fmt.Sprintf(format, v...)))
 	os.Exit(1)
 }
 
