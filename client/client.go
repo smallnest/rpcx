@@ -603,7 +603,7 @@ func (client *Client) input() {
 
 		seq := res.Seq()
 		var call *Call
-		isServerMessage := (res.MessageType() == protocol.Request && res.IsHeartbeat() && res.IsOneway())
+		isServerMessage := (res.MessageType() == protocol.Request && !res.IsHeartbeat() && res.IsOneway())
 		if !isServerMessage {
 			client.mutex.Lock()
 			call = client.pending[seq]
