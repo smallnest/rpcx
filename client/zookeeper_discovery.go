@@ -83,6 +83,25 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) (ServiceDis
 	return d, nil
 }
 
+// NewZookeeperDiscoveryTemplate returns a new ZookeeperDiscovery template.
+func NewZookeeperDiscoveryTemplate(basePath string, zkAddr []string, options *store.Config) (ServiceDiscovery, error) {
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
+		basePath = basePath[:len(basePath)-1]
+	}
+
+	kv, err := libkv.NewStore(store.ZK, zkAddr, options)
+	if err != nil {
+		log.Infof("cannot create store: %v", err)
+		return nil, err
+	}
+
+	return &ZookeeperDiscovery{basePath: basePath, kv: kv}, nil
+}
+
 // Clone clones this ServiceDiscovery with new servicePath.
 func (d *ZookeeperDiscovery) Clone(servicePath string) (ServiceDiscovery, error) {
 	return NewZookeeperDiscoveryWithStore(d.basePath+"/"+servicePath, d.kv)
