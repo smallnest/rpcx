@@ -49,7 +49,11 @@ func TestPluginHeartbeat(t *testing.T) {
 		opts.IdleTimeout = time.Duration(5) * time.Second
 		opts.ConnectTimeout = time.Duration(5) * time.Second
 		// PeerDiscovery
-		d := client.NewPeer2PeerDiscovery("tcp@127.0.0.1:9001", "")
+		d, err := client.NewPeer2PeerDiscovery("tcp@127.0.0.1:9001", "")
+		if err != nil {
+			t.Fatalf("failed to NewPeer2PeerDiscovery: %v", err)
+		}
+
 		c := client.NewXClient("Arith", client.Failtry, client.RoundRobin, d, opts)
 		i := 0
 		for {
