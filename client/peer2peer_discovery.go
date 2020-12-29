@@ -8,13 +8,13 @@ type Peer2PeerDiscovery struct {
 }
 
 // NewPeer2PeerDiscovery returns a new Peer2PeerDiscovery.
-func NewPeer2PeerDiscovery(server, metadata string) ServiceDiscovery {
-	return &Peer2PeerDiscovery{server: server, metadata: metadata}
+func NewPeer2PeerDiscovery(server, metadata string) (ServiceDiscovery, error) {
+	return &Peer2PeerDiscovery{server: server, metadata: metadata}, nil
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d *Peer2PeerDiscovery) Clone(servicePath string) ServiceDiscovery {
-	return d
+func (d *Peer2PeerDiscovery) Clone(servicePath string) (ServiceDiscovery, error) {
+	return d, nil
 }
 
 // SetFilter sets the filer.

@@ -37,7 +37,7 @@ type MDNSDiscovery struct {
 
 // NewMDNSDiscovery returns a new MDNSDiscovery.
 // If domain is empty, use "local." in default.
-func NewMDNSDiscovery(service string, timeout time.Duration, watchInterval time.Duration, domain string) ServiceDiscovery {
+func NewMDNSDiscovery(service string, timeout time.Duration, watchInterval time.Duration, domain string) (ServiceDiscovery, error) {
 	if domain == "" {
 		domain = "local."
 	}
@@ -52,19 +52,19 @@ func NewMDNSDiscovery(service string, timeout time.Duration, watchInterval time.
 		log.Warnf("failed to browse services: %v", err)
 	}
 	go d.watch()
-	return d
+	return d, nil
 }
 
 // NewMDNSDiscoveryTemplate returns a new MDNSDiscovery template.
-func NewMDNSDiscoveryTemplate(timeout time.Duration, watchInterval time.Duration, domain string) ServiceDiscovery {
+func NewMDNSDiscoveryTemplate(timeout time.Duration, watchInterval time.Duration, domain string) (ServiceDiscovery, error) {
 	if domain == "" {
 		domain = "local."
 	}
-	return &MDNSDiscovery{Timeout: timeout, WatchInterval: watchInterval, domain: domain}
+	return &MDNSDiscovery{Timeout: timeout, WatchInterval: watchInterval, domain: domain}, nil
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d *MDNSDiscovery) Clone(servicePath string) ServiceDiscovery {
+func (d *MDNSDiscovery) Clone(servicePath string) (ServiceDiscovery, error) {
 	return NewMDNSDiscovery(servicePath, d.Timeout, d.WatchInterval, d.domain)
 }
 

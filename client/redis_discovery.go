@@ -34,18 +34,18 @@ type RedisDiscovery struct {
 }
 
 // NewRedisDiscovery returns a new RedisDiscovery.
-func NewRedisDiscovery(basePath string, servicePath string, etcdAddr []string, options *store.Config) ServiceDiscovery {
+func NewRedisDiscovery(basePath string, servicePath string, etcdAddr []string, options *store.Config) (ServiceDiscovery, error) {
 	kv, err := libkv.NewStore(store.REDIS, etcdAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
-		panic(err)
+		return nil, err
 	}
 
 	return NewRedisDiscoveryStore(basePath+"/"+servicePath, kv)
 }
 
 // NewRedisDiscoveryStore return a new RedisDiscovery with specified store.
-func NewRedisDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
+func NewRedisDiscoveryStore(basePath string, kv store.Store) (ServiceDiscovery, error) {
 	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
 		basePath = basePath[:len(basePath)-1]
 	}
@@ -92,11 +92,11 @@ func NewRedisDiscoveryStore(basePath string, kv store.Store) ServiceDiscovery {
 	d.RetriesAfterWatchFailed = -1
 
 	go d.watch()
-	return d
+	return d, nil
 }
 
 // NewRedisDiscoveryTemplate returns a new RedisDiscovery template.
-func NewRedisDiscoveryTemplate(basePath string, etcdAddr []string, options *store.Config) ServiceDiscovery {
+func NewRedisDiscoveryTemplate(basePath string, etcdAddr []string, options *store.Config) (ServiceDiscovery, error) {
 	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
 		basePath = basePath[:len(basePath)-1]
 	}
@@ -104,14 +104,14 @@ func NewRedisDiscoveryTemplate(basePath string, etcdAddr []string, options *stor
 	kv, err := libkv.NewStore(store.REDIS, etcdAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
-		panic(err)
+		return nil, err
 	}
 
-	return &RedisDiscovery{basePath: basePath, kv: kv}
+	return &RedisDiscovery{basePath: basePath, kv: kv}, nil
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d *RedisDiscovery) Clone(servicePath string) ServiceDiscovery {
+func (d *RedisDiscovery) Clone(servicePath string) (ServiceDiscovery, error) {
 	return NewRedisDiscoveryStore(d.basePath+"/"+servicePath, d.kv)
 }
 

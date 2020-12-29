@@ -140,10 +140,16 @@ func (c *OneClient) newXClient(servicePath string) (xclient XClient, err error) 
 		}
 	}()
 
+	d, err := c.discovery.Clone(servicePath)
+	if err != nil {
+		return nil, err
+	}
+
 	if c.serverMessageChan == nil {
-		xclient = NewXClient(servicePath, c.failMode, c.selectMode, c.discovery.Clone(servicePath), c.option)
+
+		xclient = NewXClient(servicePath, c.failMode, c.selectMode, d, c.option)
 	} else {
-		xclient = NewBidirectionalXClient(servicePath, c.failMode, c.selectMode, c.discovery.Clone(servicePath), c.option, c.serverMessageChan)
+		xclient = NewBidirectionalXClient(servicePath, c.failMode, c.selectMode, d, c.option, c.serverMessageChan)
 	}
 
 	if c.Plugins != nil {

@@ -34,7 +34,7 @@ type ZookeeperDiscovery struct {
 }
 
 // NewZookeeperDiscovery returns a new ZookeeperDiscovery.
-func NewZookeeperDiscovery(basePath string, servicePath string, zkAddr []string, options *store.Config) ServiceDiscovery {
+func NewZookeeperDiscovery(basePath string, servicePath string, zkAddr []string, options *store.Config) (ServiceDiscovery, error) {
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -46,14 +46,14 @@ func NewZookeeperDiscovery(basePath string, servicePath string, zkAddr []string,
 	kv, err := libkv.NewStore(store.ZK, zkAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
-		panic(err)
+		return nil, err
 	}
 
 	return NewZookeeperDiscoveryWithStore(basePath+"/"+servicePath, kv)
 }
 
 // NewZookeeperDiscoveryWithStore returns a new ZookeeperDiscovery with specified store.
-func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDiscovery {
+func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) (ServiceDiscovery, error) {
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -63,7 +63,7 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDisc
 	ps, err := kv.List(basePath)
 	if err != nil {
 		log.Infof("cannot get services of %s from registry: %v, err: %v", basePath, err)
-		panic(err)
+		return nil, err
 	}
 
 	pairs := make([]*KVPair, 0, len(ps))
@@ -80,30 +80,11 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) ServiceDisc
 	d.RetriesAfterWatchFailed = -1
 	go d.watch()
 
-	return d
-}
-
-// NewZookeeperDiscoveryTemplate returns a new ZookeeperDiscovery template.
-func NewZookeeperDiscoveryTemplate(basePath string, zkAddr []string, options *store.Config) ServiceDiscovery {
-	if basePath[0] == '/' {
-		basePath = basePath[1:]
-	}
-
-	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
-		basePath = basePath[:len(basePath)-1]
-	}
-
-	kv, err := libkv.NewStore(store.ZK, zkAddr, options)
-	if err != nil {
-		log.Infof("cannot create store: %v", err)
-		panic(err)
-	}
-
-	return &ZookeeperDiscovery{basePath: basePath, kv: kv}
+	return d, nil
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d *ZookeeperDiscovery) Clone(servicePath string) ServiceDiscovery {
+func (d *ZookeeperDiscovery) Clone(servicePath string) (ServiceDiscovery, error) {
 	return NewZookeeperDiscoveryWithStore(d.basePath+"/"+servicePath, d.kv)
 }
 

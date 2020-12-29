@@ -18,15 +18,22 @@ type MultipleServersDiscovery struct {
 }
 
 // NewMultipleServersDiscovery returns a new MultipleServersDiscovery.
-func NewMultipleServersDiscovery(pairs []*KVPair) ServiceDiscovery {
+func NewMultipleServersDiscovery(pairs []*KVPair) (ServiceDiscovery, error) {
 	return &MultipleServersDiscovery{
 		pairs: pairs,
-	}
+	}, nil
+}
+
+// NewMultipleServersDiscoveryTemplate returns a new MultipleServersDiscovery template.
+func NewMultipleServersDiscoveryTemplate(pairs []*KVPair) (ServiceDiscovery, error) {
+	return &MultipleServersDiscovery{
+		pairs: pairs,
+	}, nil
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d *MultipleServersDiscovery) Clone(servicePath string) ServiceDiscovery {
-	return d
+func (d *MultipleServersDiscovery) Clone(servicePath string) (ServiceDiscovery, error) {
+	return d, nil
 }
 
 // SetFilter sets the filer.

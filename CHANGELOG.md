@@ -1,6 +1,10 @@
 # [rpcx](http://rpcx.io)
 
-## 6.0 (developing)
+## 7.0 (developing)
+- move etcd support to github.com/rpcxio/rpcx-etcd
+- Broken API: NewXXXDiscovery returns error instead of panic
+
+## 6.0 
 
 - support reflection
 - add kubernetes config example

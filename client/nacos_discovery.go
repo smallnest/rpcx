@@ -38,7 +38,7 @@ type NacosDiscovery struct {
 }
 
 // NewNacosDiscovery returns a new NacosDiscovery.
-func NewNacosDiscovery(servicePath string, cluster string, clientConfig constant.ClientConfig, serverConfig []constant.ServerConfig) ServiceDiscovery {
+func NewNacosDiscovery(servicePath string, cluster string, clientConfig constant.ClientConfig, serverConfig []constant.ServerConfig) (ServiceDiscovery, error) {
 	d := &NacosDiscovery{
 		servicePath:  servicePath,
 		Cluster:      cluster,
@@ -52,14 +52,14 @@ func NewNacosDiscovery(servicePath string, cluster string, clientConfig constant
 	})
 	if err != nil {
 		log.Errorf("failed to create NacosDiscovery: %v", err)
-		return nil
+		return nil, err
 	}
 
 	d.namingClient = namingClient
 
 	d.fetch()
 	go d.watch()
-	return d
+	return d, nil
 }
 
 func NewNacosDiscoveryWithClient(servicePath string, cluster string, namingClient naming_client.INamingClient) ServiceDiscovery {
@@ -113,7 +113,7 @@ func NewNacosDiscoveryTemplate(cluster string, clientConfig constant.ClientConfi
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.
-func (d *NacosDiscovery) Clone(servicePath string) ServiceDiscovery {
+func (d *NacosDiscovery) Clone(servicePath string) (ServiceDiscovery, error) {
 	return NewNacosDiscovery(servicePath, d.Cluster, d.ClientConfig, d.ServerConfig)
 }
 
