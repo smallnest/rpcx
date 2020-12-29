@@ -82,7 +82,7 @@ func TestXClient_IT(t *testing.T) {
 	}
 
 	reply := &Reply{}
-	err := xclient.Call(context.Background(), "Mul", args, reply)
+	err = xclient.Call(context.Background(), "Mul", args, reply)
 	if err != nil {
 		t.Fatalf("failed to call: %v", err)
 	}
