@@ -517,40 +517,40 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		req.SetOneway(true)
 	}
 
-	// heartbeat
+	// heartbeat, and use default SerializeType (msgpack)
 	if call.ServicePath == "" && call.ServiceMethod == "" {
 		req.SetHeartbeat(true)
-	}
-	{
+	} else {
 		req.SetSerializeType(client.option.SerializeType)
-		if call.Metadata != nil {
-			req.Metadata = call.Metadata
-		}
-
-		req.ServicePath = call.ServicePath
-		req.ServiceMethod = call.ServiceMethod
-
-		data, err := codec.Encode(call.Args)
-		if err != nil {
-			delete(client.pending, seq)
-			call.Error = err
-			call.done()
-			return
-		}
-		if len(data) > 1024 && client.option.CompressType != protocol.None {
-			req.SetCompressType(client.option.CompressType)
-		}
-
-		req.Payload = data
 	}
+
+	if call.Metadata != nil {
+		req.Metadata = call.Metadata
+	}
+
+	req.ServicePath = call.ServicePath
+	req.ServiceMethod = call.ServiceMethod
+
+	data, err := codec.Encode(call.Args)
+	if err != nil {
+		delete(client.pending, seq)
+		call.Error = err
+		call.done()
+		return
+	}
+	if len(data) > 1024 && client.option.CompressType != protocol.None {
+		req.SetCompressType(client.option.CompressType)
+	}
+
+	req.Payload = data
 
 	if client.Plugins != nil {
 		_ = client.Plugins.DoClientBeforeEncode(req)
 	}
 
-	data := req.EncodeSlicePointer()
-	_, err := client.Conn.Write(*data)
-	protocol.PutData(data)
+	allData := req.EncodeSlicePointer()
+	_, err = client.Conn.Write(*allData)
+	protocol.PutData(allData)
 
 	if err != nil {
 		client.mutex.Lock()
