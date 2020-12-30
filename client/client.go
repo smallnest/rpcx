@@ -520,6 +520,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	// heartbeat, and use default SerializeType (msgpack)
 	if call.ServicePath == "" && call.ServiceMethod == "" {
 		req.SetHeartbeat(true)
+		req.SetSerializeType(protocol.MsgPack)
 	} else {
 		req.SetSerializeType(client.option.SerializeType)
 	}
