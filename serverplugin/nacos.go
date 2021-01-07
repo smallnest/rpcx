@@ -123,6 +123,10 @@ func (p *NacosRegisterPlugin) RegisterFunction(serviceName, fname string, fn int
 }
 
 func (p *NacosRegisterPlugin) Unregister(name string) (err error) {
+	if len(p.Services) == 0 {
+		return nil
+	}
+
 	if strings.TrimSpace(name) == "" {
 		return errors.New("Unregister service `name` can't be empty")
 	}

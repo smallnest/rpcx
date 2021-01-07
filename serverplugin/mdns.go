@@ -187,6 +187,10 @@ func (p *MDNSRegisterPlugin) RegisterFunction(serviceName, fname string, fn inte
 }
 
 func (p *MDNSRegisterPlugin) Unregister(name string) (err error) {
+	if len(p.Services) == 0 {
+		return nil
+	}
+
 	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return

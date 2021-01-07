@@ -212,6 +212,10 @@ func (p *RedisRegisterPlugin) Register(name string, rcvr interface{}, metadata s
 }
 
 func (p *RedisRegisterPlugin) Unregister(name string) (err error) {
+	if len(p.Services) == 0 {
+		return nil
+	}
+
 	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return

@@ -226,6 +226,9 @@ func (p *ConsulRegisterPlugin) RegisterFunction(serviceName, fname string, fn in
 }
 
 func (p *ConsulRegisterPlugin) Unregister(name string) (err error) {
+	if len(p.Services) == 0 {
+		return nil
+	}
 	if strings.TrimSpace(name) == "" {
 		err = errors.New("Unregister service `name` can't be empty")
 		return
