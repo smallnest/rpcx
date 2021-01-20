@@ -766,7 +766,7 @@ func (client *Client) heartbeat() {
 		}
 
 		if reply != request {
-			log.Warnf("reply %d in heartbeat to %s is different from request %d: %v", reply, client.Conn.RemoteAddr().String(), request)
+			log.Warnf("reply %d in heartbeat to %s is different from request %d", reply, client.Conn.RemoteAddr().String(), request)
 		}
 
 		if abnormal {
