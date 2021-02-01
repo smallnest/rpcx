@@ -3,6 +3,8 @@
 ## 7.0 (developing)
 - move etcd support to github.com/rpcxio/rpcx-etcd
 - Broken API: NewXXXDiscovery returns error instead of panic
+- support AdvertiseAddr in FileTransfer
+- support Auth for OneClientPool
 
 ## 6.0 
 

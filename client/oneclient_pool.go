@@ -13,6 +13,7 @@ type OneClientPool struct {
 	count      uint64
 	index      uint64
 	oneclients []*OneClient
+	auth       string
 
 	failMode          FailMode
 	selectMode        SelectMode
@@ -56,6 +57,15 @@ func NewBidirectionalOneClientPool(count int, failMode FailMode, selectMode Sele
 		pool.oneclients[i] = oneclient
 	}
 	return pool
+}
+
+// Auth sets s token for Authentication.
+func (c *OneClientPool) Auth(auth string) {
+	c.auth = auth
+
+	for _, v := range c.oneclients {
+		v.Auth(auth)
+	}
 }
 
 // Get returns a OneClient.
