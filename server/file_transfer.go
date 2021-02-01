@@ -34,6 +34,7 @@ type downloadTokenInfo struct {
 // Clients will invokes this service to get the token and send the token and the file to this port.
 type FileTransfer struct {
 	Addr                string
+	AdvertiseAddr       string
 	handler             FileTransferHandler
 	downloadFileHandler DownloadFileHandler
 	cachedTokens        *lru.Cache
@@ -86,6 +87,9 @@ func (s *FileTransferService) TransferFile(ctx context.Context, args *share.File
 	*reply = share.FileTransferReply{
 		Token: token,
 		Addr:  s.FileTransfer.Addr,
+	}
+	if s.FileTransfer.AdvertiseAddr != "" {
+		reply.Addr = s.FileTransfer.AdvertiseAddr
 	}
 
 	s.FileTransfer.cachedTokens.Add(string(token), &tokenInfo{token, args})

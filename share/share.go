@@ -12,6 +12,9 @@ const (
 	// AuthKey is used in metadata.
 	AuthKey = "__AUTH"
 
+	// ServerAddress is used to get address of the server by client
+	ServerAddress = "__ServerAddress"
+
 	// ServerTimeout timeout value passed from client to control timeout of server
 	ServerTimeout = "__ServerTimeout"
 

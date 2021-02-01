@@ -336,6 +336,8 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 			for k, v := range call.ResMetadata {
 				resMeta[k] = v
 			}
+
+			resMeta[share.ServerAddress] = client.Conn.RemoteAddr().String()
 		}
 	}
 
