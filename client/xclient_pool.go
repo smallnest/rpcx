@@ -1,6 +1,7 @@
 package client
 
 import (
+	"sync"
 	"sync/atomic"
 
 	"github.com/smallnest/rpcx/protocol"
@@ -13,12 +14,15 @@ type XClientPool struct {
 	count    uint64
 	index    uint64
 	xclients []XClient
+	mu       sync.RWMutex
 
-	servicePath       string
-	failMode          FailMode
-	selectMode        SelectMode
-	discovery         ServiceDiscovery
-	option            Option
+	servicePath string
+	failMode    FailMode
+	selectMode  SelectMode
+	discovery   ServiceDiscovery
+	option      Option
+	auth        string
+
 	serverMessageChan chan<- *protocol.Message
 }
 
@@ -59,6 +63,16 @@ func NewBidirectionalXClientPool(count int, servicePath string, failMode FailMod
 		pool.xclients[i] = xclient
 	}
 	return pool
+}
+
+// Auth sets s token for Authentication.
+func (c *XClientPool) Auth(auth string) {
+	c.auth = auth
+	c.mu.RLock()
+	for _, v := range c.xclients {
+		v.Auth(auth)
+	}
+	c.mu.RUnlock()
 }
 
 // Get returns a xclient.

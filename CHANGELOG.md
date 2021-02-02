@@ -5,6 +5,7 @@
 - Broken API: NewXXXDiscovery returns error instead of panic
 - support AdvertiseAddr in FileTransfer
 - support Auth for OneClientPool
+- support Auth for XClientPool
 
 ## 6.0 
 
