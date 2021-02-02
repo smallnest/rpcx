@@ -16,12 +16,12 @@ type XClientPool struct {
 	xclients []XClient
 	mu       sync.RWMutex
 
-	servicePath       string
-	failMode          FailMode
-	selectMode        SelectMode
-	discovery         ServiceDiscovery
-	option            Option
-	auth      string
+	servicePath string
+	failMode    FailMode
+	selectMode  SelectMode
+	discovery   ServiceDiscovery
+	option      Option
+	auth        string
 
 	serverMessageChan chan<- *protocol.Message
 }
