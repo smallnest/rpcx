@@ -436,23 +436,23 @@ func (s *Server) serveConn(conn net.Conn) {
 			}
 
 			resMetadata := make(map[string]string)
-			var newCtx context.Context = share.WithLocalValue(share.WithLocalValue(ctx, share.ReqMetaDataKey, req.Metadata),
+			ctx = share.WithLocalValue(share.WithLocalValue(ctx, share.ReqMetaDataKey, req.Metadata),
 				share.ResMetaDataKey, resMetadata)
 
-			newCtx, cancelFunc := parseServerTimeout(newCtx, req)
+			cancelFunc := parseServerTimeout(ctx, req)
 			if cancelFunc != nil {
 				defer cancelFunc()
 			}
 
-			s.Plugins.DoPreHandleRequest(newCtx, req)
+			s.Plugins.DoPreHandleRequest(ctx, req)
 
-			res, err := s.handleRequest(newCtx, req)
+			res, err := s.handleRequest(ctx, req)
 
 			if err != nil {
 				log.Warnf("rpcx: failed to handle request: %v", err)
 			}
 
-			s.Plugins.DoPreWriteResponse(newCtx, req, res, err)
+			s.Plugins.DoPreWriteResponse(ctx, req, res, err)
 			if !req.IsOneway() {
 				if len(resMetadata) > 0 { //copy meta in context to request
 					meta := res.Metadata
@@ -474,7 +474,7 @@ func (s *Server) serveConn(conn net.Conn) {
 				conn.Write(*data)
 				protocol.PutData(data)
 			}
-			s.Plugins.DoPostWriteResponse(newCtx, req, res, err)
+			s.Plugins.DoPostWriteResponse(ctx, req, res, err)
 
 			protocol.FreeMsg(req)
 			protocol.FreeMsg(res)
@@ -482,22 +482,24 @@ func (s *Server) serveConn(conn net.Conn) {
 	}
 }
 
-func parseServerTimeout(ctx context.Context, req *protocol.Message) (context.Context, context.CancelFunc) {
+func parseServerTimeout(ctx *share.Context, req *protocol.Message) context.CancelFunc {
 	if req == nil || req.Metadata == nil {
-		return ctx, nil
+		return nil
 	}
 
 	st := req.Metadata[share.ServerTimeout]
 	if st == "" {
-		return ctx, nil
+		return nil
 	}
 
 	timeout, err := strconv.ParseInt(st, 10, 64)
 	if err != nil {
-		return ctx, nil
+		return nil
 	}
 
-	return context.WithTimeout(ctx, time.Duration(timeout)*time.Millisecond)
+	newCtx, cancel := context.WithTimeout(ctx.Context, time.Duration(timeout)*time.Millisecond)
+	ctx.Context = newCtx
+	return cancel
 }
 
 func isShutdown(s *Server) bool {
