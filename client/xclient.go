@@ -48,8 +48,8 @@ type XClient interface {
 	Broadcast(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Fork(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error)
-	SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error
-	DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer) error
+	SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64, meta map[string]string) error
+	DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer, meta map[string]string) error
 	Close() error
 }
 
@@ -874,7 +874,7 @@ check:
 // SendFile sends a local file to the server.
 // fileName is the path of local file.
 // rateInBytesPerSecond can limit bandwidth of sending,  0 means does not limit the bandwidth, unit is bytes / second.
-func (c *xClient) SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error {
+func (c *xClient) SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64, meta map[string]string) error {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return err
@@ -888,6 +888,7 @@ func (c *xClient) SendFile(ctx context.Context, fileName string, rateInBytesPerS
 	args := share.FileTransferArgs{
 		FileName: fi.Name(),
 		FileSize: fi.Size(),
+		Meta:     meta,
 	}
 
 	ctx = setServerTimeout(ctx)
@@ -950,11 +951,12 @@ loop:
 	return nil
 }
 
-func (c *xClient) DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer) error {
+func (c *xClient) DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer, meta map[string]string) error {
 	ctx = setServerTimeout(ctx)
 
 	args := share.DownloadFileArgs{
 		FileName: requestFileName,
+		Meta:     meta,
 	}
 
 	reply := &share.FileTransferReply{}

@@ -74,5 +74,6 @@ type FileTransferReply struct {
 
 // DownloadFileArgs args from clients.
 type DownloadFileArgs struct {
-	FileName string `json:"file_name,omitempty"`
+	FileName string            `json:"file_name,omitempty"`
+	Meta     map[string]string `json:"meta,omitempty"`
 }

@@ -269,7 +269,7 @@ func (c *OneClient) Fork(ctx context.Context, servicePath string, serviceMethod 
 	return xclient.Fork(ctx, serviceMethod, args, reply)
 }
 
-func (c *OneClient) SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error {
+func (c *OneClient) SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64, meta map[string]string) error {
 	c.mu.RLock()
 	xclient := c.xclients[share.SendFileServiceName]
 	c.mu.RUnlock()
@@ -288,10 +288,10 @@ func (c *OneClient) SendFile(ctx context.Context, fileName string, rateInBytesPe
 		}
 	}
 
-	return xclient.SendFile(ctx, fileName, rateInBytesPerSecond)
+	return xclient.SendFile(ctx, fileName, rateInBytesPerSecond, meta)
 }
 
-func (c *OneClient) DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer) error {
+func (c *OneClient) DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer, meta map[string]string) error {
 	c.mu.RLock()
 	xclient := c.xclients[share.SendFileServiceName]
 	c.mu.RUnlock()
@@ -310,7 +310,7 @@ func (c *OneClient) DownloadFile(ctx context.Context, requestFileName string, sa
 		}
 	}
 
-	return xclient.DownloadFile(ctx, requestFileName, saveTo)
+	return xclient.DownloadFile(ctx, requestFileName, saveTo, meta)
 }
 
 // Close closes all xclients and its underlying connnections to services.
