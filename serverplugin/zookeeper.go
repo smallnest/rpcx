@@ -15,7 +15,7 @@ import (
 
 	metrics "github.com/rcrowley/go-metrics"
 	"github.com/rpcxio/libkv/store"
-	"github.com/smallnest/rpcx/log"
+	"github.com/smallnest/rpcx/v6/log"
 )
 
 func init() {

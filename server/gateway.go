@@ -12,9 +12,9 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
-	"github.com/smallnest/rpcx/log"
-	"github.com/smallnest/rpcx/protocol"
-	"github.com/smallnest/rpcx/share"
+	"github.com/smallnest/rpcx/v6/log"
+	"github.com/smallnest/rpcx/v6/protocol"
+	"github.com/smallnest/rpcx/v6/share"
 	"github.com/soheilhy/cmux"
 )
 

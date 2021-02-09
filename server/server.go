@@ -23,9 +23,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/smallnest/rpcx/log"
-	"github.com/smallnest/rpcx/protocol"
-	"github.com/smallnest/rpcx/share"
+	"github.com/smallnest/rpcx/v6/log"
+	"github.com/smallnest/rpcx/v6/protocol"
+	"github.com/smallnest/rpcx/v6/share"
 )
 
 // ErrServerClosed is returned by the Server's Serve, ListenAndServe after a call to Shutdown or Close.

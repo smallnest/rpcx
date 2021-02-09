@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/smallnest/rpcx/codec"
-	"github.com/smallnest/rpcx/share"
+	"github.com/smallnest/rpcx/v6/codec"
+	"github.com/smallnest/rpcx/v6/share"
 	"github.com/stretchr/testify/assert"
 )
 

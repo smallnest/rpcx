@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/smallnest/rpcx/util"
+	"github.com/smallnest/rpcx/v6/util"
 )
 
 var (

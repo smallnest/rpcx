@@ -8,8 +8,8 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
 	"github.com/nacos-group/nacos-sdk-go/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/vo"
-	"github.com/smallnest/rpcx/log"
-	"github.com/smallnest/rpcx/util"
+	"github.com/smallnest/rpcx/v6/log"
+	"github.com/smallnest/rpcx/v6/util"
 )
 
 // NacosRegisterPlugin implements consul registry.

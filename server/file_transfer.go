@@ -9,8 +9,8 @@ import (
 	"time"
 
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/smallnest/rpcx/log"
-	"github.com/smallnest/rpcx/share"
+	"github.com/smallnest/rpcx/v6/log"
+	"github.com/smallnest/rpcx/v6/share"
 )
 
 // FileTransferHandler handles uploading file. Must close the connection after it finished.
