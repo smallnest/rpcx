@@ -30,20 +30,21 @@ const (
 	// OpencensusSpanRequestKey span key in request meta
 	OpencensusSpanRequestKey = "opencensus_span_request_key"
 
-	// SendFileServiceName file transfer service.
+	// SendFileServiceName is name of the file transfer service.
 	SendFileServiceName = "_filetransfer"
+
+	// StreamServiceName is name of the stream service.
+	StreamServiceName = "_streamservice"
 )
 
-var (
-	// Codecs are codecs supported by rpcx. You can add customized codecs in Codecs.
-	Codecs = map[protocol.SerializeType]codec.Codec{
-		protocol.SerializeNone: &codec.ByteCodec{},
-		protocol.JSON:          &codec.JSONCodec{},
-		protocol.ProtoBuffer:   &codec.PBCodec{},
-		protocol.MsgPack:       &codec.MsgpackCodec{},
-		protocol.Thrift:        &codec.ThriftCodec{},
-	}
-)
+// Codecs are codecs supported by rpcx. You can add customized codecs in Codecs.
+var Codecs = map[protocol.SerializeType]codec.Codec{
+	protocol.SerializeNone: &codec.ByteCodec{},
+	protocol.JSON:          &codec.JSONCodec{},
+	protocol.ProtoBuffer:   &codec.PBCodec{},
+	protocol.MsgPack:       &codec.MsgpackCodec{},
+	protocol.Thrift:        &codec.ThriftCodec{},
+}
 
 // RegisterCodec register customized codec.
 func RegisterCodec(t protocol.SerializeType, c codec.Codec) {
@@ -76,4 +77,15 @@ type FileTransferReply struct {
 type DownloadFileArgs struct {
 	FileName string            `json:"file_name,omitempty"`
 	Meta     map[string]string `json:"meta,omitempty"`
+}
+
+// StreamServiceArgs is the request type for stream service.
+type StreamServiceArgs struct {
+	Meta map[string]string `json:"meta,omitempty"`
+}
+
+// StreamServiceReply is the reply type for stream service.
+type StreamServiceReply struct {
+	Token []byte `json:"token,omitempty"`
+	Addr  string `json:"addr,omitempty"`
 }

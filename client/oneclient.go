@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"sync"
 
 	"github.com/smallnest/rpcx/share"
@@ -146,7 +147,6 @@ func (c *OneClient) newXClient(servicePath string) (xclient XClient, err error) 
 	}
 
 	if c.serverMessageChan == nil {
-
 		xclient = NewXClient(servicePath, c.failMode, c.selectMode, d, c.option)
 	} else {
 		xclient = NewBidirectionalXClient(servicePath, c.failMode, c.selectMode, d, c.option, c.serverMessageChan)
@@ -311,6 +311,28 @@ func (c *OneClient) DownloadFile(ctx context.Context, requestFileName string, sa
 	}
 
 	return xclient.DownloadFile(ctx, requestFileName, saveTo, meta)
+}
+
+func (c *OneClient) Stream(ctx context.Context, meta map[string]string) (net.Conn, error) {
+	c.mu.RLock()
+	xclient := c.xclients[share.StreamServiceName]
+	c.mu.RUnlock()
+
+	if xclient == nil {
+		var err error
+		c.mu.Lock()
+		xclient = c.xclients[share.StreamServiceName]
+		if xclient == nil {
+			xclient, err = c.newXClient(share.StreamServiceName)
+			c.xclients[share.StreamServiceName] = xclient
+		}
+		c.mu.Unlock()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return xclient.Stream(ctx, meta)
 }
 
 // Close closes all xclients and its underlying connnections to services.

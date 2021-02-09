@@ -6,7 +6,8 @@
 - support AdvertiseAddr in FileTransfer
 - support Auth for OneClientPool
 - support Auth for XClientPool
-- add meta parameter for SendFile/DownloadFile 
+- Broken API: add meta parameter for SendFile/DownloadFile 
+- support streaming between server side and client side
 
 ## 6.0 
 

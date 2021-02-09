@@ -51,7 +51,6 @@ type FileTransferService struct {
 
 // NewFileTransfer creates a FileTransfer with given parameters.
 func NewFileTransfer(addr string, handler FileTransferHandler, downloadFileHandler DownloadFileHandler, waitNum int) *FileTransfer {
-
 	cachedTokens, _ := lru.New(waitNum)
 
 	fi := &FileTransfer{
@@ -195,7 +194,6 @@ func (s *FileTransfer) start() error {
 			}
 
 		}
-
 	}
 }
 
