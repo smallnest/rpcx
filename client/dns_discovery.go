@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"net"
+	"sort"
 	"sync"
 	"time"
 
@@ -94,6 +95,12 @@ func (d *DNSDiscovery) lookup() {
 			continue
 		}
 		pairs = append(pairs, pair)
+	}
+
+	if len(pairs) > 0 {
+		sort.Slice(pairs, func(i, j int) bool {
+			return pairs[i].Key < pairs[j].Key
+		})
 	}
 
 	d.pairsMu.Lock()
