@@ -107,7 +107,7 @@ func NewRedisDiscoveryTemplate(basePath string, etcdAddr []string, options *stor
 		return nil, err
 	}
 
-	return &RedisDiscovery{basePath: basePath, kv: kv}, nil
+	return NewRedisDiscoveryStore(basePath, kv)
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.

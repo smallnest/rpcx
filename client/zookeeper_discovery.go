@@ -99,7 +99,7 @@ func NewZookeeperDiscoveryTemplate(basePath string, zkAddr []string, options *st
 		return nil, err
 	}
 
-	return &ZookeeperDiscovery{basePath: basePath, kv: kv}, nil
+	return NewZookeeperDiscoveryWithStore(basePath, kv)
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.

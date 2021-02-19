@@ -24,13 +24,6 @@ func NewMultipleServersDiscovery(pairs []*KVPair) (ServiceDiscovery, error) {
 	}, nil
 }
 
-// NewMultipleServersDiscoveryTemplate returns a new MultipleServersDiscovery template.
-func NewMultipleServersDiscoveryTemplate(pairs []*KVPair) (ServiceDiscovery, error) {
-	return &MultipleServersDiscovery{
-		pairs: pairs,
-	}, nil
-}
-
 // Clone clones this ServiceDiscovery with new servicePath.
 func (d *MultipleServersDiscovery) Clone(servicePath string) (ServiceDiscovery, error) {
 	return d, nil

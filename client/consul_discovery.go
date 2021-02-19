@@ -96,7 +96,7 @@ func NewConsulDiscoveryTemplate(basePath string, consulAddr []string, options *s
 		return nil, err
 	}
 
-	return &ConsulDiscovery{basePath: basePath, kv: kv}, nil
+	return NewConsulDiscoveryStore(basePath, kv)
 }
 
 // Clone clones this ServiceDiscovery with new servicePath.

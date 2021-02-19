@@ -8,6 +8,7 @@
 - support Auth for XClientPool
 - Broken API: add meta parameter for SendFile/DownloadFile 
 - support streaming between server side and client side
+- support DNS as service discovery
 
 ## 6.0 
 
