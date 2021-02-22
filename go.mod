@@ -38,7 +38,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/valyala/fastrand v0.0.0-20170531153657-19dd0f0bf014
-	github.com/vmihailenco/msgpack v4.0.0+incompatible
+	github.com/vmihailenco/msgpack/v5 v5.2.0 // indirect
 	github.com/xtaci/kcp-go v2.0.3+incompatible
 	go.opencensus.io v0.22.2
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9

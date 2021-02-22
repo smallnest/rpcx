@@ -9,7 +9,7 @@ import (
 	"reflect"
 
 	proto "github.com/gogo/protobuf/proto"
-	"github.com/vmihailenco/msgpack"
+	"github.com/vmihailenco/msgpack/v5"
 	pb "google.golang.org/protobuf/proto"
 
 	"github.com/apache/thrift/lib/go/thrift"
