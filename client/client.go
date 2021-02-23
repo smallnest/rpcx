@@ -101,7 +101,7 @@ type Client struct {
 
 	Conn net.Conn
 	r    *bufio.Reader
-	//w    *bufio.Writer
+	// w    *bufio.Writer
 
 	mutex        sync.Mutex // protects following
 	seq          uint64
@@ -138,7 +138,7 @@ type Option struct {
 	Block interface{}
 	// RPCPath for http connection
 	RPCPath string
-	//ConnectTimeout sets timeout for dialing
+	// ConnectTimeout sets timeout for dialing
 	ConnectTimeout time.Duration
 	// ReadTimeout sets max idle time for underlying net.Conns
 	IdleTimeout time.Duration
@@ -166,7 +166,7 @@ type Option struct {
 type Call struct {
 	ServicePath   string            // The name of the service and method to call.
 	ServiceMethod string            // The name of the service and method to call.
-	Metadata      map[string]string //metadata
+	Metadata      map[string]string // metadata
 	ResMetadata   map[string]string
 	Args          interface{} // The argument to the function (*struct).
 	Reply         interface{} // The reply from the function (*struct).
@@ -222,7 +222,7 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 	call.ServicePath = servicePath
 	call.ServiceMethod = serviceMethod
 	meta := ctx.Value(share.ReqMetaDataKey)
-	if meta != nil { //copy meta in context to meta in requests
+	if meta != nil { // copy meta in context to meta in requests
 		call.Metadata = meta.(map[string]string)
 	}
 
@@ -317,7 +317,7 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 
 	var err error
 	select {
-	case <-ctx.Done(): //cancel by context
+	case <-ctx.Done(): // cancel by context
 		client.mutex.Lock()
 		call := client.pending[*seq]
 		delete(client.pending, *seq)
@@ -369,7 +369,7 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 		}
 	}
 
-	if meta != nil { //copy meta in context to meta in requests
+	if meta != nil { // copy meta in context to meta in requests
 		call.Metadata = rmeta
 	}
 	r.Metadata = rmeta
@@ -415,7 +415,7 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 	var payload []byte
 
 	select {
-	case <-ctx.Done(): //cancel by context
+	case <-ctx.Done(): // cancel by context
 		client.mutex.Lock()
 		call := client.pending[seq]
 		delete(client.pending, seq)
@@ -479,8 +479,8 @@ func urlencode(data map[string]string) string {
 	s := buf.String()
 	return s[0 : len(s)-1]
 }
-func (client *Client) send(ctx context.Context, call *Call) {
 
+func (client *Client) send(ctx context.Context, call *Call) {
 	// Register this call.
 	client.mutex.Lock()
 	if client.shutdown || client.closing {
@@ -511,7 +511,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		*cseq = seq
 	}
 
-	//req := protocol.NewMessage()
+	// req := protocol.NewMessage()
 	req := protocol.GetPooledMsg()
 	req.SetMessageType(protocol.Request)
 	req.SetSeq(seq)
@@ -536,7 +536,9 @@ func (client *Client) send(ctx context.Context, call *Call) {
 
 	data, err := codec.Encode(call.Args)
 	if err != nil {
+		client.mutex.Lock()
 		delete(client.pending, seq)
+		client.mutex.Unlock()
 		call.Error = err
 		call.done()
 		return
@@ -584,14 +586,13 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	if client.option.IdleTimeout != 0 {
 		_ = client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
 	}
-
 }
 
 func (client *Client) input() {
 	var err error
 
 	for err == nil {
-		var res = protocol.NewMessage()
+		res := protocol.NewMessage()
 		if client.option.IdleTimeout != 0 {
 			_ = client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
 		}
