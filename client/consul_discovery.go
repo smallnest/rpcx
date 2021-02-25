@@ -66,6 +66,9 @@ func NewConsulDiscoveryStore(basePath string, kv store.Store) (ServiceDiscovery,
 	prefix := d.basePath + "/"
 	for _, p := range ps {
 		k := strings.TrimPrefix(p.Key, prefix)
+		if strings.HasPrefix(k, prefix) { // avoid prefix issue of consul List
+			continue
+		}
 		pair := &KVPair{Key: k, Value: string(p.Value)}
 		if d.filter != nil && !d.filter(pair) {
 			continue
@@ -193,6 +196,9 @@ func (d *ConsulDiscovery) watch() {
 				var pairs []*KVPair // latest servers
 				for _, p := range ps {
 					k := strings.TrimPrefix(p.Key, prefix)
+					if strings.HasPrefix(k, prefix) { // avoid prefix issue of consul List
+						continue
+					}
 					pair := &KVPair{Key: k, Value: string(p.Value)}
 					if d.filter != nil && !d.filter(pair) {
 						continue
