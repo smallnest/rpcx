@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/ChimeraCoder/gojson v1.1.0
-	github.com/apache/thrift v0.13.0
+	github.com/apache/thrift v0.14.0
 	github.com/cenk/backoff v2.2.1+incompatible // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/edwingeng/doublejump v0.0.0-20200219153503-7cfc0ed6e836
@@ -38,7 +38,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/valyala/fastrand v0.0.0-20170531153657-19dd0f0bf014
-	github.com/vmihailenco/msgpack/v5 v5.2.0 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.2.0 
 	github.com/xtaci/kcp-go v2.0.3+incompatible
 	go.opencensus.io v0.22.2
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
