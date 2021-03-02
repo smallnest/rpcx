@@ -26,10 +26,14 @@ require (
 	github.com/klauspost/reedsolomon v1.9.10 // indirect
 	github.com/kr/pretty v0.2.0
 	github.com/lucas-clemente/quic-go v0.18.0
+	github.com/mattn/go-runewidth v0.0.10 // indirect
 	github.com/nacos-group/nacos-sdk-go v1.0.1
+	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/opentracing/opentracing-go v1.1.1-0.20190913142402-a7454ce5950e
 	github.com/peterbourgon/g2s v0.0.0-20140925154142-ec76db4c1ac1 // indirect
+	github.com/psampaz/go-mod-outdated v0.7.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
+	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rpcxio/libkv v0.5.0
 	github.com/rs/cors v1.7.0
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
@@ -37,9 +41,12 @@ require (
 	github.com/soheilhy/cmux v0.1.4
 	github.com/stretchr/testify v1.6.1
 	github.com/syndtr/goleveldb v1.0.0
+	github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161 // indirect
+	github.com/templexxx/xor v0.0.0-20191217153810-f85b25db303b // indirect
+	github.com/tjfoc/gmsm v1.4.0 // indirect
 	github.com/valyala/fastrand v0.0.0-20170531153657-19dd0f0bf014
-	github.com/vmihailenco/msgpack/v5 v5.2.0 
-	github.com/xtaci/kcp-go v2.0.3+incompatible
+	github.com/vmihailenco/msgpack/v5 v5.2.0
+	github.com/xtaci/kcp-go v5.4.20+incompatible
 	go.opencensus.io v0.22.2
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	google.golang.org/protobuf v1.25.0
