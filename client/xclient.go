@@ -386,7 +386,7 @@ func setServerTimeout(ctx context.Context) context.Context {
 			ctx = context.WithValue(ctx, share.ReqMetaDataKey, metadata)
 		}
 		m := metadata.(map[string]string)
-		m[share.ServerTimeout] = fmt.Sprintf("%d", time.Since(deadline).Milliseconds())
+		m[share.ServerTimeout] = fmt.Sprintf("%d", time.Until(deadline).Milliseconds())
 	}
 
 	return ctx
