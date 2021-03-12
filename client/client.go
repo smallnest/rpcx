@@ -490,7 +490,12 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		return
 	}
 
-	codec := share.Codecs[client.option.SerializeType]
+	isHeartbeat := call.ServicePath == "" && call.ServiceMethod == ""
+	serializeType := client.option.SerializeType
+	if isHeartbeat {
+		serializeType = protocol.MsgPack
+	}
+	codec := share.Codecs[serializeType]
 	if codec == nil {
 		call.Error = ErrUnsupportedCodec
 		client.mutex.Unlock()
@@ -520,7 +525,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	}
 
 	// heartbeat, and use default SerializeType (msgpack)
-	if call.ServicePath == "" && call.ServiceMethod == "" {
+	if isHeartbeat {
 		req.SetHeartbeat(true)
 		req.SetSerializeType(protocol.MsgPack)
 	} else {
