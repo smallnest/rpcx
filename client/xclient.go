@@ -413,14 +413,14 @@ func (c *xClient) Go(ctx context.Context, serviceMethod string, args interface{}
 	ctx = setServerTimeout(ctx)
 
 	if share.Trace {
-		log.Debug("select a client for %s.%s, args: %+v in case of xclient Go", c.servicePath, serviceMethod, args)
+		log.Debugf("select a client for %s.%s, args: %+v in case of xclient Go", c.servicePath, serviceMethod, args)
 	}
 	_, client, err := c.selectClient(ctx, c.servicePath, serviceMethod, args)
 	if err != nil {
 		return nil, err
 	}
 	if share.Trace {
-		log.Debug("selected a client %s for %s.%s, args: %+v in case of xclient Go", client.RemoteAddr(), c.servicePath, serviceMethod, args)
+		log.Debugf("selected a client %s for %s.%s, args: %+v in case of xclient Go", client.RemoteAddr(), c.servicePath, serviceMethod, args)
 	}
 	return client.Go(ctx, c.servicePath, serviceMethod, args, reply, done), nil
 }
@@ -444,7 +444,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 	ctx = setServerTimeout(ctx)
 
 	if share.Trace {
-		log.Debug("select a client for %s.%s, failMode: %v, args: %+v in case of xclient Call", c.servicePath, serviceMethod, c.failMode, args)
+		log.Debugf("select a client for %s.%s, failMode: %v, args: %+v in case of xclient Call", c.servicePath, serviceMethod, c.failMode, args)
 	}
 
 	var err error
@@ -456,7 +456,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 	}
 
 	if share.Trace {
-		log.Debug("selected a client %s for %s.%s, failMode: %v, args: %+v in case of xclient Call", client.RemoteAddr(), c.servicePath, serviceMethod, c.failMode, args)
+		log.Debugf("selected a client %s for %s.%s, failMode: %v, args: %+v in case of xclient Call", client.RemoteAddr(), c.servicePath, serviceMethod, c.failMode, args)
 	}
 
 	var e error
@@ -629,7 +629,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 	ctx = setServerTimeout(ctx)
 
 	if share.Trace {
-		log.Debug("select a client for %s.%s, failMode: %v, args: %+v in case of xclient SendRaw", r.ServicePath, r.ServiceMethod, c.failMode, r.Payload)
+		log.Debugf("select a client for %s.%s, failMode: %v, args: %+v in case of xclient SendRaw", r.ServicePath, r.ServiceMethod, c.failMode, r.Payload)
 	}
 
 	var err error
@@ -647,7 +647,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 	}
 
 	if share.Trace {
-		log.Debug("selected a client %s for %s.%s, failMode: %v, args: %+v in case of xclient Call", client.RemoteAddr(), r.ServicePath, r.ServiceMethod, c.failMode, r.Payload)
+		log.Debugf("selected a client %s for %s.%s, failMode: %v, args: %+v in case of xclient Call", client.RemoteAddr(), r.ServicePath, r.ServiceMethod, c.failMode, r.Payload)
 	}
 
 	var e error
@@ -726,7 +726,7 @@ func (c *xClient) wrapCall(ctx context.Context, client RPCClient, serviceMethod 
 	}
 
 	if share.Trace {
-		log.Debug("call a client for %s.%s, args: %+v in case of xclient wrapCall", c.servicePath, serviceMethod, args)
+		log.Debugf("call a client for %s.%s, args: %+v in case of xclient wrapCall", c.servicePath, serviceMethod, args)
 	}
 
 	ctx = share.NewContext(ctx)
@@ -735,7 +735,7 @@ func (c *xClient) wrapCall(ctx context.Context, client RPCClient, serviceMethod 
 	c.Plugins.DoPostCall(ctx, c.servicePath, serviceMethod, args, reply, err)
 
 	if share.Trace {
-		log.Debug("called a client for %s.%s, args: %+v, err: %v in case of xclient wrapCall", c.servicePath, serviceMethod, args, err)
+		log.Debugf("called a client for %s.%s, args: %+v, err: %v in case of xclient wrapCall", c.servicePath, serviceMethod, args, err)
 	}
 
 	return err

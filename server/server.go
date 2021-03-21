@@ -302,7 +302,7 @@ func (s *Server) serveListener(ln net.Listener) error {
 		s.mu.Unlock()
 
 		if share.Trace {
-			log.Debug("server accepted an conn%c", conn.RemoteAddr().String())
+			log.Debugf("server accepted an conn%c", conn.RemoteAddr().String())
 		}
 
 		go s.serveConn(conn)
@@ -336,7 +336,7 @@ func (s *Server) serveConn(conn net.Conn) {
 			log.Errorf("serving %s panic error: %s, stack:\n %s", conn.RemoteAddr(), err, buf)
 		}
 		if share.Trace {
-			log.Debug("server closed conn: %v", conn.RemoteAddr().String())
+			log.Debugf("server closed conn: %v", conn.RemoteAddr().String())
 		}
 
 		s.mu.Lock()
@@ -397,7 +397,7 @@ func (s *Server) serveConn(conn net.Conn) {
 		}
 
 		if share.Trace {
-			log.Debug("server received an request %s from conn: %v", req, conn.RemoteAddr().String())
+			log.Debugf("server received an request %s from conn: %v", req, conn.RemoteAddr().String())
 		}
 
 		ctx = share.WithLocalValue(ctx, StartRequestContextKey, time.Now().UnixNano())
@@ -457,7 +457,7 @@ func (s *Server) serveConn(conn net.Conn) {
 			s.Plugins.DoPreHandleRequest(ctx, req)
 
 			if share.Trace {
-				log.Debug("server handle request %s from conn: %v", req, conn.RemoteAddr().String())
+				log.Debugf("server handle request %s from conn: %v", req, conn.RemoteAddr().String())
 			}
 			res, err := s.handleRequest(ctx, req)
 			if err != nil {
@@ -489,7 +489,7 @@ func (s *Server) serveConn(conn net.Conn) {
 			s.Plugins.DoPostWriteResponse(ctx, req, res, err)
 
 			if share.Trace {
-				log.Debug("server write response %v for an request %s from conn: %v", res, req, conn.RemoteAddr().String())
+				log.Debugf("server write response %v for an request %s from conn: %v", res, req, conn.RemoteAddr().String())
 			}
 
 			protocol.FreeMsg(req)
@@ -567,7 +567,7 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	service := s.serviceMap[serviceName]
 
 	if share.Trace {
-		log.Debug("server get service %s for an request %s", service, req)
+		log.Debugf("server get service %s for an request %s", service, req)
 	}
 
 	s.serviceMapMu.RUnlock()
@@ -641,7 +641,7 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	}
 
 	if share.Trace {
-		log.Debug("server called service %s for an request %s", service, req)
+		log.Debugf("server called service %s for an request %s", service, req)
 	}
 
 	return res, nil

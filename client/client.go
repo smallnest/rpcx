@@ -256,7 +256,7 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 	call.Done = done
 
 	if share.Trace {
-		log.Debug("client.Go send request for %s.%s, args: %+v in case of client call", servicePath, serviceMethod, args)
+		log.Debugf("client.Go send request for %s.%s, args: %+v in case of client call", servicePath, serviceMethod, args)
 	}
 	client.send(ctx, call)
 	return call
@@ -325,9 +325,9 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 	ctx = context.WithValue(ctx, seqKey{}, seq)
 
 	if share.Trace {
-		log.Debug("client.call for %s.%s, args: %+v in case of client call", servicePath, serviceMethod, args)
+		log.Debugf("client.call for %s.%s, args: %+v in case of client call", servicePath, serviceMethod, args)
 		defer func() {
-			log.Debug("client.call done for %s.%s, args: %+v in case of client call", servicePath, serviceMethod, args)
+			log.Debugf("client.call done for %s.%s, args: %+v in case of client call", servicePath, serviceMethod, args)
 		}()
 	}
 
@@ -577,13 +577,13 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	}
 
 	if share.Trace {
-		log.Debug("client.send for %s.%s, args: %+v in case of client call", call.ServicePath, call.ServiceMethod, call.Args)
+		log.Debugf("client.send for %s.%s, args: %+v in case of client call", call.ServicePath, call.ServiceMethod, call.Args)
 	}
 	allData := req.EncodeSlicePointer()
 	_, err = client.Conn.Write(*allData)
 	protocol.PutData(allData)
 	if share.Trace {
-		log.Debug("client.sent for %s.%s, args: %+v in case of client call", call.ServicePath, call.ServiceMethod, call.Args)
+		log.Debugf("client.sent for %s.%s, args: %+v in case of client call", call.ServicePath, call.ServiceMethod, call.Args)
 	}
 
 	if err != nil {
@@ -645,7 +645,7 @@ func (client *Client) input() {
 		}
 
 		if share.Trace {
-			log.Debug("client.input received %v", res)
+			log.Debugf("client.input received %v", res)
 		}
 
 		switch {
