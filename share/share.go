@@ -37,6 +37,11 @@ const (
 	StreamServiceName = "_streamservice"
 )
 
+// Trace is a flag to write a trace log or not.
+// You should not enable this flag ofr product environment and enable it only for test.
+// It writes trace log with logger Debug level.
+var Trace bool
+
 // Codecs are codecs supported by rpcx. You can add customized codecs in Codecs.
 var Codecs = map[protocol.SerializeType]codec.Codec{
 	protocol.SerializeNone: &codec.ByteCodec{},

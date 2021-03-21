@@ -87,6 +87,7 @@ type RPCClient interface {
 	Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error
 	SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error)
 	Close() error
+	RemoteAddr() string
 
 	RegisterServerMessageChan(ch chan<- *protocol.Message)
 	UnregisterServerMessageChan()
@@ -121,6 +122,11 @@ func NewClient(option Option) *Client {
 	return &Client{
 		option: option,
 	}
+}
+
+// RemoteAddr returns the remote address.
+func (c *Client) RemoteAddr() string {
+	return c.Conn.RemoteAddr().String()
 }
 
 // Option contains all options for creating clients.
@@ -248,6 +254,10 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 		}
 	}
 	call.Done = done
+
+	if share.Trace {
+		log.Debug("client.Go send request for %s.%s, args: %+v in case of client call", servicePath, serviceMethod, args)
+	}
 	client.send(ctx, call)
 	return call
 }
@@ -313,6 +323,14 @@ func (client *Client) Call(ctx context.Context, servicePath, serviceMethod strin
 func (client *Client) call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error {
 	seq := new(uint64)
 	ctx = context.WithValue(ctx, seqKey{}, seq)
+
+	if share.Trace {
+		log.Debug("client.call for %s.%s, args: %+v in case of client call", servicePath, serviceMethod, args)
+		defer func() {
+			log.Debug("client.call done for %s.%s, args: %+v in case of client call", servicePath, serviceMethod, args)
+		}()
+	}
+
 	Done := client.Go(ctx, servicePath, serviceMethod, args, reply, make(chan *Call, 1)).Done
 
 	var err error
@@ -558,9 +576,15 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		_ = client.Plugins.DoClientBeforeEncode(req)
 	}
 
+	if share.Trace {
+		log.Debug("client.send for %s.%s, args: %+v in case of client call", call.ServicePath, call.ServiceMethod, call.Args)
+	}
 	allData := req.EncodeSlicePointer()
 	_, err = client.Conn.Write(*allData)
 	protocol.PutData(allData)
+	if share.Trace {
+		log.Debug("client.sent for %s.%s, args: %+v in case of client call", call.ServicePath, call.ServiceMethod, call.Args)
+	}
 
 	if err != nil {
 		client.mutex.Lock()
@@ -618,6 +642,10 @@ func (client *Client) input() {
 			call = client.pending[seq]
 			delete(client.pending, seq)
 			client.mutex.Unlock()
+		}
+
+		if share.Trace {
+			log.Debug("client.input received %v", res)
 		}
 
 		switch {

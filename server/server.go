@@ -9,6 +9,9 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
+	"os/exec"
+	"os/signal"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -16,12 +19,8 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
-
-	"os"
-	"os/exec"
-	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
@@ -245,7 +244,6 @@ func (s *Server) ServeListener(network string, ln net.Listener) (err error) {
 // creating a new service goroutine for each.
 // The service goroutines read requests and then call services to reply to them.
 func (s *Server) serveListener(ln net.Listener) error {
-
 	var tempDelay time.Duration
 
 	s.mu.Lock()
@@ -303,6 +301,10 @@ func (s *Server) serveListener(ln net.Listener) error {
 		s.activeConn[conn] = struct{}{}
 		s.mu.Unlock()
 
+		if share.Trace {
+			log.Debug("server accepted an conn%c", conn.RemoteAddr().String())
+		}
+
 		go s.serveConn(conn)
 	}
 }
@@ -333,6 +335,10 @@ func (s *Server) serveConn(conn net.Conn) {
 			buf = buf[:ss]
 			log.Errorf("serving %s panic error: %s, stack:\n %s", conn.RemoteAddr(), err, buf)
 		}
+		if share.Trace {
+			log.Debug("server closed conn: %v", conn.RemoteAddr().String())
+		}
+
 		s.mu.Lock()
 		delete(s.activeConn, conn)
 		s.mu.Unlock()
@@ -390,8 +396,12 @@ func (s *Server) serveConn(conn net.Conn) {
 			conn.SetWriteDeadline(t0.Add(s.writeTimeout))
 		}
 
+		if share.Trace {
+			log.Debug("server received an request %s from conn: %v", req, conn.RemoteAddr().String())
+		}
+
 		ctx = share.WithLocalValue(ctx, StartRequestContextKey, time.Now().UnixNano())
-		var closeConn = false
+		closeConn := false
 		if !req.IsHeartbeat() {
 			err = s.auth(ctx, req)
 			closeConn = err != nil
@@ -446,15 +456,17 @@ func (s *Server) serveConn(conn net.Conn) {
 
 			s.Plugins.DoPreHandleRequest(ctx, req)
 
+			if share.Trace {
+				log.Debug("server handle request %s from conn: %v", req, conn.RemoteAddr().String())
+			}
 			res, err := s.handleRequest(ctx, req)
-
 			if err != nil {
 				log.Warnf("rpcx: failed to handle request: %v", err)
 			}
 
 			s.Plugins.DoPreWriteResponse(ctx, req, res, err)
 			if !req.IsOneway() {
-				if len(resMetadata) > 0 { //copy meta in context to request
+				if len(resMetadata) > 0 { // copy meta in context to request
 					meta := res.Metadata
 					if meta == nil {
 						res.Metadata = resMetadata
@@ -475,6 +487,10 @@ func (s *Server) serveConn(conn net.Conn) {
 				protocol.PutData(data)
 			}
 			s.Plugins.DoPostWriteResponse(ctx, req, res, err)
+
+			if share.Trace {
+				log.Debug("server write response %v for an request %s from conn: %v", res, req, conn.RemoteAddr().String())
+			}
 
 			protocol.FreeMsg(req)
 			protocol.FreeMsg(res)
@@ -549,6 +565,11 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	res.SetMessageType(protocol.Response)
 	s.serviceMapMu.RLock()
 	service := s.serviceMap[serviceName]
+
+	if share.Trace {
+		log.Debug("server get service %s for an request %s", service, req)
+	}
+
 	s.serviceMapMu.RUnlock()
 	if service == nil {
 		err = errors.New("rpcx: can't find service " + serviceName)
@@ -556,14 +577,14 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	}
 	mtype := service.method[methodName]
 	if mtype == nil {
-		if service.function[methodName] != nil { //check raw functions
+		if service.function[methodName] != nil { // check raw functions
 			return s.handleRequestForFunction(ctx, req)
 		}
 		err = errors.New("rpcx: can't find method " + methodName)
 		return handleError(res, err)
 	}
 
-	var argv = argsReplyPools.Get(mtype.ArgType)
+	argv := argsReplyPools.Get(mtype.ArgType)
 
 	codec := share.Codecs[req.SerializeType()]
 	if codec == nil {
@@ -601,7 +622,6 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 			argsReplyPools.Put(mtype.ReplyType, replyv)
 			if err != nil {
 				return handleError(res, err)
-
 			}
 			res.Payload = data
 		}
@@ -614,11 +634,14 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		argsReplyPools.Put(mtype.ReplyType, replyv)
 		if err != nil {
 			return handleError(res, err)
-
 		}
 		res.Payload = data
 	} else if replyv != nil {
 		argsReplyPools.Put(mtype.ReplyType, replyv)
+	}
+
+	if share.Trace {
+		log.Debug("server called service %s for an request %s", service, req)
 	}
 
 	return res, nil
@@ -644,7 +667,7 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 		return handleError(res, err)
 	}
 
-	var argv = argsReplyPools.Get(mtype.ArgType)
+	argv := argsReplyPools.Get(mtype.ArgType)
 
 	codec := share.Codecs[req.SerializeType()]
 	if codec == nil {
@@ -677,7 +700,6 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 		argsReplyPools.Put(mtype.ReplyType, replyv)
 		if err != nil {
 			return handleError(res, err)
-
 		}
 		res.Payload = data
 	} else if replyv != nil {
@@ -841,7 +863,7 @@ func (s *Server) startProcess() (int, error) {
 	var env []string
 	env = append(env, os.Environ()...)
 
-	var originalWD, _ = os.Getwd()
+	originalWD, _ := os.Getwd()
 	allFiles := []*os.File{os.Stdin, os.Stdout, os.Stderr}
 	process, err := os.StartProcess(argv0, os.Args, &os.ProcAttr{
 		Dir:   originalWD,
@@ -876,7 +898,7 @@ var ip4Reg = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-
 func validIP4(ipAddress string) bool {
 	ipAddress = strings.Trim(ipAddress, " ")
 	i := strings.LastIndex(ipAddress, ":")
-	ipAddress = ipAddress[:i] //remove port
+	ipAddress = ipAddress[:i] // remove port
 
 	return ip4Reg.MatchString(ipAddress)
 }

@@ -16,6 +16,7 @@ import (
 
 	"github.com/juju/ratelimit"
 	ex "github.com/smallnest/rpcx/errors"
+	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
 	"golang.org/x/sync/singleflight"
@@ -411,9 +412,15 @@ func (c *xClient) Go(ctx context.Context, serviceMethod string, args interface{}
 
 	ctx = setServerTimeout(ctx)
 
+	if share.Trace {
+		log.Debug("select a client for %s.%s, args: %+v in case of xclient Go", c.servicePath, serviceMethod, args)
+	}
 	_, client, err := c.selectClient(ctx, c.servicePath, serviceMethod, args)
 	if err != nil {
 		return nil, err
+	}
+	if share.Trace {
+		log.Debug("selected a client %s for %s.%s, args: %+v in case of xclient Go", client.RemoteAddr(), c.servicePath, serviceMethod, args)
 	}
 	return client.Go(ctx, c.servicePath, serviceMethod, args, reply, done), nil
 }
@@ -436,12 +443,20 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 	}
 	ctx = setServerTimeout(ctx)
 
+	if share.Trace {
+		log.Debug("select a client for %s.%s, failMode: %v, args: %+v in case of xclient Call", c.servicePath, serviceMethod, c.failMode, args)
+	}
+
 	var err error
 	k, client, err := c.selectClient(ctx, c.servicePath, serviceMethod, args)
 	if err != nil {
 		if c.failMode == Failfast || contextCanceled(err) {
 			return err
 		}
+	}
+
+	if share.Trace {
+		log.Debug("selected a client %s for %s.%s, failMode: %v, args: %+v in case of xclient Call", client.RemoteAddr(), c.servicePath, serviceMethod, c.failMode, args)
 	}
 
 	var e error
@@ -613,6 +628,10 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 
 	ctx = setServerTimeout(ctx)
 
+	if share.Trace {
+		log.Debug("select a client for %s.%s, failMode: %v, args: %+v in case of xclient SendRaw", r.ServicePath, r.ServiceMethod, c.failMode, r.Payload)
+	}
+
 	var err error
 	k, client, err := c.selectClient(ctx, r.ServicePath, r.ServiceMethod, r.Payload)
 	if err != nil {
@@ -625,6 +644,10 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		if _, ok := err.(ServiceError); ok {
 			return nil, nil, err
 		}
+	}
+
+	if share.Trace {
+		log.Debug("selected a client %s for %s.%s, failMode: %v, args: %+v in case of xclient Call", client.RemoteAddr(), r.ServicePath, r.ServiceMethod, c.failMode, r.Payload)
 	}
 
 	var e error
@@ -702,10 +725,18 @@ func (c *xClient) wrapCall(ctx context.Context, client RPCClient, serviceMethod 
 		return ErrServerUnavailable
 	}
 
+	if share.Trace {
+		log.Debug("call a client for %s.%s, args: %+v in case of xclient wrapCall", c.servicePath, serviceMethod, args)
+	}
+
 	ctx = share.NewContext(ctx)
 	c.Plugins.DoPreCall(ctx, c.servicePath, serviceMethod, args)
 	err := client.Call(ctx, c.servicePath, serviceMethod, args, reply)
 	c.Plugins.DoPostCall(ctx, c.servicePath, serviceMethod, args, reply, err)
+
+	if share.Trace {
+		log.Debug("called a client for %s.%s, args: %+v, err: %v in case of xclient wrapCall", c.servicePath, serviceMethod, args, err)
+	}
 
 	return err
 }
