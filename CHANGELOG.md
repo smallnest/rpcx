@@ -9,6 +9,7 @@
 - Broken API: add meta parameter for SendFile/DownloadFile 
 - support streaming between server side and client side
 - support DNS as service discovery
+- support rpcx flow tracing
 
 ## 6.0 
 
