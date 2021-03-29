@@ -16,8 +16,10 @@ import (
 	"github.com/smallnest/rpcx/log"
 )
 
-var typeOfError = reflect.TypeOf((*error)(nil)).Elem()
-var typeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
+var (
+	typeOfError   = reflect.TypeOf((*error)(nil)).Elem()
+	typeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
+)
 
 var json = jsoniter.Config{
 	TagKey: "-",
@@ -68,8 +70,9 @@ func New() *Reflection {
 		Services: make(map[string]*ServiceInfo),
 	}
 }
+
 func (r *Reflection) Register(name string, rcvr interface{}, metadata string) error {
-	var si = &ServiceInfo{}
+	si := &ServiceInfo{}
 
 	val := reflect.ValueOf(rcvr)
 	typ := reflect.TypeOf(rcvr)
@@ -115,7 +118,6 @@ func (r *Reflection) Register(name string, rcvr interface{}, metadata string) er
 		}
 		// Method needs one out.
 		if mtype.NumOut() != 1 {
-
 			continue
 		}
 		// The return type of the method must be error.
@@ -162,13 +164,12 @@ func (r *Reflection) GetService(ctx context.Context, s string, reply *string) er
 }
 
 func (r *Reflection) GetServices(ctx context.Context, s string, reply *string) error {
-
 	var buf bytes.Buffer
 
-	var pkg = `package `
+	pkg := `package `
 
 	for _, si := range r.Services {
-		if pkg == `` {
+		if pkg == `package ` {
 			pkg = pkg + si.PkgPath + "\n\n"
 		}
 		buf.WriteString(strings.ReplaceAll(si.String(), pkg, ""))
@@ -176,6 +177,8 @@ func (r *Reflection) GetServices(ctx context.Context, s string, reply *string) e
 
 	if pkg != `package ` {
 		*reply = pkg + buf.String()
+	} else {
+		*reply = buf.String()
 	}
 
 	return nil
@@ -187,7 +190,7 @@ func generateTypeDefination(name, pkg string, jsonValue string) string {
 		return ""
 	}
 	r := strings.NewReader(jsonValue)
-	output, err := gojson.Generate(r, gojson.ParseJson, name, pkg, nil, false, false)
+	output, err := gojson.Generate(r, gojson.ParseJson, name, pkg, nil, false, true)
 	if err != nil {
 		log.Errorf("failed to generate json: %v", err)
 		return ""
