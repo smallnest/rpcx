@@ -2,6 +2,7 @@ package server
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 )
@@ -13,6 +14,8 @@ func init() {
 	makeListeners["tcp4"] = tcpMakeListener("tcp4")
 	makeListeners["tcp6"] = tcpMakeListener("tcp6")
 	makeListeners["http"] = tcpMakeListener("tcp")
+	makeListeners["ws"] = tcpMakeListener("tcp")
+	makeListeners["wss"] = tcpMakeListener("tcp")
 }
 
 // RegisterMakeListener registers a MakeListener for network.
@@ -30,6 +33,11 @@ func (s *Server) makeListener(network, address string) (ln net.Listener, err err
 	if ml == nil {
 		return nil, fmt.Errorf("can not make listener for %s", network)
 	}
+
+	if network == "wss" && s.tlsConfig == nil {
+		return nil, errors.New("must set tlsconfig for wss")
+	}
+
 	return ml(s, address)
 }
 
@@ -43,5 +51,4 @@ func tcpMakeListener(network string) MakeListener {
 
 		return ln, err
 	}
-
 }

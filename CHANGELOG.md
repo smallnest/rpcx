@@ -10,6 +10,7 @@
 - support streaming between server side and client side
 - support DNS as service discovery
 - support rpcx flow tracing
+- support websocket as the transport like tcp,kcp and quic
 
 ## 6.0 
 

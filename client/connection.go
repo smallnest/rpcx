@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/share"
+	"golang.org/x/net/websocket"
 )
 
 type ConnFactoryFn func(c *Client, network, address string) (net.Conn, error)
@@ -30,6 +32,8 @@ func (c *Client) Connect(network, address string) error {
 	switch network {
 	case "http":
 		conn, err = newDirectHTTPConn(c, network, address)
+	case "ws", "wss":
+		conn, err = newDirectWSConn(c, network, address)
 	case "kcp":
 		conn, err = newDirectKCPConn(c, network, address)
 	case "quic":
@@ -64,7 +68,7 @@ func (c *Client) Connect(network, address string) error {
 
 		c.Conn = conn
 		c.r = bufio.NewReaderSize(conn, ReaderBuffsize)
-		//c.w = bufio.NewWriterSize(conn, WriterBuffsize)
+		// c.w = bufio.NewWriterSize(conn, WriterBuffsize)
 
 		// start reading and writing since connected
 		go c.input()
@@ -88,7 +92,7 @@ func newDirectConn(c *Client, network, address string) (net.Conn, error) {
 			Timeout: c.option.ConnectTimeout,
 		}
 		tlsConn, err = tls.DialWithDialer(dialer, network, address, c.option.TLSConfig)
-		//or conn:= tls.Client(netConn, &config)
+		// or conn:= tls.Client(netConn, &config)
 		conn = net.Conn(tlsConn)
 	} else {
 		conn, err = net.DialTimeout(network, address, c.option.ConnectTimeout)
@@ -122,7 +126,7 @@ func newDirectHTTPConn(c *Client, network, address string) (net.Conn, error) {
 			Timeout: c.option.ConnectTimeout,
 		}
 		tlsConn, err = tls.DialWithDialer(dialer, "tcp", address, c.option.TLSConfig)
-		//or conn:= tls.Client(netConn, &config)
+		// or conn:= tls.Client(netConn, &config)
 
 		conn = net.Conn(tlsConn)
 	} else {
@@ -156,4 +160,41 @@ func newDirectHTTPConn(c *Client, network, address string) (net.Conn, error) {
 		Addr: nil,
 		Err:  err,
 	}
+}
+
+func newDirectWSConn(c *Client, network, address string) (net.Conn, error) {
+	if c == nil {
+		return nil, errors.New("empty client")
+	}
+	path := c.option.RPCPath
+	if path == "" {
+		path = share.DefaultRPCPath
+	}
+
+	var conn net.Conn
+	var err error
+
+	// url := "ws://localhost:12345/ws"
+
+	var url, origin string
+	if network == "ws" {
+		url = fmt.Sprintf("ws://%s/%s", address, path)
+		origin = fmt.Sprintf("http://%s", address)
+	} else {
+		url = fmt.Sprintf("wss://%s/%s", address, path)
+		origin = fmt.Sprintf("https://%s", address)
+	}
+
+	if c.option.TLSConfig != nil {
+		config, err := websocket.NewConfig(url, origin)
+		if err != nil {
+			return nil, err
+		}
+		config.TlsConfig = c.option.TLSConfig
+		conn, err = websocket.DialConfig(config)
+	} else {
+		conn, err = websocket.Dial(url, "", origin)
+	}
+
+	return conn, err
 }

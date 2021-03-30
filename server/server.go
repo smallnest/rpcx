@@ -25,6 +25,7 @@ import (
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
+	"golang.org/x/net/websocket"
 )
 
 // ErrServerClosed is returned by the Server's Serve, ListenAndServe after a call to Shutdown or Close.
@@ -219,6 +220,11 @@ func (s *Server) Serve(network, address string) (err error) {
 		return nil
 	}
 
+	if network == "ws" || network == "wss" {
+		s.serveByWS(ln, "")
+		return nil
+	}
+
 	// try to start gateway
 	ln = s.startGateway(network, ln)
 
@@ -317,8 +323,22 @@ func (s *Server) serveByHTTP(ln net.Listener, rpcPath string) {
 	if rpcPath == "" {
 		rpcPath = share.DefaultRPCPath
 	}
-	http.Handle(rpcPath, s)
-	srv := &http.Server{Handler: nil}
+	mux := http.NewServeMux()
+	mux.Handle(rpcPath, s)
+	srv := &http.Server{Handler: mux}
+
+	srv.Serve(ln)
+}
+
+func (s *Server) serveByWS(ln net.Listener, rpcPath string) {
+	s.ln = ln
+
+	if rpcPath == "" {
+		rpcPath = share.DefaultRPCPath
+	}
+	mux := http.NewServeMux()
+	mux.Handle(rpcPath, websocket.Handler(s.ServeWS))
+	srv := &http.Server{Handler: mux}
 
 	srv.Serve(ln)
 }
@@ -736,6 +756,14 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	io.WriteString(conn, "HTTP/1.0 "+connected+"\n\n")
 
+	s.mu.Lock()
+	s.activeConn[conn] = struct{}{}
+	s.mu.Unlock()
+
+	s.serveConn(conn)
+}
+
+func (s *Server) ServeWS(conn *websocket.Conn) {
 	s.mu.Lock()
 	s.activeConn[conn] = struct{}{}
 	s.mu.Unlock()
