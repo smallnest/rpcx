@@ -178,10 +178,10 @@ func newDirectWSConn(c *Client, network, address string) (net.Conn, error) {
 
 	var url, origin string
 	if network == "ws" {
-		url = fmt.Sprintf("ws://%s/%s", address, path)
+		url = fmt.Sprintf("ws://%s%s", address, path)
 		origin = fmt.Sprintf("http://%s", address)
 	} else {
-		url = fmt.Sprintf("wss://%s/%s", address, path)
+		url = fmt.Sprintf("wss://%s%s", address, path)
 		origin = fmt.Sprintf("https://%s", address)
 	}
 
