@@ -193,11 +193,17 @@ func (d *ZookeeperDiscovery) watch() {
 			case <-d.stopCh:
 				log.Info("discovery has been closed")
 				return
-			case ps := <-c:
-				if ps == nil {
+			case ps, ok := <-c:
+				if !ok {
 					break readChanges
 				}
 				var pairs []*KVPair // latest servers
+				if ps == nil {
+					d.pairsMu.Lock()
+					d.pairs = pairs
+					d.pairsMu.Unlock()
+					continue
+				}
 				for _, p := range ps {
 					pair := &KVPair{Key: p.Key, Value: string(p.Value)}
 					if d.filter != nil && !d.filter(pair) {

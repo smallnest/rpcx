@@ -189,11 +189,17 @@ func (d *ConsulDiscovery) watch() {
 			case <-d.stopCh:
 				log.Info("discovery has been closed")
 				return
-			case ps := <-c:
-				if ps == nil {
+			case ps, ok := <-c:
+				if !ok {
 					break readChanges
 				}
 				var pairs []*KVPair // latest servers
+				if ps == nil {
+					d.pairsMu.Lock()
+					d.pairs = pairs
+					d.pairsMu.Unlock()
+					continue
+				}
 				for _, p := range ps {
 					if !strings.HasPrefix(p.Key, prefix) { // avoid prefix issue of consul List
 						continue
