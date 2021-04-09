@@ -6,10 +6,11 @@ import (
 
 	"github.com/smallnest/rpcx/errors"
 	"github.com/smallnest/rpcx/protocol"
+	"github.com/soheilhy/cmux"
 )
 
-//PluginContainer represents a plugin container that defines all methods to manage plugins.
-//And it also defines all extension points.
+// PluginContainer represents a plugin container that defines all methods to manage plugins.
+// And it also defines all extension points.
 type PluginContainer interface {
 	Add(plugin Plugin)
 	Remove(plugin Plugin)
@@ -36,10 +37,12 @@ type PluginContainer interface {
 	DoPostWriteRequest(ctx context.Context, r *protocol.Message, e error) error
 
 	DoHeartbeatRequest(ctx context.Context, req *protocol.Message) error
+
+	MuxMatch(m cmux.CMux)
 }
 
 // Plugin is the server plugin interface.
-type Plugin interface {}
+type Plugin interface{}
 
 type (
 	// RegisterPlugin is .
@@ -111,6 +114,10 @@ type (
 	// HeartbeatPlugin is .
 	HeartbeatPlugin interface {
 		HeartbeatRequest(ctx context.Context, req *protocol.Message) error
+	}
+
+	CMuxPlugin interface {
+		MuxMatch(m cmux.CMux)
 	}
 )
 
@@ -198,13 +205,13 @@ func (p *pluginContainer) DoUnregister(name string) error {
 	return nil
 }
 
-//DoPostConnAccept handles accepted conn
+// DoPostConnAccept handles accepted conn
 func (p *pluginContainer) DoPostConnAccept(conn net.Conn) (net.Conn, bool) {
 	var flag bool
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PostConnAcceptPlugin); ok {
 			conn, flag = plugin.HandleConnAccept(conn)
-			if !flag { //interrupt
+			if !flag { // interrupt
 				conn.Close()
 				return conn, false
 			}
@@ -213,7 +220,7 @@ func (p *pluginContainer) DoPostConnAccept(conn net.Conn) (net.Conn, bool) {
 	return conn, true
 }
 
-//DoPostConnClose handles closed conn
+// DoPostConnClose handles closed conn
 func (p *pluginContainer) DoPostConnClose(conn net.Conn) bool {
 	var flag bool
 	for i := range p.plugins {
@@ -367,4 +374,13 @@ func (p *pluginContainer) DoHeartbeatRequest(ctx context.Context, r *protocol.Me
 	}
 
 	return nil
+}
+
+// MuxMatch adds cmux Match.
+func (p *pluginContainer) MuxMatch(m cmux.CMux) {
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(CMuxPlugin); ok {
+			plugin.MuxMatch(m)
+		}
+	}
 }

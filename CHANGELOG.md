@@ -11,6 +11,7 @@
 - support DNS as service discovery
 - support rpcx flow tracing
 - support websocket as the transport like tcp,kcp and quic
+- add CMuxPlugin to allow developing customzied services by using the same single port
 
 ## 6.0 
 
