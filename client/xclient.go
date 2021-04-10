@@ -58,10 +58,10 @@ type XClient interface {
 }
 
 type CacheClientBuilder interface {
-	setCachedClient(client RPCClient, k, servicePath, serviceMethod string)
-	findCachedClient(k, servicePath, serviceMethod string) RPCClient
-	deleteCachedClient(client RPCClient, k, servicePath, serviceMethod string)
-	generateClient(k, servicePath, serviceMethod string) (client RPCClient, err error)
+	SetCachedClient(client RPCClient, k, servicePath, serviceMethod string)
+	FindCachedClient(k, servicePath, serviceMethod string) RPCClient
+	DeleteCachedClient(client RPCClient, k, servicePath, serviceMethod string)
+	GenerateClient(k, servicePath, serviceMethod string) (client RPCClient, err error)
 }
 
 // KVPair contains a key and a string.
@@ -321,7 +321,7 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, a
 func (c *xClient) setCachedClient(client RPCClient, k, servicePath, serviceMethod string) {
 	network, _ := splitNetworkAndAddress(k)
 	if builder, ok := c.cacheClientBuilders[network]; ok {
-		builder.setCachedClient(client, k, servicePath, serviceMethod)
+		builder.SetCachedClient(client, k, servicePath, serviceMethod)
 		return
 	}
 
@@ -331,7 +331,7 @@ func (c *xClient) setCachedClient(client RPCClient, k, servicePath, serviceMetho
 func (c *xClient) findCachedClient(k, servicePath, serviceMethod string) RPCClient {
 	network, _ := splitNetworkAndAddress(k)
 	if builder, ok := c.cacheClientBuilders[network]; ok {
-		return builder.findCachedClient(k, servicePath, serviceMethod)
+		return builder.FindCachedClient(k, servicePath, serviceMethod)
 	}
 
 	return c.cachedClient[k]
@@ -340,7 +340,7 @@ func (c *xClient) findCachedClient(k, servicePath, serviceMethod string) RPCClie
 func (c *xClient) deleteCachedClient(client RPCClient, k, servicePath, serviceMethod string) {
 	network, _ := splitNetworkAndAddress(k)
 	if builder, ok := c.cacheClientBuilders[network]; ok && client != nil {
-		builder.deleteCachedClient(client, k, servicePath, serviceMethod)
+		builder.DeleteCachedClient(client, k, servicePath, serviceMethod)
 		client.Close()
 		return
 	}
@@ -366,6 +366,11 @@ func (c *xClient) removeClient(k, servicePath, serviceMethod string, client RPCC
 }
 
 func (c *xClient) generateClient(k, servicePath, serviceMethod string) (client RPCClient, err error) {
+	network, addr := splitNetworkAndAddress(k)
+	if builder, ok := c.cacheClientBuilders[network]; ok && client != nil {
+		return builder.GenerateClient(k, servicePath, serviceMethod)
+	}
+
 	client = &Client{
 		option:  c.option,
 		Plugins: c.Plugins,
@@ -376,7 +381,6 @@ func (c *xClient) generateClient(k, servicePath, serviceMethod string) (client R
 		breaker, _ = c.breakers.LoadOrStore(k, c.option.GenBreaker())
 	}
 
-	network, addr := splitNetworkAndAddress(k)
 	err = client.Connect(network, addr)
 	if err != nil {
 		if breaker != nil {
