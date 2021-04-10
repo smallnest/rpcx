@@ -53,15 +53,15 @@ type XClient interface {
 	DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer, meta map[string]string) error
 	Stream(ctx context.Context, meta map[string]string) (net.Conn, error)
 	Close() error
-
-	RegisterCacheClientBuilder(network string, builder CacheClientBuilder)
 }
 
-type CacheClientBuilder interface {
-	SetCachedClient(client RPCClient, k, servicePath, serviceMethod string)
-	FindCachedClient(k, servicePath, serviceMethod string) RPCClient
-	DeleteCachedClient(client RPCClient, k, servicePath, serviceMethod string)
-	GenerateClient(k, servicePath, serviceMethod string) (client RPCClient, err error)
+// SetSelector sets customized selector by users.
+func (c *xClient) SetSelector(s Selector) {
+	c.mu.RLock()
+	s.UpdateServer(c.servers)
+	c.mu.RUnlock()
+
+	c.selector = s
 }
 
 // KVPair contains a key and a string.
@@ -93,11 +93,10 @@ type xClient struct {
 	servicePath  string
 	option       Option
 
-	mu                  sync.RWMutex
-	servers             map[string]string
-	discovery           ServiceDiscovery
-	selector            Selector
-	cacheClientBuilders map[string]CacheClientBuilder
+	mu        sync.RWMutex
+	servers   map[string]string
+	discovery ServiceDiscovery
+	selector  Selector
 
 	slGroup singleflight.Group
 
@@ -116,13 +115,12 @@ type xClient struct {
 // NewXClient creates a XClient that supports service discovery and service governance.
 func NewXClient(servicePath string, failMode FailMode, selectMode SelectMode, discovery ServiceDiscovery, option Option) XClient {
 	client := &xClient{
-		failMode:            failMode,
-		selectMode:          selectMode,
-		discovery:           discovery,
-		servicePath:         servicePath,
-		cachedClient:        make(map[string]RPCClient),
-		cacheClientBuilders: make(map[string]CacheClientBuilder),
-		option:              option,
+		failMode:     failMode,
+		selectMode:   selectMode,
+		discovery:    discovery,
+		servicePath:  servicePath,
+		cachedClient: make(map[string]RPCClient),
+		option:       option,
 	}
 
 	pairs := discovery.GetServices()
@@ -180,21 +178,6 @@ func NewBidirectionalXClient(servicePath string, failMode FailMode, selectMode S
 	}
 
 	return client
-}
-
-func (c *xClient) RegisterCacheClientBuilder(network string, builder CacheClientBuilder) {
-	c.mu.Lock()
-	c.mu.Unlock()
-	c.cacheClientBuilders[network] = builder
-}
-
-// SetSelector sets customized selector by users.
-func (c *xClient) SetSelector(s Selector) {
-	c.mu.RLock()
-	s.UpdateServer(c.servers)
-	c.mu.RUnlock()
-
-	c.selector = s
 }
 
 // SetPlugins sets client's plugins.
@@ -320,7 +303,7 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, a
 
 func (c *xClient) setCachedClient(client RPCClient, k, servicePath, serviceMethod string) {
 	network, _ := splitNetworkAndAddress(k)
-	if builder, ok := c.cacheClientBuilders[network]; ok {
+	if builder, ok := getCacheClientBuilder(network); ok {
 		builder.SetCachedClient(client, k, servicePath, serviceMethod)
 		return
 	}
@@ -330,7 +313,7 @@ func (c *xClient) setCachedClient(client RPCClient, k, servicePath, serviceMetho
 
 func (c *xClient) findCachedClient(k, servicePath, serviceMethod string) RPCClient {
 	network, _ := splitNetworkAndAddress(k)
-	if builder, ok := c.cacheClientBuilders[network]; ok {
+	if builder, ok := getCacheClientBuilder(network); ok {
 		return builder.FindCachedClient(k, servicePath, serviceMethod)
 	}
 
@@ -339,7 +322,7 @@ func (c *xClient) findCachedClient(k, servicePath, serviceMethod string) RPCClie
 
 func (c *xClient) deleteCachedClient(client RPCClient, k, servicePath, serviceMethod string) {
 	network, _ := splitNetworkAndAddress(k)
-	if builder, ok := c.cacheClientBuilders[network]; ok && client != nil {
+	if builder, ok := getCacheClientBuilder(network); ok && client != nil {
 		builder.DeleteCachedClient(client, k, servicePath, serviceMethod)
 		client.Close()
 		return
@@ -367,7 +350,7 @@ func (c *xClient) removeClient(k, servicePath, serviceMethod string, client RPCC
 
 func (c *xClient) generateClient(k, servicePath, serviceMethod string) (client RPCClient, err error) {
 	network, addr := splitNetworkAndAddress(k)
-	if builder, ok := c.cacheClientBuilders[network]; ok && client != nil {
+	if builder, ok := getCacheClientBuilder(network); ok && client != nil {
 		return builder.GenerateClient(k, servicePath, serviceMethod)
 	}
 
