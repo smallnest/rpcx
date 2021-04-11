@@ -62,10 +62,6 @@ func (l *defaultLogger) Panicf(format string, v ...interface{}) {
 	l.Logger.Panicf(format, v...)
 }
 
-func (l *defaultLogger) Handle(v ...interface{}) {
-	l.Error(v...)
-}
-
 func header(lvl, msg string) string {
 	return fmt.Sprintf("%s: %s", lvl, msg)
 }

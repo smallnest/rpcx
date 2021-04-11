@@ -331,12 +331,9 @@ func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv refl
 			n := runtime.Stack(buf, false)
 			buf = buf[:n]
 
-			err = fmt.Errorf("[service internal error]: %v, method: %s, argv: %+v",
-				r, mtype.method.Name, argv.Interface())
-
-			err2 := fmt.Errorf("[service internal error]: %v, method: %s, argv: %+v, stack: %s",
+			err = fmt.Errorf("[service internal error]: %v, method: %s, argv: %+v, stack: %s",
 				r, mtype.method.Name, argv.Interface(), buf)
-			log.Handle(err2)
+			log.Warn(err)
 		}
 	}()
 
@@ -355,10 +352,14 @@ func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv refl
 func (s *service) callForFunction(ctx context.Context, ft *functionType, argv, replyv reflect.Value) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
+			buf := make([]byte, 4096)
+			n := runtime.Stack(buf, false)
+			buf = buf[:n]
+
 			// log.Errorf("failed to invoke service: %v, stacks: %s", r, string(debug.Stack()))
-			err = fmt.Errorf("[service internal error]: %v, function: %s, argv: %+v",
-				r, runtime.FuncForPC(ft.fn.Pointer()), argv.Interface())
-			log.Handle(err)
+			err = fmt.Errorf("[service internal error]: %v, function: %s, argv: %+v, stack: %s",
+				r, runtime.FuncForPC(ft.fn.Pointer()), argv.Interface(), buf)
+			log.Warn(err)
 		}
 	}()
 
