@@ -350,7 +350,7 @@ func (c *xClient) removeClient(k, servicePath, serviceMethod string, client RPCC
 
 func (c *xClient) generateClient(k, servicePath, serviceMethod string) (client RPCClient, err error) {
 	network, addr := splitNetworkAndAddress(k)
-	if builder, ok := getCacheClientBuilder(network); ok && client != nil {
+	if builder, ok := getCacheClientBuilder(network); ok && builder != nil {
 		return builder.GenerateClient(k, servicePath, serviceMethod)
 	}
 
