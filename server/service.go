@@ -333,7 +333,7 @@ func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv refl
 
 			err = fmt.Errorf("[service internal error]: %v, method: %s, argv: %+v, stack: %s",
 				r, mtype.method.Name, argv.Interface(), buf)
-			log.Warn(err)
+			log.Error(err)
 		}
 	}()
 
@@ -359,7 +359,7 @@ func (s *service) callForFunction(ctx context.Context, ft *functionType, argv, r
 			// log.Errorf("failed to invoke service: %v, stacks: %s", r, string(debug.Stack()))
 			err = fmt.Errorf("[service internal error]: %v, function: %s, argv: %+v, stack: %s",
 				r, runtime.FuncForPC(ft.fn.Pointer()), argv.Interface(), buf)
-			log.Warn(err)
+			log.Error(err)
 		}
 	}()
 

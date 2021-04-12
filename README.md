@@ -58,8 +58,6 @@ go get -v -tags "quic kcp" github.com/smallnest/rpcx/...
   <img style="padding-bottom: 20px;" src="https://user-images.githubusercontent.com/865763/102993785-c20cf600-4558-11eb-82b9-27b801aca4ff.png" width="200" />
 </p>
 
-
-![sina](https://user-images.githubusercontent.com/865763/113412550-23135800-93eb-11eb-868e-04e89330827e.png)
 ## Features
 rpcx is a RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).
 
