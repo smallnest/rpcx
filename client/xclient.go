@@ -258,31 +258,37 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, a
 			c.Plugins.DoClientConnected(client.GetConn())
 		}
 	}()
-	c.mu.Lock()
-	defer c.mu.Unlock()
 
 	if c.isShutdown {
 		return nil, errors.New("this xclient is closed")
 	}
 
+	// if this client is broken
 	breaker, ok := c.breakers.Load(k)
 	if ok && !breaker.(Breaker).Ready() {
 		return nil, ErrBreakerOpen
 	}
 
+	c.mu.Lock()
 	client = c.findCachedClient(k, servicePath, serviceMethod)
 	if client != nil {
 		if !client.IsClosing() && !client.IsShutdown() {
+			c.mu.Unlock()
 			return client, nil
 		}
 		c.deleteCachedClient(client, k, servicePath, serviceMethod)
 	}
 
 	client = c.findCachedClient(k, servicePath, serviceMethod)
+	c.mu.Unlock()
+
 	if client == nil || client.IsShutdown() {
+		c.mu.Lock()
 		generatedClient, err, _ := c.slGroup.Do(k, func() (interface{}, error) {
 			return c.generateClient(k, servicePath, serviceMethod)
 		})
+		c.mu.Unlock()
+
 		c.slGroup.Forget(k)
 		if err != nil {
 			return nil, err
@@ -295,7 +301,9 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, a
 
 		client.RegisterServerMessageChan(c.serverMessageChan)
 
+		c.mu.Lock()
 		c.setCachedClient(client, k, servicePath, serviceMethod)
+		c.mu.Unlock()
 	}
 
 	return client, nil

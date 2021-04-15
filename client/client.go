@@ -46,7 +46,7 @@ func (e ServiceError) Error() string {
 var DefaultOption = Option{
 	Retries:             3,
 	RPCPath:             share.DefaultRPCPath,
-	ConnectTimeout:      10 * time.Second,
+	ConnectTimeout:      time.Second,
 	SerializeType:       protocol.MsgPack,
 	CompressType:        protocol.None,
 	BackupLatency:       10 * time.Millisecond,
