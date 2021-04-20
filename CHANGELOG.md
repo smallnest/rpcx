@@ -1,6 +1,6 @@
 # [rpcx](http://rpcx.io)
 
-## 7.0 (developing)
+## 1.7.0 (developing)
 - move etcd support to github.com/rpcxio/rpcx-etcd
 - Broken API: NewXXXDiscovery returns error instead of panic
 - support AdvertiseAddr in FileTransfer
@@ -12,8 +12,11 @@
 - support rpcx flow tracing
 - support websocket as the transport like tcp,kcp and quic
 - add CMuxPlugin to allow developing customzied services by using the same single port
+- re-tag rpcx to make sure the version is less than 2 (for go module)
+- support visit grpc services by rpcx clients
+- support configing grpc servicves in rpcx server side
 
-## 6.0 
+## 1.6.0 
 
 - support reflection
 - add kubernetes config example
@@ -33,7 +36,7 @@
 - use heartbeat/tcp_keepalive to avoid client hanging
 
 
-## 5.0 
+## 1.5.0 
 
 - support jsonrpc 2.0
 - support CORS for jsonrpc 2.0
@@ -52,7 +55,7 @@
 - add Nacos as registry http://nacos.io
 - support blacklist and whitlist
 
-## 4.0
+## 1.4.0
 
 - Support utp and rudp
 - Add OneClient to support invoke multile servicesby one client
@@ -66,7 +69,7 @@
 - Setup rpcx offcial site: http://rpcx.io
 - Add Chinese document: http://cn.doc.rpcx.io or https://smallnest.gitbooks.io/go-rpc-programming-guide
 
-## 3.1
+## 1.3.1
 
 - Add http gateway: https://github.com/rpcxio/rpcx-gateway
 - Add direct http invoke
@@ -76,7 +79,7 @@
 
 fix bugs.
 
-## 3.0
+## 1.3.0
 
 - Rewrite rpcx. It implements its protocol and won't implemented based on wrapper of go standard rpc lib
 - Add go tags for pluggable plugins
