@@ -382,21 +382,15 @@ func (c *xClient) generateClient(k, servicePath, serviceMethod string) (client R
 	return client, err
 }
 
-func (c *xClient) getCachedClientWithoutLock(k, servicePath, serviceMethod string) (RPCClient, error) {
+func (c *xClient) getCachedClientWithoutLock(k, servicePath, serviceMethod string) (RPCClient, bool, error) {
+	var needCallPlugin bool
 	client := c.findCachedClient(k, servicePath, serviceMethod)
 	if client != nil {
 		if !client.IsClosing() && !client.IsShutdown() {
-			return client, nil
+			return client, needCallPlugin, nil
 		}
 		c.deleteCachedClient(client, k, servicePath, serviceMethod)
 	}
-
-	var needCallPlugin bool
-	defer func() {
-		if needCallPlugin {
-			c.Plugins.DoClientConnected(client.GetConn())
-		}
-	}()
 
 	// double check
 	client = c.findCachedClient(k, servicePath, serviceMethod)
@@ -406,7 +400,7 @@ func (c *xClient) getCachedClientWithoutLock(k, servicePath, serviceMethod strin
 		})
 		c.slGroup.Forget(k)
 		if err != nil {
-			return nil, err
+			return nil, needCallPlugin, err
 		}
 
 		client = generatedClient.(RPCClient)
@@ -419,7 +413,7 @@ func (c *xClient) getCachedClientWithoutLock(k, servicePath, serviceMethod strin
 		c.setCachedClient(client, k, servicePath, serviceMethod)
 	}
 
-	return client, nil
+	return client, needCallPlugin, nil
 }
 
 func splitNetworkAndAddress(server string) (string, string) {
@@ -812,17 +806,26 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 	}
 
 	ctx = setServerTimeout(ctx)
-
+	callPlugins := make([]RPCClient, 0, len(c.servers))
 	clients := make(map[string]RPCClient)
 	c.mu.Lock()
 	for k := range c.servers {
-		client, err := c.getCachedClientWithoutLock(k, c.servicePath, serviceMethod)
+		client, needCallPlugin, err := c.getCachedClientWithoutLock(k, c.servicePath, serviceMethod)
 		if err != nil {
 			continue
 		}
 		clients[k] = client
+		if needCallPlugin {
+			callPlugins = append(callPlugins, client)
+		}
 	}
 	c.mu.Unlock()
+
+	for i := range callPlugins {
+		if c.Plugins != nil {
+			c.Plugins.DoClientConnected(callPlugins[i].GetConn())
+		}
+	}
 
 	if len(clients) == 0 {
 		return ErrXClientNoServer
@@ -838,7 +841,7 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 			e := c.wrapCall(ctx, client, serviceMethod, args, reply)
 			done <- (e == nil)
 			if e != nil {
-				if uncoverError(err) {
+				if uncoverError(e) {
 					c.removeClient(k, c.servicePath, serviceMethod, client)
 				}
 				err.Append(e)
@@ -885,18 +888,27 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 	}
 
 	ctx = setServerTimeout(ctx)
-
+	callPlugins := make([]RPCClient, 0, len(c.servers))
 	clients := make(map[string]RPCClient)
 	c.mu.Lock()
 	for k := range c.servers {
-		client, err := c.getCachedClientWithoutLock(k, c.servicePath, serviceMethod)
+		client, needCallPlugin, err := c.getCachedClientWithoutLock(k, c.servicePath, serviceMethod)
 		if err != nil {
 			continue
 		}
 		clients[k] = client
+		if needCallPlugin {
+			callPlugins = append(callPlugins, client)
+		}
 	}
 	c.mu.Unlock()
 
+	for i := range callPlugins {
+		if c.Plugins != nil {
+			c.Plugins.DoClientConnected(callPlugins[i].GetConn())
+		}
+	}
+	
 	if len(clients) == 0 {
 		return ErrXClientNoServer
 	}
@@ -919,7 +931,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 			}
 			done <- (e == nil)
 			if e != nil {
-				if uncoverError(err) {
+				if uncoverError(e) {
 					c.removeClient(k, c.servicePath, serviceMethod, client)
 				}
 				err.Append(e)
