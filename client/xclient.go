@@ -841,7 +841,7 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 			e := c.wrapCall(ctx, client, serviceMethod, args, reply)
 			done <- (e == nil)
 			if e != nil {
-				if uncoverError(err) {
+				if uncoverError(e) {
 					c.removeClient(k, c.servicePath, serviceMethod, client)
 				}
 				err.Append(e)
@@ -931,7 +931,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 			}
 			done <- (e == nil)
 			if e != nil {
-				if uncoverError(err) {
+				if uncoverError(e) {
 					c.removeClient(k, c.servicePath, serviceMethod, client)
 				}
 				err.Append(e)
