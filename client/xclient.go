@@ -502,7 +502,11 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 	}
 
 	if share.Trace {
-		log.Debugf("selected a client %s for %s.%s, failMode: %v, args: %+v in case of xclient Call", client.RemoteAddr(), c.servicePath, serviceMethod, c.failMode, args)
+		if client != nil {
+			log.Debugf("selected a client %s for %s.%s, failMode: %v, args: %+v in case of xclient Call", client.RemoteAddr(), c.servicePath, serviceMethod, c.failMode, args)
+		} else {
+			log.Debugf("selected a client %s for %s.%s, failMode: %v, args: %+v in case of xclient Call", "nil", c.servicePath, serviceMethod, c.failMode, args)
+		}
 	}
 
 	var e error
