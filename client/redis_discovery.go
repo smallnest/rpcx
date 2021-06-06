@@ -34,8 +34,8 @@ type RedisDiscovery struct {
 }
 
 // NewRedisDiscovery returns a new RedisDiscovery.
-func NewRedisDiscovery(basePath string, servicePath string, etcdAddr []string, options *store.Config) (ServiceDiscovery, error) {
-	kv, err := libkv.NewStore(store.REDIS, etcdAddr, options)
+func NewRedisDiscovery(basePath string, servicePath string, redisAddr []string, options *store.Config) (ServiceDiscovery, error) {
+	kv, err := libkv.NewStore(store.REDIS, redisAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
 		return nil, err
