@@ -707,7 +707,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		for retries >= 0 {
 			retries--
 			if client != nil {
-				m, payload, err := client.SendRaw(ctx, r)
+				m, payload, err := c.wrapSendRaw(ctx, client, r)
 				if err == nil {
 					return m, payload, nil
 				}
@@ -734,7 +734,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		for retries >= 0 {
 			retries--
 			if client != nil {
-				m, payload, err := client.SendRaw(ctx, r)
+				m, payload, err := c.wrapSendRaw(ctx, client, r)
 				if err == nil {
 					return m, payload, nil
 				}
@@ -759,7 +759,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		return nil, nil, err
 
 	default: // Failfast
-		m, payload, err := client.SendRaw(ctx, r)
+		m, payload, err := c.wrapSendRaw(ctx, client, r)
 		if err != nil {
 			if uncoverError(err) {
 				c.removeClient(k, r.ServicePath, r.ServiceMethod, client)
@@ -789,6 +789,28 @@ func (c *xClient) wrapCall(ctx context.Context, client RPCClient, serviceMethod 
 	}
 
 	return err
+}
+
+// wrapSendRaw wrap SendRaw to support client plugins
+func (c *xClient) wrapSendRaw(ctx context.Context, client RPCClient, r *protocol.Message) (map[string]string, []byte, error) {
+	if client == nil {
+		return nil, nil, ErrServerUnavailable
+	}
+
+	if share.Trace {
+		log.Debugf("call a client for %s.%s, args: %+v in case of xclient wrapSendRaw", c.servicePath, r.ServiceMethod, r.Payload)
+	}
+
+	ctx = share.NewContext(ctx)
+	c.Plugins.DoPreCall(ctx, c.servicePath, r.ServiceMethod, r.Payload)
+	m, payload, err := client.SendRaw(ctx, r)
+	c.Plugins.DoPostCall(ctx, c.servicePath, r.ServiceMethod, r.Payload, nil, err)
+
+	if share.Trace {
+		log.Debugf("called a client for %s.%s, args: %+v, err: %v in case of xclient wrapSendRaw", c.servicePath, r.ServiceMethod, r.Payload, err)
+	}
+
+	return m, payload, err
 }
 
 // Broadcast sends requests to all servers and Success only when all servers return OK.
@@ -912,7 +934,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 			c.Plugins.DoClientConnected(callPlugins[i].GetConn())
 		}
 	}
-	
+
 	if len(clients) == 0 {
 		return ErrXClientNoServer
 	}
