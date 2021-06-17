@@ -399,6 +399,14 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 	}
 	r.Metadata = rmeta
 
+	if _, ok := ctx.(*share.Context); !ok {
+		ctx = share.NewContext(ctx)
+	}
+
+	// TODO: should implement as plugin
+	client.injectOpenTracingSpan(ctx, call)
+	client.injectOpenCensusSpan(ctx, call)
+
 	done := make(chan *Call, 10)
 	call.Done = done
 
