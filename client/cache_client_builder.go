@@ -17,13 +17,15 @@ var cacheClientBuilders = make(map[string]CacheClientBuilder)
 
 func RegisterCacheClientBuilder(network string, builder CacheClientBuilder) {
 	cacheClientBuildersMutex.Lock()
-	cacheClientBuildersMutex.Unlock()
+	defer cacheClientBuildersMutex.Unlock()
+
 	cacheClientBuilders[network] = builder
 }
 
 func getCacheClientBuilder(network string) (CacheClientBuilder, bool) {
 	cacheClientBuildersMutex.RLock()
-	cacheClientBuildersMutex.RUnlock()
+	defer cacheClientBuildersMutex.RUnlock()
+
 	builder, ok := cacheClientBuilders[network]
 	return builder, ok
 }
