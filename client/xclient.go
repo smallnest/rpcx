@@ -1010,6 +1010,8 @@ func (c *xClient) SendFile(ctx context.Context, fileName string, rateInBytesPerS
 		return err
 	}
 
+	defer file.Close()
+
 	fi, err := os.Stat(fileName)
 	if err != nil {
 		return err
