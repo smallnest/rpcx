@@ -18,7 +18,7 @@ var group = ColorGroup{
 	Colors: []string{"Crimson", "Red", "Ruby", "Maroon"},
 }
 
-func BenchmarkByteCodec_Encode(b *testing.B) {
+func BenchmarkJSONCodec_Encode(b *testing.B) {
 	var raw = make([]byte, 0, 1024)
 	serializer := JSONCodec{}
 
@@ -72,7 +72,7 @@ func BenchmarkThriftCodec_Encode(b *testing.B) {
 	b.ReportMetric(float64(len(bb)), "bytes")
 }
 
-func BenchmarkByteCodec_Decode(b *testing.B) {
+func BenchmarkJSONCodec_Decode(b *testing.B) {
 	serializer := JSONCodec{}
 	bytes, _ := serializer.Encode(group)
 	result := ColorGroup{}
