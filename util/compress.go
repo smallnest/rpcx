@@ -15,7 +15,7 @@ var (
 
 func init() {
 	spWriter = sync.Pool{New: func() interface{} {
-		return new(gzip.Writer)
+		return gzip.NewWriter(nil)
 	}}
 	spReader = sync.Pool{New: func() interface{} {
 		return new(gzip.Reader)
