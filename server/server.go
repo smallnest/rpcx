@@ -461,6 +461,7 @@ func (s *Server) serveConn(conn net.Conn) {
 				req.SetMessageType(protocol.Response)
 				data := req.EncodeSlicePointer()
 				conn.Write(*data)
+				protocol.FreeMsg(req)
 				protocol.PutData(data)
 				return
 			}
