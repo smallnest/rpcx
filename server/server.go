@@ -301,7 +301,7 @@ func (s *Server) serveListener(ln net.Listener) error {
 
 		conn, ok := s.Plugins.DoPostConnAccept(conn)
 		if !ok {
-			closeChannel(s, conn)
+			conn.Close()
 			continue
 		}
 
@@ -346,6 +346,12 @@ func (s *Server) serveByWS(ln net.Listener, rpcPath string) {
 }
 
 func (s *Server) serveConn(conn net.Conn) {
+
+	if s.isShutdown() {
+		s.closeConn(conn)
+		return
+	}
+
 	defer func() {
 		if err := recover(); err != nil {
 			const size = 64 << 10
@@ -357,22 +363,13 @@ func (s *Server) serveConn(conn net.Conn) {
 			buf = buf[:ss]
 			log.Errorf("serving %s panic error: %s, stack:\n %s", conn.RemoteAddr(), err, buf)
 		}
+
 		if share.Trace {
 			log.Debugf("server closed conn: %v", conn.RemoteAddr().String())
 		}
 
-		s.mu.Lock()
-		delete(s.activeConn, conn)
-		s.mu.Unlock()
-		conn.Close()
-
-		s.Plugins.DoPostConnClose(conn)
+		s.closeConn(conn)
 	}()
-
-	if isShutdown(s) {
-		closeChannel(s, conn)
-		return
-	}
 
 	if tlsConn, ok := conn.(*tls.Conn); ok {
 		if d := s.readTimeout; d != 0 {
@@ -390,8 +387,7 @@ func (s *Server) serveConn(conn net.Conn) {
 	r := bufio.NewReaderSize(conn, ReaderBuffsize)
 
 	for {
-		if isShutdown(s) {
-			closeChannel(s, conn)
+		if s.isShutdown() {
 			return
 		}
 
@@ -544,15 +540,18 @@ func parseServerTimeout(ctx *share.Context, req *protocol.Message) context.Cance
 	return cancel
 }
 
-func isShutdown(s *Server) bool {
+func (s *Server) isShutdown() bool {
 	return atomic.LoadInt32(&s.inShutdown) == 1
 }
 
-func closeChannel(s *Server, conn net.Conn) {
+func (s *Server) closeConn(conn net.Conn) {
 	s.mu.Lock()
 	delete(s.activeConn, conn)
 	s.mu.Unlock()
+
 	conn.Close()
+
+	s.Plugins.DoPostConnClose(conn)
 }
 
 func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Message, err error) {
