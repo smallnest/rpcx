@@ -688,7 +688,7 @@ func (client *Client) input() {
 
 	client.mutex.Unlock()
 
-	if err != nil && err != io.EOF && !closing {
+	if err != nil && !closing {
 		log.Error("rpcx: client protocol error:", err)
 	}
 }
