@@ -670,9 +670,8 @@ func (client *Client) input() {
 				if client.ServerMessageChan != nil {
 					client.handleServerRequest(res)
 					client.ServerMessageChanMu.RUnlock()
-				} else {
-					client.ServerMessageChanMu.RUnlock()
 				}
+				client.ServerMessageChanMu.RUnlock()
 				continue
 			}
 		case res.MessageStatusType() == protocol.Error:
@@ -733,10 +732,9 @@ func (client *Client) input() {
 			}
 		}
 		req.Metadata["server"] = client.Conn.RemoteAddr().String()
-		go client.handleServerRequest(req)
-	} else {
-		client.ServerMessageChanMu.RUnlock()
+		client.handleServerRequest(req)
 	}
+	client.ServerMessageChanMu.RUnlock()
 
 	client.mutex.Lock()
 	if !client.pluginClosed {
