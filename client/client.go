@@ -668,8 +668,8 @@ func (client *Client) input() {
 			if isServerMessage {
 				client.ServerMessageChanMu.RLock()
 				if client.ServerMessageChan != nil {
+					client.handleServerRequest(res)
 					client.ServerMessageChanMu.RUnlock()
-					go client.handleServerRequest(res)
 				} else {
 					client.ServerMessageChanMu.RUnlock()
 				}
@@ -775,17 +775,14 @@ func (client *Client) handleServerRequest(msg *protocol.Message) {
 		}
 	}()
 
-	client.ServerMessageChanMu.RLock()
 	serverMessageChan := client.ServerMessageChan
-	client.ServerMessageChanMu.RUnlock()
-
-	t := time.NewTimer(5 * time.Second)
-	select {
-	case serverMessageChan <- msg:
-	case <-t.C:
-		log.Warnf("ServerMessageChan may be full so the server request %d has been dropped", msg.Seq())
+	if serverMessageChan != nil {
+		select {
+		case serverMessageChan <- msg:
+		default:
+			log.Warnf("ServerMessageChan may be full so the server request %d has been dropped", msg.Seq())
+		}
 	}
-	t.Stop()
 }
 
 func (client *Client) heartbeat() {
