@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-
 func TestPool(t *testing.T) {
 	// not pool anything yet
 	UsePool = false
@@ -16,17 +15,17 @@ func TestPool(t *testing.T) {
 
 	intType := reflect.TypeOf(magicNumber)
 	// init int pool
-	argsReplyPools.Init(intType)
+	reflectTypePools.Init(intType)
 	// insert a integer
-	argsReplyPools.Put(intType, magicNumber)
+	reflectTypePools.Put(intType, magicNumber)
 	// if UsePool == false, argsReplyPools.Get() will call reflect.New() which
 	// returns a Value representing a pointer to a new zero value
-	assert.Equal(t, 0, *argsReplyPools.Get(intType).(*int))
+	assert.Equal(t, 0, *reflectTypePools.Get(intType).(*int))
 
 	// start pooling
 	UsePool = true
 
-	argsReplyPools.Put(intType, magicNumber)
+	reflectTypePools.Put(intType, magicNumber)
 	// Get() will remove element from pool
-	assert.Equal(t, magicNumber, argsReplyPools.Get(intType).(int))
+	assert.Equal(t, magicNumber, reflectTypePools.Get(intType).(int))
 }

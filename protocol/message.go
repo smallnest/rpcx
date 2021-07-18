@@ -1,25 +1,22 @@
 package protocol
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 
 	"github.com/smallnest/rpcx/util"
+	"github.com/valyala/bytebufferpool"
 )
 
-var (
-	bufferPool = util.NewLimitedPool(512, 4096)
-)
-var (
-	// Compressors are compressors supported by rpcx. You can add customized compressor in Compressors.
-	Compressors = map[CompressType]Compressor{
-		None: &RawDataCompressor{},
-		Gzip: &GzipCompressor{},
-	}
-)
+var bufferPool = util.NewLimitedPool(512, 4096)
+
+// Compressors are compressors supported by rpcx. You can add customized compressor in Compressors.
+var Compressors = map[CompressType]Compressor{
+	None: &RawDataCompressor{},
+	Gzip: &GzipCompressor{},
+}
 
 // MaxMessageLength is the max length of a message.
 // Default is 0 that means does not limit length of messages.
@@ -233,7 +230,9 @@ func (m Message) Encode() []byte {
 
 // EncodeSlicePointer encodes messages as a byte slice poiter we we can use pool to improve.
 func (m Message) EncodeSlicePointer() *[]byte {
-	meta := encodeMetadata(m.Metadata)
+	bb := bytebufferpool.Get()
+	encodeMetadata(m.Metadata, bb)
+	meta := bb.Bytes()
 
 	spL := len(m.ServicePath)
 	smL := len(m.ServiceMethod)
@@ -264,7 +263,7 @@ func (m Message) EncodeSlicePointer() *[]byte {
 	data := bufferPool.Get(l)
 	copy(*data, m.Header[:])
 
-	//totalLen
+	// totalLen
 	binary.BigEndian.PutUint32((*data)[12:16], uint32(totalL))
 
 	binary.BigEndian.PutUint32((*data)[16:20], uint32(spL))
@@ -275,6 +274,8 @@ func (m Message) EncodeSlicePointer() *[]byte {
 
 	binary.BigEndian.PutUint32((*data)[metaStart:metaStart+4], uint32(len(meta)))
 	copy((*data)[metaStart+4:], meta)
+
+	bytebufferpool.Put(bb)
 
 	binary.BigEndian.PutUint32((*data)[payLoadStart:payLoadStart+4], uint32(len(payload)))
 	copy((*data)[payLoadStart+4:], payload)
@@ -295,7 +296,9 @@ func (m Message) WriteTo(w io.Writer) (int64, error) {
 		return n, err
 	}
 
-	meta := encodeMetadata(m.Metadata)
+	bb := bytebufferpool.Get()
+	encodeMetadata(m.Metadata, bb)
+	meta := bb.Bytes()
 
 	spL := len(m.ServicePath)
 	smL := len(m.ServiceMethod)
@@ -318,7 +321,7 @@ func (m Message) WriteTo(w io.Writer) (int64, error) {
 		return n, err
 	}
 
-	//write servicePath and serviceMethod
+	// write servicePath and serviceMethod
 	err = binary.Write(w, binary.BigEndian, uint32(len(m.ServicePath)))
 	if err != nil {
 		return n, err
@@ -346,7 +349,9 @@ func (m Message) WriteTo(w io.Writer) (int64, error) {
 		return n, err
 	}
 
-	//write payload
+	bytebufferpool.Put(bb)
+
+	// write payload
 	err = binary.Write(w, binary.BigEndian, uint32(len(payload)))
 	if err != nil {
 		return n, err
@@ -357,21 +362,19 @@ func (m Message) WriteTo(w io.Writer) (int64, error) {
 }
 
 // len,string,len,string,......
-func encodeMetadata(m map[string]string) []byte {
+func encodeMetadata(m map[string]string, bb *bytebufferpool.ByteBuffer) {
 	if len(m) == 0 {
-		return []byte{}
+		return
 	}
-	var buf bytes.Buffer
-	var d = make([]byte, 4)
+	d := poolUint32Data.Get().(*[]byte)
 	for k, v := range m {
-		binary.BigEndian.PutUint32(d, uint32(len(k)))
-		buf.Write(d)
-		buf.Write(util.StringToSliceByte(k))
-		binary.BigEndian.PutUint32(d, uint32(len(v)))
-		buf.Write(d)
-		buf.Write(util.StringToSliceByte(v))
+		binary.BigEndian.PutUint32(*d, uint32(len(k)))
+		bb.Write(*d)
+		bb.Write(util.StringToSliceByte(k))
+		binary.BigEndian.PutUint32(*d, uint32(len(v)))
+		bb.Write(*d)
+		bb.Write(util.StringToSliceByte(v))
 	}
-	return buf.Bytes()
 }
 
 func decodeMetadata(l uint32, data []byte) (map[string]string, error) {
@@ -430,7 +433,7 @@ func (m *Message) Decode(r io.Reader) error {
 		return err
 	}
 
-	//total
+	// total
 	lenData := poolUint32Data.Get().(*[]byte)
 	_, err = io.ReadFull(r, *lenData)
 	if err != nil {
@@ -445,7 +448,7 @@ func (m *Message) Decode(r io.Reader) error {
 	}
 
 	totalL := int(l)
-	if cap(m.data) >= totalL { //reuse data
+	if cap(m.data) >= totalL { // reuse data
 		m.data = m.data[:totalL]
 	} else {
 		m.data = make([]byte, totalL)
@@ -514,8 +517,10 @@ func (m *Message) Reset() {
 	m.ServiceMethod = ""
 }
 
-var zeroHeaderArray Header
-var zeroHeader = zeroHeaderArray[1:]
+var (
+	zeroHeaderArray Header
+	zeroHeader      = zeroHeaderArray[1:]
+)
 
 func resetHeader(h *Header) {
 	copy(h[1:], zeroHeader)

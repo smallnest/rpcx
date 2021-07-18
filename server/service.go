@@ -229,8 +229,10 @@ func (s *Server) registerFunction(servicePath string, fn interface{}, name strin
 	ss.function[fname] = &functionType{fn: f, ArgType: argType, ReplyType: replyType}
 	s.serviceMap[servicePath] = ss
 
-	argsReplyPools.Init(argType)
-	argsReplyPools.Init(replyType)
+	// init pool for reflect.Type of args and reply
+	reflectTypePools.Init(argType)
+	reflectTypePools.Init(replyType)
+
 	return fname, nil
 }
 
@@ -301,8 +303,9 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 		}
 		methods[mname] = &methodType{method: method, ArgType: argType, ReplyType: replyType}
 
-		argsReplyPools.Init(argType)
-		argsReplyPools.Init(replyType)
+		// init pool for reflect.Type of args and reply
+		reflectTypePools.Init(argType)
+		reflectTypePools.Init(replyType)
 	}
 	return methods
 }

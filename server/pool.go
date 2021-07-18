@@ -12,7 +12,7 @@ type Reset interface {
 	Reset()
 }
 
-var argsReplyPools = &typePools{
+var reflectTypePools = &typePools{
 	pools: make(map[reflect.Type]*sync.Pool),
 	New: func(t reflect.Type) interface{} {
 		var argv reflect.Value

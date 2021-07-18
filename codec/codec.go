@@ -69,7 +69,7 @@ func (c PBCodec) Encode(i interface{}) ([]byte, error) {
 		return pb.Marshal(m)
 	}
 
-	return nil, fmt.Errorf("%T is not a proto.Marshaler", i)
+	return nil, fmt.Errorf("%T is not a proto.Marshaler or pb.Message", i)
 }
 
 // Decode decodes an object from slice of bytes.
@@ -82,7 +82,7 @@ func (c PBCodec) Decode(data []byte, i interface{}) error {
 		return pb.Unmarshal(data, m)
 	}
 
-	return fmt.Errorf("%T is not a proto.Unmarshaler", i)
+	return fmt.Errorf("%T is not a proto.Unmarshaler  or pb.Message", i)
 }
 
 // MsgpackCodec uses messagepack marshaler and unmarshaler.

@@ -346,7 +346,6 @@ func (s *Server) serveByWS(ln net.Listener, rpcPath string) {
 }
 
 func (s *Server) serveConn(conn net.Conn) {
-
 	if s.isShutdown() {
 		s.closeConn(conn)
 		return
@@ -612,7 +611,8 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		return handleError(res, err)
 	}
 
-	argv := argsReplyPools.Get(mtype.ArgType)
+	// get a argv object from object pool
+	argv := reflectTypePools.Get(mtype.ArgType)
 
 	codec := share.Codecs[req.SerializeType()]
 	if codec == nil {
@@ -625,11 +625,13 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		return handleError(res, err)
 	}
 
-	replyv := argsReplyPools.Get(mtype.ReplyType)
+	// and get a reply object from object pool
+	replyv := reflectTypePools.Get(mtype.ReplyType)
 
 	argv, err = s.Plugins.DoPreCall(ctx, serviceName, methodName, argv)
 	if err != nil {
-		argsReplyPools.Put(mtype.ReplyType, replyv)
+		// return reply to object pool
+		reflectTypePools.Put(mtype.ReplyType, replyv)
 		return handleError(res, err)
 	}
 
@@ -643,29 +645,32 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		replyv, err = s.Plugins.DoPostCall(ctx, serviceName, methodName, argv, replyv)
 	}
 
-	argsReplyPools.Put(mtype.ArgType, argv)
+	// return argc to object pool
+	reflectTypePools.Put(mtype.ArgType, argv)
+
 	if err != nil {
 		if replyv != nil {
 			data, err := codec.Encode(replyv)
-			argsReplyPools.Put(mtype.ReplyType, replyv)
+			// return reply to object pool
+			reflectTypePools.Put(mtype.ReplyType, replyv)
 			if err != nil {
 				return handleError(res, err)
 			}
 			res.Payload = data
 		}
-		argsReplyPools.Put(mtype.ReplyType, replyv)
 		return handleError(res, err)
 	}
 
 	if !req.IsOneway() {
 		data, err := codec.Encode(replyv)
-		argsReplyPools.Put(mtype.ReplyType, replyv)
+		// return reply to object pool
+		reflectTypePools.Put(mtype.ReplyType, replyv)
 		if err != nil {
 			return handleError(res, err)
 		}
 		res.Payload = data
 	} else if replyv != nil {
-		argsReplyPools.Put(mtype.ReplyType, replyv)
+		reflectTypePools.Put(mtype.ReplyType, replyv)
 	}
 
 	if share.Trace {
@@ -695,7 +700,7 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 		return handleError(res, err)
 	}
 
-	argv := argsReplyPools.Get(mtype.ArgType)
+	argv := reflectTypePools.Get(mtype.ArgType)
 
 	codec := share.Codecs[req.SerializeType()]
 	if codec == nil {
@@ -708,7 +713,7 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 		return handleError(res, err)
 	}
 
-	replyv := argsReplyPools.Get(mtype.ReplyType)
+	replyv := reflectTypePools.Get(mtype.ReplyType)
 
 	if mtype.ArgType.Kind() != reflect.Ptr {
 		err = service.callForFunction(ctx, mtype, reflect.ValueOf(argv).Elem(), reflect.ValueOf(replyv))
@@ -716,22 +721,22 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 		err = service.callForFunction(ctx, mtype, reflect.ValueOf(argv), reflect.ValueOf(replyv))
 	}
 
-	argsReplyPools.Put(mtype.ArgType, argv)
+	reflectTypePools.Put(mtype.ArgType, argv)
 
 	if err != nil {
-		argsReplyPools.Put(mtype.ReplyType, replyv)
+		reflectTypePools.Put(mtype.ReplyType, replyv)
 		return handleError(res, err)
 	}
 
 	if !req.IsOneway() {
 		data, err := codec.Encode(replyv)
-		argsReplyPools.Put(mtype.ReplyType, replyv)
+		reflectTypePools.Put(mtype.ReplyType, replyv)
 		if err != nil {
 			return handleError(res, err)
 		}
 		res.Payload = data
 	} else if replyv != nil {
-		argsReplyPools.Put(mtype.ReplyType, replyv)
+		reflectTypePools.Put(mtype.ReplyType, replyv)
 	}
 
 	return res, nil
