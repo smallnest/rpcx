@@ -112,6 +112,7 @@ func NewServer(options ...OptionFn) *Server {
 		activeConn: make(map[net.Conn]struct{}),
 		doneChan:   make(chan struct{}),
 		serviceMap: make(map[string]*service),
+		router:     make(map[string]Handler),
 	}
 
 	for _, op := range options {
