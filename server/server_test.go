@@ -1,15 +1,18 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io/ioutil"
+	"net"
 	"testing"
-
 	"time"
 
 	testutils "github.com/smallnest/rpcx/_testutils"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
+	"github.com/stretchr/testify/assert"
 )
 
 type Args struct {
@@ -58,11 +61,10 @@ func TestShutdownHook(t *testing.T) {
 	if cancel1 != nil {
 		cancel1()
 	}
-
 }
 
 func TestHandleRequest(t *testing.T) {
-	//use jsoncodec
+	// use jsoncodec
 
 	req := protocol.NewMessage()
 	req.SetVersion(0)
@@ -115,4 +117,64 @@ func TestHandleRequest(t *testing.T) {
 	if reply.C != 200 {
 		t.Fatalf("expect 200 but got %d", reply.C)
 	}
+}
+
+func TestHandler(t *testing.T) {
+	// use jsoncodec
+
+	req := protocol.NewMessage()
+	req.SetVersion(0)
+	req.SetMessageType(protocol.Request)
+	req.SetHeartbeat(false)
+	req.SetOneway(false)
+	req.SetCompressType(protocol.None)
+	req.SetMessageStatusType(protocol.Normal)
+	req.SetSerializeType(protocol.JSON)
+	req.SetSeq(1234567890)
+
+	req.ServicePath = "Arith"
+	req.ServiceMethod = "Mul"
+
+	argv := &Args{
+		A: 10,
+		B: 20,
+	}
+
+	data, err := json.Marshal(argv)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Payload = data
+
+	serverConn, clientConn := net.Pipe()
+
+	handler := func(ctx *Context) error {
+		req := &Args{}
+		res := &Reply{}
+		ctx.Bind(req)
+		res.C = req.A * req.B
+
+		return ctx.Write(res)
+	}
+
+	go func() {
+		ctx := NewContext(share.NewContext(context.Background()), serverConn, req)
+		err = handler(ctx)
+		assert.NoError(t, err)
+
+		serverConn.Close()
+	}()
+
+	data, err = ioutil.ReadAll(clientConn)
+	assert.NoError(t, err)
+
+	resp, err := protocol.Read(bytes.NewReader(data))
+	assert.NoError(t, err)
+
+	assert.Equal(t, "Arith", resp.ServicePath)
+	assert.Equal(t, "Mul", resp.ServiceMethod)
+	assert.Equal(t, req.Seq(), resp.Seq())
+
+	assert.Equal(t, "{\"C\":200}", string(resp.Payload))
 }

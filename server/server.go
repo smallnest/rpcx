@@ -61,6 +61,8 @@ var (
 	HttpConnContextKey = &contextKey{"http-conn"}
 )
 
+type Handler func(ctx *Context) error
+
 // Server is rpcx server that use TCP or UDP.
 type Server struct {
 	ln                 net.Listener
@@ -72,6 +74,8 @@ type Server struct {
 
 	serviceMapMu sync.RWMutex
 	serviceMap   map[string]*service
+
+	router map[string]Handler
 
 	mu         sync.RWMutex
 	activeConn map[net.Conn]struct{}
@@ -128,6 +132,10 @@ func (s *Server) Address() net.Addr {
 		return nil
 	}
 	return s.ln.Addr()
+}
+
+func (s *Server) AddHandler(servicePath, serviceMethod string, handler func(*Context) error) {
+	s.router[servicePath+"."+serviceMethod] = handler
 }
 
 // ActiveClientConn returns active connections.
@@ -479,6 +487,19 @@ func (s *Server) serveConn(conn net.Conn) {
 			if share.Trace {
 				log.Debugf("server handle request %+v from conn: %v", req, conn.RemoteAddr().String())
 			}
+
+			// first use handler
+			if handler, ok := s.router[req.ServicePath+"."+req.ServiceMethod]; ok {
+				sctx := NewContext(ctx, conn, req)
+				err := handler(sctx)
+				if err != nil {
+					log.Errorf("[handler internal error]: servicepath: %s, servicemethod, err: %v", req.ServicePath, req.ServiceMethod, err)
+				}
+
+				return
+			}
+
+			//
 			res, err := s.handleRequest(ctx, req)
 			if err != nil {
 				if s.HandleServiceError != nil {
