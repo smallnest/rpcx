@@ -13,11 +13,13 @@ type Context struct {
 	conn net.Conn
 	req  *protocol.Message
 	ctx  *share.Context
+
+	writeCh chan *[]byte
 }
 
 // NewContext creates a server.Context for Handler.
-func NewContext(ctx *share.Context, conn net.Conn, req *protocol.Message) *Context {
-	return &Context{conn: conn, req: req, ctx: ctx}
+func NewContext(ctx *share.Context, conn net.Conn, req *protocol.Message, writeCh chan *[]byte) *Context {
+	return &Context{conn: conn, req: req, ctx: ctx, writeCh: writeCh}
 }
 
 // Get returns value for key.
@@ -112,8 +114,14 @@ func (ctx *Context) Write(v interface{}) error {
 		res.SetCompressType(req.CompressType())
 	}
 	respData := res.EncodeSlicePointer()
-	_, err := ctx.conn.Write(*respData)
-	protocol.PutData(respData)
+
+	var err error
+	if ctx.writeCh != nil {
+		ctx.writeCh <- respData
+	} else {
+		_, err = ctx.conn.Write(*respData)
+		protocol.PutData(respData)
+	}
 
 	return err
 }
