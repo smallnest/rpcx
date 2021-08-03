@@ -669,7 +669,6 @@ func (client *Client) input() {
 				client.ServerMessageChanMu.RLock()
 				if client.ServerMessageChan != nil {
 					client.handleServerRequest(res)
-					client.ServerMessageChanMu.RUnlock()
 				}
 				client.ServerMessageChanMu.RUnlock()
 				continue
