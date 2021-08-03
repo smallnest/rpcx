@@ -733,7 +733,6 @@ func (client *Client) input() {
 		req.Metadata["server"] = client.Conn.RemoteAddr().String()
 		client.handleServerRequest(req)
 	}
-	client.ServerMessageChanMu.RUnlock()
 
 	client.mutex.Lock()
 	if !client.pluginClosed {
