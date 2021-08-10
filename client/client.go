@@ -115,8 +115,7 @@ type Client struct {
 
 	Plugins PluginContainer
 
-	ServerMessageChanMu sync.RWMutex
-	ServerMessageChan   chan<- *protocol.Message
+	ServerMessageChan chan<- *protocol.Message
 }
 
 // NewClient returns a new Client with the option.
@@ -200,16 +199,12 @@ func (call *Call) done() {
 
 // RegisterServerMessageChan registers the channel that receives server requests.
 func (client *Client) RegisterServerMessageChan(ch chan<- *protocol.Message) {
-	client.ServerMessageChanMu.Lock()
 	client.ServerMessageChan = ch
-	client.ServerMessageChanMu.Unlock()
 }
 
 // UnregisterServerMessageChan removes ServerMessageChan.
 func (client *Client) UnregisterServerMessageChan() {
-	client.ServerMessageChanMu.Lock()
 	client.ServerMessageChan = nil
-	client.ServerMessageChanMu.Unlock()
 }
 
 // IsClosing client is closing or not.
@@ -666,11 +661,9 @@ func (client *Client) input() {
 		switch {
 		case call == nil:
 			if isServerMessage {
-				client.ServerMessageChanMu.RLock()
 				if client.ServerMessageChan != nil {
 					client.handleServerRequest(res)
 				}
-				client.ServerMessageChanMu.RUnlock()
 				continue
 			}
 		case res.MessageStatusType() == protocol.Error:
@@ -718,9 +711,7 @@ func (client *Client) input() {
 	}
 	// Terminate pending calls.
 
-	client.ServerMessageChanMu.RLock()
 	if client.ServerMessageChan != nil {
-		client.ServerMessageChanMu.RUnlock()
 		req := protocol.NewMessage()
 		req.SetMessageType(protocol.Request)
 		req.SetMessageStatusType(protocol.Error)
