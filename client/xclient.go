@@ -36,6 +36,13 @@ var (
 	ErrServerUnavailable = errors.New("selected server is unavilable")
 )
 
+// InformResult represents the result of the service returned.
+type InformResult struct {
+	Address string
+	Reply   interface{}
+	Error   error
+}
+
 // XClient is an interface that used by client with service discovery and service governance.
 // One XClient is used only for one service. You should create multiple XClient for multiple services.
 type XClient interface {
@@ -49,6 +56,7 @@ type XClient interface {
 	Call(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Broadcast(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Fork(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
+	Inform(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) ([]InformResult, error)
 	SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error)
 	SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64, meta map[string]string) error
 	DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer, meta map[string]string) error
@@ -874,7 +882,12 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 		k := k
 		client := client
 		go func() {
-			e := c.wrapCall(ctx, client, serviceMethod, args, reply)
+			var clonedReply interface{}
+			if reply != nil {
+				clonedReply = reflect.New(reflect.ValueOf(reply).Elem().Type()).Interface()
+			}
+
+			e := c.wrapCall(ctx, client, serviceMethod, args, clonedReply)
 			done <- (e == nil)
 			if e != nil {
 				if uncoverError(e) {
@@ -882,10 +895,14 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 				}
 				err.Append(e)
 			}
+
+			if e == nil && reply != nil && clonedReply != nil {
+				reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(clonedReply).Elem())
+			}
 		}()
 	}
 
-	timeout := time.After(time.Minute)
+	timeout := time.NewTimer(time.Minute)
 check:
 	for {
 		select {
@@ -894,11 +911,12 @@ check:
 			if l == 0 || !result { // all returns or some one returns an error
 				break check
 			}
-		case <-timeout:
+		case <-timeout.C:
 			err.Append(errors.New(("timeout")))
 			break check
 		}
 	}
+	timeout.Stop()
 
 	if err.Error() == "[]" {
 		return nil
@@ -975,7 +993,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 		}()
 	}
 
-	timeout := time.After(time.Minute)
+	timeout := time.NewTimer(time.Minute)
 check:
 	for {
 		select {
@@ -988,17 +1006,127 @@ check:
 				break check
 			}
 
-		case <-timeout:
+		case <-timeout.C:
 			err.Append(errors.New(("timeout")))
 			break check
 		}
 	}
+	timeout.Stop()
 
 	if err.Error() == "[]" {
 		return nil
 	}
 
 	return err
+}
+
+// Inform sends requests to all servers and returns all results from services.
+// FailMode and SelectMode are meanless for this method.
+// Please set timeout to avoid hanging.
+func (c *xClient) Inform(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) ([]InformResult, error) {
+	if c.isShutdown {
+		return nil, ErrXClientShutdown
+	}
+
+	if c.auth != "" {
+		metadata := ctx.Value(share.ReqMetaDataKey)
+		if metadata == nil {
+			metadata = map[string]string{}
+			ctx = context.WithValue(ctx, share.ReqMetaDataKey, metadata)
+		}
+		m := metadata.(map[string]string)
+		m[share.AuthKey] = c.auth
+	}
+
+	ctx = setServerTimeout(ctx)
+	callPlugins := make([]RPCClient, 0, len(c.servers))
+	clients := make(map[string]RPCClient)
+	c.mu.Lock()
+	for k := range c.servers {
+		client, needCallPlugin, err := c.getCachedClientWithoutLock(k, c.servicePath, serviceMethod)
+		if err != nil {
+			continue
+		}
+		clients[k] = client
+		if needCallPlugin {
+			callPlugins = append(callPlugins, client)
+		}
+	}
+	c.mu.Unlock()
+
+	for i := range callPlugins {
+		if c.Plugins != nil {
+			c.Plugins.DoClientConnected(callPlugins[i].GetConn())
+		}
+	}
+
+	if len(clients) == 0 {
+		return nil, ErrXClientNoServer
+	}
+
+	var informResultLock sync.Mutex
+	var informResult []InformResult
+
+	err := &ex.MultiError{}
+	l := len(clients)
+	done := make(chan bool, l)
+	for k, client := range clients {
+		k := k
+		client := client
+		go func() {
+			var clonedReply interface{}
+			if reply != nil {
+				clonedReply = reflect.New(reflect.ValueOf(reply).Elem().Type()).Interface()
+			}
+
+			e := c.wrapCall(ctx, client, serviceMethod, args, clonedReply)
+			done <- (e == nil)
+			if e != nil {
+				if uncoverError(e) {
+					c.removeClient(k, c.servicePath, serviceMethod, client)
+				}
+				err.Append(e)
+			}
+			if e == nil && reply != nil && clonedReply != nil {
+				reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(clonedReply).Elem())
+			}
+
+			addr := k
+			ss := strings.SplitN(k, "@", 2)
+			if len(ss) == 2 {
+				addr = ss[1]
+			}
+			informResultLock.Lock()
+
+			informResult = append(informResult, InformResult{
+				Address: addr,
+				Reply:   clonedReply,
+				Error:   err,
+			})
+			informResultLock.Unlock()
+		}()
+	}
+
+	timeout := time.NewTimer(time.Minute)
+check:
+	for {
+		select {
+		case <-done:
+			l--
+			if l == 0 { // all returns or some one returns an error
+				break check
+			}
+		case <-timeout.C:
+			err.Append(errors.New(("timeout")))
+			break check
+		}
+	}
+	timeout.Stop()
+
+	if err.Error() == "[]" {
+		return informResult, nil
+	}
+	return informResult, err
 }
 
 // SendFile sends a local file to the server.
