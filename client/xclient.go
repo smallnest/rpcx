@@ -36,8 +36,8 @@ var (
 	ErrServerUnavailable = errors.New("selected server is unavilable")
 )
 
-// InformResult represents the result of the service returned.
-type InformResult struct {
+// Receipt represents the result of the service returned.
+type Receipt struct {
 	Address string
 	Reply   interface{}
 	Error   error
@@ -56,7 +56,7 @@ type XClient interface {
 	Call(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Broadcast(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Fork(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
-	Inform(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) ([]InformResult, error)
+	Inform(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) ([]receipts, error)
 	SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error)
 	SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64, meta map[string]string) error
 	DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer, meta map[string]string) error
@@ -1023,7 +1023,7 @@ check:
 // Inform sends requests to all servers and returns all results from services.
 // FailMode and SelectMode are meanless for this method.
 // Please set timeout to avoid hanging.
-func (c *xClient) Inform(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) ([]InformResult, error) {
+func (c *xClient) Inform(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) ([]Receipt, error) {
 	if c.isShutdown {
 		return nil, ErrXClientShutdown
 	}
@@ -1064,8 +1064,8 @@ func (c *xClient) Inform(ctx context.Context, serviceMethod string, args interfa
 		return nil, ErrXClientNoServer
 	}
 
-	var informResultLock sync.Mutex
-	var informResult []InformResult
+	var receiptsLock sync.Mutex
+	var receipts []Receipt
 
 	err := &ex.MultiError{}
 	l := len(clients)
@@ -1096,14 +1096,14 @@ func (c *xClient) Inform(ctx context.Context, serviceMethod string, args interfa
 			if len(ss) == 2 {
 				addr = ss[1]
 			}
-			informResultLock.Lock()
+			receiptsLock.Lock()
 
-			informResult = append(informResult, InformResult{
+			receipts = append(receipts, Receipt{
 				Address: addr,
 				Reply:   clonedReply,
 				Error:   err,
 			})
-			informResultLock.Unlock()
+			receiptsLock.Unlock()
 		}()
 	}
 
@@ -1124,9 +1124,9 @@ check:
 	timeout.Stop()
 
 	if err.Error() == "[]" {
-		return informResult, nil
+		return receipts, nil
 	}
-	return informResult, err
+	return receipts, err
 }
 
 // SendFile sends a local file to the server.
