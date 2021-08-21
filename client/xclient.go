@@ -56,7 +56,7 @@ type XClient interface {
 	Call(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Broadcast(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Fork(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
-	Inform(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) ([]receipts, error)
+	Inform(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) ([]Receipt, error)
 	SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error)
 	SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64, meta map[string]string) error
 	DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer, meta map[string]string) error
