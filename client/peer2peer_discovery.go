@@ -8,7 +8,7 @@ type Peer2PeerDiscovery struct {
 }
 
 // NewPeer2PeerDiscovery returns a new Peer2PeerDiscovery.
-func NewPeer2PeerDiscovery(server, metadata string) (ServiceDiscovery, error) {
+func NewPeer2PeerDiscovery(server, metadata string) (*Peer2PeerDiscovery, error) {
 	return &Peer2PeerDiscovery{server: server, metadata: metadata}, nil
 }
 

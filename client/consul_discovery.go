@@ -33,7 +33,7 @@ type ConsulDiscovery struct {
 }
 
 // NewConsulDiscovery returns a new ConsulDiscovery.
-func NewConsulDiscovery(basePath, servicePath string, consulAddr []string, options *store.Config) (ServiceDiscovery, error) {
+func NewConsulDiscovery(basePath, servicePath string, consulAddr []string, options *store.Config) (*ConsulDiscovery, error) {
 	kv, err := libkv.NewStore(store.CONSUL, consulAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
@@ -44,7 +44,7 @@ func NewConsulDiscovery(basePath, servicePath string, consulAddr []string, optio
 }
 
 // NewConsulDiscoveryStore returns a new ConsulDiscovery with specified store.
-func NewConsulDiscoveryStore(basePath string, kv store.Store) (ServiceDiscovery, error) {
+func NewConsulDiscoveryStore(basePath string, kv store.Store) (*ConsulDiscovery, error) {
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -84,7 +84,7 @@ func NewConsulDiscoveryStore(basePath string, kv store.Store) (ServiceDiscovery,
 }
 
 // NewConsulDiscoveryTemplate returns a new ConsulDiscovery template.
-func NewConsulDiscoveryTemplate(basePath string, consulAddr []string, options *store.Config) (ServiceDiscovery, error) {
+func NewConsulDiscoveryTemplate(basePath string, consulAddr []string, options *store.Config) (*ConsulDiscovery, error) {
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}

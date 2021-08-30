@@ -37,7 +37,7 @@ type MDNSDiscovery struct {
 
 // NewMDNSDiscovery returns a new MDNSDiscovery.
 // If domain is empty, use "local." in default.
-func NewMDNSDiscovery(service string, timeout time.Duration, watchInterval time.Duration, domain string) (ServiceDiscovery, error) {
+func NewMDNSDiscovery(service string, timeout time.Duration, watchInterval time.Duration, domain string) (*MDNSDiscovery, error) {
 	if domain == "" {
 		domain = "local."
 	}
