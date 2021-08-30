@@ -34,7 +34,7 @@ type ZookeeperDiscovery struct {
 }
 
 // NewZookeeperDiscovery returns a new ZookeeperDiscovery.
-func NewZookeeperDiscovery(basePath string, servicePath string, zkAddr []string, options *store.Config) (ServiceDiscovery, error) {
+func NewZookeeperDiscovery(basePath string, servicePath string, zkAddr []string, options *store.Config) (*ZookeeperDiscovery, error) {
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -53,7 +53,7 @@ func NewZookeeperDiscovery(basePath string, servicePath string, zkAddr []string,
 }
 
 // NewZookeeperDiscoveryWithStore returns a new ZookeeperDiscovery with specified store.
-func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) (ServiceDiscovery, error) {
+func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) (*ZookeeperDiscovery, error) {
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -84,7 +84,7 @@ func NewZookeeperDiscoveryWithStore(basePath string, kv store.Store) (ServiceDis
 }
 
 // NewZookeeperDiscoveryTemplate returns a new ZookeeperDiscovery template.
-func NewZookeeperDiscoveryTemplate(basePath string, zkAddr []string, options *store.Config) (ServiceDiscovery, error) {
+func NewZookeeperDiscoveryTemplate(basePath string, zkAddr []string, options *store.Config) (*ZookeeperDiscovery, error) {
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}

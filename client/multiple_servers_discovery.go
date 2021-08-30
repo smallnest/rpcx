@@ -18,7 +18,7 @@ type MultipleServersDiscovery struct {
 }
 
 // NewMultipleServersDiscovery returns a new MultipleServersDiscovery.
-func NewMultipleServersDiscovery(pairs []*KVPair) (ServiceDiscovery, error) {
+func NewMultipleServersDiscovery(pairs []*KVPair) (*MultipleServersDiscovery, error) {
 	return &MultipleServersDiscovery{
 		pairs: pairs,
 	}, nil

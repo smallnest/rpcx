@@ -34,7 +34,7 @@ type RedisDiscovery struct {
 }
 
 // NewRedisDiscovery returns a new RedisDiscovery.
-func NewRedisDiscovery(basePath string, servicePath string, redisAddr []string, options *store.Config) (ServiceDiscovery, error) {
+func NewRedisDiscovery(basePath string, servicePath string, redisAddr []string, options *store.Config) (*RedisDiscovery, error) {
 	kv, err := libkv.NewStore(store.REDIS, redisAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
@@ -45,7 +45,7 @@ func NewRedisDiscovery(basePath string, servicePath string, redisAddr []string, 
 }
 
 // NewRedisDiscoveryStore return a new RedisDiscovery with specified store.
-func NewRedisDiscoveryStore(basePath string, kv store.Store) (ServiceDiscovery, error) {
+func NewRedisDiscoveryStore(basePath string, kv store.Store) (*RedisDiscovery, error) {
 	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
 		basePath = basePath[:len(basePath)-1]
 	}
@@ -96,7 +96,7 @@ func NewRedisDiscoveryStore(basePath string, kv store.Store) (ServiceDiscovery, 
 }
 
 // NewRedisDiscoveryTemplate returns a new RedisDiscovery template.
-func NewRedisDiscoveryTemplate(basePath string, etcdAddr []string, options *store.Config) (ServiceDiscovery, error) {
+func NewRedisDiscoveryTemplate(basePath string, etcdAddr []string, options *store.Config) (*RedisDiscovery, error) {
 	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
 		basePath = basePath[:len(basePath)-1]
 	}
