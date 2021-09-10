@@ -64,8 +64,10 @@ func (p *MDNSRegisterPlugin) Start() error {
 	}
 
 	if p.UpdateInterval > 0 {
-		ticker := time.NewTicker(p.UpdateInterval)
 		go func() {
+			ticker := time.NewTicker(p.UpdateInterval)
+
+			defer ticker.Stop()
 			defer p.server.Shutdown()
 
 			for {

@@ -72,8 +72,10 @@ func (p *ConsulRegisterPlugin) Start() error {
 	}
 
 	if p.UpdateInterval > 0 {
-		ticker := time.NewTicker(p.UpdateInterval)
 		go func() {
+			ticker := time.NewTicker(p.UpdateInterval)
+
+			defer ticker.Stop()
 			defer p.kv.Close()
 
 			// refresh service TTL
