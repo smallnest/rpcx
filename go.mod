@@ -35,7 +35,6 @@ require (
 	github.com/smallnest/quick v0.0.0-20200505103731-c8c83f9c76d3
 	github.com/soheilhy/cmux v0.1.4
 	github.com/stretchr/testify v1.7.0
-	github.com/syndtr/goleveldb v1.0.0
 	github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161 // indirect
 	github.com/templexxx/xor v0.0.0-20191217153810-f85b25db303b // indirect
 	github.com/tjfoc/gmsm v1.4.0 // indirect

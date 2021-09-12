@@ -2,10 +2,10 @@ package serverplugin
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/juju/ratelimit"
-	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
 var ErrReqReachLimit = errors.New("request reached rate limit")
