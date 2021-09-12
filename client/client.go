@@ -152,7 +152,7 @@ type Option struct {
 	RPCPath string
 	// ConnectTimeout sets timeout for dialing
 	ConnectTimeout time.Duration
-	// ReadTimeout sets max idle time for underlying net.Conns
+	// IdleTimeout sets max idle time for underlying net.Conns
 	IdleTimeout time.Duration
 
 	// BackupLatency is used for Failbackup mode. rpcx will sends another request if the first response doesn't return in BackupLatency time.
