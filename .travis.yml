@@ -1,14 +1,14 @@
 language: go
 
 go:
-  - 1.15.x
+  - 1.17.x
 
 env:
   - GO111MODULE=on
 
 before_script:
   - rm -f go.sum
-  - go get -tags "quic kcp" -v github.com/smallnest/rpcx/...
+  - go get -tags "quic kcp" -v github.com/smallnest/rpcx@HEAD
   - go get github.com/mattn/goveralls
 
 script:

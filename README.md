@@ -1,4 +1,4 @@
-- **stable branch**: v1.6.2
+- **stable branch**: v1.6.x
 - **development branch**: master
 
 <a href="https://rpcx.io/"><img height="160" src="http://rpcx.io/logos/rpcx-logo-text.png"></a>
@@ -61,7 +61,7 @@ go get -v -tags "quic kcp" github.com/smallnest/rpcx/...
 ## Features
 rpcx is a RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).
 
-**rpcx 3.0** has been refactored for targets:
+**rpcx** is created for targets:
 1. **Simple**: easy to learn, easy to develop, easy to intergate and easy to deploy
 2. **Performance**: high perforamnce (>= grpc-go)
 3. **Cross-platform**: support _raw slice of bytes_, _JSON_, _Protobuf_ and _MessagePack_. Theoretically it can be used with java, php, python, c/c++, node.js, c# and other platforms
