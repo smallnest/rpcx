@@ -37,6 +37,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161 // indirect
 	github.com/templexxx/xor v0.0.0-20191217153810-f85b25db303b // indirect
+	github.com/tinylib/msgp v1.1.6
 	github.com/tjfoc/gmsm v1.4.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0
 	github.com/valyala/fastrand v0.0.0-20170531153657-19dd0f0bf014
