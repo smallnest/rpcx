@@ -13,8 +13,11 @@
 - support websocket as the transport like tcp,kcp and quic
 - add CMuxPlugin to allow developing customzied services by using the same single port
 - re-tag rpcx to make sure the version is less than 2 (for go module)
-- support visit grpc services by rpcx clients
+- support visit grpc services by rpcx clients: https://github.com/rpcxio/rpcxplus/tree/master/grpcx
 - support configing grpc servicves in rpcx server side
+- improve rpcx performance
+- add Inform method in XClient
+- add memory connection for unit tests
 
 ## 1.6.0 
 

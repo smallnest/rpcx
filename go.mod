@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/ChimeraCoder/gojson v1.1.0
+	github.com/akutz/memconn v0.1.0 // indirect
 	github.com/apache/thrift v0.14.0
 	github.com/cenk/backoff v2.2.1+incompatible // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
