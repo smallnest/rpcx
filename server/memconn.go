@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	makeListeners["memconn"] = memconnMakeListener
+	makeListeners["memu"] = memconnMakeListener
 }
 
 func memconnMakeListener(s *Server, address string) (ln net.Listener, err error) {
