@@ -157,10 +157,10 @@ The below is a simple example.
     // prepare requests
     ……
 
-    d := client.NewPeer2PeerDiscovery("tcp@"+addr, "")
+    d, err := client.NewPeer2PeerDiscovery("tcp@"+addr, "")
 	xclient := client.NewXClient("Arith", client.Failtry, client.RandomSelect, d, client.DefaultOption)
 	defer xclient.Close()
-	err := xclient.Call(context.Background(), "Mul", args, reply, nil)
+	err = xclient.Call(context.Background(), "Mul", args, reply, nil)
 ```
 
 ## Contribute
