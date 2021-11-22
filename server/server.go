@@ -849,6 +849,7 @@ func (s *Server) ServeWS(conn *websocket.Conn) {
 	s.activeConn[conn] = struct{}{}
 	s.mu.Unlock()
 
+	conn.PayloadType = websocket.BinaryFrame
 	s.serveConn(conn)
 }
 

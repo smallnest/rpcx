@@ -56,7 +56,7 @@ func NewRedisDiscoveryStore(basePath string, kv store.Store) (*RedisDiscovery, e
 	ps, err := kv.List(basePath)
 	if err != nil {
 		log.Infof("cannot get services of from registry: %v, err: %v", basePath, err)
-		panic(err)
+		return nil, err
 	}
 	pairs := make([]*KVPair, 0, len(ps))
 	var prefix string
