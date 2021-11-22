@@ -172,6 +172,8 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 	defer protocol.FreeMsg(res)
 
 	if err != nil {
+		// call DoPreWriteResponse
+		s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
 		if s.HandleServiceError != nil {
 			s.HandleServiceError(err)
 		} else {
@@ -180,6 +182,8 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 		wh.Set(XMessageStatusType, "Error")
 		wh.Set(XErrorMessage, err.Error())
 		w.WriteHeader(500)
+		// call DoPostWriteResponse
+		s.Plugins.DoPostWriteResponse(ctx, req, req.Clone(), err)
 		return
 	}
 
