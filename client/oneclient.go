@@ -335,7 +335,7 @@ func (c *OneClient) Stream(ctx context.Context, meta map[string]string) (net.Con
 	return xclient.Stream(ctx, meta)
 }
 
-// Close closes all xclients and its underlying connnections to services.
+// Close closes all xclients and its underlying connections to services.
 func (c *OneClient) Close() error {
 	var result error
 
