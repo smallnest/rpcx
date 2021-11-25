@@ -1264,7 +1264,7 @@ loop:
 	return err
 }
 
-// Close closes this client and its underlying connnections to services.
+// Close closes this client and its underlying connections to services.
 func (c *xClient) Close() error {
 	var errs []error
 	c.mu.Lock()
