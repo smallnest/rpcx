@@ -43,6 +43,14 @@ func (c *Context) SetValue(key, val interface{}) {
 	c.tags[key] = val
 }
 
+// DeleteKey delete the kv pair by key.
+func (c *Context) DeleteKey(key interface{}) {
+	if c.tags == nil || key == nil{
+		return
+	}
+	delete(c.tags, key)
+}
+
 func (c *Context) String() string {
 	return fmt.Sprintf("%v.WithValue(%v)", c.Context, c.tags)
 }
