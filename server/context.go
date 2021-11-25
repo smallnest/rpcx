@@ -35,6 +35,15 @@ func (ctx *Context) SetValue(key, val interface{}) {
 	ctx.ctx.SetValue(key, val)
 }
 
+// DeleteKey delete the kv pair by key.
+func (ctx *Context) DeleteKey(key interface{}) {
+	if ctx.ctx==nil || key == nil{
+		return
+	}
+	ctx.ctx.DeleteKey(key)
+}
+
+
 // Payload returns the  payload.
 func (ctx *Context) Payload() []byte {
 	return ctx.req.Payload
