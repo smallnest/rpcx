@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sync"
 
 	opentracing "github.com/opentracing/opentracing-go"
 	"go.opencensus.io/trace"
@@ -14,7 +15,8 @@ import (
 
 // Context is a rpcx customized Context that can contains multiple values.
 type Context struct {
-	tags map[interface{}]interface{}
+	tagsLock sync.Mutex
+	tags     map[interface{}]interface{}
 	context.Context
 }
 
@@ -26,6 +28,8 @@ func NewContext(ctx context.Context) *Context {
 }
 
 func (c *Context) Value(key interface{}) interface{} {
+	c.tagsLock.Lock()
+	defer c.tagsLock.Unlock()
 	if c.tags == nil {
 		c.tags = make(map[interface{}]interface{})
 	}
@@ -37,6 +41,9 @@ func (c *Context) Value(key interface{}) interface{} {
 }
 
 func (c *Context) SetValue(key, val interface{}) {
+	c.tagsLock.Lock()
+	defer c.tagsLock.Unlock()
+
 	if c.tags == nil {
 		c.tags = make(map[interface{}]interface{})
 	}
@@ -45,7 +52,10 @@ func (c *Context) SetValue(key, val interface{}) {
 
 // DeleteKey delete the kv pair by key.
 func (c *Context) DeleteKey(key interface{}) {
-	if c.tags == nil || key == nil{
+	c.tagsLock.Lock()
+	defer c.tagsLock.Unlock()
+
+	if c.tags == nil || key == nil {
 		return
 	}
 	delete(c.tags, key)
