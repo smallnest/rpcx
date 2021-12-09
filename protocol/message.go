@@ -228,7 +228,7 @@ func (m Message) Encode() []byte {
 	return *data
 }
 
-// EncodeSlicePointer encodes messages as a byte slice poiter we we can use pool to improve.
+// EncodeSlicePointer encodes messages as a byte slice pointer we can use pool to improve.
 func (m Message) EncodeSlicePointer() *[]byte {
 	bb := bytebufferpool.Get()
 	encodeMetadata(m.Metadata, bb)

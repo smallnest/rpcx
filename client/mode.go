@@ -10,7 +10,7 @@ const (
 	Failfast
 	//Failtry use current client again
 	Failtry
-	//Failbackup select another server if the first server doesn't respon in specified time and use the fast response.
+	//Failbackup select another server if the first server doesn't respond in specified time and use the fast response.
 	Failbackup
 )
 
