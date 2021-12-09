@@ -25,7 +25,7 @@ func (p *pluginContainer) Add(plugin Plugin) {
 	p.plugins = append(p.plugins, plugin)
 }
 
-// Remove removes a plugin by it's name.
+// Remove removes a plugin by its name.
 func (p *pluginContainer) Remove(plugin Plugin) {
 	if p.plugins == nil {
 		return

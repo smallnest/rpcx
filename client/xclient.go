@@ -33,7 +33,7 @@ var (
 	// ErrXClientNoServer selector can't found one server.
 	ErrXClientNoServer = errors.New("can not found any server")
 	// ErrServerUnavailable selected server is unavailable.
-	ErrServerUnavailable = errors.New("selected server is unavilable")
+	ErrServerUnavailable = errors.New("selected server is unavailable")
 )
 
 // Receipt represents the result of the service returned.
