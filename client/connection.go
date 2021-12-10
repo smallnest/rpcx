@@ -82,7 +82,12 @@ func newDirectConn(c *Client, network, address string) (net.Conn, error) {
 	var tlsConn *tls.Conn
 	var err error
 
-	if c != nil && c.option.TLSConfig != nil {
+	if c == nil {
+		err = fmt.Errorf("nil client")
+		return nil, err
+	}
+
+	if c.option.TLSConfig != nil {
 		dialer := &net.Dialer{
 			Timeout: c.option.ConnectTimeout,
 		}
