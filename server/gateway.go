@@ -189,7 +189,8 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 
 	// will set res to call
 	s.Plugins.DoPreWriteResponse(newCtx, req, res, nil)
-	if len(resMetadata) > 0 { // copy meta in context to request
+	resMetadata = ctx.Value(share.ResMetaDataKey).(map[string]string)
+	if resMetadata!= nil && len(resMetadata) > 0 { // copy meta in context to request
 		meta := res.Metadata
 		if meta == nil {
 			res.Metadata = resMetadata

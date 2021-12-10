@@ -504,7 +504,8 @@ func (s *Server) serveConn(conn net.Conn) {
 
 			s.Plugins.DoPreWriteResponse(ctx, req, res, err)
 			if !req.IsOneway() {
-				if len(resMetadata) > 0 { // copy meta in context to request
+				resMetadata = ctx.Value(share.ResMetaDataKey).(map[string]string)
+				if resMetadata!= nil && len(resMetadata) > 0 { // copy meta in context to request
 					meta := res.Metadata
 					if meta == nil {
 						res.Metadata = resMetadata
