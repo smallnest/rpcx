@@ -798,6 +798,8 @@ func (c *xClient) wrapCall(ctx context.Context, client RPCClient, serviceMethod 
 	}
 
 	ctx = share.NewContext(ctx)
+	metadata := map[string]string{}
+	share.WithLocalValue(ctx.(*share.Context), share.ResMetaDataKey, metadata)
 	c.Plugins.DoPreCall(ctx, c.servicePath, serviceMethod, args)
 	err := client.Call(ctx, c.servicePath, serviceMethod, args, reply)
 	c.Plugins.DoPostCall(ctx, c.servicePath, serviceMethod, args, reply, err)
@@ -820,6 +822,8 @@ func (c *xClient) wrapSendRaw(ctx context.Context, client RPCClient, r *protocol
 	}
 
 	ctx = share.NewContext(ctx)
+	metadata := map[string]string{}
+	share.WithLocalValue(ctx.(*share.Context), share.ResMetaDataKey, metadata)
 	c.Plugins.DoPreCall(ctx, c.servicePath, r.ServiceMethod, r.Payload)
 	m, payload, err := client.SendRaw(ctx, r)
 	c.Plugins.DoPostCall(ctx, c.servicePath, r.ServiceMethod, r.Payload, nil, err)

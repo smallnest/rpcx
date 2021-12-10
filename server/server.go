@@ -517,7 +517,7 @@ func (s *Server) serveConn(conn net.Conn) {
 						}
 					}
 				}
-
+				log.Debug("rpcx3: res.Metadata: %v", res.Metadata)
 				if len(res.Payload) > 1024 && req.CompressType() != protocol.None {
 					res.SetCompressType(req.CompressType())
 				}
