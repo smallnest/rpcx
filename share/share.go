@@ -38,7 +38,7 @@ const (
 )
 
 // Trace is a flag to write a trace log or not.
-// You should not enable this flag ofr product environment and enable it only for test.
+// You should not enable this flag for product environment and enable it only for test.
 // It writes trace log with logger Debug level.
 var Trace bool
 
