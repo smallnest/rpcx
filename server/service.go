@@ -313,6 +313,8 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 // UnregisterAll unregisters all services.
 // You can call this method when you want to shutdown/upgrade this node.
 func (s *Server) UnregisterAll() error {
+	s.serviceMapMu.RLock()
+	defer s.serviceMapMu.RUnlock()
 	var es []error
 	for k := range s.serviceMap {
 		err := s.Plugins.DoUnregister(k)
