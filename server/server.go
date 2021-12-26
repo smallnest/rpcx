@@ -442,10 +442,12 @@ func (s *Server) serveConn(conn net.Conn) {
 			}
 			continue
 		}
+
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
 					// maybe panic because the writeCh is closed.
+					log.Errorf("failed to handle request: %v", r)
 				}
 			}()
 
@@ -529,6 +531,7 @@ func (s *Server) serveConn(conn net.Conn) {
 				}
 
 			}
+
 			s.Plugins.DoPostWriteResponse(ctx, req, res, err)
 
 			if share.Trace {

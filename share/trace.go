@@ -7,6 +7,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+type OpenTelemetryKeyType int
+
+const (
+	OpenTelemetryKey OpenTelemetryKeyType = iota
+)
+
 type metadataSupplier struct {
 	metadata map[string]string
 }

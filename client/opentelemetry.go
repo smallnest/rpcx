@@ -26,8 +26,13 @@ func NewOpenTelemetryPlugin(tracer trace.Tracer, propagators propagation.TextMap
 }
 
 func (p *OpenTelemetryPlugin) PreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error {
-	ctx, span := p.tracer.Start(ctx, "rpcx.client."+servicePath+"."+serviceMethod)
-	share.Inject(ctx, p.propagators)
+	spanCtx := share.Extract(ctx, p.propagators)
+	ctx0 := trace.ContextWithSpanContext(ctx, spanCtx)
+
+	ctx1, span := p.tracer.Start(ctx0, "rpcx.client."+servicePath+"."+serviceMethod)
+	share.Inject(ctx1, p.propagators)
+
+	ctx.(*share.Context).SetValue(share.OpenTelemetryKey, span)
 
 	span.AddEvent("PreCall")
 
@@ -35,9 +40,7 @@ func (p *OpenTelemetryPlugin) PreCall(ctx context.Context, servicePath, serviceM
 }
 
 func (p *OpenTelemetryPlugin) PostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error {
-	spanCtx := share.Extract(ctx, p.propagators)
-	ctx = trace.ContextWithSpanContext(ctx, spanCtx)
-	span := trace.SpanFromContext(ctx)
+	span := ctx.Value(share.OpenTelemetryKey).(trace.Span)
 	defer span.End()
 
 	span.AddEvent("PostCall")

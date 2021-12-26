@@ -18,6 +18,7 @@
 - improve rpcx performance
 - add Inform method in XClient
 - add memory connection for unit tests
+- supports opentelemetry
 
 ## 1.6.0 
 
