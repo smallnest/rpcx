@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/smallnest/rpcx/share"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -11,6 +12,17 @@ import (
 type OpenTelemetryPlugin struct {
 	tracer      trace.Tracer
 	propagators propagation.TextMapPropagator
+}
+
+func NewOpenTelemetryPlugin(tracer trace.Tracer, propagators propagation.TextMapPropagator) *OpenTelemetryPlugin {
+	if propagators == nil {
+		propagators = otel.GetTextMapPropagator()
+	}
+
+	return &OpenTelemetryPlugin{
+		tracer:      tracer,
+		propagators: propagators,
+	}
 }
 
 func (p *OpenTelemetryPlugin) PreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error {
