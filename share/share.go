@@ -18,18 +18,6 @@ const (
 	// ServerTimeout timeout value passed from client to control timeout of server
 	ServerTimeout = "__ServerTimeout"
 
-	// OpentracingSpanServerKey key in service context
-	OpentracingSpanServerKey = "opentracing_span_server_key"
-	// OpentracingSpanClientKey key in client context
-	OpentracingSpanClientKey = "opentracing_span_client_key"
-
-	// OpencensusSpanServerKey key in service context
-	OpencensusSpanServerKey = "opencensus_span_server_key"
-	// OpencensusSpanClientKey key in client context
-	OpencensusSpanClientKey = "opencensus_span_client_key"
-	// OpencensusSpanRequestKey span key in request meta
-	OpencensusSpanRequestKey = "opencensus_span_request_key"
-
 	// SendFileServiceName is name of the file transfer service.
 	SendFileServiceName = "_filetransfer"
 

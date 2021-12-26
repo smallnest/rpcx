@@ -13,12 +13,10 @@ import (
 	"sync"
 	"time"
 
-	opentracing "github.com/opentracing/opentracing-go"
 	circuit "github.com/rubyist/circuitbreaker"
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
-	"go.opencensus.io/trace"
 )
 
 const (
@@ -238,10 +236,6 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 		ctx = share.NewContext(ctx)
 	}
 
-	// TODO: should implement as plugin
-	client.injectOpenTracingSpan(ctx, call)
-	client.injectOpenCensusSpan(ctx, call)
-
 	call.Args = args
 	call.Reply = reply
 	if done == nil {
@@ -262,59 +256,6 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 	}
 	client.send(ctx, call)
 	return call
-}
-
-func (client *Client) injectOpenTracingSpan(ctx context.Context, call *Call) {
-	var rpcxContext *share.Context
-	var ok bool
-	if rpcxContext, ok = ctx.(*share.Context); !ok {
-		return
-	}
-	sp := rpcxContext.Value(share.OpentracingSpanClientKey)
-	if sp == nil { // have not config opentracing plugin
-		return
-	}
-
-	span := sp.(opentracing.Span)
-	if call.Metadata == nil {
-		call.Metadata = make(map[string]string)
-	}
-	meta := call.Metadata
-
-	err := opentracing.GlobalTracer().Inject(
-		span.Context(),
-		opentracing.TextMap,
-		opentracing.TextMapCarrier(meta))
-	if err != nil {
-		log.Errorf("failed to inject span: %v", err)
-	}
-}
-
-func (client *Client) injectOpenCensusSpan(ctx context.Context, call *Call) {
-	var rpcxContext *share.Context
-	var ok bool
-	if rpcxContext, ok = ctx.(*share.Context); !ok {
-		return
-	}
-	sp := rpcxContext.Value(share.OpencensusSpanClientKey)
-	if sp == nil { // have not config opencensus plugin
-		return
-	}
-
-	span := sp.(*trace.Span)
-	if span == nil {
-		return
-	}
-	if call.Metadata == nil {
-		call.Metadata = make(map[string]string)
-	}
-	meta := call.Metadata
-
-	spanContext := span.SpanContext()
-	scData := make([]byte, 24)
-	copy(scData[:16], spanContext.TraceID[:])
-	copy(scData[16:24], spanContext.SpanID[:])
-	meta[share.OpencensusSpanRequestKey] = string(scData)
 }
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
@@ -397,10 +338,6 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 	if _, ok := ctx.(*share.Context); !ok {
 		ctx = share.NewContext(ctx)
 	}
-
-	// TODO: should implement as plugin
-	client.injectOpenTracingSpan(ctx, call)
-	client.injectOpenCensusSpan(ctx, call)
 
 	done := make(chan *Call, 10)
 	call.Done = done

@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/ChimeraCoder/gojson v1.1.0
-	github.com/akutz/memconn v0.1.0 // indirect
+	github.com/akutz/memconn v0.1.0
 	github.com/apache/thrift v0.14.0
 	github.com/cenk/backoff v2.2.1+incompatible // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
@@ -26,7 +26,6 @@ require (
 	github.com/klauspost/reedsolomon v1.9.10 // indirect
 	github.com/kr/pretty v0.2.0
 	github.com/lucas-clemente/quic-go v0.23.0
-	github.com/opentracing/opentracing-go v1.1.1-0.20190913142402-a7454ce5950e
 	github.com/peterbourgon/g2s v0.0.0-20140925154142-ec76db4c1ac1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
@@ -45,7 +44,9 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.4
 	github.com/xtaci/kcp-go v5.4.20+incompatible
 	github.com/xtaci/lossyconn v0.0.0-20200209145036-adba10fffc37 // indirect
-	go.opencensus.io v0.22.2
+	go.opentelemetry.io/otel v1.3.0
+	go.opentelemetry.io/otel/internal/metric v0.26.0 // indirect
+	go.opentelemetry.io/otel/trace v1.3.0
 	golang.org/x/net v0.0.0-20210428140749-89ef3d95e781
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/grpc/examples v0.0.0-20210823233914-c361e9ea1646 // indirect
