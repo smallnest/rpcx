@@ -115,7 +115,7 @@ func NewServer(options ...OptionFn) *Server {
 		doneChan:   make(chan struct{}),
 		serviceMap: make(map[string]*service),
 		router:     make(map[string]Handler),
-		AsyncWrite: true,
+		AsyncWrite: false, // 除非你想benchmark或者极致优化，否则建议你设置为false
 	}
 
 	for _, op := range options {
