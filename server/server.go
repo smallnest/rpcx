@@ -367,7 +367,7 @@ func (s *Server) serveConn(conn net.Conn) {
 
 	var writeCh chan *[]byte
 	if s.AsyncWrite {
-		writeCh = make(chan *[]byte, WriteChanSize)
+		writeCh = make(chan *[]byte, 1)
 		defer close(writeCh)
 		go s.serveAsyncWrite(conn, writeCh)
 	}
