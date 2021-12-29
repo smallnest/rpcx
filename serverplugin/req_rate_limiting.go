@@ -2,13 +2,11 @@ package serverplugin
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/juju/ratelimit"
+	"github.com/smallnest/rpcx/server"
 )
-
-var ErrReqReachLimit = errors.New("request reached rate limit")
 
 // ReqRateLimitingPlugin can limit requests per unit time
 type ReqRateLimitingPlugin struct {
@@ -41,5 +39,5 @@ func (plugin *ReqRateLimitingPlugin) PreReadRequest(ctx context.Context) error {
 	if count == 1 {
 		return nil
 	}
-	return ErrReqReachLimit
+	return server.ErrReqReachLimit
 }

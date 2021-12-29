@@ -27,7 +27,10 @@ import (
 )
 
 // ErrServerClosed is returned by the Server's Serve, ListenAndServe after a call to Shutdown or Close.
-var ErrServerClosed = errors.New("http: Server closed")
+var (
+	ErrServerClosed  = errors.New("http: Server closed")
+	ErrReqReachLimit = errors.New("request reached rate limit")
+)
 
 const (
 	// ReaderBuffsize is used for bufio reader.
@@ -392,6 +395,29 @@ func (s *Server) serveConn(conn net.Conn) {
 				log.Infof("client has closed this connection: %s", conn.RemoteAddr().String())
 			} else if strings.Contains(err.Error(), "use of closed network connection") {
 				log.Infof("rpcx: connection %s is closed", conn.RemoteAddr().String())
+			} else if errors.Is(err, ErrReqReachLimit) {
+				if !req.IsOneway() {
+					res := req.Clone()
+					res.SetMessageType(protocol.Response)
+					if len(res.Payload) > 1024 && req.CompressType() != protocol.None {
+						res.SetCompressType(req.CompressType())
+					}
+					handleError(res, err)
+					s.Plugins.DoPreWriteResponse(ctx, req, res, err)
+					data := res.EncodeSlicePointer()
+					if s.AsyncWrite {
+						writeCh <- data
+					} else {
+						conn.Write(*data)
+						protocol.PutData(data)
+					}
+					s.Plugins.DoPostWriteResponse(ctx, req, res, err)
+					protocol.FreeMsg(res)
+				} else {
+					s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
+				}
+				protocol.FreeMsg(req)
+				continue
 			} else {
 				log.Warnf("rpcx: failed to read request: %v", err)
 			}
