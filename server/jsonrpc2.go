@@ -157,7 +157,7 @@ type CORSOptions struct {
 	// as argument and returns true if allowed or false otherwise. If this option is
 	// set, the content of AllowedOrigins is ignored.
 	AllowOriginFunc func(origin string) bool
-	// AllowOriginFunc is a custom function to validate the origin. It takes the HTTP Request object and the origin as
+	// AllowOriginRequestFunc is a custom function to validate the origin. It takes the HTTP Request object and the origin as
 	// argument and returns true if allowed or false otherwise. If this option is set, the content of `AllowedOrigins`
 	// and `AllowOriginFunc` is ignored.
 	AllowOriginRequestFunc func(r *http.Request, origin string) bool
@@ -181,6 +181,9 @@ type CORSOptions struct {
 	// OptionsPassthrough instructs preflight to let other potential next handlers to
 	// process the OPTIONS method. Turn this on if your application handles OPTIONS.
 	OptionsPassthrough bool
+	// Provides a status code to use for successful OPTIONS requests.
+	// Default value is http.StatusNoContent (204).
+	OptionsSuccessStatus int
 	// Debugging flag adds additional output to debug server side CORS issues
 	Debug bool
 }
