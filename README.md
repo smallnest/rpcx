@@ -163,6 +163,13 @@ The below is a simple example.
 	err = xclient.Call(context.Background(), "Mul", args, reply, nil)
 ```
 
+## Contributors
+
+<a href="https://github.com/smallnest/rpcx/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=smallnest/rpcx" />
+</a>
+
+
 ## Contribute
 
 see [contributors](https://github.com/smallnest/rpcx/graphs/contributors).

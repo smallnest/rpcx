@@ -1,6 +1,8 @@
 # [rpcx](http://rpcx.io)
 
-## 1.7.0 (developing)
+## 1.8.0
+
+## 1.7.0
 - move etcd support to github.com/rpcxio/rpcx-etcd
 - Broken API: NewXXXDiscovery returns error instead of panic
 - support AdvertiseAddr in FileTransfer
