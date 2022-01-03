@@ -1,4 +1,4 @@
-- **stable branch**: v1.6.x
+- **stable branch**: v1.7.x
 - **development branch**: master
 
 <a href="https://rpcx.io/"><img height="160" src="http://rpcx.io/logos/rpcx-logo-text.png"></a>

@@ -1,6 +1,7 @@
 # [rpcx](http://rpcx.io)
 
 ## 1.8.0
+- supports distributed rate limiter based on go-redis/redis-rate
 
 ## 1.7.0
 - move etcd support to github.com/rpcxio/rpcx-etcd
