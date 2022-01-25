@@ -13,7 +13,10 @@ var (
 
 // ConsecCircuitBreaker is window sliding CircuitBreaker with failure threshold.
 type ConsecCircuitBreaker struct {
-	lastFailureTime  time.Time
+	// time.Time is a compund type, split into second and nano for using atomic.
+	lastFailureTimeSecond int64
+	lastFailureTimeNano   int32
+
 	failures         uint64
 	failureThreshold uint64
 	window           time.Duration
@@ -64,7 +67,8 @@ func (cb *ConsecCircuitBreaker) Call(fn func() error, d time.Duration) error {
 }
 
 func (cb *ConsecCircuitBreaker) ready() bool {
-	if time.Since(cb.lastFailureTime) > cb.window {
+	lastFailureTime := cb.loadLastFailureTime()
+	if time.Since(lastFailureTime) > cb.window {
 		cb.reset()
 		return true
 	}
@@ -78,7 +82,7 @@ func (cb *ConsecCircuitBreaker) success() {
 }
 func (cb *ConsecCircuitBreaker) fail() {
 	atomic.AddUint64(&cb.failures, 1)
-	cb.lastFailureTime = time.Now()
+	cb.updateLastFailureTime(time.Now())
 }
 
 func (cb *ConsecCircuitBreaker) Success() {
@@ -94,5 +98,15 @@ func (cb *ConsecCircuitBreaker) Ready() bool {
 
 func (cb *ConsecCircuitBreaker) reset() {
 	atomic.StoreUint64(&cb.failures, 0)
-	cb.lastFailureTime = time.Now()
+	cb.updateLastFailureTime(time.Now())
+}
+
+func (cb *ConsecCircuitBreaker) updateLastFailureTime(cur time.Time) {
+	atomic.StoreInt64(&cb.lastFailureTimeSecond, cur.Unix())
+	atomic.StoreInt32(&cb.lastFailureTimeNano, int32(cur.UnixNano()))
+}
+func (cb *ConsecCircuitBreaker) loadLastFailureTime() time.Time {
+	nano := atomic.LoadInt32(&cb.lastFailureTimeNano)
+	second := atomic.LoadInt64(&cb.lastFailureTimeSecond)
+	return time.Unix(second, int64(nano))
 }
