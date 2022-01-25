@@ -139,6 +139,10 @@ func newDirectHTTPConn(c *Client, network, address string) (net.Conn, error) {
 
 	_, err = io.WriteString(conn, "CONNECT "+path+" HTTP/1.0\n\n")
 	if err != nil {
+		// Dial() success but Write() failed here, close the successfully
+		// created conn before return.
+		conn.Close()
+
 		log.Errorf("failed to make CONNECT: %v", err)
 		return nil, err
 	}
