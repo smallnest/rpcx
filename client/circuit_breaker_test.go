@@ -2,6 +2,7 @@ package client
 
 import (
 	"errors"
+	"math/rand"
 	"testing"
 	"time"
 )
@@ -50,4 +51,25 @@ func TestConsecCircuitBreaker(t *testing.T) {
 
 	}
 
+}
+
+func TestCircuitBreakerRace(t *testing.T) {
+	cb := NewConsecCircuitBreaker(2, 50*time.Millisecond)
+	routines := 100
+	loop := 100000
+
+	fn := func() error {
+		if rand.Intn(2) == 1 {
+			return nil
+		}
+		return errors.New("test error")
+	}
+
+	for r := 0; r < routines; r++ {
+		go func() {
+			for i := 0; i < loop; i++ {
+				cb.Call(fn, 100*time.Millisecond)
+			}
+		}()
+	}
 }
