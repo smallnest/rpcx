@@ -56,6 +56,7 @@ func (p *ConsulRegisterPlugin) Start() error {
 		kv, err := libkv.NewStore(store.CONSUL, p.ConsulServers, p.Options)
 		if err != nil {
 			log.Errorf("cannot create consul registry: %v", err)
+			close(p.done)
 			return err
 		}
 		p.kv = kv
@@ -68,6 +69,7 @@ func (p *ConsulRegisterPlugin) Start() error {
 	err := p.kv.Put(p.BasePath, []byte("rpcx_path"), &store.WriteOptions{IsDir: true})
 	if err != nil {
 		log.Errorf("cannot create consul path %s: %v", p.BasePath, err)
+		close(p.done)
 		return err
 	}
 
