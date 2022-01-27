@@ -18,13 +18,7 @@ func GetFreePort() (port int, err error) {
 	}
 	defer listener.Close()
 
-	addr := listener.Addr().String()
-	_, portString, err := net.SplitHostPort(addr)
-	if err != nil {
-		return 0, err
-	}
-
-	return strconv.Atoi(portString)
+	return listener.Addr().(*net.TCPAddr).Port, nil
 }
 
 // ParseRpcxAddress parses rpcx address such as tcp@127.0.0.1:8972  quic@192.168.1.1:9981
