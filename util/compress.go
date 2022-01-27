@@ -27,22 +27,13 @@ func init() {
 
 // Unzip unzips data.
 func Unzip(data []byte) ([]byte, error) {
-	buf := spBuffer.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		spBuffer.Put(buf)
-	}()
-
-	_, err := buf.Write(data)
-	if err != nil {
-		return nil, err
-	}
+	buf := bytes.NewBuffer(data)
 
 	gr := spReader.Get().(*gzip.Reader)
 	defer func() {
 		spReader.Put(gr)
 	}()
-	err = gr.Reset(buf)
+	err := gr.Reset(buf)
 	if err != nil {
 		return nil, err
 	}
