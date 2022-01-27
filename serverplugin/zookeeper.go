@@ -269,7 +269,7 @@ func (p *ZooKeeperRegisterPlugin) Unregister(name string) (err error) {
 
 	err = p.kv.Delete(nodePath)
 	if err != nil {
-		log.Errorf("cannot create consul path %s: %v", nodePath, err)
+		log.Errorf("cannot remove zk path %s: %v", nodePath, err)
 		return err
 	}
 
