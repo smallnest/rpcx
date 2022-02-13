@@ -389,8 +389,6 @@ func (s *Server) serveConn(conn net.Conn) {
 
 		req, err := s.readRequest(ctx, r)
 		if err != nil {
-			protocol.FreeMsg(req)
-
 			if err == io.EOF {
 				log.Infof("client has closed this connection: %s", conn.RemoteAddr().String())
 			} else if strings.Contains(err.Error(), "use of closed network connection") {
@@ -421,6 +419,9 @@ func (s *Server) serveConn(conn net.Conn) {
 			} else {
 				log.Warnf("rpcx: failed to read request: %v", err)
 			}
+
+			protocol.FreeMsg(req)
+
 			return
 		}
 
