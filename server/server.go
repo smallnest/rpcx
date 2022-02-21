@@ -267,7 +267,7 @@ func (s *Server) serveListener(ln net.Listener) error {
 				continue
 			}
 
-			if e == cmux.ErrListenerClosed {
+			if errors.Is(, cmux.ErrListenerClosed)  {
 				return ErrServerClosed
 			}
 			return e
