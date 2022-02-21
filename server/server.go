@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/soheilhy/cmux"
 	"io"
 	"net"
 	"net/http"
@@ -266,7 +267,7 @@ func (s *Server) serveListener(ln net.Listener) error {
 				continue
 			}
 
-			if strings.Contains(e.Error(), "listener closed") {
+			if e == cmux.ErrListenerClosed {
 				return ErrServerClosed
 			}
 			return e
@@ -391,7 +392,7 @@ func (s *Server) serveConn(conn net.Conn) {
 		if err != nil {
 			if err == io.EOF {
 				log.Infof("client has closed this connection: %s", conn.RemoteAddr().String())
-			} else if strings.Contains(err.Error(), "use of closed network connection") {
+			} else if errors.Is(err, net.ErrClosed) {
 				log.Infof("rpcx: connection %s is closed", conn.RemoteAddr().String())
 			} else if errors.Is(err, ErrReqReachLimit) {
 				if !req.IsOneway() {
