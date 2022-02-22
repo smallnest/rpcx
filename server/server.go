@@ -267,7 +267,7 @@ func (s *Server) serveListener(ln net.Listener) error {
 				continue
 			}
 
-			if errors.Is(, cmux.ErrListenerClosed)  {
+			if errors.Is(e, cmux.ErrListenerClosed) {
 				return ErrServerClosed
 			}
 			return e
@@ -522,7 +522,6 @@ func (s *Server) serveConn(conn net.Conn) {
 				return
 			}
 
-			//
 			res, err := s.handleRequest(ctx, req)
 			if err != nil {
 				if s.HandleServiceError != nil {
