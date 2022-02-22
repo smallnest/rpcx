@@ -522,7 +522,6 @@ func (s *Server) serveConn(conn net.Conn) {
 				return
 			}
 
-			//
 			res, err := s.handleRequest(ctx, req)
 			if err != nil {
 				if s.HandleServiceError != nil {
