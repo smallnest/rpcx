@@ -124,13 +124,13 @@ func NewClient(option Option) *Client {
 }
 
 // RemoteAddr returns the remote address.
-func (c *Client) RemoteAddr() string {
-	return c.Conn.RemoteAddr().String()
+func (client *Client) RemoteAddr() string {
+	return client.Conn.RemoteAddr().String()
 }
 
 // GetConn returns the underlying conn.
-func (c *Client) GetConn() net.Conn {
-	return c.Conn
+func (client *Client) GetConn() net.Conn {
+	return client.Conn
 }
 
 // Option contains all options for creating clients.
