@@ -190,9 +190,9 @@ func newDirectWSConn(c *Client, network, address string) (net.Conn, error) {
 	}
 
 	if c.option.TLSConfig != nil {
-		config, err := websocket.NewConfig(url, origin)
-		if err != nil {
-			return nil, err
+		config, erri := websocket.NewConfig(url, origin)
+		if erri != nil {
+			return nil, erri
 		}
 		config.TlsConfig = c.option.TLSConfig
 		conn, err = websocket.DialConfig(config)
