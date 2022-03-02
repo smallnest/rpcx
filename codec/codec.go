@@ -9,8 +9,8 @@ import (
 	"reflect"
 
 	"github.com/apache/thrift/lib/go/thrift"
-	"github.com/tinylib/msgp/msgp"
 	proto "github.com/gogo/protobuf/proto"
+	"github.com/tinylib/msgp/msgp"
 	"github.com/vmihailenco/msgpack/v5"
 	pb "google.golang.org/protobuf/proto"
 )
@@ -117,7 +117,8 @@ type ThriftCodec struct{}
 
 func (c ThriftCodec) Encode(i interface{}) ([]byte, error) {
 	b := thrift.NewTMemoryBufferLen(1024)
-	p := thrift.NewTBinaryProtocolFactoryDefault().GetProtocol(b)
+	p := thrift.NewTBinaryProtocolFactoryConf(&thrift.TConfiguration{}).
+		GetProtocol(b)
 	t := &thrift.TSerializer{
 		Transport: b,
 		Protocol:  p,
@@ -131,7 +132,8 @@ func (c ThriftCodec) Encode(i interface{}) ([]byte, error) {
 
 func (c ThriftCodec) Decode(data []byte, i interface{}) error {
 	t := thrift.NewTMemoryBufferLen(1024)
-	p := thrift.NewTBinaryProtocolFactoryDefault().GetProtocol(t)
+	p := thrift.NewTBinaryProtocolFactoryConf(&thrift.TConfiguration{}).
+		GetProtocol(t)
 	d := &thrift.TDeserializer{
 		Transport: t,
 		Protocol:  p,
