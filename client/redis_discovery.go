@@ -96,12 +96,12 @@ func NewRedisDiscoveryStore(basePath string, kv store.Store) (*RedisDiscovery, e
 }
 
 // NewRedisDiscoveryTemplate returns a new RedisDiscovery template.
-func NewRedisDiscoveryTemplate(basePath string, etcdAddr []string, options *store.Config) (*RedisDiscovery, error) {
+func NewRedisDiscoveryTemplate(basePath string, redisAddr []string, options *store.Config) (*RedisDiscovery, error) {
 	if len(basePath) > 1 && strings.HasSuffix(basePath, "/") {
 		basePath = basePath[:len(basePath)-1]
 	}
 
-	kv, err := libkv.NewStore(store.REDIS, etcdAddr, options)
+	kv, err := libkv.NewStore(store.REDIS, redisAddr, options)
 	if err != nil {
 		log.Infof("cannot create store: %v", err)
 		return nil, err
