@@ -56,7 +56,7 @@ func NewMDNSRegisterPlugin(serviceAddress string, port int, m metrics.Registry, 
 	}
 }
 
-// Start starts to connect etcd cluster
+// Start starts the mdns loop.
 func (p *MDNSRegisterPlugin) Start() error {
 
 	if p.server == nil && len(p.Services) != 0 {

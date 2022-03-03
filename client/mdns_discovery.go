@@ -18,7 +18,7 @@ type serviceMeta struct {
 }
 
 // MDNSDiscovery is a mdns service discovery.
-// It always returns the registered servers in etcd.
+// It always returns the registered servers in mdns.
 type MDNSDiscovery struct {
 	Timeout       time.Duration
 	WatchInterval time.Duration
