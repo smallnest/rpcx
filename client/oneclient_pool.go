@@ -60,10 +60,10 @@ func NewBidirectionalOneClientPool(count int, failMode FailMode, selectMode Sele
 }
 
 // Auth sets s token for Authentication.
-func (c *OneClientPool) Auth(auth string) {
-	c.auth = auth
+func (p *OneClientPool) Auth(auth string) {
+	p.auth = auth
 
-	for _, v := range c.oneclients {
+	for _, v := range p.oneclients {
 		v.Auth(auth)
 	}
 }
@@ -79,7 +79,7 @@ func (p *OneClientPool) Get() *OneClient {
 
 // Close this pool.
 // Please make sure it won't be used any more.
-func (p OneClientPool) Close() {
+func (p *OneClientPool) Close() {
 	for _, c := range p.oneclients {
 		c.Close()
 	}
