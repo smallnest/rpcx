@@ -470,8 +470,8 @@ func (c *xClient) Go(ctx context.Context, serviceMethod string, args interface{}
 			metadata = map[string]string{}
 			ctx = context.WithValue(ctx, share.ReqMetaDataKey, metadata)
 		}
-		m := metadata.(map[string]string)
-		m[share.AuthKey] = c.auth
+// 		m := metadata.(map[string]string)
+// 		m[share.AuthKey] = c.auth
 	}
 
 	ctx = setServerTimeout(ctx)
@@ -502,8 +502,8 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 			metadata = map[string]string{}
 			ctx = context.WithValue(ctx, share.ReqMetaDataKey, metadata)
 		}
-		m := metadata.(map[string]string)
-		m[share.AuthKey] = c.auth
+// 		m := metadata.(map[string]string)
+// 		m[share.AuthKey] = c.auth
 	}
 	ctx = setServerTimeout(ctx)
 
