@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/soheilhy/cmux"
 	"io"
 	"net"
 	"net/http"
@@ -24,6 +23,7 @@ import (
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
+	"github.com/soheilhy/cmux"
 	"golang.org/x/net/websocket"
 )
 
@@ -199,7 +199,7 @@ func (s *Server) Serve(network, address string) (err error) {
 	var ln net.Listener
 	ln, err = s.makeListener(network, address)
 	if err != nil {
-		return
+		return err
 	}
 
 	if network == "http" {
