@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package server
@@ -15,10 +16,10 @@ func init() {
 
 func reuseportMakeListener(s *Server, address string) (ln net.Listener, err error) {
 	var network string
-	if validIP4(address) {
-		network = "tcp4"
-	} else {
+	if validIP6(address) {
 		network = "tcp6"
+	} else {
+		network = "tcp4"
 	}
 
 	return reuseport.NewReusablePortListener(network, address)
