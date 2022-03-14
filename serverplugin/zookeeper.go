@@ -209,6 +209,8 @@ func (p *ZooKeeperRegisterPlugin) Register(name string, rcvr interface{}, metada
 	}
 
 	nodePath = fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
+	// call delete first when previous is nil, if key exists already, create new key will fail.
+	p.kv.Delete(nodePath)
 	_, _, err = p.kv.AtomicPut(nodePath, []byte(metadata), nil, &store.WriteOptions{TTL: p.UpdateInterval * 2})
 	if err != nil {
 		log.Errorf("cannot create zk path %s: %v", nodePath, err)
