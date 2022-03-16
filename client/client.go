@@ -171,7 +171,7 @@ type Option struct {
 
 	// TCPKeepAlive, if it is zero we don't set keepalive
 	TCPKeepAlivePeriod time.Duration
-	// bidirectional model, if true serverMessageChan will block to wait message for consume. default false.
+	// bidirectional mode, if true serverMessageChan will block to wait message for consume. default false.
 	BidirectionalBlock bool
 }
 
