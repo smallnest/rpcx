@@ -50,6 +50,7 @@ var DefaultOption = Option{
 	BackupLatency:       10 * time.Millisecond,
 	MaxWaitForHeartbeat: 30 * time.Second,
 	TCPKeepAlivePeriod:  time.Minute,
+	BidirectionalBlock:  false,
 }
 
 // Breaker is a CircuitBreaker interface.
@@ -170,6 +171,8 @@ type Option struct {
 
 	// TCPKeepAlive, if it is zero we don't set keepalive
 	TCPKeepAlivePeriod time.Duration
+	// bidirectional model, if true serverMessageChan will block to wait message for consume. default false.
+	BidirectionalBlock bool
 }
 
 // Call represents an active RPC.
@@ -701,10 +704,16 @@ func (client *Client) handleServerRequest(msg *protocol.Message) {
 
 	serverMessageChan := client.ServerMessageChan
 	if serverMessageChan != nil {
-		select {
-		case serverMessageChan <- msg:
-		default:
-			log.Warnf("ServerMessageChan may be full so the server request %d has been dropped", msg.Seq())
+		if client.option.BidirectionalBlock {
+			select {
+			case serverMessageChan <- msg:
+			}
+		} else {
+			select {
+			case serverMessageChan <- msg:
+			default:
+				log.Warnf("ServerMessageChan may be full so the server request %d has been dropped", msg.Seq())
+			}
 		}
 	}
 }
