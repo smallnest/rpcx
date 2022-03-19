@@ -1197,7 +1197,7 @@ loop:
 			if n == 0 {
 				break loop
 			}
-			_, err = conn.Write(sendBuffer)
+			_, err = conn.Write(sendBuffer[:n])
 			if err != nil {
 				if err == io.EOF {
 					return nil
