@@ -17,8 +17,7 @@ func NewPluginContainer() PluginContainer {
 }
 
 // Plugin is the client plugin interface.
-type Plugin interface {
-}
+type Plugin interface{}
 
 // Add adds a plugin.
 func (p *pluginContainer) Add(plugin Plugin) {
@@ -87,6 +86,15 @@ func (p *pluginContainer) DoConnCreated(conn net.Conn) (net.Conn, error) {
 	return conn, nil
 }
 
+// DoConnCreated is called in case of client connection created.
+func (p *pluginContainer) DoConnCreateFailed(network, address string) {
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(ConnCreateFailedPlugin); ok {
+			plugin.ConnCreateFailed(network, address)
+		}
+	}
+}
+
 // DoClientConnected is called in case of connected.
 func (p *pluginContainer) DoClientConnected(conn net.Conn) (net.Conn, error) {
 	var err error
@@ -145,7 +153,7 @@ func (p *pluginContainer) DoClientAfterDecode(req *protocol.Message) error {
 
 // DoWrapSelect is called when select a node.
 func (p *pluginContainer) DoWrapSelect(fn SelectFunc) SelectFunc {
-	var rt = fn
+	rt := fn
 	for i := range p.plugins {
 		if pn, ok := p.plugins[i].(SelectNodePlugin); ok {
 			rt = pn.WrapSelect(rt)
@@ -169,6 +177,10 @@ type (
 	// ConnCreatedPlugin is invoked when the client connection has created.
 	ConnCreatedPlugin interface {
 		ConnCreated(net.Conn) (net.Conn, error)
+	}
+
+	ConnCreateFailedPlugin interface {
+		ConnCreateFailed(network, address string)
 	}
 
 	// ClientConnectedPlugin is invoked when the client has connected the server.
@@ -196,14 +208,15 @@ type (
 		WrapSelect(SelectFunc) SelectFunc
 	}
 
-	//PluginContainer represents a plugin container that defines all methods to manage plugins.
-	//And it also defines all extension points.
+	// PluginContainer represents a plugin container that defines all methods to manage plugins.
+	// And it also defines all extension points.
 	PluginContainer interface {
 		Add(plugin Plugin)
 		Remove(plugin Plugin)
 		All() []Plugin
 
 		DoConnCreated(net.Conn) (net.Conn, error)
+		DoConnCreateFailed(network, address string)
 		DoClientConnected(net.Conn) (net.Conn, error)
 		DoClientConnectionClose(net.Conn) error
 

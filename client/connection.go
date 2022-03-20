@@ -74,6 +74,10 @@ func (client *Client) Connect(network, address string) error {
 
 	}
 
+	if err != nil && client.Plugins != nil {
+		client.Plugins.DoConnCreateFailed(network, address)
+	}
+
 	return err
 }
 
