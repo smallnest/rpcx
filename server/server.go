@@ -943,6 +943,14 @@ func (s *Server) Shutdown(ctx context.Context) error {
 			s.Plugins.DoPostConnClose(conn)
 		}
 		s.closeDoneChanLocked()
+
+		// 主动注销注册的服务
+		if s.Plugins != nil {
+			for name := range s.serviceMap {
+				s.Plugins.DoUnregister(name)
+			}
+		}
+
 		s.mu.Unlock()
 
 		log.Info("shutdown end")
