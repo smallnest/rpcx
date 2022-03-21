@@ -251,6 +251,8 @@ func (s *Server) serveListener(ln net.Listener) error {
 			default:
 			}
 
+			<-s.doneChan
+
 			if ne, ok := e.(net.Error); ok && ne.Temporary() {
 				if tempDelay == 0 {
 					tempDelay = 5 * time.Millisecond
@@ -902,6 +904,14 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		log.Info("shutdown begin")
 
 		s.mu.Lock()
+
+		// 主动注销注册的服务
+		if s.Plugins != nil {
+			for name := range s.serviceMap {
+				s.Plugins.DoUnregister(name)
+			}
+		}
+
 		s.ln.Close()
 		for conn := range s.activeConn {
 			if tcpConn, ok := conn.(*net.TCPConn); ok {
@@ -941,13 +951,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 			s.Plugins.DoPostConnClose(conn)
 		}
 		s.closeDoneChanLocked()
-
-		// 主动注销注册的服务
-		if s.Plugins != nil {
-			for name := range s.serviceMap {
-				s.Plugins.DoUnregister(name)
-			}
-		}
 
 		s.mu.Unlock()
 
