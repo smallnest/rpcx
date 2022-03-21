@@ -88,7 +88,6 @@ type Server struct {
 	doneChan   chan struct{}
 	seq        uint64
 
-	drained    chan struct{}
 	inShutdown int32
 	onShutdown []func(s *Server)
 	onRestart  []func(s *Server)
@@ -120,7 +119,6 @@ func NewServer(options ...OptionFn) *Server {
 		doneChan:   make(chan struct{}),
 		serviceMap: make(map[string]*service),
 		router:     make(map[string]Handler),
-		drained:    make(chan struct{}),
 		AsyncWrite: false, // 除非你想做进一步的优化测试，否则建议你设置为false
 	}
 
