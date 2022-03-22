@@ -245,13 +245,10 @@ func (s *Server) serveListener(ln net.Listener) error {
 	for {
 		conn, e := ln.Accept()
 		if e != nil {
-			select {
-			case <-s.getDoneChan():
+			if s.isShutdown() {
+				<-s.doneChan
 				return ErrServerClosed
-			default:
 			}
-
-			<-s.doneChan
 
 			if ne, ok := e.(net.Error); ok && ne.Temporary() {
 				if tempDelay == 0 {
