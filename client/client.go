@@ -705,9 +705,7 @@ func (client *Client) handleServerRequest(msg *protocol.Message) {
 	serverMessageChan := client.ServerMessageChan
 	if serverMessageChan != nil {
 		if client.option.BidirectionalBlock {
-			select {
-			case serverMessageChan <- msg:
-			}
+			serverMessageChan <- msg
 		} else {
 			select {
 			case serverMessageChan <- msg:
