@@ -328,6 +328,24 @@ func (s *Server) serveByWS(ln net.Listener, rpcPath string) {
 	srv.Serve(ln)
 }
 
+func (s *Server) sendResponse(ctx *share.Context, conn net.Conn, writeCh chan *[]byte, err error, req, res *protocol.Message) {
+	if len(res.Payload) > 1024 && req.CompressType() != protocol.None {
+		res.SetCompressType(req.CompressType())
+	}
+	data := res.EncodeSlicePointer()
+	s.Plugins.DoPreWriteResponse(ctx, req, res, err)
+	if s.AsyncWrite {
+		writeCh <- data
+	} else {
+		if s.writeTimeout != 0 {
+			conn.SetWriteDeadline(time.Now().Add(s.writeTimeout))
+		}
+		conn.Write(*data)
+		protocol.PutData(data)
+	}
+	s.Plugins.DoPostWriteResponse(ctx, req, res, err)
+}
+
 func (s *Server) serveConn(conn net.Conn) {
 	if s.isShutdown() {
 		s.closeConn(conn)
@@ -402,19 +420,9 @@ func (s *Server) serveConn(conn net.Conn) {
 				if !req.IsOneway() {
 					res := req.Clone()
 					res.SetMessageType(protocol.Response)
-					if len(res.Payload) > 1024 && req.CompressType() != protocol.None {
-						res.SetCompressType(req.CompressType())
-					}
+
 					handleError(res, err)
-					s.Plugins.DoPreWriteResponse(ctx, req, res, err)
-					data := res.EncodeSlicePointer()
-					if s.AsyncWrite {
-						writeCh <- data
-					} else {
-						conn.Write(*data)
-						protocol.PutData(data)
-					}
-					s.Plugins.DoPostWriteResponse(ctx, req, res, err)
+					s.sendResponse(ctx, conn, writeCh, err, req, res)
 					protocol.FreeMsg(res)
 				} else {
 					s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
@@ -428,10 +436,6 @@ func (s *Server) serveConn(conn net.Conn) {
 			protocol.FreeMsg(req)
 
 			return
-		}
-
-		if s.writeTimeout != 0 {
-			conn.SetWriteDeadline(t0.Add(s.writeTimeout))
 		}
 
 		if share.Trace {
@@ -449,19 +453,8 @@ func (s *Server) serveConn(conn net.Conn) {
 			if !req.IsOneway() {
 				res := req.Clone()
 				res.SetMessageType(protocol.Response)
-				if len(res.Payload) > 1024 && req.CompressType() != protocol.None {
-					res.SetCompressType(req.CompressType())
-				}
 				handleError(res, err)
-				s.Plugins.DoPreWriteResponse(ctx, req, res, err)
-				data := res.EncodeSlicePointer()
-				if s.AsyncWrite {
-					writeCh <- data
-				} else {
-					conn.Write(*data)
-					protocol.PutData(data)
-				}
-				s.Plugins.DoPostWriteResponse(ctx, req, res, err)
+				s.sendResponse(ctx, conn, writeCh, err, req, res)
 				protocol.FreeMsg(res)
 			} else {
 				s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
@@ -493,6 +486,9 @@ func (s *Server) serveConn(conn net.Conn) {
 				if s.AsyncWrite {
 					writeCh <- data
 				} else {
+					if s.writeTimeout != 0 {
+						conn.SetWriteDeadline(time.Now().Add(s.writeTimeout))
+					}
 					conn.Write(*data)
 					protocol.PutData(data)
 				}
@@ -523,6 +519,7 @@ func (s *Server) serveConn(conn net.Conn) {
 					log.Errorf("[handler internal error]: servicepath: %s, servicemethod, err: %v", req.ServicePath, req.ServiceMethod, err)
 				}
 
+				protocol.FreeMsg(req)
 				return
 			}
 
@@ -535,7 +532,6 @@ func (s *Server) serveConn(conn net.Conn) {
 				}
 			}
 
-			s.Plugins.DoPreWriteResponse(ctx, req, res, err)
 			if !req.IsOneway() {
 				if len(resMetadata) > 0 { // copy meta in context to request
 					meta := res.Metadata
@@ -550,20 +546,8 @@ func (s *Server) serveConn(conn net.Conn) {
 					}
 				}
 
-				if len(res.Payload) > 1024 && req.CompressType() != protocol.None {
-					res.SetCompressType(req.CompressType())
-				}
-				data := res.EncodeSlicePointer()
-				if s.AsyncWrite {
-					writeCh <- data
-				} else {
-					conn.Write(*data)
-					protocol.PutData(data)
-				}
-
+				s.sendResponse(ctx, conn, writeCh, err, req, res)
 			}
-
-			s.Plugins.DoPostWriteResponse(ctx, req, res, err)
 
 			if share.Trace {
 				log.Debugf("server write response %+v for an request %+v from conn: %v", res, req, conn.RemoteAddr().String())
@@ -583,6 +567,9 @@ func (s *Server) serveAsyncWrite(conn net.Conn, writeCh chan *[]byte) {
 		case data := <-writeCh:
 			if data == nil {
 				return
+			}
+			if s.writeTimeout != 0 {
+				conn.SetWriteDeadline(time.Now().Add(s.writeTimeout))
 			}
 			conn.Write(*data)
 			protocol.PutData(data)
