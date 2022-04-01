@@ -344,7 +344,6 @@ func (s *Server) sendResponse(ctx *share.Context, conn net.Conn, writeCh chan *[
 		protocol.PutData(data)
 	}
 	s.Plugins.DoPostWriteResponse(ctx, req, res, err)
-	protocol.FreeMsg(res)
 }
 
 func (s *Server) serveConn(conn net.Conn) {
@@ -424,6 +423,7 @@ func (s *Server) serveConn(conn net.Conn) {
 
 					handleError(res, err)
 					s.sendResponse(ctx, conn, writeCh, err, req, res)
+					protocol.FreeMsg(res)
 				} else {
 					s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
 				}
@@ -455,6 +455,7 @@ func (s *Server) serveConn(conn net.Conn) {
 				res.SetMessageType(protocol.Response)
 				handleError(res, err)
 				s.sendResponse(ctx, conn, writeCh, err, req, res)
+				protocol.FreeMsg(res)
 			} else {
 				s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
 			}
@@ -518,6 +519,7 @@ func (s *Server) serveConn(conn net.Conn) {
 					log.Errorf("[handler internal error]: servicepath: %s, servicemethod, err: %v", req.ServicePath, req.ServiceMethod, err)
 				}
 
+				protocol.FreeMsg(req)
 				return
 			}
 
