@@ -149,7 +149,9 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 	}
 	err = s.Plugins.DoPostReadRequest(ctx, req, nil)
 	if err != nil {
+		s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
 		http.Error(w, err.Error(), 500)
+		s.Plugins.DoPostWriteResponse(ctx, req, req.Clone(), err)
 		return
 	}
 
