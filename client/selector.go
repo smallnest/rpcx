@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/edwingeng/doublejump"
@@ -239,6 +240,7 @@ func createGeoServer(servers map[string]string) []*geoServer {
 type consistentHashSelector struct {
 	h       *doublejump.Hash
 	servers []string
+	rwlock  sync.RWMutex
 }
 
 func newConsistentHashSelector(servers map[string]string) Selector {
@@ -260,12 +262,17 @@ func (s consistentHashSelector) Select(ctx context.Context, servicePath, service
 	}
 
 	key := genKey(servicePath, serviceMethod, args)
+	s.rwlock.RLock()
 	selected, _ := s.h.Get(key).(string)
+	s.rwlock.RUnlock()
 	return selected
 }
 
 func (s *consistentHashSelector) UpdateServer(servers map[string]string) {
 	ss := make([]string, 0, len(servers))
+
+	s.rwlock.Lock()
+	defer s.rwlock.Unlock()
 	for k := range servers {
 		s.h.Add(k)
 		ss = append(ss, k)
