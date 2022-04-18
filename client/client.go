@@ -298,7 +298,9 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 		if meta != nil && len(call.ResMetadata) > 0 {
 			resMeta := meta.(map[string]string)
 			for k, v := range call.ResMetadata {
+				client.mutex.Lock()
 				resMeta[k] = v
+				client.mutex.Unlock()
 			}
 
 			resMeta[share.ServerAddress] = client.Conn.RemoteAddr().String()
