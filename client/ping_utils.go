@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"strings"
+	"time"
 
 	ping "github.com/go-ping/ping"
 )
@@ -54,8 +55,17 @@ func Ping(host string) (rtt int, err error) {
 		return rtt, err
 	}
 	pinger.Count = 3
+	pinger.Timeout = 3 * time.Second
+	err = pinger.Run()
+	if err != nil {
+		return rtt, err
+	}
 	stats := pinger.Statistics()
-	rtt = int(stats.AvgRtt)
+	// ping failed
+	if len(stats.Rtts) == 0 {
+		return rtt, err
+	}
+	rtt = int(stats.AvgRtt) / 1e6
 
 	return rtt, err
 }
