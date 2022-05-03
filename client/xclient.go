@@ -849,6 +849,8 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 		m[share.AuthKey] = c.auth
 	}
 
+	var replyOnce sync.Once
+
 	ctx = setServerTimeout(ctx)
 	callPlugins := make([]RPCClient, 0, len(c.servers))
 	clients := make(map[string]RPCClient)
@@ -897,7 +899,9 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 			}
 
 			if e == nil && reply != nil && clonedReply != nil {
-				reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(clonedReply).Elem())
+				replyOnce.Do(func() {
+					reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(clonedReply).Elem())
+				})
 			}
 		}()
 	}
@@ -967,6 +971,8 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 		return ErrXClientNoServer
 	}
 
+	var replyOnce sync.Once
+
 	err := &ex.MultiError{}
 	l := len(clients)
 	done := make(chan bool, l)
@@ -981,7 +987,9 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 
 			e := c.wrapCall(ctx, client, serviceMethod, args, clonedReply)
 			if e == nil && reply != nil && clonedReply != nil {
-				reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(clonedReply).Elem())
+				replyOnce.Do(func() {
+					reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(clonedReply).Elem())
+				})
 			}
 			done <- (e == nil)
 			if e != nil {
@@ -1067,6 +1075,8 @@ func (c *xClient) Inform(ctx context.Context, serviceMethod string, args interfa
 	var receiptsLock sync.Mutex
 	var receipts []Receipt
 
+	var replyOnce sync.Once
+
 	err := &ex.MultiError{}
 	l := len(clients)
 	done := make(chan bool, l)
@@ -1088,7 +1098,9 @@ func (c *xClient) Inform(ctx context.Context, serviceMethod string, args interfa
 				err.Append(e)
 			}
 			if e == nil && reply != nil && clonedReply != nil {
-				reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(clonedReply).Elem())
+				replyOnce.Do(func() {
+					reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(clonedReply).Elem())
+				})
 			}
 
 			addr := k
