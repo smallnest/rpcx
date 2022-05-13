@@ -112,6 +112,9 @@ type Client struct {
 	shutdown     bool // server has told us to stop
 	pluginClosed bool // the plugin has been called
 
+	resMetaMutex sync.Mutex // ctx resMeta lock 
+
+	
 	Plugins PluginContainer
 
 	ServerMessageChan chan<- *protocol.Message
@@ -297,12 +300,12 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 		meta := ctx.Value(share.ResMetaDataKey)
 		if meta != nil && len(call.ResMetadata) > 0 {
 			resMeta := meta.(map[string]string)
-			client.mutex.Lock()
+			client.resMetaMutex.Lock()
 			for k, v := range call.ResMetadata {
 				resMeta[k] = v	
 			}
 			resMeta[share.ServerAddress] = client.Conn.RemoteAddr().String()
-			client.mutex.Unlock()
+			client.resMetaMutex.Unlock()
 		}
 	}
 
