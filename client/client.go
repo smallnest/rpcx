@@ -113,7 +113,6 @@ type Client struct {
 	pluginClosed bool // the plugin has been called
 
 	resMetaMutex sync.Mutex // ctx resMeta lock 
-
 	
 	Plugins PluginContainer
 
