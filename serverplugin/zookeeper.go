@@ -43,7 +43,9 @@ type ZooKeeperRegisterPlugin struct {
 	dying chan struct{}
 	done  chan struct{}
 }
+
 type ZooKeeperOpt func(o *ZooKeeperRegisterPlugin)
+
 
 func WithZKServersAddress(zkServers []string) ZooKeeperOpt {
 	return func(o *ZooKeeperRegisterPlugin) {
