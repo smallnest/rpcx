@@ -43,6 +43,46 @@ type ZooKeeperRegisterPlugin struct {
 	dying chan struct{}
 	done  chan struct{}
 }
+type ZooKeeperOpt func(o *ZooKeeperRegisterPlugin)
+
+func WithZKServersAddress(zkServers []string) ZooKeeperOpt {
+	return func(o *ZooKeeperRegisterPlugin) {
+		o.ZooKeeperServers = zkServers
+	}
+}
+func WithZKServiceAddress(serviceAddress string) ZooKeeperOpt {
+	return func(o *ZooKeeperRegisterPlugin) {
+		o.ServiceAddress = serviceAddress
+	}
+}
+
+func WithZKBasePath(basePath string) ZooKeeperOpt {
+	return func(o *ZooKeeperRegisterPlugin) {
+		o.BasePath = basePath
+	}
+}
+func WithZKMetrics(me metrics.Registry) ZooKeeperOpt {
+	return func(o *ZooKeeperRegisterPlugin) {
+		o.Metrics = me
+	}
+}
+func WithZkUpdateInterval(updateInterval time.Duration) ZooKeeperOpt {
+	return func(o *ZooKeeperRegisterPlugin) {
+		o.UpdateInterval = updateInterval
+	}
+}
+func WithZkOptions(Options *store.Config) ZooKeeperOpt {
+	return func(o *ZooKeeperRegisterPlugin) {
+		o.Options = Options
+	}
+}
+func NewZooKeeperRegisterPlugin(opts ...ZooKeeperOpt) *ZooKeeperRegisterPlugin {
+	zp := &ZooKeeperRegisterPlugin{}
+	for _, v := range opts {
+		v(zp)
+	}
+	return zp
+}
 
 // Start starts to connect zookeeper cluster
 func (p *ZooKeeperRegisterPlugin) Start() error {
