@@ -23,6 +23,14 @@ func NewContext(ctx context.Context) *Context {
 	}
 }
 
+func (c *Context) Lock() {
+	c.tagsLock.Lock()
+}
+
+func (c *Context) Unlock() {
+	c.tagsLock.Unlock()
+}
+
 func (c *Context) Value(key interface{}) interface{} {
 	c.tagsLock.Lock()
 	defer c.tagsLock.Unlock()

@@ -297,11 +297,21 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 		meta := ctx.Value(share.ResMetaDataKey)
 		if meta != nil && len(call.ResMetadata) > 0 {
 			resMeta := meta.(map[string]string)
-			for k, v := range call.ResMetadata {
-				resMeta[k] = v
-			}
+			locker, ok := ctx.(sync.Locker)
+			if ok {
+				locker.Lock()
+				for k, v := range call.ResMetadata {
+					resMeta[k] = v
+				}
+				resMeta[share.ServerAddress] = client.Conn.RemoteAddr().String()
+				locker.Unlock()
 
-			resMeta[share.ServerAddress] = client.Conn.RemoteAddr().String()
+			} else {
+				for k, v := range call.ResMetadata {
+					resMeta[k] = v
+				}
+				resMeta[share.ServerAddress] = client.Conn.RemoteAddr().String()
+			}
 		}
 	}
 
