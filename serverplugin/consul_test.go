@@ -10,14 +10,13 @@ import (
 
 func TestConsulRegistry(t *testing.T) {
 	s := server.NewServer()
-
-	r := &ConsulRegisterPlugin{
-		ServiceAddress: "tcp@127.0.0.1:8972",
-		ConsulServers:  []string{"127.0.0.1:8500"},
-		BasePath:       "/rpcx_test",
-		Metrics:        metrics.NewRegistry(),
-		UpdateInterval: time.Minute,
-	}
+	r := NewConsulRegisterPlugin(
+		WithConsulServiceAddress("tcp@127.0.0.1:8972"),
+		WithConsulServers([]string{"127.0.0.1:8500"}),
+		WithConsulBasePath("/rpcx_test"),
+		WithConsulMetrics(metrics.NewRegistry()),
+		WithConsulUpdateInterval(time.Minute),
+	)
 	err := r.Start()
 	if err != nil {
 		return

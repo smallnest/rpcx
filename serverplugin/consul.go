@@ -43,6 +43,52 @@ type ConsulRegisterPlugin struct {
 	done  chan struct{}
 }
 
+type ConsulOpt func(*ConsulRegisterPlugin)
+
+func WithConsulServers(consulServers []string) ConsulOpt {
+	return func(o *ConsulRegisterPlugin) {
+		o.ConsulServers = consulServers
+	}
+}
+
+func WithConsulServiceAddress(serviceAddress string) ConsulOpt {
+	return func(o *ConsulRegisterPlugin) {
+		o.ServiceAddress = serviceAddress
+	}
+}
+
+func WithConsulBasePath(basePath string) ConsulOpt {
+	return func(o *ConsulRegisterPlugin) {
+		o.BasePath = basePath
+	}
+}
+
+func WithConsulMetrics(me metrics.Registry) ConsulOpt {
+	return func(o *ConsulRegisterPlugin) {
+		o.Metrics = me
+	}
+}
+
+func WithConsulUpdateInterval(updateInterval time.Duration) ConsulOpt {
+	return func(o *ConsulRegisterPlugin) {
+		o.UpdateInterval = updateInterval
+	}
+}
+
+func WithConsulOptions(options *store.Config) ConsulOpt {
+	return func(o *ConsulRegisterPlugin) {
+		o.Options = options
+	}
+}
+
+func NewConsulRegisterPlugin(o ...ConsulOpt) *ConsulRegisterPlugin {
+	consulPlugin := &ConsulRegisterPlugin{}
+	for _, v := range o {
+		v(consulPlugin)
+	}
+	return consulPlugin
+}
+
 // Start starts to connect consul cluster
 func (p *ConsulRegisterPlugin) Start() error {
 	if p.done == nil {

@@ -10,14 +10,12 @@ import (
 
 func TestZookeeperRegistry(t *testing.T) {
 	s := server.NewServer()
-
-	r := &ZooKeeperRegisterPlugin{
-		ServiceAddress:   "tcp@127.0.0.1:8972",
-		ZooKeeperServers: []string{"127.0.0.1:2181"},
-		BasePath:         "/rpcx_test",
-		Metrics:          metrics.NewRegistry(),
-		UpdateInterval:   time.Minute,
-	}
+	r := NewZooKeeperRegisterPlugin(
+		WithZKServiceAddress("tcp@127.0.0.1:8972"),
+		WithZKServersAddress([]string{"127.0.0.1:2181"}),
+		WithZKBasePath("rpcx_test"),
+		WithZKMetrics(metrics.NewRegistry()),
+		WithZkUpdateInterval(time.Minute))
 	err := r.Start()
 	if err != nil {
 		return
