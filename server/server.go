@@ -497,6 +497,9 @@ func (s *Server) serveConn(conn net.Conn) {
 			}
 
 			resMetadata := make(map[string]string)
+			if req.Metadata == nil {
+				req.Metadata = make(map[string]string)
+			}
 			ctx = share.WithLocalValue(share.WithLocalValue(ctx, share.ReqMetaDataKey, req.Metadata),
 				share.ResMetaDataKey, resMetadata)
 
