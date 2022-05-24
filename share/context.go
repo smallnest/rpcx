@@ -11,15 +11,18 @@ import (
 
 // Context is a rpcx customized Context that can contains multiple values.
 type Context struct {
-	tagsLock sync.Mutex
+	tagsLock *sync.Mutex
 	tags     map[interface{}]interface{}
 	context.Context
 }
 
 func NewContext(ctx context.Context) *Context {
+	tagsLock := &sync.Mutex{}
+	ctx = context.WithValue(ctx, ContextTagsLock, tagsLock)
 	return &Context{
-		Context: ctx,
-		tags:    make(map[interface{}]interface{}),
+		tagsLock: tagsLock,
+		Context:  ctx,
+		tags:     make(map[interface{}]interface{}),
 	}
 }
 

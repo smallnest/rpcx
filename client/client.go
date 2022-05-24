@@ -297,8 +297,9 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 		meta := ctx.Value(share.ResMetaDataKey)
 		if meta != nil && len(call.ResMetadata) > 0 {
 			resMeta := meta.(map[string]string)
-			locker, ok := ctx.(sync.Locker)
+			locker, ok := ctx.Value(share.ContextTagsLock).(*sync.Mutex)
 			if ok {
+
 				locker.Lock()
 				for k, v := range call.ResMetadata {
 					resMeta[k] = v

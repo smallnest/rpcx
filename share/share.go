@@ -23,6 +23,9 @@ const (
 
 	// StreamServiceName is name of the stream service.
 	StreamServiceName = "_streamservice"
+
+	// ContextTagsLock is name of the Context TagsLock.
+	ContextTagsLock = "_tagsLock"
 )
 
 // Trace is a flag to write a trace log or not.
