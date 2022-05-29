@@ -235,7 +235,7 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 		call.Metadata = meta.(map[string]string)
 	}
 
-	if _, ok := ctx.(*share.Context); !ok {
+	if !share.IsShareContext(ctx) {
 		ctx = share.NewContext(ctx)
 	}
 
@@ -349,7 +349,7 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 	}
 	r.Metadata = rmeta
 
-	if _, ok := ctx.(*share.Context); !ok {
+	if !share.IsShareContext(ctx) {
 		ctx = share.NewContext(ctx)
 	}
 

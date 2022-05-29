@@ -22,7 +22,7 @@ func NewContext(ctx context.Context) *Context {
 	return &Context{
 		tagsLock: tagsLock,
 		Context:  ctx,
-		tags:     make(map[interface{}]interface{}),
+		tags:     map[interface{}]interface{}{isShareContext: true},
 	}
 }
 
@@ -99,4 +99,10 @@ func WithLocalValue(ctx *Context, key, val interface{}) *Context {
 
 	ctx.tags[key] = val
 	return ctx
+}
+
+// IsShareContext checks whether a context is share.Context.
+func IsShareContext(ctx context.Context) bool {
+	ok := ctx.Value(isShareContext)
+	return ok != nil
 }
