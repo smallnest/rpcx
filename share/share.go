@@ -27,7 +27,7 @@ const (
 	// ContextTagsLock is name of the Context TagsLock.
 	ContextTagsLock = "_tagsLock"
 	// _isShareContext indicates this context is share.Contex.
-	IsShareContext = "_isShareContext"
+	isShareContext = "_isShareContext"
 )
 
 // Trace is a flag to write a trace log or not.
