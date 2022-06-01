@@ -36,7 +36,8 @@ func (s *metadataSupplier) Keys() []string {
 }
 
 func Inject(ctx context.Context, propagators propagation.TextMapPropagator) {
-	meta := ctx.Value(ReqMetaDataKey)
+	value := ctx.Value(ReqMetaDataKey)
+	meta, _ := value.(map[string]string)
 	if meta == nil {
 		meta = make(map[string]string)
 		if rpcxContext, ok := ctx.(*Context); ok {
@@ -45,7 +46,7 @@ func Inject(ctx context.Context, propagators propagation.TextMapPropagator) {
 	}
 
 	propagators.Inject(ctx, &metadataSupplier{
-		metadata: meta.(map[string]string),
+		metadata: meta,
 	})
 }
 
