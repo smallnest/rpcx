@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -10,8 +11,10 @@ import (
 	"strings"
 
 	"github.com/rs/cors"
+	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
+	"github.com/soheilhy/cmux"
 )
 
 func (s *Server) jsonrpcHandler(w http.ResponseWriter, r *http.Request) {
@@ -231,11 +234,22 @@ func (s *Server) startJSONRPC2(ln net.Listener) {
 		c := cors.New(opt)
 		mux := c.Handler(newServer)
 		srv.Handler = mux
-
-		go srv.Serve(ln)
 	} else {
 		srv.Handler = newServer
-		go srv.Serve(ln)
 	}
 
+	s.jsonrpcHTTPServer = &srv
+	if err := s.jsonrpcHTTPServer.Serve(ln); !errors.Is(err, cmux.ErrServerClosed) {
+		log.Errorf("error in JSONRPC server: %T %s", err, err)
+	}
+}
+
+func (s *Server) closeJSONRPC2(ctx context.Context) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.jsonrpcHTTPServer != nil {
+		return s.jsonrpcHTTPServer.Shutdown(ctx)
+	}
+
+	return nil
 }

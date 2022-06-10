@@ -74,6 +74,7 @@ type Server struct {
 	readTimeout        time.Duration
 	writeTimeout       time.Duration
 	gatewayHTTPServer  *http.Server
+	jsonrpcHTTPServer  *http.Server
 	DisableHTTPGateway bool // should disable http invoke or not.
 	DisableJSONRPC     bool // should disable json rpc or not.
 	AsyncWrite         bool // set true if your server only serves few clients
@@ -928,6 +929,14 @@ func (s *Server) Shutdown(ctx context.Context) error {
 				log.Warnf("failed to close gateway: %v", err)
 			} else {
 				log.Info("closed gateway")
+			}
+		}
+
+		if s.jsonrpcHTTPServer != nil {
+			if err := s.closeJSONRPC2(ctx); err != nil {
+				log.Warnf("failed to close JSONRPC: %v", err)
+			} else {
+				log.Info("closed JSONRPC")
 			}
 		}
 
