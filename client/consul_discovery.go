@@ -156,7 +156,7 @@ func (d *ConsulDiscovery) watch() {
 
 		retry := d.RetriesAfterWatchFailed
 		for d.RetriesAfterWatchFailed < 0 || retry >= 0 {
-			c, err = d.kv.WatchTree(d.basePath, nil)
+			c, err = d.kv.WatchTree(d.basePath, d.stopCh)
 			if err != nil {
 				if d.RetriesAfterWatchFailed > 0 {
 					retry--
