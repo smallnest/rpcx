@@ -366,13 +366,13 @@ func encodeMetadata(m map[string]string, bb *bytebufferpool.ByteBuffer) {
 	if len(m) == 0 {
 		return
 	}
-	d := poolUint32Data.Get().(*[]byte)
+	d := make([]byte, 4)
 	for k, v := range m {
-		binary.BigEndian.PutUint32(*d, uint32(len(k)))
-		bb.Write(*d)
+		binary.BigEndian.PutUint32(d, uint32(len(k)))
+		bb.Write(d)
 		bb.Write(util.StringToSliceByte(k))
-		binary.BigEndian.PutUint32(*d, uint32(len(v)))
-		bb.Write(*d)
+		binary.BigEndian.PutUint32(d, uint32(len(v)))
+		bb.Write(d)
 		bb.Write(util.StringToSliceByte(v))
 	}
 }
@@ -434,14 +434,12 @@ func (m *Message) Decode(r io.Reader) error {
 	}
 
 	// total
-	lenData := poolUint32Data.Get().(*[]byte)
-	_, err = io.ReadFull(r, *lenData)
+	lenData := make([]byte, 4)
+	_, err = io.ReadFull(r, lenData)
 	if err != nil {
-		poolUint32Data.Put(lenData)
 		return err
 	}
-	l := binary.BigEndian.Uint32(*lenData)
-	poolUint32Data.Put(lenData)
+	l := binary.BigEndian.Uint32(lenData)
 
 	if MaxMessageLength > 0 && int(l) > MaxMessageLength {
 		return ErrMessageTooLong
