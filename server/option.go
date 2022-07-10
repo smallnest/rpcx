@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"time"
 
-	"github.com/alphadose/itogami"
+	"github.com/alitto/pond"
 )
 
 // OptionFn configures options of server.
@@ -41,11 +41,9 @@ func WithWriteTimeout(writeTimeout time.Duration) OptionFn {
 }
 
 // WithPool sets goroutine pool.
-func WithPool(n uint64) OptionFn {
+func WithPool(maxWorkers, maxCapacity int, options ...pond.Option) OptionFn {
 	return func(s *Server) {
-		if n > 0 {
-			s.pool = itogami.NewPool(n)
-		}
+		s.pool = pond.New(maxWorkers, maxCapacity, options...)
 	}
 }
 

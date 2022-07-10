@@ -20,7 +20,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/alphadose/itogami"
+	"github.com/alitto/pond"
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
@@ -79,7 +79,7 @@ type Server struct {
 	DisableHTTPGateway bool // should disable http invoke or not.
 	DisableJSONRPC     bool // should disable json rpc or not.
 	AsyncWrite         bool // set true if your server only serves few clients
-	pool               *itogami.Pool
+	pool               *pond.WorkerPool
 
 	serviceMapMu sync.RWMutex
 	serviceMap   map[string]*service
@@ -892,6 +892,11 @@ func (s *Server) Close() error {
 		s.Plugins.DoPostConnClose(c)
 	}
 	s.closeDoneChanLocked()
+
+	if s.pool != nil {
+		s.pool.StopAndWaitFor(10 * time.Second)
+	}
+
 	return err
 }
 

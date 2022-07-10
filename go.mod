@@ -44,6 +44,7 @@ require (
 )
 
 require (
+	github.com/alitto/pond v1.8.0 // indirect
 	github.com/alphadose/itogami v0.0.0-20220705100819-134f04183c42 // indirect
 	github.com/armon/go-metrics v0.4.0 // indirect
 	github.com/cenk/backoff v2.2.1+incompatible // indirect
