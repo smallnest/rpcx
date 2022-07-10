@@ -399,6 +399,7 @@ func (s *Server) serveConn(conn net.Conn) {
 		go s.serveAsyncWrite(conn, writeCh)
 	}
 
+	// read requests and handle it
 	for {
 		if s.isShutdown() {
 			return
@@ -409,32 +410,38 @@ func (s *Server) serveConn(conn net.Conn) {
 			conn.SetReadDeadline(t0.Add(s.readTimeout))
 		}
 
+		// create a rpcx Context
 		ctx := share.WithValue(context.Background(), RemoteConnContextKey, conn)
 
+		// read a request from the underlying connection
 		req, err := s.readRequest(ctx, r)
 		if err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				log.Infof("client has closed this connection: %s", conn.RemoteAddr().String())
 			} else if errors.Is(err, net.ErrClosed) {
 				log.Infof("rpcx: connection %s is closed", conn.RemoteAddr().String())
 			} else if errors.Is(err, ErrReqReachLimit) {
-				if !req.IsOneway() {
+				if !req.IsOneway() { // return a error response
 					res := req.Clone()
 					res.SetMessageType(protocol.Response)
 
 					handleError(res, err)
 					s.sendResponse(ctx, conn, writeCh, err, req, res)
 					protocol.FreeMsg(res)
-				} else {
+				} else { // Oneway and only call the plugins
 					s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
 				}
 				protocol.FreeMsg(req)
 				continue
-			} else {
+			} else { // wrong data
 				log.Warnf("rpcx: failed to read request: %v", err)
 			}
 
 			protocol.FreeMsg(req)
+
+			if s.HandleServiceError != nil {
+				s.HandleServiceError(err)
+			}
 
 			return
 		}
@@ -451,16 +458,22 @@ func (s *Server) serveConn(conn net.Conn) {
 		}
 
 		if err != nil {
-			if !req.IsOneway() {
+			if !req.IsOneway() { // return a error response
 				res := req.Clone()
 				res.SetMessageType(protocol.Response)
 				handleError(res, err)
 				s.sendResponse(ctx, conn, writeCh, err, req, res)
+
 				protocol.FreeMsg(res)
 			} else {
 				s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
 			}
 			protocol.FreeMsg(req)
+
+			if s.HandleServiceError != nil {
+				s.HandleServiceError(err)
+			}
+
 			// auth failed, closed the connection
 			if closeConn {
 				log.Infof("auth failed for conn %s: %v", conn.RemoteAddr().String(), err)
@@ -469,32 +482,37 @@ func (s *Server) serveConn(conn net.Conn) {
 			continue
 		}
 
+		// handle biz logics
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
-					// maybe panic because the writeCh is closed.
-					log.Errorf("failed to handle request: %v", r)
+					log.Errorf("failed to handle the request: %v", r)
 				}
 			}()
 
 			atomic.AddInt32(&s.handlerMsgNum, 1)
 			defer atomic.AddInt32(&s.handlerMsgNum, -1)
 
+			// 心跳请求，直接处理返回
 			if req.IsHeartbeat() {
 				s.Plugins.DoHeartbeatRequest(ctx, req)
 				req.SetMessageType(protocol.Response)
 				data := req.EncodeSlicePointer()
-				if s.AsyncWrite {
-					writeCh <- data
-				} else {
-					if s.writeTimeout != 0 {
-						conn.SetWriteDeadline(time.Now().Add(s.writeTimeout))
-					}
-					conn.Write(*data)
-					protocol.PutData(data)
+
+				if s.writeTimeout != 0 {
+					conn.SetWriteDeadline(time.Now().Add(s.writeTimeout))
 				}
+				conn.Write(*data)
+
+				protocol.PutData(data)
 				protocol.FreeMsg(req)
+
 				return
+			}
+
+			cancelFunc := parseServerTimeout(ctx, req)
+			if cancelFunc != nil {
+				defer cancelFunc()
 			}
 
 			resMetadata := make(map[string]string)
@@ -504,18 +522,13 @@ func (s *Server) serveConn(conn net.Conn) {
 			ctx = share.WithLocalValue(share.WithLocalValue(ctx, share.ReqMetaDataKey, req.Metadata),
 				share.ResMetaDataKey, resMetadata)
 
-			cancelFunc := parseServerTimeout(ctx, req)
-			if cancelFunc != nil {
-				defer cancelFunc()
-			}
-
 			s.Plugins.DoPreHandleRequest(ctx, req)
 
 			if share.Trace {
 				log.Debugf("server handle request %+v from conn: %v", req, conn.RemoteAddr().String())
 			}
 
-			// first use handler
+			// use handlers first
 			if handler, ok := s.router[req.ServicePath+"."+req.ServiceMethod]; ok {
 				sctx := NewContext(ctx, conn, req, writeCh)
 				err := handler(sctx)
@@ -537,7 +550,7 @@ func (s *Server) serveConn(conn net.Conn) {
 			}
 
 			if !req.IsOneway() {
-				if len(resMetadata) > 0 { // copy meta in context to request
+				if len(resMetadata) > 0 { // copy meta in context to responses
 					meta := res.Metadata
 					if meta == nil {
 						res.Metadata = resMetadata

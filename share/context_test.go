@@ -32,10 +32,10 @@ func TestWithValue(t *testing.T) {
 }
 
 func TestWithLocalValue(t *testing.T) {
-	var c Context
+	var c = NewContext(context.Background())
 	c.SetValue("key", "value")
 
-	ctx := WithLocalValue(&c, "MagicNumber", "42")
+	ctx := WithLocalValue(c, "MagicNumber", "42")
 
 	assert.Equal(t, "value", ctx.tags["key"])
 	assert.Equal(t, "42", ctx.tags["MagicNumber"])
