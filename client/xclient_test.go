@@ -110,7 +110,7 @@ func TestXClient_filterByStateAndGroup(t *testing.T) {
 }
 
 func TestUncoverError(t *testing.T) {
-	var e error = ServiceError("error")
+	var e error = strErr("error")
 	if uncoverError(e) {
 		t.Fatalf("expect false but get true")
 	}

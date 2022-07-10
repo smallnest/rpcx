@@ -34,10 +34,14 @@ const (
 )
 
 // ServiceError is an error from server.
-type ServiceError string
+type ServiceError error
 
-func (e ServiceError) Error() string {
-	return string(e)
+var ClientErrorFunc func(e string) ServiceError
+
+type strErr string
+
+func (s strErr) Error() string {
+	return string(s)
 }
 
 // DefaultOption is a common option configuration for client.
@@ -621,7 +625,14 @@ func (client *Client) input() {
 			// We've got an error response. Give this to the request
 			if len(res.Metadata) > 0 {
 				call.ResMetadata = res.Metadata
-				call.Error = ServiceError(res.Metadata[protocol.ServiceError])
+
+				// convert server error to a customized error, which implements ServerError interface
+				if ClientErrorFunc != nil {
+					call.Error = ClientErrorFunc(res.Metadata[protocol.ServiceError])
+				} else {
+					call.Error = strErr(res.Metadata[protocol.ServiceError])
+				}
+
 			}
 
 			if call.Raw {
@@ -643,11 +654,11 @@ func (client *Client) input() {
 				if len(data) > 0 {
 					codec := share.Codecs[res.SerializeType()]
 					if codec == nil {
-						call.Error = ServiceError(ErrUnsupportedCodec.Error())
+						call.Error = strErr(ErrUnsupportedCodec.Error())
 					} else {
 						err = codec.Decode(data, call.Reply)
 						if err != nil {
-							call.Error = ServiceError(err.Error())
+							call.Error = strErr(err.Error())
 						}
 					}
 				}

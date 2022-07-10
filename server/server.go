@@ -108,7 +108,12 @@ type Server struct {
 
 	handlerMsgNum int32
 
+	// HandleServiceError is used to get all service errors. You can use it write logs or others.
 	HandleServiceError func(error)
+
+	// ServerErrorFunc is a customized error handlers and you can use it to return customized error strings to clients.
+	// If not set, it use err.Error()
+	ServerErrorFunc func(res *protocol.Message, err error) string
 }
 
 // NewServer returns a server.
@@ -425,7 +430,7 @@ func (s *Server) serveConn(conn net.Conn) {
 					res := req.Clone()
 					res.SetMessageType(protocol.Response)
 
-					handleError(res, err)
+					s.handleError(res, err)
 					s.sendResponse(ctx, conn, writeCh, err, req, res)
 					protocol.FreeMsg(res)
 				} else { // Oneway and only call the plugins
@@ -461,7 +466,7 @@ func (s *Server) serveConn(conn net.Conn) {
 			if !req.IsOneway() { // return a error response
 				res := req.Clone()
 				res.SetMessageType(protocol.Response)
-				handleError(res, err)
+				s.handleError(res, err)
 				s.sendResponse(ctx, conn, writeCh, err, req, res)
 
 				protocol.FreeMsg(res)
@@ -672,7 +677,7 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	s.serviceMapMu.RUnlock()
 	if service == nil {
 		err = errors.New("rpcx: can't find service " + serviceName)
-		return handleError(res, err)
+		return s.handleError(res, err)
 	}
 	mtype := service.method[methodName]
 	if mtype == nil {
@@ -680,7 +685,7 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 			return s.handleRequestForFunction(ctx, req)
 		}
 		err = errors.New("rpcx: can't find method " + methodName)
-		return handleError(res, err)
+		return s.handleError(res, err)
 	}
 
 	// get a argv object from object pool
@@ -689,12 +694,12 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	codec := share.Codecs[req.SerializeType()]
 	if codec == nil {
 		err = fmt.Errorf("can not find codec for %d", req.SerializeType())
-		return handleError(res, err)
+		return s.handleError(res, err)
 	}
 
 	err = codec.Decode(req.Payload, argv)
 	if err != nil {
-		return handleError(res, err)
+		return s.handleError(res, err)
 	}
 
 	// and get a reply object from object pool
@@ -704,7 +709,7 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	if err != nil {
 		// return reply to object pool
 		reflectTypePools.Put(mtype.ReplyType, replyv)
-		return handleError(res, err)
+		return s.handleError(res, err)
 	}
 
 	if mtype.ArgType.Kind() != reflect.Ptr {
@@ -726,11 +731,11 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 			// return reply to object pool
 			reflectTypePools.Put(mtype.ReplyType, replyv)
 			if err != nil {
-				return handleError(res, err)
+				return s.handleError(res, err)
 			}
 			res.Payload = data
 		}
-		return handleError(res, err)
+		return s.handleError(res, err)
 	}
 
 	if !req.IsOneway() {
@@ -738,7 +743,7 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		// return reply to object pool
 		reflectTypePools.Put(mtype.ReplyType, replyv)
 		if err != nil {
-			return handleError(res, err)
+			return s.handleError(res, err)
 		}
 		res.Payload = data
 	} else if replyv != nil {
@@ -764,12 +769,12 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 	s.serviceMapMu.RUnlock()
 	if service == nil {
 		err = errors.New("rpcx: can't find service  for func raw function")
-		return handleError(res, err)
+		return s.handleError(res, err)
 	}
 	mtype := service.function[methodName]
 	if mtype == nil {
 		err = errors.New("rpcx: can't find method " + methodName)
-		return handleError(res, err)
+		return s.handleError(res, err)
 	}
 
 	argv := reflectTypePools.Get(mtype.ArgType)
@@ -777,12 +782,12 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 	codec := share.Codecs[req.SerializeType()]
 	if codec == nil {
 		err = fmt.Errorf("can not find codec for %d", req.SerializeType())
-		return handleError(res, err)
+		return s.handleError(res, err)
 	}
 
 	err = codec.Decode(req.Payload, argv)
 	if err != nil {
-		return handleError(res, err)
+		return s.handleError(res, err)
 	}
 
 	replyv := reflectTypePools.Get(mtype.ReplyType)
@@ -797,14 +802,14 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 
 	if err != nil {
 		reflectTypePools.Put(mtype.ReplyType, replyv)
-		return handleError(res, err)
+		return s.handleError(res, err)
 	}
 
 	if !req.IsOneway() {
 		data, err := codec.Encode(replyv)
 		reflectTypePools.Put(mtype.ReplyType, replyv)
 		if err != nil {
-			return handleError(res, err)
+			return s.handleError(res, err)
 		}
 		res.Payload = data
 	} else if replyv != nil {
@@ -814,12 +819,18 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 	return res, nil
 }
 
-func handleError(res *protocol.Message, err error) (*protocol.Message, error) {
+func (s *Server) handleError(res *protocol.Message, err error) (*protocol.Message, error) {
 	res.SetMessageStatusType(protocol.Error)
 	if res.Metadata == nil {
 		res.Metadata = make(map[string]string)
 	}
-	res.Metadata[protocol.ServiceError] = err.Error()
+
+	if s.ServerErrorFunc != nil {
+		res.Metadata[protocol.ServiceError] = s.ServerErrorFunc(res, err)
+	} else {
+		res.Metadata[protocol.ServiceError] = err.Error()
+	}
+
 	return res, err
 }
 
