@@ -1,3 +1,4 @@
+//go:build quic
 // +build quic
 
 package client
@@ -21,9 +22,7 @@ func newDirectQuicConn(c *Client, network, address string) (net.Conn, error) {
 		tlsConf.NextProtos = []string{"rpcx"}
 	}
 
-	quicConfig := &quic.Config{
-		KeepAlive: c.option.Heartbeat,
-	}
+	quicConfig := &quic.Config{}
 
 	return quick.Dial(address, tlsConf, quicConfig)
 }

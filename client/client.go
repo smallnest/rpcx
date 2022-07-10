@@ -34,7 +34,10 @@ const (
 )
 
 // ServiceError is an error from server.
-type ServiceError error
+type ServiceError interface {
+	Error() string
+	IsServiceError() bool
+}
 
 var ClientErrorFunc func(e string) ServiceError
 
@@ -42,6 +45,10 @@ type strErr string
 
 func (s strErr) Error() string {
 	return string(s)
+}
+
+func (s strErr) IsServiceError() bool {
+	return true
 }
 
 // DefaultOption is a common option configuration for client.

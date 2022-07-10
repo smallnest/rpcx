@@ -3,6 +3,8 @@ package server
 import (
 	"crypto/tls"
 	"time"
+
+	"github.com/alphadose/itogami"
 )
 
 // OptionFn configures options of server.
@@ -35,5 +37,21 @@ func WithReadTimeout(readTimeout time.Duration) OptionFn {
 func WithWriteTimeout(writeTimeout time.Duration) OptionFn {
 	return func(s *Server) {
 		s.writeTimeout = writeTimeout
+	}
+}
+
+// WithPool sets goroutine pool.
+func WithPool(n uint64) OptionFn {
+	return func(s *Server) {
+		if n > 0 {
+			s.pool = itogami.NewPool(n)
+		}
+	}
+}
+
+// WithAsyncWrite sets AsyncWrite to true.
+func WithAsyncWrite() OptionFn {
+	return func(s *Server) {
+		s.AsyncWrite = true
 	}
 }
