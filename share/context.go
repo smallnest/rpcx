@@ -82,7 +82,7 @@ func WithValue(parent context.Context, key, val interface{}) *Context {
 
 	tags := make(map[interface{}]interface{})
 	tags[key] = val
-	return &Context{Context: parent, tags: tags}
+	return &Context{Context: parent, tags: tags, tagsLock: &sync.Mutex{}}
 }
 
 func WithLocalValue(ctx *Context, key, val interface{}) *Context {

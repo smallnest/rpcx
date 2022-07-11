@@ -502,7 +502,10 @@ func (s *Server) serveConn(conn net.Conn) {
 func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, conn net.Conn, writeCh chan *[]byte) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Errorf("failed to handle the request: %v", r)
+			buf := make([]byte, 1024)
+			buf = buf[:runtime.Stack(buf, true)]
+
+			log.Errorf("failed to handle the request: %v， stacks: %s", r, buf)
 		}
 	}()
 
