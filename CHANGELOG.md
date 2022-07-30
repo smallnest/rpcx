@@ -6,6 +6,9 @@
 - move consul plugin to https://github.com/smallnest/rpcx-consul
 - move redis plugin to https://github.com/smallnest/rpcx-redis
 - move influxd/opentelemetry plugin to https://github.com/smallnest/rpcx-plugins
+- you can write customized error, for example `{"code": 500, err: "internal error"}`
+- server support the work pool by `WithPool`
+- support to write services like `go std http router` style without reflect
 - improve performance
 
 

@@ -9,7 +9,14 @@ Official site: [http://rpcx.io](http://rpcx.io/)
 
 **Notice: etcd**
 
-`etcd` plugin has been moved to [rpcx-etcd](https://github.com/rpcxio/rpcx-etcd)
+since rpcx 1.7.6, some plugins have been moved to the independent pproject:
+
+- `etcd` plugin has been moved to [rpcx-etcd](https://github.com/rpcxio/rpcx-etcd)
+- `zookeeper` plugin has been moved to [rpcx-zookeeper](https://github.com/rpcxio/rpcx-zookeeper)
+- `consul` plugin has been moved to [rpcx-consul](https://github.com/rpcxio/rpcx-consul)
+- `redis` plugin has been moved to [rpcx-redis](https://github.com/rpcxio/rpcx-redis)
+- `influxdb` plugin has been moved to [rpcx-plugins](https://github.com/rpcxio/rpcx-plugins)
+- `opentelemetry` plugin has been moved to [rpcx-plugins](https://github.com/rpcxio/rpcx-plugins)
 
 ## Announce
 
@@ -24,7 +31,7 @@ you can use other programming languages besides Go to access rpcx services.
 - **rpcx-gateway**: You can write clients in any programming languages to call rpcx services via [rpcx-gateway](https://github.com/rpcxio/rpcx-gateway)
 - **http invoke**: you can use the same http requests to access rpcx gateway
 - **Java Services/Clients**: You can use [rpcx-java](https://github.com/smallnest/rpcx-java) to implement/access rpcx servies via raw protocol.
-
+- **rust rpcx**: You can write rpcx services in rust by [rpcx-rs]()
 
 > If you can write Go methods, you can also write rpc services. It is so easy to write rpc applications with rpcx.
 
@@ -44,8 +51,6 @@ go get -v -tags "quic kcp" github.com/smallnest/rpcx/...
 **_tags_**:
 - **quic**: support quic transport
 - **kcp**: support kcp transport
-- **ping**: support network quality load balancing
-- **utp**: support utp transport
 
 ## Which companies are using rpcx?
 
