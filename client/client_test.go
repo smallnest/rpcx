@@ -41,8 +41,6 @@ func (t *Arith) ThriftMul(ctx context.Context, args *testutils.ThriftArgs_, repl
 }
 
 func TestClient_IT(t *testing.T) {
-	server.UsePool = false
-
 	s := server.NewServer()
 	_ = s.RegisterName("Arith", new(Arith), "")
 	_ = s.RegisterName("PBArith", new(PBArith), "")
