@@ -159,7 +159,7 @@ func TestHandler(t *testing.T) {
 	}
 
 	go func() {
-		ctx := NewContext(share.NewContext(context.Background()), serverConn, req, nil)
+		ctx := NewContext(share.NewContext(context.Background()), serverConn, req, false)
 		err = handler(ctx)
 		assert.NoError(t, err)
 

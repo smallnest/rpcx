@@ -9,6 +9,7 @@
 - you can write customized error, for example `{"code": 500, err: "internal error"}`
 - server support the work pool by `WithPool`
 - support to write services like `go std http router` style without reflect
+- simplify async write for service
 - improve performance
 
 

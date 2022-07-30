@@ -40,8 +40,8 @@ const (
 	// WriterBuffsize is used for bufio writer.
 	WriterBuffsize = 1024
 
-	// WriteChanSize is used for response.
-	WriteChanSize = 1024 * 1024
+	// // WriteChanSize is used for response.
+	// WriteChanSize = 1024 * 1024
 )
 
 // contextKey is a value for use with context.WithValue. It's used as
@@ -76,8 +76,8 @@ type Server struct {
 	writeTimeout       time.Duration
 	gatewayHTTPServer  *http.Server
 	jsonrpcHTTPServer  *http.Server
-	DisableHTTPGateway bool // should disable http invoke or not.
-	DisableJSONRPC     bool // should disable json rpc or not.
+	DisableHTTPGateway bool // disable http invoke or not.
+	DisableJSONRPC     bool // disable json rpc or not.
 	AsyncWrite         bool // set true if your server only serves few clients
 	pool               *pond.WorkerPool
 
@@ -336,14 +336,31 @@ func (s *Server) serveByWS(ln net.Listener, rpcPath string) {
 	srv.Serve(ln)
 }
 
-func (s *Server) sendResponse(ctx *share.Context, conn net.Conn, writeCh chan *[]byte, err error, req, res *protocol.Message) {
+func (s *Server) sendResponse(ctx *share.Context, conn net.Conn, err error, req, res *protocol.Message) {
 	if len(res.Payload) > 1024 && req.CompressType() != protocol.None {
 		res.SetCompressType(req.CompressType())
 	}
 	data := res.EncodeSlicePointer()
 	s.Plugins.DoPreWriteResponse(ctx, req, res, err)
 	if s.AsyncWrite {
-		writeCh <- data
+		if s.pool != nil {
+			s.pool.Submit(func() {
+				if s.writeTimeout != 0 {
+					conn.SetWriteDeadline(time.Now().Add(s.writeTimeout))
+				}
+				conn.Write(*data)
+				protocol.PutData(data)
+			})
+		} else {
+			go func() {
+				if s.writeTimeout != 0 {
+					conn.SetWriteDeadline(time.Now().Add(s.writeTimeout))
+				}
+				conn.Write(*data)
+				protocol.PutData(data)
+			}()
+		}
+
 	} else {
 		if s.writeTimeout != 0 {
 			conn.SetWriteDeadline(time.Now().Add(s.writeTimeout))
@@ -399,13 +416,6 @@ func (s *Server) serveConn(conn net.Conn) {
 
 	r := bufio.NewReaderSize(conn, ReaderBuffsize)
 
-	var writeCh chan *[]byte
-	if s.AsyncWrite {
-		writeCh = make(chan *[]byte, 1)
-		defer close(writeCh)
-		go s.serveAsyncWrite(conn, writeCh)
-	}
-
 	// read requests and handle it
 	for {
 		if s.isShutdown() {
@@ -433,7 +443,7 @@ func (s *Server) serveConn(conn net.Conn) {
 					res.SetMessageType(protocol.Response)
 
 					s.handleError(res, err)
-					s.sendResponse(ctx, conn, writeCh, err, req, res)
+					s.sendResponse(ctx, conn, err, req, res)
 					protocol.FreeMsg(res)
 				} else { // Oneway and only call the plugins
 					s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
@@ -469,7 +479,7 @@ func (s *Server) serveConn(conn net.Conn) {
 				res := req.Clone()
 				res.SetMessageType(protocol.Response)
 				s.handleError(res, err)
-				s.sendResponse(ctx, conn, writeCh, err, req, res)
+				s.sendResponse(ctx, conn, err, req, res)
 
 				protocol.FreeMsg(res)
 			} else {
@@ -491,15 +501,15 @@ func (s *Server) serveConn(conn net.Conn) {
 
 		if s.pool != nil {
 			s.pool.Submit(func() {
-				s.processOneRequest(ctx, req, conn, writeCh)
+				s.processOneRequest(ctx, req, conn)
 			})
 		} else {
-			go s.processOneRequest(ctx, req, conn, writeCh)
+			go s.processOneRequest(ctx, req, conn)
 		}
 	}
 }
 
-func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, conn net.Conn, writeCh chan *[]byte) {
+func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, conn net.Conn) {
 	defer func() {
 		if r := recover(); r != nil {
 			buf := make([]byte, 1024)
@@ -549,7 +559,7 @@ func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, co
 
 	// use handlers first
 	if handler, ok := s.router[req.ServicePath+"."+req.ServiceMethod]; ok {
-		sctx := NewContext(ctx, conn, req, writeCh)
+		sctx := NewContext(ctx, conn, req, s.AsyncWrite)
 		err := handler(sctx)
 		if err != nil {
 			log.Errorf("[handler internal error]: servicepath: %s, servicemethod, err: %v", req.ServicePath, req.ServiceMethod, err)
@@ -582,7 +592,7 @@ func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, co
 			}
 		}
 
-		s.sendResponse(ctx, conn, writeCh, err, req, res)
+		s.sendResponse(ctx, conn, err, req, res)
 	}
 
 	if share.Trace {
@@ -591,24 +601,6 @@ func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, co
 
 	protocol.FreeMsg(req)
 	protocol.FreeMsg(res)
-}
-
-func (s *Server) serveAsyncWrite(conn net.Conn, writeCh chan *[]byte) {
-	for {
-		select {
-		case <-s.doneChan:
-			return
-		case data := <-writeCh:
-			if data == nil {
-				return
-			}
-			if s.writeTimeout != 0 {
-				conn.SetWriteDeadline(time.Now().Add(s.writeTimeout))
-			}
-			conn.Write(*data)
-			protocol.PutData(data)
-		}
-	}
 }
 
 func parseServerTimeout(ctx *share.Context, req *protocol.Message) context.CancelFunc {
