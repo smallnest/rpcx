@@ -2,6 +2,12 @@
 
 ## 1.8.0
 - supports distributed rate limiter based on go-redis/redis-rate
+- move zookeeper plugin to https://github.com/smallnest/rpcx-zookeepr
+- move consul plugin to https://github.com/smallnest/rpcx-consul
+- move redis plugin to https://github.com/smallnest/rpcx-redis
+- move influxd/opentelemetry plugin to https://github.com/smallnest/rpcx-plugins
+- improve performance
+
 
 ## 1.7.0
 - move etcd support to github.com/rpcxio/rpcx-etcd
