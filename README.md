@@ -9,7 +9,7 @@ Official site: [http://rpcx.io](http://rpcx.io/)
 
 **Notice: etcd**
 
-since rpcx 1.7.6, some plugins have been moved to the independent pproject:
+since rpcx 1.7.6, some plugins have been moved to the independent project:
 
 - `etcd` plugin has been moved to [rpcx-etcd](https://github.com/rpcxio/rpcx-etcd)
 - `zookeeper` plugin has been moved to [rpcx-zookeeper](https://github.com/rpcxio/rpcx-zookeeper)
