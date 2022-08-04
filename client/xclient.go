@@ -722,7 +722,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 	switch c.failMode {
 	case Failtry:
 		retries := c.option.Retries
-		for retries >= 0 {
+		for retries > 0 {
 			retries--
 			if client != nil {
 				m, payload, err := c.wrapSendRaw(ctx, client, r)
@@ -749,7 +749,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		return nil, nil, err
 	case Failover:
 		retries := c.option.Retries
-		for retries >= 0 {
+		for retries > 0 {
 			retries--
 			if client != nil {
 				m, payload, err := c.wrapSendRaw(ctx, client, r)
