@@ -31,7 +31,7 @@ you can use other programming languages besides Go to access rpcx services.
 - **rpcx-gateway**: You can write clients in any programming languages to call rpcx services via [rpcx-gateway](https://github.com/rpcxio/rpcx-gateway)
 - **http invoke**: you can use the same http requests to access rpcx gateway
 - **Java Services/Clients**: You can use [rpcx-java](https://github.com/smallnest/rpcx-java) to implement/access rpcx servies via raw protocol.
-- **rust rpcx**: You can write rpcx services in rust by [rpcx-rs]()
+- **rust rpcx**: You can write rpcx services in rust by [rpcx-rs](https://github.com/smallnest/rpcx-rs)
 
 > If you can write Go methods, you can also write rpc services. It is so easy to write rpc applications with rpcx.
 
