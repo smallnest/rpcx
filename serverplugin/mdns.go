@@ -1,8 +1,10 @@
 package serverplugin
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/url"
 	"os"
@@ -54,7 +56,7 @@ func NewMDNSRegisterPlugin(serviceAddress string, port int, m metrics.Registry, 
 	}
 }
 
-// Start starts to connect etcd cluster
+// Start starts the mdns loop.
 func (p *MDNSRegisterPlugin) Start() error {
 
 	if p.server == nil && len(p.Services) != 0 {
@@ -62,8 +64,10 @@ func (p *MDNSRegisterPlugin) Start() error {
 	}
 
 	if p.UpdateInterval > 0 {
-		ticker := time.NewTicker(p.UpdateInterval)
 		go func() {
+			ticker := time.NewTicker(p.UpdateInterval)
+
+			defer ticker.Stop()
 			defer p.server.Shutdown()
 
 			for {
@@ -77,16 +81,18 @@ func (p *MDNSRegisterPlugin) Start() error {
 						break
 					}
 
-					var data []byte
+					extra := make(map[string]string)
 					if p.Metrics != nil {
-						clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
-						data = []byte(strconv.FormatInt(clientMeter.Count()/60, 10))
+						extra["calls"] = fmt.Sprintf("%.2f", metrics.GetOrRegisterMeter("calls", p.Metrics).RateMean())
+						extra["connections"] = fmt.Sprintf("%.2f", metrics.GetOrRegisterMeter("connections", p.Metrics).RateMean())
 					}
 
 					//set this same metrics for all services at this server
 					for _, sm := range p.Services {
 						v, _ := url.ParseQuery(string(sm.Meta))
-						v.Set("tps", string(data))
+						for key, value := range extra {
+							v.Set(key, value)
+						}
 						sm.Meta = v.Encode()
 					}
 					ss, _ := json.Marshal(p.Services)
@@ -102,10 +108,11 @@ func (p *MDNSRegisterPlugin) Start() error {
 
 // Stop unregister all services.
 func (p *MDNSRegisterPlugin) Stop() error {
+	p.server.Shutdown()
+
 	close(p.dying)
 	<-p.done
 
-	p.server.Shutdown()
 	return nil
 }
 func (p *MDNSRegisterPlugin) initMDNS() {
@@ -137,16 +144,23 @@ func (p *MDNSRegisterPlugin) initMDNS() {
 // HandleConnAccept handles connections from clients
 func (p *MDNSRegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
 	if p.Metrics != nil {
-		clientMeter := metrics.GetOrRegisterMeter("clientMeter", p.Metrics)
-		clientMeter.Mark(1)
+		metrics.GetOrRegisterMeter("connections", p.Metrics).Mark(1)
 	}
 	return conn, true
+}
+
+// PreCall handles rpc call from clients
+func (p *MDNSRegisterPlugin) PreCall(_ context.Context, _, _ string, args interface{}) (interface{}, error) {
+	if p.Metrics != nil {
+		metrics.GetOrRegisterMeter("calls", p.Metrics).Mark(1)
+	}
+	return args, nil
 }
 
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
 func (p *MDNSRegisterPlugin) Register(name string, rcvr interface{}, metadata string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return
 	}
@@ -170,8 +184,16 @@ func (p *MDNSRegisterPlugin) Register(name string, rcvr interface{}, metadata st
 	return
 }
 
+func (p *MDNSRegisterPlugin) RegisterFunction(serviceName, fname string, fn interface{}, metadata string) error {
+	return p.Register(serviceName, fn, metadata)
+}
+
 func (p *MDNSRegisterPlugin) Unregister(name string) (err error) {
-	if "" == strings.TrimSpace(name) {
+	if len(p.Services) == 0 {
+		return nil
+	}
+
+	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return
 	}

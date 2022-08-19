@@ -1,23 +1,19 @@
 language: go
 
-
 go:
-  - tip
-  - 1.10.x
-  - 1.12.x
+  - 1.17.x
 
 env:
   - GO111MODULE=on
 
 before_script:
   - rm -f go.sum
-  - curl -fL https://getgoc.gocenter.io | sh
-  - ./goc get -tags "reuseport quic kcp zookeeper etcd consul ping rudp utp" -v github.com/smallnest/rpcx/...
+  - go get -tags "quic kcp" -v github.com/smallnest/rpcx@HEAD
   - go get github.com/mattn/goveralls
 
 script:
- - go test -v ./...
- - goveralls -service=travis-ci
+  - go test -v ./...
+  - goveralls -service=travis-ci
 
 notifications:
   email:

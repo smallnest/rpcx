@@ -1,3 +1,4 @@
+//go:build !quic
 // +build !quic
 
 package client

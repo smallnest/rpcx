@@ -30,7 +30,7 @@ const (
 	CodeInternalJSONRPCError = -32603
 )
 
-// jsonrpcRequest is sent to a server to represent a Call or Notify operaton.
+// jsonrpcRequest is sent to a server to represent a Call or Notify operation.
 type jsonrpcRequest struct {
 	// VersionTag is always encoded as the string "2.0"
 	VersionTag VersionTag `json:"jsonrpc"`
@@ -105,7 +105,7 @@ func (VersionTag) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	if version != "2.0" {
-		return fmt.Errorf("Invalid RPC version %v", version)
+		return fmt.Errorf("invalid RPC version %v", version)
 	}
 	return nil
 }

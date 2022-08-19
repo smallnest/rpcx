@@ -17,15 +17,14 @@ func NewPluginContainer() PluginContainer {
 }
 
 // Plugin is the client plugin interface.
-type Plugin interface {
-}
+type Plugin interface{}
 
 // Add adds a plugin.
 func (p *pluginContainer) Add(plugin Plugin) {
 	p.plugins = append(p.plugins, plugin)
 }
 
-// Remove removes a plugin by it's name.
+// Remove removes a plugin by its name.
 func (p *pluginContainer) Remove(plugin Plugin) {
 	if p.plugins == nil {
 		return
@@ -50,7 +49,7 @@ func (p *pluginContainer) All() []Plugin {
 func (p *pluginContainer) DoPreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PreCallPlugin); ok {
-			err := plugin.DoPreCall(ctx, servicePath, serviceMethod, args)
+			err := plugin.PreCall(ctx, servicePath, serviceMethod, args)
 			if err != nil {
 				return err
 			}
@@ -64,7 +63,7 @@ func (p *pluginContainer) DoPreCall(ctx context.Context, servicePath, serviceMet
 func (p *pluginContainer) DoPostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PostCallPlugin); ok {
-			err = plugin.DoPostCall(ctx, servicePath, serviceMethod, args, reply, err)
+			err = plugin.PostCall(ctx, servicePath, serviceMethod, args, reply, err)
 			if err != nil {
 				return err
 			}
@@ -73,107 +72,160 @@ func (p *pluginContainer) DoPostCall(ctx context.Context, servicePath, serviceMe
 	return nil
 }
 
+// DoConnCreated is called in case of client connection created.
+func (p *pluginContainer) DoConnCreated(conn net.Conn) (net.Conn, error) {
+	var err error
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(ConnCreatedPlugin); ok {
+			conn, err = plugin.ConnCreated(conn)
+			if err != nil {
+				return conn, err
+			}
+		}
+	}
+	return conn, nil
+}
+
+// DoConnCreated is called in case of client connection created.
+func (p *pluginContainer) DoConnCreateFailed(network, address string) {
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(ConnCreateFailedPlugin); ok {
+			plugin.ConnCreateFailed(network, address)
+		}
+	}
+}
+
 // DoClientConnected is called in case of connected.
-func (p *pluginContainer) DoClientConnected(conn net.Conn) (net.Conn, bool) {
-	var handleOk bool
+func (p *pluginContainer) DoClientConnected(conn net.Conn) (net.Conn, error) {
+	var err error
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(ClientConnectedPlugin); ok {
-			conn, handleOk = plugin.ClientConnected(conn)
-			if !handleOk {
-				return conn, false
+			conn, err = plugin.ClientConnected(conn)
+			if err != nil {
+				return conn, err
 			}
 		}
 	}
-	return conn, true
+	return conn, nil
 }
 
 // DoClientConnected is called in case of connected.
-func (p *pluginContainer) DoClientConnectionClose(conn net.Conn) bool {
-	var handleOk bool
+func (p *pluginContainer) DoClientConnectionClose(conn net.Conn) error {
+	var err error
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(ClientConnectionClosePlugin); ok {
-			handleOk = plugin.ClientConnectionClose(conn)
-			if !handleOk {
-				return false
+			err = plugin.ClientConnectionClose(conn)
+			if err != nil {
+				return err
 			}
 		}
 	}
-	return true
+	return err
 }
 
 // DoClientBeforeEncode is called when requests are encoded and sent.
-func (p *pluginContainer) DoClientBeforeEncode(req *protocol.Message) bool {
-	var handleOk bool
+func (p *pluginContainer) DoClientBeforeEncode(req *protocol.Message) error {
+	var err error
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(ClientBeforeEncodePlugin); ok {
-			handleOk = plugin.ClientBeforeEncode(req)
-			if !handleOk {
-				return false
+			err = plugin.ClientBeforeEncode(req)
+			if err != nil {
+				return err
 			}
 		}
 	}
-	return true
+	return nil
 }
 
 // DoClientBeforeEncode is called when requests are encoded and sent.
-func (p *pluginContainer) DoClientAfterDecode(req *protocol.Message) bool {
-	var handleOk bool
+func (p *pluginContainer) DoClientAfterDecode(req *protocol.Message) error {
+	var err error
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(ClientAfterDecodePlugin); ok {
-			handleOk = plugin.ClientAfterDecode(req)
-			if !handleOk {
-				return false
+			err = plugin.ClientAfterDecode(req)
+			if err != nil {
+				return err
 			}
 		}
 	}
-	return true
+	return nil
+}
+
+// DoWrapSelect is called when select a node.
+func (p *pluginContainer) DoWrapSelect(fn SelectFunc) SelectFunc {
+	rt := fn
+	for i := range p.plugins {
+		if pn, ok := p.plugins[i].(SelectNodePlugin); ok {
+			rt = pn.WrapSelect(rt)
+		}
+	}
+
+	return rt
 }
 
 type (
 	// PreCallPlugin is invoked before the client calls a server.
 	PreCallPlugin interface {
-		DoPreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error
+		PreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error
 	}
 
 	// PostCallPlugin is invoked after the client calls a server.
 	PostCallPlugin interface {
-		DoPostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error
+		PostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error
+	}
+
+	// ConnCreatedPlugin is invoked when the client connection has created.
+	ConnCreatedPlugin interface {
+		ConnCreated(net.Conn) (net.Conn, error)
+	}
+
+	ConnCreateFailedPlugin interface {
+		ConnCreateFailed(network, address string)
 	}
 
 	// ClientConnectedPlugin is invoked when the client has connected the server.
 	ClientConnectedPlugin interface {
-		ClientConnected(net.Conn) (net.Conn, bool)
+		ClientConnected(net.Conn) (net.Conn, error)
 	}
 
 	// ClientConnectionClosePlugin is invoked when the connection is closing.
 	ClientConnectionClosePlugin interface {
-		ClientConnectionClose(net.Conn) bool
+		ClientConnectionClose(net.Conn) error
 	}
 
 	// ClientBeforeEncodePlugin is invoked when the message is encoded and sent.
 	ClientBeforeEncodePlugin interface {
-		ClientBeforeEncode(*protocol.Message) bool
+		ClientBeforeEncode(*protocol.Message) error
 	}
 
 	// ClientAfterDecodePlugin is invoked when the message is decoded.
 	ClientAfterDecodePlugin interface {
-		ClientAfterDecode(*protocol.Message) bool
+		ClientAfterDecode(*protocol.Message) error
 	}
 
-	//PluginContainer represents a plugin container that defines all methods to manage plugins.
-	//And it also defines all extension points.
+	// SelectNodePlugin can interrupt selecting of xclient and add customized logics such as skipping some nodes.
+	SelectNodePlugin interface {
+		WrapSelect(SelectFunc) SelectFunc
+	}
+
+	// PluginContainer represents a plugin container that defines all methods to manage plugins.
+	// And it also defines all extension points.
 	PluginContainer interface {
 		Add(plugin Plugin)
 		Remove(plugin Plugin)
 		All() []Plugin
 
-		DoClientConnected(net.Conn) (net.Conn, bool)
-		DoClientConnectionClose(net.Conn) bool
+		DoConnCreated(net.Conn) (net.Conn, error)
+		DoConnCreateFailed(network, address string)
+		DoClientConnected(net.Conn) (net.Conn, error)
+		DoClientConnectionClose(net.Conn) error
 
 		DoPreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error
 		DoPostCall(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, err error) error
 
-		DoClientBeforeEncode(*protocol.Message) bool
-		DoClientAfterDecode(*protocol.Message) bool
+		DoClientBeforeEncode(*protocol.Message) error
+		DoClientAfterDecode(*protocol.Message) error
+
+		DoWrapSelect(SelectFunc) SelectFunc
 	}
 )

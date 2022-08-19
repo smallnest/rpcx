@@ -12,7 +12,7 @@ import (
 
 const (
 	XVersion           = "X-RPCX-Version"
-	XMessageType       = "X-RPCX-MesssageType"
+	XMessageType       = "X-RPCX-MessageType"
 	XHeartbeat         = "X-RPCX-Heartbeat"
 	XOneway            = "X-RPCX-Oneway"
 	XMessageStatusType = "X-RPCX-MessageStatusType"
@@ -81,15 +81,9 @@ func HTTPRequest2RpcxRequest(r *http.Request) (*protocol.Message, error) {
 		req.Metadata[share.AuthKey] = auth
 	}
 
-	sp := h.Get(XServicePath)
-	if sp != "" {
-		req.ServicePath = sp
-	}
+	req.ServicePath = h.Get(XServicePath)
 
-	sm := h.Get(XServiceMethod)
-	if sm != "" {
-		req.ServiceMethod = sm
-	}
+	req.ServiceMethod = h.Get(XServiceMethod)
 
 	payload, err := ioutil.ReadAll(r.Body)
 	if err != nil {

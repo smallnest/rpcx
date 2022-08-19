@@ -14,9 +14,11 @@ import (
 	"github.com/valyala/fastrand"
 )
 
+type SelectFunc func(ctx context.Context, servicePath, serviceMethod string, args interface{}) string
+
 // Selector defines selector that selects one service from candidates.
 type Selector interface {
-	Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string
+	Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string // SelectFunc
 	UpdateServer(servers map[string]string)
 }
 
@@ -45,7 +47,7 @@ type randomSelector struct {
 }
 
 func newRandomSelector(servers map[string]string) Selector {
-	var ss = make([]string, 0, len(servers))
+	ss := make([]string, 0, len(servers))
 	for k := range servers {
 		ss = append(ss, k)
 	}
@@ -63,7 +65,7 @@ func (s randomSelector) Select(ctx context.Context, servicePath, serviceMethod s
 }
 
 func (s *randomSelector) UpdateServer(servers map[string]string) {
-	var ss = make([]string, 0, len(servers))
+	ss := make([]string, 0, len(servers))
 	for k := range servers {
 		ss = append(ss, k)
 	}
@@ -78,7 +80,7 @@ type roundRobinSelector struct {
 }
 
 func newRoundRobinSelector(servers map[string]string) Selector {
-	var ss = make([]string, 0, len(servers))
+	ss := make([]string, 0, len(servers))
 	for k := range servers {
 		ss = append(ss, k)
 	}
@@ -87,7 +89,7 @@ func newRoundRobinSelector(servers map[string]string) Selector {
 }
 
 func (s *roundRobinSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
-	var ss = s.servers
+	ss := s.servers
 	if len(ss) == 0 {
 		return ""
 	}
@@ -99,7 +101,7 @@ func (s *roundRobinSelector) Select(ctx context.Context, servicePath, serviceMet
 }
 
 func (s *roundRobinSelector) UpdateServer(servers map[string]string) {
-	var ss = make([]string, 0, len(servers))
+	ss := make([]string, 0, len(servers))
 	for k := range servers {
 		ss = append(ss, k)
 	}
@@ -135,7 +137,7 @@ func (s *weightedRoundRobinSelector) UpdateServer(servers map[string]string) {
 }
 
 func createWeighted(servers map[string]string) []*Weighted {
-	var ss = make([]*Weighted, 0, len(servers))
+	ss := make([]*Weighted, 0, len(servers))
 	for k, metadata := range servers {
 		w := &Weighted{Server: k, Weight: 1, EffectiveWeight: 1}
 
@@ -205,7 +207,7 @@ func (s *geoSelector) UpdateServer(servers map[string]string) {
 }
 
 func createGeoServer(servers map[string]string) []*geoServer {
-	var geoServers = make([]*geoServer, 0, len(servers))
+	geoServers := make([]*geoServer, 0, len(servers))
 
 	for s, metadata := range servers {
 		if v, err := url.ParseQuery(metadata); err == nil {
@@ -240,13 +242,15 @@ type consistentHashSelector struct {
 }
 
 func newConsistentHashSelector(servers map[string]string) Selector {
-	var ss = make([]string, 0, len(servers))
+	h := doublejump.NewHash()
+	ss := make([]string, 0, len(servers))
 	for k := range servers {
 		ss = append(ss, k)
+		h.Add(k)
 	}
 
 	sort.Slice(ss, func(i, j int) bool { return ss[i] < ss[j] })
-	return &consistentHashSelector{servers: ss, h: doublejump.NewHash()}
+	return &consistentHashSelector{servers: ss, h: h}
 }
 
 func (s consistentHashSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
@@ -256,11 +260,12 @@ func (s consistentHashSelector) Select(ctx context.Context, servicePath, service
 	}
 
 	key := genKey(servicePath, serviceMethod, args)
-	return s.h.Get(key).(string)
+	selected, _ := s.h.Get(key).(string)
+	return selected
 }
 
 func (s *consistentHashSelector) UpdateServer(servers map[string]string) {
-	var ss = make([]string, 0, len(servers))
+	ss := make([]string, 0, len(servers))
 	for k := range servers {
 		s.h.Add(k)
 		ss = append(ss, k)
@@ -269,12 +274,11 @@ func (s *consistentHashSelector) UpdateServer(servers map[string]string) {
 	sort.Slice(ss, func(i, j int) bool { return ss[i] < ss[j] })
 
 	for _, k := range s.servers {
-		if servers[k] == "" { //remove
+		if servers[k] == "" { // remove
 			s.h.Remove(k)
 		}
 	}
 	s.servers = ss
-
 }
 
 // weightedICMPSelector selects servers with ping result.

@@ -74,22 +74,20 @@ func (s *Server) Register(rcvr interface{}, metadata string) error {
 	if err != nil {
 		return err
 	}
-	if s.Plugins == nil {
-		s.Plugins = &pluginContainer{}
-	}
 	return s.Plugins.DoRegister(sname, rcvr, metadata)
 }
 
 // RegisterName is like Register but uses the provided name for the type
 // instead of the receiver's concrete type.
 func (s *Server) RegisterName(name string, rcvr interface{}, metadata string) error {
+	_, err := s.register(rcvr, name, true)
+	if err != nil {
+		return err
+	}
 	if s.Plugins == nil {
 		s.Plugins = &pluginContainer{}
 	}
-
-	s.Plugins.DoRegister(name, rcvr, metadata)
-	_, err := s.register(rcvr, name, true)
-	return err
+	return s.Plugins.DoRegister(name, rcvr, metadata)
 }
 
 // RegisterFunction publishes a function that satisfy the following conditions:
@@ -102,31 +100,24 @@ func (s *Server) RegisterFunction(servicePath string, fn interface{}, metadata s
 	if err != nil {
 		return err
 	}
-	if s.Plugins == nil {
-		s.Plugins = &pluginContainer{}
-	}
 
-	return s.Plugins.DoRegisterFunction(fname, fn, metadata)
+	return s.Plugins.DoRegisterFunction(servicePath, fname, fn, metadata)
 }
 
 // RegisterFunctionName is like RegisterFunction but uses the provided name for the function
 // instead of the function's concrete type.
 func (s *Server) RegisterFunctionName(servicePath string, name string, fn interface{}, metadata string) error {
-	if s.Plugins == nil {
-		s.Plugins = &pluginContainer{}
+	_, err := s.registerFunction(servicePath, fn, name, true)
+	if err != nil {
+		return err
 	}
 
-	s.Plugins.DoRegisterFunction(name, fn, metadata)
-	_, err := s.registerFunction(servicePath, fn, name, true)
-	return err
+	return s.Plugins.DoRegisterFunction(servicePath, name, fn, metadata)
 }
 
 func (s *Server) register(rcvr interface{}, name string, useName bool) (string, error) {
 	s.serviceMapMu.Lock()
 	defer s.serviceMapMu.Unlock()
-	if s.serviceMap == nil {
-		s.serviceMap = make(map[string]*service)
-	}
 
 	service := new(service)
 	service.typ = reflect.TypeOf(rcvr)
@@ -170,9 +161,6 @@ func (s *Server) register(rcvr interface{}, name string, useName bool) (string, 
 func (s *Server) registerFunction(servicePath string, fn interface{}, name string, useName bool) (string, error) {
 	s.serviceMapMu.Lock()
 	defer s.serviceMapMu.Unlock()
-	if s.serviceMap == nil {
-		s.serviceMap = make(map[string]*service)
-	}
 
 	ss := s.serviceMap[servicePath]
 	if ss == nil {
@@ -241,8 +229,10 @@ func (s *Server) registerFunction(servicePath string, fn interface{}, name strin
 	ss.function[fname] = &functionType{fn: f, ArgType: argType, ReplyType: replyType}
 	s.serviceMap[servicePath] = ss
 
-	argsReplyPools.Init(argType)
-	argsReplyPools.Init(replyType)
+	// init pool for reflect.Type of args and reply
+	reflectTypePools.Init(argType)
+	reflectTypePools.Init(replyType)
+
 	return fname, nil
 }
 
@@ -261,7 +251,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 		// Method needs four ins: receiver, context.Context, *args, *reply.
 		if mtype.NumIn() != 4 {
 			if reportErr {
-				log.Info("method", mname, " has wrong number of ins:", mtype.NumIn())
+				log.Debug("method ", mname, " has wrong number of ins:", mtype.NumIn())
 			}
 			continue
 		}
@@ -269,7 +259,7 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 		ctxType := mtype.In(1)
 		if !ctxType.Implements(typeOfContext) {
 			if reportErr {
-				log.Info("method", mname, " must use context.Context as the first parameter")
+				log.Debug("method ", mname, " must use context.Context as the first parameter")
 			}
 			continue
 		}
@@ -313,8 +303,9 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 		}
 		methods[mname] = &methodType{method: method, ArgType: argType, ReplyType: replyType}
 
-		argsReplyPools.Init(argType)
-		argsReplyPools.Init(replyType)
+		// init pool for reflect.Type of args and reply
+		reflectTypePools.Init(argType)
+		reflectTypePools.Init(replyType)
 	}
 	return methods
 }
@@ -322,10 +313,8 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 // UnregisterAll unregisters all services.
 // You can call this method when you want to shutdown/upgrade this node.
 func (s *Server) UnregisterAll() error {
-	if s.Plugins == nil {
-		s.Plugins = &pluginContainer{}
-	}
-
+	s.serviceMapMu.RLock()
+	defer s.serviceMapMu.RUnlock()
 	var es []error
 	for k := range s.serviceMap {
 		err := s.Plugins.DoUnregister(k)
@@ -343,10 +332,13 @@ func (s *Server) UnregisterAll() error {
 func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv reflect.Value) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			//log.Errorf("failed to invoke service: %v, stacks: %s", r, string(debug.Stack()))
-			err = fmt.Errorf("[service internal error]: %v, method: %s, argv: %+v",
-				r, mtype.method.Name, argv.Interface())
-			log.Handle(err)
+			buf := make([]byte, 4096)
+			n := runtime.Stack(buf, false)
+			buf = buf[:n]
+
+			err = fmt.Errorf("[service internal error]: %v, method: %s, argv: %+v, stack: %s",
+				r, mtype.method.Name, argv.Interface(), buf)
+			log.Error(err)
 		}
 	}()
 
@@ -365,10 +357,14 @@ func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv refl
 func (s *service) callForFunction(ctx context.Context, ft *functionType, argv, replyv reflect.Value) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			//log.Errorf("failed to invoke service: %v, stacks: %s", r, string(debug.Stack()))
-			err = fmt.Errorf("[service internal error]: %v, function: %s, argv: %+v",
-				r, runtime.FuncForPC(ft.fn.Pointer()), argv.Interface())
-			log.Handle(err)
+			buf := make([]byte, 4096)
+			n := runtime.Stack(buf, false)
+			buf = buf[:n]
+
+			// log.Errorf("failed to invoke service: %v, stacks: %s", r, string(debug.Stack()))
+			err = fmt.Errorf("[service internal error]: %v, function: %s, argv: %+v, stack: %s",
+				r, runtime.FuncForPC(ft.fn.Pointer()), argv.Interface(), buf)
+			log.Error(err)
 		}
 	}()
 

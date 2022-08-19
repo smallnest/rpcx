@@ -105,22 +105,22 @@ func (p *MetricsPlugin) Graphite(freq time.Duration, prefix string, addr *net.TC
 	go metrics.Graphite(p.Registry, freq, prefix, addr)
 }
 
-// InfluxDB reports metrics into influxdb.
-//
-// 	p.InfluxDB(10e9, "http://127.0.0.1:8086","metrics", "test","test"})
-//
-func (p *MetricsPlugin) InfluxDB(freq time.Duration, url, database, username, password string) {
-	go InfluxDB(p.Registry, freq, url, database, username, password)
-}
+// // InfluxDB reports metrics into influxdb.
+// //
+// // 	p.InfluxDB(10e9, "http://127.0.0.1:8086","metrics", "test","test"})
+// //
+// func (p *MetricsPlugin) InfluxDB(freq time.Duration, url, database, username, password string) {
+// 	go InfluxDB(p.Registry, freq, url, database, username, password)
+// }
 
-// InfluxDBWithTags reports metrics into influxdb with tags.
-// you can set node info into tags.
-//
-// 	p.InfluxDBWithTags(10e9, "http://127.0.0.1:8086","metrics", "test","test", map[string]string{"host":"127.0.0.1"})
-//
-func (p *MetricsPlugin) InfluxDBWithTags(freq time.Duration, url, database, username, password string, tags map[string]string) {
-	go InfluxDBWithTags(p.Registry, freq, url, database, username, password, tags)
-}
+// // InfluxDBWithTags reports metrics into influxdb with tags.
+// // you can set node info into tags.
+// //
+// // 	p.InfluxDBWithTags(10e9, "http://127.0.0.1:8086","metrics", "test","test", map[string]string{"host":"127.0.0.1"})
+// //
+// func (p *MetricsPlugin) InfluxDBWithTags(freq time.Duration, url, database, username, password string, tags map[string]string) {
+// 	go InfluxDBWithTags(p.Registry, freq, url, database, username, password, tags)
+// }
 
 // Exp uses the same mechanism as the official expvar but exposed under /debug/metrics,
 // which shows a json representation of all your usual expvars as well as all your go-metrics.

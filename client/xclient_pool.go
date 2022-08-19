@@ -1,6 +1,7 @@
 package client
 
 import (
+	"sync"
 	"sync/atomic"
 
 	"github.com/smallnest/rpcx/protocol"
@@ -13,12 +14,15 @@ type XClientPool struct {
 	count    uint64
 	index    uint64
 	xclients []XClient
+	mu       sync.RWMutex
 
-	servicePath       string
-	failMode          FailMode
-	selectMode        SelectMode
-	discovery         ServiceDiscovery
-	option            Option
+	servicePath string
+	failMode    FailMode
+	selectMode  SelectMode
+	discovery   ServiceDiscovery
+	option      Option
+	auth        string
+
 	serverMessageChan chan<- *protocol.Message
 }
 
@@ -61,10 +65,20 @@ func NewBidirectionalXClientPool(count int, servicePath string, failMode FailMod
 	return pool
 }
 
+// Auth sets s token for Authentication.
+func (c *XClientPool) Auth(auth string) {
+	c.auth = auth
+	c.mu.RLock()
+	for _, v := range c.xclients {
+		v.Auth(auth)
+	}
+	c.mu.RUnlock()
+}
+
 // Get returns a xclient.
 // It does not remove this xclient from its cache so you don't need to put it back.
 // Don't close this xclient because maybe other goroutines are using this xclient.
-func (p XClientPool) Get() XClient {
+func (p *XClientPool) Get() XClient {
 	i := atomic.AddUint64(&p.index, 1)
 	picked := int(i % p.count)
 	return p.xclients[picked]
@@ -72,7 +86,7 @@ func (p XClientPool) Get() XClient {
 
 // Close this pool.
 // Please make sure it won't be used any more.
-func (p XClientPool) Close() {
+func (p *XClientPool) Close() {
 	for _, c := range p.xclients {
 		c.Close()
 	}

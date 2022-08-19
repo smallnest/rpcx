@@ -1,22 +1,22 @@
 package protocol
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 
 	"github.com/smallnest/rpcx/util"
+	"github.com/valyala/bytebufferpool"
 )
 
-var (
-	// Compressors are compressors supported by rpcx. You can add customized compressor in Compressors.
-	Compressors = map[CompressType]Compressor{
-		None: &RawDataCompressor{},
-		Gzip: &GzipCompressor{},
-	}
-)
+var bufferPool = util.NewLimitedPool(512, 4096)
+
+// Compressors are compressors supported by rpcx. You can add customized compressor in Compressors.
+var Compressors = map[CompressType]Compressor{
+	None: &RawDataCompressor{},
+	Gzip: &GzipCompressor{},
+}
 
 // MaxMessageLength is the max length of a message.
 // Default is 0 that means does not limit length of messages.
@@ -32,7 +32,7 @@ func MagicNumber() byte {
 }
 
 var (
-	// ErrMetaKVMissing some keys or values are mssing.
+	// ErrMetaKVMissing some keys or values are missing.
 	ErrMetaKVMissing = errors.New("wrong metadata lines. some keys or values are missing")
 	// ErrMessageTooLong message is too long
 	ErrMessageTooLong = errors.New("message is too long")
@@ -45,7 +45,7 @@ const (
 	ServiceError = "__rpcx_error__"
 )
 
-// MessageType is message type of requests and resposnes.
+// MessageType is message type of requests and responses.
 type MessageType byte
 
 const (
@@ -224,7 +224,15 @@ func (m Message) Clone() *Message {
 
 // Encode encodes messages.
 func (m Message) Encode() []byte {
-	meta := encodeMetadata(m.Metadata)
+	data := m.EncodeSlicePointer()
+	return *data
+}
+
+// EncodeSlicePointer encodes messages as a byte slice pointer we can use pool to improve.
+func (m Message) EncodeSlicePointer() *[]byte {
+	bb := bytebufferpool.Get()
+	encodeMetadata(m.Metadata, bb)
+	meta := bb.Bytes()
 
 	spL := len(m.ServicePath)
 	smL := len(m.ServiceMethod)
@@ -252,35 +260,45 @@ func (m Message) Encode() []byte {
 	payLoadStart := metaStart + (4 + len(meta))
 	l := 12 + 4 + totalL
 
-	data := make([]byte, l)
-	copy(data, m.Header[:])
+	data := bufferPool.Get(l)
+	copy(*data, m.Header[:])
 
-	//totalLen
-	binary.BigEndian.PutUint32(data[12:16], uint32(totalL))
+	// totalLen
+	binary.BigEndian.PutUint32((*data)[12:16], uint32(totalL))
 
-	binary.BigEndian.PutUint32(data[16:20], uint32(spL))
-	copy(data[20:20+spL], util.StringToSliceByte(m.ServicePath))
+	binary.BigEndian.PutUint32((*data)[16:20], uint32(spL))
+	copy((*data)[20:20+spL], util.StringToSliceByte(m.ServicePath))
 
-	binary.BigEndian.PutUint32(data[20+spL:24+spL], uint32(smL))
-	copy(data[24+spL:metaStart], util.StringToSliceByte(m.ServiceMethod))
+	binary.BigEndian.PutUint32((*data)[20+spL:24+spL], uint32(smL))
+	copy((*data)[24+spL:metaStart], util.StringToSliceByte(m.ServiceMethod))
 
-	binary.BigEndian.PutUint32(data[metaStart:metaStart+4], uint32(len(meta)))
-	copy(data[metaStart+4:], meta)
+	binary.BigEndian.PutUint32((*data)[metaStart:metaStart+4], uint32(len(meta)))
+	copy((*data)[metaStart+4:], meta)
 
-	binary.BigEndian.PutUint32(data[payLoadStart:payLoadStart+4], uint32(len(payload)))
-	copy(data[payLoadStart+4:], payload)
+	bytebufferpool.Put(bb)
+
+	binary.BigEndian.PutUint32((*data)[payLoadStart:payLoadStart+4], uint32(len(payload)))
+	copy((*data)[payLoadStart+4:], payload)
 
 	return data
 }
 
+// PutData puts the byte slice into pool.
+func PutData(data *[]byte) {
+	bufferPool.Put(data)
+}
+
 // WriteTo writes message to writers.
-func (m Message) WriteTo(w io.Writer) error {
-	_, err := w.Write(m.Header[:])
+func (m Message) WriteTo(w io.Writer) (int64, error) {
+	nn, err := w.Write(m.Header[:])
+	n := int64(nn)
 	if err != nil {
-		return err
+		return n, err
 	}
 
-	meta := encodeMetadata(m.Metadata)
+	bb := bytebufferpool.Get()
+	encodeMetadata(m.Metadata, bb)
+	meta := bb.Bytes()
 
 	spL := len(m.ServicePath)
 	smL := len(m.ServiceMethod)
@@ -289,74 +307,74 @@ func (m Message) WriteTo(w io.Writer) error {
 	if m.CompressType() != None {
 		compressor := Compressors[m.CompressType()]
 		if compressor == nil {
-			return ErrUnsupportedCompressor
+			return n, ErrUnsupportedCompressor
 		}
 		payload, err = compressor.Zip(m.Payload)
 		if err != nil {
-			return err
+			return n, err
 		}
 	}
 
 	totalL := (4 + spL) + (4 + smL) + (4 + len(meta)) + (4 + len(payload))
 	err = binary.Write(w, binary.BigEndian, uint32(totalL))
 	if err != nil {
-		return err
+		return n, err
 	}
 
-	//write servicePath and serviceMethod
+	// write servicePath and serviceMethod
 	err = binary.Write(w, binary.BigEndian, uint32(len(m.ServicePath)))
 	if err != nil {
-		return err
+		return n, err
 	}
 	_, err = w.Write(util.StringToSliceByte(m.ServicePath))
 	if err != nil {
-		return err
+		return n, err
 	}
 	err = binary.Write(w, binary.BigEndian, uint32(len(m.ServiceMethod)))
 	if err != nil {
-		return err
+		return n, err
 	}
 	_, err = w.Write(util.StringToSliceByte(m.ServiceMethod))
 	if err != nil {
-		return err
+		return n, err
 	}
 
 	// write meta
 	err = binary.Write(w, binary.BigEndian, uint32(len(meta)))
 	if err != nil {
-		return err
+		return n, err
 	}
 	_, err = w.Write(meta)
 	if err != nil {
-		return err
+		return n, err
 	}
 
-	//write payload
+	bytebufferpool.Put(bb)
+
+	// write payload
 	err = binary.Write(w, binary.BigEndian, uint32(len(payload)))
 	if err != nil {
-		return err
+		return n, err
 	}
 
-	_, err = w.Write(payload)
-	return err
+	nn, err = w.Write(payload)
+	return int64(nn), err
 }
 
 // len,string,len,string,......
-func encodeMetadata(m map[string]string) []byte {
+func encodeMetadata(m map[string]string, bb *bytebufferpool.ByteBuffer) {
 	if len(m) == 0 {
-		return []byte{}
+		return
 	}
-	var buf bytes.Buffer
-	var d = make([]byte, 4)
+	d := make([]byte, 4)
 	for k, v := range m {
 		binary.BigEndian.PutUint32(d, uint32(len(k)))
-		buf.Write(d)
-		buf.Write(util.StringToSliceByte(k))
+		bb.Write(d)
+		bb.Write(util.StringToSliceByte(k))
 		binary.BigEndian.PutUint32(d, uint32(len(v)))
-		buf.Write(d)
-		buf.Write(util.StringToSliceByte(v))
+		bb.Write(d)
+		bb.Write(util.StringToSliceByte(v))
 	}
-	return buf.Bytes()
 }
 
 func decodeMetadata(l uint32, data []byte) (map[string]string, error) {
@@ -415,22 +433,20 @@ func (m *Message) Decode(r io.Reader) error {
 		return err
 	}
 
-	//total
-	lenData := poolUint32Data.Get().(*[]byte)
-	_, err = io.ReadFull(r, *lenData)
+	// total
+	lenData := make([]byte, 4)
+	_, err = io.ReadFull(r, lenData)
 	if err != nil {
-		poolUint32Data.Put(lenData)
 		return err
 	}
-	l := binary.BigEndian.Uint32(*lenData)
-	poolUint32Data.Put(lenData)
+	l := binary.BigEndian.Uint32(lenData)
 
 	if MaxMessageLength > 0 && int(l) > MaxMessageLength {
 		return ErrMessageTooLong
 	}
 
 	totalL := int(l)
-	if cap(m.data) >= totalL { //reuse data
+	if cap(m.data) >= totalL { // reuse data
 		m.data = m.data[:totalL]
 	} else {
 		m.data = make([]byte, totalL)
@@ -499,8 +515,10 @@ func (m *Message) Reset() {
 	m.ServiceMethod = ""
 }
 
-var zeroHeaderArray Header
-var zeroHeader = zeroHeaderArray[1:]
+var (
+	zeroHeaderArray Header
+	zeroHeader      = zeroHeaderArray[1:]
+)
 
 func resetHeader(h *Header) {
 	copy(h[1:], zeroHeader)

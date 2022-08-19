@@ -8,7 +8,7 @@ import (
 // MultiError holds multiple errors
 type MultiError struct {
 	Errors []error
-	sync.Mutex
+	mu     sync.Mutex
 }
 
 // Error returns the message of the actual error
@@ -17,8 +17,8 @@ func (e *MultiError) Error() string {
 }
 
 func (e *MultiError) Append(err error) {
-	e.Lock()
-	defer e.Unlock()
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.Errors = append(e.Errors, err)
 }
 

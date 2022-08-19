@@ -1,16 +1,37 @@
-<a href="https://rpcx.site/"><img height="160" src="http://rpcx.site/logos/rpcx-logo-text.png"></a>
+- **stable branch**: v1.7.x
+- **development branch**: master
 
-Official site: [http://rpcx.site](http://rpcx.site/)
+<a href="https://rpcx.io/"><img height="160" src="http://rpcx.io/logos/rpcx-logo-text.png"></a>
 
-[![License](https://img.shields.io/:license-apache%202-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![GoDoc](https://godoc.org/github.com/smallnest/rpcx?status.png)](http://godoc.org/github.com/smallnest/rpcx)  [![travis](https://travis-ci.org/smallnest/rpcx.svg?branch=master)](https://travis-ci.org/smallnest/rpcx) [![Go Report Card](https://goreportcard.com/badge/github.com/smallnest/rpcx)](https://goreportcard.com/report/github.com/smallnest/rpcx) [![coveralls](https://coveralls.io/repos/smallnest/rpcx/badge.svg?branch=master&service=github)](https://coveralls.io/github/smallnest/rpcx?branch=master) [![QQ群](https://img.shields.io/:QQ群-398044387-blue.svg)](_documents/rpcx_dev_qq.png)
+Official site: [http://rpcx.io](http://rpcx.io/)
+
+[![License](https://img.shields.io/:license-apache%202-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![GoDoc](https://godoc.org/github.com/smallnest/rpcx?status.png)](http://godoc.org/github.com/smallnest/rpcx)  [![travis](https://travis-ci.org/smallnest/rpcx.svg?branch=master)](https://travis-ci.org/smallnest/rpcx) [![Go Report Card](https://goreportcard.com/badge/github.com/smallnest/rpcx)](https://goreportcard.com/report/github.com/smallnest/rpcx) [![coveralls](https://coveralls.io/repos/smallnest/rpcx/badge.svg?branch=master&service=github)](https://coveralls.io/github/smallnest/rpcx?branch=master) [![QQ3群](https://img.shields.io/:QQ3群-953962236-blue.svg)](_documents/rpcx_dev_qq3.jpg) 
+
+**Notice: etcd**
+
+since rpcx 1.7.6, some plugins have been moved to the independent project:
+
+- `etcd` plugin has been moved to [rpcx-etcd](https://github.com/rpcxio/rpcx-etcd)
+- `zookeeper` plugin has been moved to [rpcx-zookeeper](https://github.com/rpcxio/rpcx-zookeeper)
+- `consul` plugin has been moved to [rpcx-consul](https://github.com/rpcxio/rpcx-consul)
+- `redis` plugin has been moved to [rpcx-redis](https://github.com/rpcxio/rpcx-redis)
+- `influxdb` plugin has been moved to [rpcx-plugins](https://github.com/rpcxio/rpcx-plugins)
+- `opentelemetry` plugin has been moved to [rpcx-plugins](https://github.com/rpcxio/rpcx-plugins)
+
+## Announce
+
+A tcpdump-like tool added: [rpcxdump](https://github.com/smallnest/rpcxdump)。 You can use it to debug communications between rpcx services and clients.
+
+![](https://github.com/smallnest/rpcxdump/blob/master/snapshoot.png)
+
 
 ## Cross-Languages
 you can use other programming languages besides Go to access rpcx services.
 
-- **rpcx-gateway**: You can write clients in any programming languages to call rpcx services via [rpcx-gateway](https://github.com/rpcx-ecosystem/rpcx-gateway)
+- **rpcx-gateway**: You can write clients in any programming languages to call rpcx services via [rpcx-gateway](https://github.com/rpcxio/rpcx-gateway)
 - **http invoke**: you can use the same http requests to access rpcx gateway
 - **Java Services/Clients**: You can use [rpcx-java](https://github.com/smallnest/rpcx-java) to implement/access rpcx servies via raw protocol.
-
+- **rust rpcx**: You can write rpcx services in rust by [rpcx-rs](https://github.com/smallnest/rpcx-rs)
 
 > If you can write Go methods, you can also write rpc services. It is so easy to write rpc applications with rpcx.
 
@@ -18,28 +39,34 @@ you can use other programming languages besides Go to access rpcx services.
 
 install the basic features:
 
-`go get -u -v github.com/smallnest/rpcx/...`
+`go get -v github.com/smallnest/rpcx/...`
 
 
-If you want to use `reuseport`、`quic`、`kcp`, `zookeeper`, `etcd`, `consul` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
+If you want to use `quic`、`kcp` registry, use those tags to `go get` 、 `go build` or `go run`. For example, if you want to use all features, you can:
 
 ```sh
-go get -u -v -tags "reuseport quic kcp zookeeper etcd consul ping rudp utp" github.com/smallnest/rpcx/...
+go get -v -tags "quic kcp" github.com/smallnest/rpcx/...
 ```
 
 **_tags_**:
 - **quic**: support quic transport
 - **kcp**: support kcp transport
-- **zookeeper**: support zookeeper register
-- **etcd**: support etcd register
-- **consul**: support consul register
-- **ping**: support network quality load balancing
-- **reuseport**: support reuseport
+
+## Which companies are using rpcx?
+
+<p float="left">
+  <img style="padding-bottom: 20px;" src="https://user-images.githubusercontent.com/865763/102993220-b967f000-4557-11eb-9747-703a6cbb9fb1.png" width="200" />
+  <img style="padding-bottom: 20px;" src="https://user-images.githubusercontent.com/865763/113414067-a8e4d280-93ee-11eb-9f42-1373d7e766c1.png" width="200" />
+  <img style="padding-bottom: 20px;" src="https://user-images.githubusercontent.com/865763/102993433-267b8580-4558-11eb-9e45-4e1a86d61688.png" width="200" /> 
+  <img style="padding-bottom: 20px;" src="https://user-images.githubusercontent.com/865763/102993530-4743db00-4558-11eb-9f76-1ee69e992b82.png" width="200" />
+  <img style="padding-bottom: 20px;" src="https://user-images.githubusercontent.com/865763/102993612-722e2f00-4558-11eb-849a-3264c430aef9.png" width="200" />
+  <img style="padding-bottom: 20px;" src="https://user-images.githubusercontent.com/865763/102993785-c20cf600-4558-11eb-82b9-27b801aca4ff.png" width="200" />
+</p>
 
 ## Features
 rpcx is a RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).
 
-**rpcx 3.0** has been refactored for targets:
+**rpcx** is created for targets:
 1. **Simple**: easy to learn, easy to develop, easy to intergate and easy to deploy
 2. **Performance**: high perforamnce (>= grpc-go)
 3. **Cross-platform**: support _raw slice of bytes_, _JSON_, _Protobuf_ and _MessagePack_. Theoretically it can be used with java, php, python, c/c++, node.js, c# and other platforms
@@ -72,6 +99,11 @@ There is a UI manager: [rpcx-ui](https://github.com/smallnest/rpcx-ui).
 ## Performance
 
 Test results show rpcx has better performance than other rpc framework except standard rpc lib.
+
+
+The benchmark code is at [rpcx-benchmark](https://github.com/rpcx-ecosystem/rpcx-benchmark).
+
+**Listen to others, but test by yourself**.
 
 **_Test Environment_**
 
@@ -106,7 +138,7 @@ Test results show rpcx has better performance than other rpc framework except st
 
 ## Examples
 
-You can find all examples at [rpcx-ecosystem/rpcx-examples3](https://github.com/rpcx-ecosystem/rpcx-examples3).
+You can find all examples at [rpcxio/rpcx-examples](https://github.com/rpcxio/rpcx-examples).
 
 The below is a simple example.
 
@@ -130,11 +162,18 @@ The below is a simple example.
     // prepare requests
     ……
 
-    d := client.NewPeer2PeerDiscovery("tcp@"+addr, "")
+    d, err := client.NewPeer2PeerDiscovery("tcp@"+addr, "")
 	xclient := client.NewXClient("Arith", client.Failtry, client.RandomSelect, d, client.DefaultOption)
 	defer xclient.Close()
-	err := xclient.Call(context.Background(), "Mul", args, reply, nil)
+	err = xclient.Call(context.Background(), "Mul", args, reply, nil)
 ```
+
+## Contributors
+
+<a href="https://github.com/smallnest/rpcx/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=smallnest/rpcx" />
+</a>
+
 
 ## Contribute
 

@@ -2,12 +2,13 @@ package client
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"fmt"
 
-	"github.com/smallnest/rpcx/_testutils"
+	testutils "github.com/smallnest/rpcx/_testutils"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/server"
 	"github.com/smallnest/rpcx/share"
@@ -31,7 +32,11 @@ func TestXClient_Thrift(t *testing.T) {
 		BackupLatency:  10 * time.Millisecond,
 	}
 
-	d := NewPeer2PeerDiscovery("tcp@"+addr, "desc=a test service")
+	d, err := NewPeer2PeerDiscovery("tcp@"+addr, "desc=a test service")
+	if err != nil {
+		t.Fatalf("failed to NewPeer2PeerDiscovery: %v", err)
+	}
+
 	xclient := NewXClient("Arith", Failtry, RandomSelect, d, opt)
 
 	defer xclient.Close()
@@ -42,7 +47,7 @@ func TestXClient_Thrift(t *testing.T) {
 
 	reply := testutils.ThriftReply{}
 
-	err := xclient.Call(context.Background(), "ThriftMul", &args, &reply)
+	err = xclient.Call(context.Background(), "ThriftMul", &args, &reply)
 	if err != nil {
 		t.Fatalf("failed to call: %v", err)
 	}
@@ -62,7 +67,11 @@ func TestXClient_IT(t *testing.T) {
 
 	addr := s.Address().String()
 
-	d := NewPeer2PeerDiscovery("tcp@"+addr, "desc=a test service")
+	d, err := NewPeer2PeerDiscovery("tcp@"+addr, "desc=a test service")
+	if err != nil {
+		t.Fatalf("failed to NewPeer2PeerDiscovery: %v", err)
+	}
+
 	xclient := NewXClient("Arith", Failtry, RandomSelect, d, DefaultOption)
 
 	defer xclient.Close()
@@ -73,7 +82,7 @@ func TestXClient_IT(t *testing.T) {
 	}
 
 	reply := &Reply{}
-	err := xclient.Call(context.Background(), "Mul", args, reply)
+	err = xclient.Call(context.Background(), "Mul", args, reply)
 	if err != nil {
 		t.Fatalf("failed to call: %v", err)
 	}
@@ -97,5 +106,25 @@ func TestXClient_filterByStateAndGroup(t *testing.T) {
 	}
 	if _, ok := servers["d"]; !ok {
 		t.Error("node must be removed")
+	}
+}
+
+func TestUncoverError(t *testing.T) {
+	var e error = strErr("error")
+	if uncoverError(e) {
+		t.Fatalf("expect false but get true")
+	}
+
+	if uncoverError(context.DeadlineExceeded) {
+		t.Fatalf("expect false but get true")
+	}
+
+	if uncoverError(context.Canceled) {
+		t.Fatalf("expect false but get true")
+	}
+
+	e = errors.New("error")
+	if !uncoverError(e) {
+		t.Fatalf("expect true but get false")
 	}
 }

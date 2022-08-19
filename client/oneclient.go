@@ -4,15 +4,17 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"sync"
 
-	"github.com/smallnest/rpcx/serverplugin"
+	"github.com/smallnest/rpcx/share"
 
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/smallnest/rpcx/protocol"
 )
 
 // OneClient wraps servicesPath and XClients.
+// Users can use a shared oneclient to access multiple services.
 type OneClient struct {
 	xclients map[string]XClient
 	mu       sync.RWMutex
@@ -76,6 +78,10 @@ func (c *OneClient) SetPlugins(plugins PluginContainer) {
 	c.mu.RUnlock()
 }
 
+func (c *OneClient) GetPlugins() PluginContainer {
+	return c.Plugins
+}
+
 // ConfigGeoSelector sets location of client's latitude and longitude,
 // and use newGeoSelector.
 func (c *OneClient) ConfigGeoSelector(latitude, longitude float64) {
@@ -135,10 +141,15 @@ func (c *OneClient) newXClient(servicePath string) (xclient XClient, err error) 
 		}
 	}()
 
+	d, err := c.discovery.Clone(servicePath)
+	if err != nil {
+		return nil, err
+	}
+
 	if c.serverMessageChan == nil {
-		xclient = NewXClient(servicePath, c.failMode, c.selectMode, c.discovery.Clone(servicePath), c.option)
+		xclient = NewXClient(servicePath, c.failMode, c.selectMode, d, c.option)
 	} else {
-		xclient = NewBidirectionalXClient(servicePath, c.failMode, c.selectMode, c.discovery.Clone(servicePath), c.option, c.serverMessageChan)
+		xclient = NewBidirectionalXClient(servicePath, c.failMode, c.selectMode, d, c.option, c.serverMessageChan)
 	}
 
 	if c.Plugins != nil {
@@ -258,18 +269,18 @@ func (c *OneClient) Fork(ctx context.Context, servicePath string, serviceMethod 
 	return xclient.Fork(ctx, serviceMethod, args, reply)
 }
 
-func (c *OneClient) SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64) error {
+func (c *OneClient) SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64, meta map[string]string) error {
 	c.mu.RLock()
-	xclient := c.xclients[serverplugin.SendFileServiceName]
+	xclient := c.xclients[share.SendFileServiceName]
 	c.mu.RUnlock()
 
 	if xclient == nil {
 		var err error
 		c.mu.Lock()
-		xclient = c.xclients[serverplugin.SendFileServiceName]
+		xclient = c.xclients[share.SendFileServiceName]
 		if xclient == nil {
-			xclient, err = c.newXClient(serverplugin.SendFileServiceName)
-			c.xclients[serverplugin.SendFileServiceName] = xclient
+			xclient, err = c.newXClient(share.SendFileServiceName)
+			c.xclients[share.SendFileServiceName] = xclient
 		}
 		c.mu.Unlock()
 		if err != nil {
@@ -277,21 +288,21 @@ func (c *OneClient) SendFile(ctx context.Context, fileName string, rateInBytesPe
 		}
 	}
 
-	return xclient.SendFile(ctx, fileName, rateInBytesPerSecond)
+	return xclient.SendFile(ctx, fileName, rateInBytesPerSecond, meta)
 }
 
-func (c *OneClient) DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer) error {
+func (c *OneClient) DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer, meta map[string]string) error {
 	c.mu.RLock()
-	xclient := c.xclients[serverplugin.SendFileServiceName]
+	xclient := c.xclients[share.SendFileServiceName]
 	c.mu.RUnlock()
 
 	if xclient == nil {
 		var err error
 		c.mu.Lock()
-		xclient = c.xclients[serverplugin.SendFileServiceName]
+		xclient = c.xclients[share.SendFileServiceName]
 		if xclient == nil {
-			xclient, err = c.newXClient(serverplugin.SendFileServiceName)
-			c.xclients[serverplugin.SendFileServiceName] = xclient
+			xclient, err = c.newXClient(share.SendFileServiceName)
+			c.xclients[share.SendFileServiceName] = xclient
 		}
 		c.mu.Unlock()
 		if err != nil {
@@ -299,10 +310,32 @@ func (c *OneClient) DownloadFile(ctx context.Context, requestFileName string, sa
 		}
 	}
 
-	return xclient.DownloadFile(ctx, requestFileName, saveTo)
+	return xclient.DownloadFile(ctx, requestFileName, saveTo, meta)
 }
 
-// Close closes all xclients and its underlying connnections to services.
+func (c *OneClient) Stream(ctx context.Context, meta map[string]string) (net.Conn, error) {
+	c.mu.RLock()
+	xclient := c.xclients[share.StreamServiceName]
+	c.mu.RUnlock()
+
+	if xclient == nil {
+		var err error
+		c.mu.Lock()
+		xclient = c.xclients[share.StreamServiceName]
+		if xclient == nil {
+			xclient, err = c.newXClient(share.StreamServiceName)
+			c.xclients[share.StreamServiceName] = xclient
+		}
+		c.mu.Unlock()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return xclient.Stream(ctx, meta)
+}
+
+// Close closes all xclients and its underlying connections to services.
 func (c *OneClient) Close() error {
 	var result error
 

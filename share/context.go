@@ -2,27 +2,45 @@ package share
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
-
-	opentracing "github.com/opentracing/opentracing-go"
-	"go.opencensus.io/trace"
+	"sync"
 )
 
 // var _ context.Context = &Context{}
 
 // Context is a rpcx customized Context that can contains multiple values.
 type Context struct {
-	tags map[interface{}]interface{}
+	tagsLock *sync.Mutex
+	tags     map[interface{}]interface{}
 	context.Context
 }
 
 func NewContext(ctx context.Context) *Context {
-	tags := make(map[interface{}]interface{})
-	return &Context{Context: ctx, tags: tags}
+	tagsLock := &sync.Mutex{}
+	ctx = context.WithValue(ctx, ContextTagsLock, tagsLock)
+	return &Context{
+		tagsLock: tagsLock,
+		Context:  ctx,
+		tags:     map[interface{}]interface{}{isShareContext: true},
+	}
 }
+
+func (c *Context) Lock() {
+	c.tagsLock.Lock()
+}
+
+func (c *Context) Unlock() {
+	c.tagsLock.Unlock()
+}
+
 func (c *Context) Value(key interface{}) interface{} {
+	c.tagsLock.Lock()
+	defer c.tagsLock.Unlock()
+	if c.tags == nil {
+		c.tags = make(map[interface{}]interface{})
+	}
+
 	if v, ok := c.tags[key]; ok {
 		return v
 	}
@@ -30,7 +48,24 @@ func (c *Context) Value(key interface{}) interface{} {
 }
 
 func (c *Context) SetValue(key, val interface{}) {
+	c.tagsLock.Lock()
+	defer c.tagsLock.Unlock()
+
+	if c.tags == nil {
+		c.tags = make(map[interface{}]interface{})
+	}
 	c.tags[key] = val
+}
+
+// DeleteKey delete the kv pair by key.
+func (c *Context) DeleteKey(key interface{}) {
+	c.tagsLock.Lock()
+	defer c.tagsLock.Unlock()
+
+	if c.tags == nil || key == nil {
+		return
+	}
+	delete(c.tags, key)
 }
 
 func (c *Context) String() string {
@@ -47,7 +82,7 @@ func WithValue(parent context.Context, key, val interface{}) *Context {
 
 	tags := make(map[interface{}]interface{})
 	tags[key] = val
-	return &Context{Context: parent, tags: tags}
+	return &Context{Context: parent, tags: tags, tagsLock: &sync.Mutex{}}
 }
 
 func WithLocalValue(ctx *Context, key, val interface{}) *Context {
@@ -58,32 +93,16 @@ func WithLocalValue(ctx *Context, key, val interface{}) *Context {
 		panic("key is not comparable")
 	}
 
+	if ctx.tags == nil {
+		ctx.tags = make(map[interface{}]interface{})
+	}
+
 	ctx.tags[key] = val
 	return ctx
 }
 
-// GetSpanContextFromContext get opentracing.SpanContext from context.Context.
-func GetSpanContextFromContext(ctx context.Context) (opentracing.SpanContext, error) {
-	reqMeta := ctx.Value(ReqMetaDataKey).(map[string]string)
-	return opentracing.GlobalTracer().Extract(
-		opentracing.TextMap,
-		opentracing.TextMapCarrier(reqMeta))
-}
-
-// GetOpencensusSpanContextFromContext get opencensus.trace.SpanContext from context.Context.
-func GetOpencensusSpanContextFromContext(ctx context.Context) (*trace.SpanContext, error) {
-	reqMeta := ctx.Value(ReqMetaDataKey).(map[string]string)
-	spanKey := reqMeta[OpencensusSpanRequestKey]
-	if spanKey == "" {
-		return nil, errors.New("key not found")
-	}
-
-	data := []byte(spanKey)
-	_ = data[23]
-
-	t := &trace.SpanContext{}
-	copy(t.TraceID[:], data[:16])
-	copy(t.SpanID[:], data[16:24])
-
-	return t, nil
+// IsShareContext checks whether a context is share.Context.
+func IsShareContext(ctx context.Context) bool {
+	ok := ctx.Value(isShareContext)
+	return ok != nil
 }

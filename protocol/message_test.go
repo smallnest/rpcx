@@ -31,10 +31,11 @@ func TestMessage(t *testing.T) {
 	req.Payload = []byte(payload)
 
 	var buf bytes.Buffer
-	err := req.WriteTo(&buf)
+	_, err := req.WriteTo(&buf)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	res, err := Read(&buf)
 	if err != nil {
 		t.Fatal(err)
