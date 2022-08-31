@@ -340,8 +340,10 @@ func (s *Server) sendResponse(ctx *share.Context, conn net.Conn, err error, req,
 	if len(res.Payload) > 1024 && req.CompressType() != protocol.None {
 		res.SetCompressType(req.CompressType())
 	}
-	data := res.EncodeSlicePointer()
+
 	s.Plugins.DoPreWriteResponse(ctx, req, res, err)
+
+	data := res.EncodeSlicePointer()
 	if s.AsyncWrite {
 		if s.pool != nil {
 			s.pool.Submit(func() {
