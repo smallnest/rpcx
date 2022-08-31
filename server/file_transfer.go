@@ -92,7 +92,9 @@ func (s *FileTransferService) TransferFile(ctx context.Context, args *share.File
 		reply.Addr = s.FileTransfer.AdvertiseAddr
 	}
 
-	s.FileTransfer.cachedTokens.Add(string(token), &tokenInfo{token, args})
+	cloned := args.Clone()
+	s.FileTransfer.cachedTokens.Add(string(token), &tokenInfo{token, cloned})
+
 	return nil
 }
 
@@ -112,7 +114,9 @@ func (s *FileTransferService) DownloadFile(ctx context.Context, args *share.Down
 		reply.Addr = s.FileTransfer.AdvertiseAddr
 	}
 
-	s.FileTransfer.cachedTokens.Add(string(token), &downloadTokenInfo{token, args})
+	cloned := args.Clone()
+	s.FileTransfer.cachedTokens.Add(string(token), &downloadTokenInfo{token, cloned})
+
 	return nil
 }
 

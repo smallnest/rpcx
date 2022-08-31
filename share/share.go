@@ -65,6 +65,20 @@ type FileTransferArgs struct {
 	Meta     map[string]string `json:"meta,omitempty"`
 }
 
+// Clone clones this DownloadFileArgs.
+func (args FileTransferArgs) Clone() *FileTransferArgs {
+	meta := make(map[string]string)
+	for k, v := range args.Meta {
+		meta[k] = v
+	}
+
+	return &FileTransferArgs{
+		FileName: args.FileName,
+		FileSize: args.FileSize,
+		Meta:     meta,
+	}
+}
+
 // FileTransferReply response to token and addr to clients.
 type FileTransferReply struct {
 	Token []byte `json:"token,omitempty"`
@@ -75,6 +89,19 @@ type FileTransferReply struct {
 type DownloadFileArgs struct {
 	FileName string            `json:"file_name,omitempty"`
 	Meta     map[string]string `json:"meta,omitempty"`
+}
+
+// Clone clones this DownloadFileArgs.
+func (args DownloadFileArgs) Clone() *DownloadFileArgs {
+	meta := make(map[string]string)
+	for k, v := range args.Meta {
+		meta[k] = v
+	}
+
+	return &DownloadFileArgs{
+		FileName: args.FileName,
+		Meta:     meta,
+	}
 }
 
 // StreamServiceArgs is the request type for stream service.
