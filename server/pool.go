@@ -44,12 +44,12 @@ func (p *typePools) Init(t reflect.Type) {
 func (p *typePools) Put(t reflect.Type, x interface{}) {
 	if o, ok := x.(Reset); ok {
 		o.Reset()
+		p.mu.RLock()
+		pool := p.pools[t]
+		p.mu.RUnlock()
+		pool.Put(x)
 	}
 
-	p.mu.RLock()
-	pool := p.pools[t]
-	p.mu.RUnlock()
-	pool.Put(x)
 }
 
 func (p *typePools) Get(t reflect.Type) interface{} {
