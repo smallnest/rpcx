@@ -20,7 +20,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/alitto/pond"
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
@@ -69,6 +68,13 @@ var (
 
 type Handler func(ctx *Context) error
 
+type WorkerPool interface {
+	Submit(task func())
+	StopAndWaitFor(deadline time.Duration)
+	Stop()
+	StopAndWait()
+}
+
 // Server is rpcx server that use TCP or UDP.
 type Server struct {
 	ln                 net.Listener
@@ -79,7 +85,7 @@ type Server struct {
 	DisableHTTPGateway bool // disable http invoke or not.
 	DisableJSONRPC     bool // disable json rpc or not.
 	AsyncWrite         bool // set true if your server only serves few clients
-	pool               *pond.WorkerPool
+	pool               WorkerPool
 
 	serviceMapMu sync.RWMutex
 	serviceMap   map[string]*service

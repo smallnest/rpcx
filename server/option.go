@@ -47,6 +47,13 @@ func WithPool(maxWorkers, maxCapacity int, options ...pond.Option) OptionFn {
 	}
 }
 
+// WithCustomPool uses a custom goroutine pool.
+func WithCustomPool(pool WorkerPool) OptionFn {
+	return func(s *Server) {
+		s.pool = pool
+	}
+}
+
 // WithAsyncWrite sets AsyncWrite to true.
 func WithAsyncWrite() OptionFn {
 	return func(s *Server) {
