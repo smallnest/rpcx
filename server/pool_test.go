@@ -7,15 +7,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type Elem struct {
+	// magicNumber the Magic Number
+	magicNumber int
+}
+
+func (e Elem) Reset() {
+
+}
+
 func TestPool(t *testing.T) {
-	// THE Magic Number
-	magicNumber := 42
-
-	intType := reflect.TypeOf(magicNumber)
-	// init int pool
-	reflectTypePools.Init(intType)
-
-	reflectTypePools.Put(intType, magicNumber)
+	elem := Elem{42}
+	elemType := reflect.TypeOf(elem)
+	// init Elem pool
+	reflectTypePools.Init(elemType)
+	reflectTypePools.Put(elemType, elem)
 	// Get() will remove element from pool
-	assert.Equal(t, magicNumber, reflectTypePools.Get(intType).(int))
+	assert.Equal(t, elem.magicNumber, reflectTypePools.Get(elemType).(Elem).magicNumber)
 }
