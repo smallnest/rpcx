@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime"
 
+	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/util"
 	"github.com/valyala/bytebufferpool"
 )
@@ -114,7 +116,6 @@ func NewMessage() *Message {
 
 // Header is the first part of Message and has fixed size.
 // Format:
-//
 type Header [12]byte
 
 // CheckMagicNumber checks whether header starts rpcx magic number.
@@ -417,7 +418,14 @@ func Read(r io.Reader) (*Message, error) {
 
 // Decode decodes a message from reader.
 func (m *Message) Decode(r io.Reader) error {
-	// validate rest length for each step?
+	defer func() {
+		if err := recover(); err != nil {
+			var errStack = make([]byte, 1024)
+			n := runtime.Stack(errStack, true)
+			log.Errorf("panic in message decode: %v, stack: %s", err, errStack[:n])
+
+		}
+	}()
 
 	// parse header
 	_, err := io.ReadFull(r, m.Header[:1])
