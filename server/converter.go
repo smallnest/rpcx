@@ -26,7 +26,7 @@ const (
 
 // HTTPRequest2RpcxRequest converts a http request to a rpcx request.
 func HTTPRequest2RpcxRequest(r *http.Request) (*protocol.Message, error) {
-	req := protocol.GetPooledMsg()
+	req := protocol.NewMessage()
 	req.SetMessageType(protocol.Request)
 
 	h := r.Header

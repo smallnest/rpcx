@@ -215,7 +215,7 @@ func (h *Header) SetSeq(seq uint64) {
 // Clone clones from an message.
 func (m Message) Clone() *Message {
 	header := *m.Header
-	c := GetPooledMsg()
+	c := NewMessage()
 	header.SetCompressType(None)
 	c.Header = &header
 	c.ServicePath = m.ServicePath

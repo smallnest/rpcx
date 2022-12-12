@@ -111,7 +111,6 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 	servicePath := r.Header.Get(XServicePath)
 	wh := w.Header()
 	req, err := HTTPRequest2RpcxRequest(r)
-	defer protocol.FreeMsg(req)
 
 	// set headers
 	wh.Set(XVersion, r.Header.Get(XVersion))
@@ -171,7 +170,6 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 		share.ResMetaDataKey, resMetadata)
 
 	res, err := s.handleRequest(newCtx, req)
-	defer protocol.FreeMsg(res)
 
 	if err != nil {
 		// call DoPreWriteResponse

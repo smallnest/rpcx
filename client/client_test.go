@@ -143,14 +143,13 @@ func TestClient_IT_Concurrency(t *testing.T) {
 
 func testSendRaw(t *testing.T, client *Client, seq uint64, x, y int32, wg *sync.WaitGroup) {
 	defer wg.Done()
-	rpcxReq := protocol.GetPooledMsg()
+	rpcxReq := protocol.NewMessage()
 	rpcxReq.SetMessageType(protocol.Request)
 	rpcxReq.SetSeq(seq)
 	rpcxReq.ServicePath = "PBArith"
 	rpcxReq.ServiceMethod = "Mul"
 	rpcxReq.SetSerializeType(protocol.ProtoBuffer)
 	rpcxReq.SetOneway(false)
-	defer protocol.FreeMsg(rpcxReq)
 
 	pbArgs := &testutils.ProtoArgs{
 		A: x,

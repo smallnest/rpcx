@@ -182,7 +182,7 @@ func (s *Server) SendMessage(conn net.Conn, servicePath, serviceMethod string, m
 	ctx := share.WithValue(context.Background(), StartSendRequestContextKey, time.Now().UnixNano())
 	s.Plugins.DoPreWriteRequest(ctx)
 
-	req := protocol.GetPooledMsg()
+	req := protocol.NewMessage()
 	req.SetMessageType(protocol.Request)
 
 	seq := atomic.AddUint64(&s.seq, 1)
@@ -199,7 +199,7 @@ func (s *Server) SendMessage(conn net.Conn, servicePath, serviceMethod string, m
 	protocol.PutData(b)
 
 	s.Plugins.DoPostWriteRequest(ctx, req, err)
-	protocol.FreeMsg(req)
+
 	return err
 }
 
@@ -452,17 +452,13 @@ func (s *Server) serveConn(conn net.Conn) {
 
 					s.handleError(res, err)
 					s.sendResponse(ctx, conn, err, req, res)
-					protocol.FreeMsg(res)
 				} else { // Oneway and only call the plugins
 					s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
 				}
-				protocol.FreeMsg(req)
 				continue
 			} else { // wrong data
 				log.Warnf("rpcx: failed to read request: %v", err)
 			}
-
-			protocol.FreeMsg(req)
 
 			if s.HandleServiceError != nil {
 				s.HandleServiceError(err)
@@ -488,12 +484,9 @@ func (s *Server) serveConn(conn net.Conn) {
 				res.SetMessageType(protocol.Response)
 				s.handleError(res, err)
 				s.sendResponse(ctx, conn, err, req, res)
-
-				protocol.FreeMsg(res)
 			} else {
 				s.Plugins.DoPreWriteResponse(ctx, req, nil, err)
 			}
-			protocol.FreeMsg(req)
 
 			if s.HandleServiceError != nil {
 				s.HandleServiceError(err)
@@ -542,7 +535,6 @@ func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, co
 		conn.Write(*data)
 
 		protocol.PutData(data)
-		protocol.FreeMsg(req)
 
 		return
 	}
@@ -573,7 +565,6 @@ func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, co
 			log.Errorf("[handler internal error]: servicepath: %s, servicemethod, err: %v", req.ServicePath, req.ServiceMethod, err)
 		}
 
-		protocol.FreeMsg(req)
 		return
 	}
 
@@ -606,9 +597,6 @@ func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, co
 	if share.Trace {
 		log.Debugf("server write response %+v for an request %+v from conn: %v", res, req, conn.RemoteAddr().String())
 	}
-
-	protocol.FreeMsg(req)
-	protocol.FreeMsg(res)
 }
 
 func parseServerTimeout(ctx *share.Context, req *protocol.Message) context.CancelFunc {
@@ -651,7 +639,7 @@ func (s *Server) readRequest(ctx context.Context, r io.Reader) (req *protocol.Me
 		return nil, err
 	}
 	// pool req?
-	req = protocol.GetPooledMsg()
+	req = protocol.NewMessage()
 	err = req.Decode(r)
 	if err == io.EOF {
 		return req, err

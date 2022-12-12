@@ -57,7 +57,7 @@ func (s *Server) handleJSONRPCRequest(ctx context.Context, r *jsonrpcRequest, he
 	var res = &jsonrpcRespone{}
 	res.ID = r.ID
 
-	req := protocol.GetPooledMsg()
+	req := protocol.NewMessage()
 	if req.Metadata == nil {
 		req.Metadata = make(map[string]string)
 	}
@@ -211,12 +211,11 @@ func AllowAllCORSOptions() *CORSOptions {
 // SetCORS sets CORS options.
 // for example:
 //
-//    cors.Options{
-//    	AllowedOrigins:   []string{"foo.com"},
-//    	AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete},
-//    	AllowCredentials: true,
-//    }
-//
+//	cors.Options{
+//		AllowedOrigins:   []string{"foo.com"},
+//		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodDelete},
+//		AllowCredentials: true,
+//	}
 func (s *Server) SetCORS(options *CORSOptions) {
 	s.corsOptions = options
 }

@@ -509,7 +509,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	}
 
 	// req := protocol.NewMessage()
-	req := protocol.GetPooledMsg()
+	req := protocol.NewMessage()
 	req.SetMessageType(protocol.Request)
 	req.SetSeq(seq)
 	if call.Reply == nil {
@@ -569,12 +569,11 @@ func (client *Client) send(ctx context.Context, call *Call) {
 			call.Error = err
 			call.done()
 		}
-		protocol.FreeMsg(req)
+
 		return
 	}
 
 	isOneway := req.IsOneway()
-	protocol.FreeMsg(req)
 
 	if isOneway {
 		client.mutex.Lock()
