@@ -77,10 +77,10 @@ func (s *Server) startHTTP1APIGateway(ln net.Listener) {
 	}
 
 	if err := s.gatewayHTTPServer.Serve(ln); err != nil {
-		if err == ErrServerClosed || errors.Is(err, cmux.ErrListenerClosed) {
+		if errors.Is(err, ErrServerClosed) || errors.Is(err, cmux.ErrListenerClosed) || errors.Is(err, cmux.ErrServerClosed) {
 			log.Info("gateway server closed")
 		} else {
-			log.Errorf("error in gateway Serve: %T %s", err, err)
+			log.Warnf("error in gateway Serve: %T %s", err, err)
 		}
 	}
 }
