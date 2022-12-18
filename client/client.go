@@ -62,6 +62,7 @@ var DefaultOption = Option{
 	MaxWaitForHeartbeat: 30 * time.Second,
 	TCPKeepAlivePeriod:  time.Minute,
 	BidirectionalBlock:  false,
+	TimeToDisallow:      time.Minute,
 }
 
 // Breaker is a CircuitBreaker interface.
@@ -153,6 +154,8 @@ type Option struct {
 
 	// Retries retries to send
 	Retries int
+	// Time to disallow the bad server not to be selected
+	TimeToDisallow time.Duration
 
 	// TLSConfig for tcp and quic
 	TLSConfig *tls.Config
