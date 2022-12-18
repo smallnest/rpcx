@@ -1,6 +1,7 @@
 package protocol
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/util"
-	"github.com/valyala/bytebufferpool"
 )
 
 var bufferPool = util.NewLimitedPool(512, 4096)
@@ -231,7 +231,7 @@ func (m Message) Encode() []byte {
 
 // EncodeSlicePointer encodes messages as a byte slice pointer we can use pool to improve.
 func (m Message) EncodeSlicePointer() *[]byte {
-	bb := bytebufferpool.Get()
+	var bb = bytes.NewBuffer(make([]byte, 0, len(m.Metadata)*64))
 	encodeMetadata(m.Metadata, bb)
 	meta := bb.Bytes()
 
@@ -276,8 +276,6 @@ func (m Message) EncodeSlicePointer() *[]byte {
 	binary.BigEndian.PutUint32((*data)[metaStart:metaStart+4], uint32(len(meta)))
 	copy((*data)[metaStart+4:], meta)
 
-	bytebufferpool.Put(bb)
-
 	binary.BigEndian.PutUint32((*data)[payLoadStart:payLoadStart+4], uint32(len(payload)))
 	copy((*data)[payLoadStart+4:], payload)
 
@@ -297,7 +295,7 @@ func (m Message) WriteTo(w io.Writer) (int64, error) {
 		return n, err
 	}
 
-	bb := bytebufferpool.Get()
+	bb := bytes.NewBuffer(make([]byte, 0, len(m.Metadata)*64))
 	encodeMetadata(m.Metadata, bb)
 	meta := bb.Bytes()
 
@@ -350,8 +348,6 @@ func (m Message) WriteTo(w io.Writer) (int64, error) {
 		return n, err
 	}
 
-	bytebufferpool.Put(bb)
-
 	// write payload
 	err = binary.Write(w, binary.BigEndian, uint32(len(payload)))
 	if err != nil {
@@ -363,7 +359,7 @@ func (m Message) WriteTo(w io.Writer) (int64, error) {
 }
 
 // len,string,len,string,......
-func encodeMetadata(m map[string]string, bb *bytebufferpool.ByteBuffer) {
+func encodeMetadata(m map[string]string, bb *bytes.Buffer) {
 	if len(m) == 0 {
 		return
 	}

@@ -32,7 +32,6 @@ require (
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stretchr/testify v1.7.2
 	github.com/tinylib/msgp v1.1.6
-	github.com/valyala/bytebufferpool v1.0.0
 	github.com/valyala/fastrand v1.1.0
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 	github.com/xtaci/kcp-go v5.4.20+incompatible
