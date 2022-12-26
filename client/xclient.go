@@ -317,8 +317,8 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, a
 			return c.generateClient(k, servicePath, serviceMethod)
 		})
 
-		c.slGroup.Forget(k)
 		if err != nil {
+			c.slGroup.Forget(k)
 			return nil, err
 		}
 
@@ -332,6 +332,9 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, a
 		c.mu.Lock()
 		c.setCachedClient(client, k, servicePath, serviceMethod)
 		c.mu.Unlock()
+
+		// forget k only when client is cached
+		c.slGroup.Forget(k)
 	}
 
 	return client, nil
