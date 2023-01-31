@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/url"
@@ -564,6 +565,14 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	}
 
 	if err != nil {
+		if e, ok := err.(*net.OpError); ok {
+			if e.Err != nil {
+				err = fmt.Errorf("net.OpError: %s", e.Err.Error())
+			} else {
+				err = errors.New("net.OpError")
+			}
+
+		}
 		client.mutex.Lock()
 		call = client.pending[seq]
 		delete(client.pending, seq)
