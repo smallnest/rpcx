@@ -343,7 +343,11 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 
 // SendRaw sends raw messages. You don't care args and replies.
 func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error) {
-	ctx = context.WithValue(ctx, seqKey{}, r.Seq())
+	if sharedCtx, ok := ctx.(*share.Context); ok {
+		sharedCtx.SetValue(seqKey{}, r.Seq())
+	} else {
+		ctx = context.WithValue(ctx, seqKey{}, r.Seq())
+	}
 
 	call := new(Call)
 	call.Raw = true
