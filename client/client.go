@@ -285,7 +285,12 @@ func (client *Client) Call(ctx context.Context, servicePath, serviceMethod strin
 
 func (client *Client) call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error {
 	seq := new(uint64)
-	ctx = context.WithValue(ctx, seqKey{}, seq)
+
+	if sharedCtx, ok := ctx.(*share.Context); ok {
+		sharedCtx.SetValue(seqKey{}, seq)
+	} else {
+		ctx = context.WithValue(ctx, seqKey{}, seq)
+	}
 
 	if share.Trace {
 		log.Debugf("client.call for %s.%s, args: %+v in case of client call", servicePath, serviceMethod, args)
