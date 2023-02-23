@@ -216,20 +216,7 @@ func (s *Server) Serve(network, address string) (err error) {
 		return err
 	}
 
-	if network == "http" {
-		s.serveByHTTP(ln, "")
-		return nil
-	}
-
-	if network == "ws" || network == "wss" {
-		s.serveByWS(ln, "")
-		return nil
-	}
-
-	// try to start gateway
-	ln = s.startGateway(network, ln)
-
-	return s.serveListener(ln)
+	return s.ServeListener(network, ln)
 }
 
 // ServeListener listens RPC requests.
@@ -237,6 +224,11 @@ func (s *Server) Serve(network, address string) (err error) {
 func (s *Server) ServeListener(network string, ln net.Listener) (err error) {
 	if network == "http" {
 		s.serveByHTTP(ln, "")
+		return nil
+	}
+
+	if network == "ws" || network == "wss" {
+		s.serveByWS(ln, "")
 		return nil
 	}
 
