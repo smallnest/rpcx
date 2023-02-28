@@ -1,5 +1,9 @@
 # [rpcx](http://rpcx.io)
 
+## 1.9.0
+- unregister all services on close automatically
+
+
 ## 1.8.0
 - supports distributed rate limiter based on go-redis/redis-rate
 - move zookeeper plugin to https://github.com/smallnest/rpcx-zookeepr

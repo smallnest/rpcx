@@ -87,8 +87,9 @@ type Server struct {
 	AsyncWrite         bool // set true if your server only serves few clients
 	pool               WorkerPool
 
-	serviceMapMu sync.RWMutex
-	serviceMap   map[string]*service
+	serviceMapMu      sync.RWMutex
+	serviceMap        map[string]*service
+	unregisterAllOnce sync.Once
 
 	router map[string]Handler
 
@@ -216,6 +217,8 @@ func (s *Server) Serve(network, address string) (err error) {
 		return err
 	}
 
+	defer s.UnregisterAll()
+
 	if network == "http" {
 		s.serveByHTTP(ln, "")
 		return nil
@@ -235,6 +238,8 @@ func (s *Server) Serve(network, address string) (err error) {
 // ServeListener listens RPC requests.
 // It is blocked until receiving connections from clients.
 func (s *Server) ServeListener(network string, ln net.Listener) (err error) {
+	defer s.UnregisterAll()
+
 	if network == "http" {
 		s.serveByHTTP(ln, "")
 		return nil
