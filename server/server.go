@@ -87,9 +87,8 @@ type Server struct {
 	AsyncWrite         bool // set true if your server only serves few clients
 	pool               WorkerPool
 
-	serviceMapMu      sync.RWMutex
-	serviceMap        map[string]*service
-	unregisterAllOnce sync.Once
+	serviceMapMu sync.RWMutex
+	serviceMap   map[string]*service
 
 	router map[string]Handler
 
