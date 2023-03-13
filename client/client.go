@@ -487,19 +487,11 @@ func urlencode(data map[string]string) string {
 
 func (client *Client) send(ctx context.Context, call *Call) {
 	// Register this call.
-	defer func() {
-		if r := recover(); r != nil {
-			log.Errorf("client send error is %v", r)
-		}
-		// write channel ,
-		if call != nil {
-			call.done()
-		}
-	}()
 	client.mutex.Lock()
 	if client.shutdown || client.closing {
 		call.Error = ErrShutdown
 		client.mutex.Unlock()
+		call.done()
 		return
 	}
 
@@ -512,6 +504,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	if codec == nil {
 		call.Error = ErrUnsupportedCodec
 		client.mutex.Unlock()
+		call.done()
 		return
 	}
 
@@ -557,6 +550,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		delete(client.pending, seq)
 		client.mutex.Unlock()
 		call.Error = err
+		call.done()
 		return
 	}
 	if len(data) > 1024 && client.option.CompressType != protocol.None {
@@ -594,6 +588,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		client.mutex.Unlock()
 		if call != nil {
 			call.Error = err
+			call.done()
 		}
 
 		return
@@ -606,6 +601,9 @@ func (client *Client) send(ctx context.Context, call *Call) {
 		call = client.pending[seq]
 		delete(client.pending, seq)
 		client.mutex.Unlock()
+		if call != nil {
+			call.done()
+		}
 	}
 
 	if client.option.IdleTimeout != 0 {
