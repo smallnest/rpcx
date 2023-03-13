@@ -489,8 +489,7 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	// Register this call.
 	defer func() {
 		if r := recover(); r != nil {
-			call.Error = errors.New(r.(string))
-			log.Warnf("client send error: %v", r)
+			log.Errorf("client send error is %v", r)
 		}
 		// write channel ,
 		if call != nil {
