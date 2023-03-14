@@ -726,6 +726,14 @@ func (client *Client) input() {
 	client.Conn.Close()
 	client.shutdown = true
 	closing := client.closing
+	if e, ok := err.(*net.OpError); ok {
+		if e.Addr != nil || e.Err != nil {
+			err = fmt.Errorf("net.OpError: %s", e.Err.Error())
+		} else {
+			err = errors.New("net.OpError")
+		}
+
+	}
 	if err == io.EOF {
 		if closing {
 			err = ErrShutdown
