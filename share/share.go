@@ -42,6 +42,7 @@ var Codecs = map[protocol.SerializeType]codec.Codec{
 	protocol.ProtoBuffer:   &codec.PBCodec{},
 	protocol.MsgPack:       &codec.MsgpackCodec{},
 	protocol.Thrift:        &codec.ThriftCodec{},
+	protocol.JSONIterCodec: &codec.JSONIterCodec{},
 }
 
 // RegisterCodec register customized codec.
