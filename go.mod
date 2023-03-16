@@ -1,6 +1,6 @@
 module github.com/smallnest/rpcx
 
-go 1.18
+go 1.19
 
 require (
 	github.com/ChimeraCoder/gojson v1.1.0
