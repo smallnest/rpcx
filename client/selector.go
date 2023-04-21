@@ -274,7 +274,7 @@ func (s *consistentHashSelector) UpdateServer(servers map[string]string) {
 	sort.Slice(ss, func(i, j int) bool { return ss[i] < ss[j] })
 
 	for _, k := range s.servers {
-		if servers[k] == "" { // remove
+		if _, exist := servers[k]; !exist { // remove
 			s.h.Remove(k)
 		}
 	}
