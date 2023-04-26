@@ -421,10 +421,11 @@ func (c *xClient) getCachedClientWithoutLock(k, servicePath, serviceMethod strin
 			return client, needCallPlugin, nil
 		}
 		c.deleteCachedClient(client, k, servicePath, serviceMethod)
+
+		// double check
+		client = c.findCachedClient(k, servicePath, serviceMethod)
 	}
 
-	// double check
-	client = c.findCachedClient(k, servicePath, serviceMethod)
 	if client == nil || client.IsShutdown() {
 		generatedClient, err, _ := c.slGroup.Do(k, func() (interface{}, error) {
 			return c.generateClient(k, servicePath, serviceMethod)
