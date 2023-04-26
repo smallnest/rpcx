@@ -95,7 +95,7 @@ type Server struct {
 	mu         sync.RWMutex
 	activeConn map[net.Conn]struct{}
 	doneChan   chan struct{}
-	seq        uint64
+	seq        atomic.Uint64
 
 	inShutdown int32
 	onShutdown []func(s *Server)
@@ -185,7 +185,7 @@ func (s *Server) SendMessage(conn net.Conn, servicePath, serviceMethod string, m
 	req := protocol.NewMessage()
 	req.SetMessageType(protocol.Request)
 
-	seq := atomic.AddUint64(&s.seq, 1)
+	seq := s.seq.Add(1)
 	req.SetSeq(seq)
 	req.SetOneway(true)
 	req.SetSerializeType(protocol.SerializeNone)
