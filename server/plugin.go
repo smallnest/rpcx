@@ -3,7 +3,9 @@ package server
 import (
 	"context"
 	"net"
+	"net/http"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/smallnest/rpcx/errors"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/soheilhy/cmux"
@@ -25,6 +27,7 @@ type PluginContainer interface {
 
 	DoPreReadRequest(ctx context.Context) error
 	DoPostReadRequest(ctx context.Context, r *protocol.Message, e error) error
+	DoPostHTTPRequest(ctx context.Context, r *http.Request, params httprouter.Params) error
 
 	DoPreHandleRequest(ctx context.Context, req *protocol.Message) error
 	DoPreCall(ctx context.Context, serviceName, methodName string, args interface{}) (interface{}, error)
@@ -76,6 +79,11 @@ type (
 	// PostReadRequestPlugin represents .
 	PostReadRequestPlugin interface {
 		PostReadRequest(ctx context.Context, r *protocol.Message, e error) error
+	}
+
+	// PostHTTPRequestPlugin represents .
+	PostHTTPRequestPlugin interface {
+		PostHTTPRequest(ctx context.Context, r *http.Request, params httprouter.Params) error
 	}
 
 	// PreHandleRequestPlugin represents .
@@ -253,6 +261,20 @@ func (p *pluginContainer) DoPostReadRequest(ctx context.Context, r *protocol.Mes
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PostReadRequestPlugin); ok {
 			err := plugin.PostReadRequest(ctx, r, e)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// DoPostHTTPRequest invokes PostHTTPRequest plugin.
+func (p *pluginContainer) DoPostHTTPRequest(ctx context.Context, r *http.Request, params httprouter.Params) error {
+	for i := range p.plugins {
+		if plugin, ok := p.plugins[i].(PostHTTPRequestPlugin); ok {
+			err := plugin.PostHTTPRequest(ctx, r, params)
 			if err != nil {
 				return err
 			}

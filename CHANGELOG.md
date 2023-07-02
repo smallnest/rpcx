@@ -2,6 +2,7 @@
 
 ## 1.9.0
 - unregister all services on close automatically
+- add PostHTTPRequestPlugin 
 
 
 ## 1.8.0

@@ -103,6 +103,12 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 		return
 	}
 
+	err = s.Plugins.DoPostHTTPRequest(ctx, r, params)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
 	if r.Header.Get(XServicePath) == "" {
 		servicePath := params.ByName("servicePath")
 		servicePath = strings.TrimPrefix(servicePath, "/")
