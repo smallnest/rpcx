@@ -40,6 +40,12 @@ type ServiceError interface {
 	IsServiceError() bool
 }
 
+// NewServiceError creates a ServiceError with the error message.
+func NewServiceError(s string) ServiceError {
+	return strErr(s)
+}
+
+// ClientErrorFunc is a function to create a customized error.
 var ClientErrorFunc func(e string) ServiceError
 
 type strErr string
