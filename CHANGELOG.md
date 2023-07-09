@@ -3,6 +3,7 @@
 ## 1.9.0
 - unregister all services on close automatically
 - add PostHTTPRequestPlugin 
+- support io_uring
 
 
 ## 1.8.0
