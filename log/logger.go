@@ -35,6 +35,10 @@ func SetLogger(logger Logger) {
 	l = logger
 }
 
+func GetLogger() Logger {
+	return l
+}
+
 func SetDummyLogger() {
 	l = &dummyLogger{}
 }

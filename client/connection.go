@@ -18,11 +18,12 @@ import (
 type ConnFactoryFn func(c *Client, network, address string) (net.Conn, error)
 
 var ConnFactories = map[string]ConnFactoryFn{
-	"http": newDirectHTTPConn,
-	"kcp":  newDirectKCPConn,
-	"quic": newDirectQuicConn,
-	"unix": newDirectConn,
-	"memu": newMemuConn,
+	"http":    newDirectHTTPConn,
+	"kcp":     newDirectKCPConn,
+	"quic":    newDirectQuicConn,
+	"unix":    newDirectConn,
+	"memu":    newMemuConn,
+	"iouring": newIOUringConn,
 }
 
 // Connect connects the server via specified network.
