@@ -430,8 +430,9 @@ func (c *xClient) getCachedClientWithoutLock(k, servicePath, serviceMethod strin
 		generatedClient, err, _ := c.slGroup.Do(k, func() (interface{}, error) {
 			return c.generateClient(k, servicePath, serviceMethod)
 		})
-		c.slGroup.Forget(k)
+
 		if err != nil {
+			c.slGroup.Forget(k)
 			return nil, needCallPlugin, err
 		}
 
@@ -443,6 +444,7 @@ func (c *xClient) getCachedClientWithoutLock(k, servicePath, serviceMethod strin
 		client.RegisterServerMessageChan(c.serverMessageChan)
 
 		c.setCachedClient(client, k, servicePath, serviceMethod)
+		c.slGroup.Forget(k)
 	}
 
 	return client, needCallPlugin, nil
