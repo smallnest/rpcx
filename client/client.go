@@ -439,7 +439,7 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 		return nil, nil, ctx.Err()
 	case call := <-done:
 		err = call.Error
-		m = call.Metadata
+		m = call.ResMetadata
 		if call.Reply != nil {
 			payload = call.Reply.([]byte)
 		}
