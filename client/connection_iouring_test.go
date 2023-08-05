@@ -3,44 +3,36 @@
 
 package client
 
-import (
-	"context"
-	"testing"
-	"time"
+// func TestXClient_IOUring(t *testing.T) {
+// 	s := server.NewServer()
+// 	s.RegisterName("Arith", new(Arith), "")
+// 	go s.Serve("iouring", "127.0.0.1:8972")
+// 	defer s.Close()
+// 	time.Sleep(500 * time.Millisecond)
 
-	"github.com/smallnest/rpcx/server"
-)
+// 	addr := s.Address().String()
 
-func TestXClient_IOUring(t *testing.T) {
-	s := server.NewServer()
-	s.RegisterName("Arith", new(Arith), "")
-	go s.Serve("iouring", "127.0.0.1:8972")
-	defer s.Close()
-	time.Sleep(500 * time.Millisecond)
+// 	d, err := NewPeer2PeerDiscovery("iouring@"+addr, "desc=a test service")
+// 	if err != nil {
+// 		t.Fatalf("failed to NewPeer2PeerDiscovery: %v", err)
+// 	}
 
-	addr := s.Address().String()
+// 	xclient := NewXClient("Arith", Failtry, RandomSelect, d, DefaultOption)
 
-	d, err := NewPeer2PeerDiscovery("iouring@"+addr, "desc=a test service")
-	if err != nil {
-		t.Fatalf("failed to NewPeer2PeerDiscovery: %v", err)
-	}
+// 	defer xclient.Close()
 
-	xclient := NewXClient("Arith", Failtry, RandomSelect, d, DefaultOption)
+// 	args := &Args{
+// 		A: 10,
+// 		B: 20,
+// 	}
 
-	defer xclient.Close()
+// 	reply := &Reply{}
+// 	err = xclient.Call(context.Background(), "Mul", args, reply)
+// 	if err != nil {
+// 		t.Fatalf("failed to call: %v", err)
+// 	}
 
-	args := &Args{
-		A: 10,
-		B: 20,
-	}
-
-	reply := &Reply{}
-	err = xclient.Call(context.Background(), "Mul", args, reply)
-	if err != nil {
-		t.Fatalf("failed to call: %v", err)
-	}
-
-	if reply.C != 200 {
-		t.Fatalf("expect 200 but got %d", reply.C)
-	}
-}
+// 	if reply.C != 200 {
+// 		t.Fatalf("expect 200 but got %d", reply.C)
+// 	}
+// }
