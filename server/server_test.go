@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net"
 	"testing"
 	"time"
@@ -166,7 +166,7 @@ func TestHandler(t *testing.T) {
 		serverConn.Close()
 	}()
 
-	data, err = ioutil.ReadAll(clientConn)
+	data, err = io.ReadAll(clientConn)
 	assert.NoError(t, err)
 
 	resp, err := protocol.Read(bytes.NewReader(data))
