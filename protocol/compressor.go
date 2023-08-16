@@ -2,7 +2,7 @@ package protocol
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 
 	"github.com/golang/snappy"
 	"github.com/smallnest/rpcx/util"
@@ -67,7 +67,7 @@ func (c *SnappyCompressor) Unzip(data []byte) ([]byte, error) {
 	}
 
 	reader := snappy.NewReader(bytes.NewReader(data))
-	out, err := ioutil.ReadAll(reader)
+	out, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}

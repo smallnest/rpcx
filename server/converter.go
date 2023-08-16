@@ -1,7 +1,7 @@
 package server
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -85,7 +85,7 @@ func HTTPRequest2RpcxRequest(r *http.Request) (*protocol.Message, error) {
 
 	req.ServiceMethod = h.Get(XServiceMethod)
 
-	payload, err := ioutil.ReadAll(r.Body)
+	payload, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, err
 	}
