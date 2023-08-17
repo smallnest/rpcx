@@ -29,7 +29,7 @@ type DNSDiscovery struct {
 	stopCh chan struct{}
 }
 
-// NewPeer2PeerDiscovery returns a new Peer2PeerDiscovery.
+// NewDNSDiscovery returns a new DNSDiscovery.
 func NewDNSDiscovery(domain string, network string, port int, d time.Duration) (*DNSDiscovery, error) {
 	discovery := &DNSDiscovery{domain: domain, network: network, port: port, d: d}
 	discovery.lookup()
