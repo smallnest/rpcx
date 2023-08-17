@@ -97,8 +97,8 @@ func (p *MetricsPlugin) Log(freq time.Duration, l metrics.Logger) {
 
 // Graphite reports metrics into graphite.
 //
-//		addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:2003")
-//	 p.Graphite(10e9, "metrics", addr)
+//	addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:2003")
+//	p.Graphite(10e9, "metrics", addr)
 func (p *MetricsPlugin) Graphite(freq time.Duration, prefix string, addr *net.TCPAddr) {
 	go metrics.Graphite(p.Registry, freq, prefix, addr)
 }
