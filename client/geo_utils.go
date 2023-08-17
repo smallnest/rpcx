@@ -4,7 +4,7 @@ import (
 	"math"
 )
 
-//https://gist.github.com/cdipaolo/d3f8db3848278b49db68
+// https://gist.github.com/cdipaolo/d3f8db3848278b49db68
 func getDistanceFrom(lat1, lon1, lat2, lon2 float64) float64 {
 	var la1, lo1, la2, lo2, r float64
 	la1 = lat1 * math.Pi / 180

@@ -48,7 +48,7 @@ func createICMPWeighted(servers map[string]string) []*Weighted {
 
 // Ping gets network traffic by ICMP
 func Ping(host string) (rtt int, err error) {
-	rtt = 1000 //default and timeout is 1000 ms
+	rtt = 1000 // default and timeout is 1000 ms
 
 	pinger, err := ping.NewPinger(host)
 	if err != nil {

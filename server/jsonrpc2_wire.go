@@ -18,7 +18,7 @@ const (
 	CodeUnknownJSONRPCError = -32001
 	// CodeParseJSONRPCError is used when invalid JSON was received by the server.
 	CodeParseJSONRPCError = -32700
-	//CodeInvalidjsonrpcRequest is used when the JSON sent is not a valid jsonrpcRequest object.
+	// CodeInvalidjsonrpcRequest is used when the JSON sent is not a valid jsonrpcRequest object.
 	CodeInvalidjsonrpcRequest = -32600
 	// CodeMethodNotFound should be returned by the handler when the method does
 	// not exist / is not available.

@@ -12,7 +12,7 @@ type aliasPair struct {
 	servicePath, serviceMethod string
 }
 
-//AliasPlugin can be used to set aliases for services
+// AliasPlugin can be used to set aliases for services
 type AliasPlugin struct {
 	Aliases          map[string]*aliasPair
 	ReseverseAliases map[string]*aliasPair

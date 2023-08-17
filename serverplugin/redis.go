@@ -88,7 +88,7 @@ func (p *RedisRegisterPlugin) Start() error {
 						extra["calls"] = fmt.Sprintf("%.2f", metrics.GetOrRegisterMeter("calls", p.Metrics).RateMean())
 						extra["connections"] = fmt.Sprintf("%.2f", metrics.GetOrRegisterMeter("connections", p.Metrics).RateMean())
 					}
-					//set this same metrics for all services at this server
+					// set this same metrics for all services at this server
 					for _, name := range p.Services {
 						nodePath := fmt.Sprintf("%s/%s/%s", p.BasePath, name, p.ServiceAddress)
 						kvPair, err := p.kv.Get(nodePath)
