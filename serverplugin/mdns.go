@@ -87,7 +87,7 @@ func (p *MDNSRegisterPlugin) Start() error {
 						extra["connections"] = fmt.Sprintf("%.2f", metrics.GetOrRegisterMeter("connections", p.Metrics).RateMean())
 					}
 
-					//set this same metrics for all services at this server
+					// set this same metrics for all services at this server
 					for _, sm := range p.Services {
 						v, _ := url.ParseQuery(string(sm.Meta))
 						for key, value := range extra {

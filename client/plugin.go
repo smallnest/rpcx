@@ -86,7 +86,7 @@ func (p *pluginContainer) DoConnCreated(conn net.Conn) (net.Conn, error) {
 	return conn, nil
 }
 
-// DoConnCreated is called in case of client connection created.
+// DoConnCreateFailed is called in case of client connection create failed.
 func (p *pluginContainer) DoConnCreateFailed(network, address string) {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(ConnCreateFailedPlugin); ok {
@@ -109,7 +109,7 @@ func (p *pluginContainer) DoClientConnected(conn net.Conn) (net.Conn, error) {
 	return conn, nil
 }
 
-// DoClientConnected is called in case of connected.
+// DoClientConnectionClose is called in case of connection close.
 func (p *pluginContainer) DoClientConnectionClose(conn net.Conn) error {
 	var err error
 	for i := range p.plugins {
@@ -137,7 +137,7 @@ func (p *pluginContainer) DoClientBeforeEncode(req *protocol.Message) error {
 	return nil
 }
 
-// DoClientBeforeEncode is called when requests are encoded and sent.
+// DoClientAfterDecode is called when requests are decoded and received.
 func (p *pluginContainer) DoClientAfterDecode(req *protocol.Message) error {
 	var err error
 	for i := range p.plugins {

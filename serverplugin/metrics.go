@@ -21,7 +21,7 @@ type MetricsPlugin struct {
 	Prefix   string
 }
 
-//NewMetricsPlugin creates a new MetricsPlugirn
+// NewMetricsPlugin creates a new MetricsPlugin
 func NewMetricsPlugin(registry metrics.Registry) *MetricsPlugin {
 	return &MetricsPlugin{Registry: registry}
 }
@@ -78,8 +78,8 @@ func (p *MetricsPlugin) PostWriteResponse(ctx context.Context, req *protocol.Mes
 
 	if t > 0 {
 		t = time.Now().UnixNano() - t
-		if t < 30*time.Minute.Nanoseconds() { //it is impossible that calltime exceeds 30 minute
-			//Historgram
+		if t < 30*time.Minute.Nanoseconds() { // it is impossible that calltime exceeds 30 minute
+			// Historgram
 			h := metrics.GetOrRegisterHistogram(p.withPrefix("service."+sp+"."+sm+".CallTime"), p.Registry,
 				metrics.NewExpDecaySample(1028, 0.015))
 			h.Update(t)
@@ -91,16 +91,14 @@ func (p *MetricsPlugin) PostWriteResponse(ctx context.Context, req *protocol.Mes
 // Log reports metrics into logs.
 //
 // p.Log( 5 * time.Second, log.New(os.Stderr, "metrics: ", log.Lmicroseconds))
-//
 func (p *MetricsPlugin) Log(freq time.Duration, l metrics.Logger) {
 	go metrics.Log(p.Registry, freq, l)
 }
 
 // Graphite reports metrics into graphite.
 //
-// 	addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:2003")
-//  p.Graphite(10e9, "metrics", addr)
-//
+//	addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:2003")
+//	p.Graphite(10e9, "metrics", addr)
 func (p *MetricsPlugin) Graphite(freq time.Duration, prefix string, addr *net.TCPAddr) {
 	go metrics.Graphite(p.Registry, freq, prefix, addr)
 }

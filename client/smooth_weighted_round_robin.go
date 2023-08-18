@@ -15,7 +15,7 @@ type Weighted struct {
 // 	}
 // }
 
-//https://github.com/phusion/nginx/commit/27e94984486058d73157038f7950a0a36ecc6e35
+// https://github.com/phusion/nginx/commit/27e94984486058d73157038f7950a0a36ecc6e35
 func nextWeighted(servers []*Weighted) (best *Weighted) {
 	total := 0
 
@@ -25,7 +25,7 @@ func nextWeighted(servers []*Weighted) (best *Weighted) {
 		if w == nil {
 			continue
 		}
-		//if w is down, continue
+		// if w is down, continue
 
 		w.CurrentWeight += w.EffectiveWeight
 		total += w.EffectiveWeight
