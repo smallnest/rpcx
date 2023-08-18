@@ -8,7 +8,7 @@ import (
 )
 
 // MultipleServersDiscovery is a multiple servers service discovery.
-// It always returns the current servers and uses can change servers dynamically.
+// It always returns the current servers and users can change servers dynamically.
 type MultipleServersDiscovery struct {
 	pairsMu sync.RWMutex
 	pairs   []*KVPair
