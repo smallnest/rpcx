@@ -30,5 +30,14 @@ func TestMultiError_Error(t *testing.T) {
 	multiErrors.Errors = append(multiErrors.Errors, errors.New("invalid"))
 	multiErrors.Errors = append(multiErrors.Errors, errors.New("fatal"))
 
-	assert.Equal(t, "[invalid fatal]",multiErrors.Error(), "Test Error()")
+	assert.Equal(t, "[invalid fatal]", multiErrors.Error(), "Test Error()")
+}
+
+func TestMultiError_ErrorOrNil(t *testing.T) {
+	multiErrors := MultiError{}
+	assert.Equal(t, nil, multiErrors.ErrorOrNil(), "Test ErrorOrNil() nil")
+
+	multiErrors.Errors = append(multiErrors.Errors, errors.New("invalid"))
+	multiErrors.Errors = append(multiErrors.Errors, errors.New("fatal"))
+	assert.Equal(t, &multiErrors, multiErrors.ErrorOrNil(), "Test ErrorOrNil() error")
 }

@@ -941,10 +941,7 @@ check:
 	}
 	timeout.Stop()
 
-	if err.Error() == "[]" {
-		return nil
-	}
-	return err
+	return err.ErrorOrNil()
 }
 
 // Fork sends requests to all servers and Success once one server returns OK.
@@ -1040,11 +1037,7 @@ check:
 	}
 	timeout.Stop()
 
-	if err.Error() == "[]" {
-		return nil
-	}
-
-	return err
+	return err.ErrorOrNil()
 }
 
 // Inform sends requests to all servers and returns all results from services.
@@ -1154,10 +1147,7 @@ check:
 	}
 	timeout.Stop()
 
-	if err.Error() == "[]" {
-		return receipts, nil
-	}
-	return receipts, err
+	return receipts, err.ErrorOrNil()
 }
 
 // SendFile sends a local file to the server.

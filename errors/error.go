@@ -22,6 +22,13 @@ func (e *MultiError) Append(err error) {
 	e.Errors = append(e.Errors, err)
 }
 
+func (e *MultiError) ErrorOrNil() error {
+	if e == nil || len(e.Errors) == 0 {
+		return nil
+	}
+	return e
+}
+
 // NewMultiError creates and returns an Error with error splice
 func NewMultiError(errors []error) *MultiError {
 	return &MultiError{Errors: errors}
