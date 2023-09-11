@@ -222,9 +222,6 @@ func (c *xClient) Auth(auth string) {
 // watch changes of service and update cached clients.
 func (c *xClient) watch(ch chan []*KVPair) {
 	for pairs := range ch {
-		sort.Slice(pairs, func(i, j int) bool {
-			return strings.Compare(pairs[i].Key, pairs[j].Key) <= 0
-		})
 		servers := make(map[string]string, len(pairs))
 		for _, p := range pairs {
 			servers[p.Key] = p.Value
