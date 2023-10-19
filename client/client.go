@@ -46,7 +46,7 @@ func NewServiceError(s string) ServiceError {
 }
 
 // ClientErrorFunc is a function to create a customized error.
-var ClientErrorFunc func(e string) ServiceError
+var ClientErrorFunc func(res *protocol.Message, e string) ServiceError
 
 type strErr string
 
@@ -663,7 +663,7 @@ func (client *Client) input() {
 
 				// convert server error to a customized error, which implements ServerError interface
 				if ClientErrorFunc != nil {
-					call.Error = ClientErrorFunc(res.Metadata[protocol.ServiceError])
+					call.Error = ClientErrorFunc(res, res.Metadata[protocol.ServiceError])
 				} else {
 					call.Error = strErr(res.Metadata[protocol.ServiceError])
 				}
