@@ -46,7 +46,7 @@ func NewServiceError(s string) ServiceError {
 }
 
 // ClientErrorFunc is a function to create a customized error.
-var ClientErrorFunc func(res *protocol.Message, , e string) ServiceError
+var ClientErrorFunc func(res *protocol.Message, e string) ServiceError
 
 type strErr string
 
