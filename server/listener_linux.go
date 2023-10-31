@@ -51,8 +51,8 @@ type uringnetListener struct {
 }
 
 func (cl *uringnetListener) Close() error {
-	cl.Listener.Close()
 	cl.closeRings()
+	cl.Listener.Close()
 
 	return nil
 }
