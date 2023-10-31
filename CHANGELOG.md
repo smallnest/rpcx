@@ -4,6 +4,7 @@
 - unregister all services on close automatically
 - add PostHTTPRequestPlugin 
 - support io_uring
+- add CacheDiscovery
 
 
 ## 1.8.0
