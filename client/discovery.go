@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -37,6 +38,15 @@ type cachedServiceDiscovery struct {
 func CacheDiscovery(threshold int, cachedFile string, discovery ServiceDiscovery) ServiceDiscovery {
 	if cachedFile == "" {
 		cachedFile = ".cache/discovery.json"
+	}
+
+	cachedFileDir := filepath.Dir(cachedFile)
+
+	if _, err := os.Stat(cachedFileDir); os.IsNotExist(err) {
+		// 目录不存在，创建目录
+		if err := os.MkdirAll(cachedFileDir, os.ModePerm); err != nil {
+			panic(err)
+		}
 	}
 
 	return &cachedServiceDiscovery{
