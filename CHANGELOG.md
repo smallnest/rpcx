@@ -5,6 +5,7 @@
 - add PostHTTPRequestPlugin 
 - support io_uring
 - add CacheDiscovery
+- add Oneshot method for XClient
 
 
 ## 1.8.0

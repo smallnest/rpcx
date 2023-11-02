@@ -54,6 +54,7 @@ type XClient interface {
 
 	Go(ctx context.Context, serviceMethod string, args interface{}, reply interface{}, done chan *Call) (*Call, error)
 	Call(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
+	Oneshot(ctx context.Context, serviceMethod string, args interface{}) error
 	Broadcast(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Fork(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
 	Inform(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) ([]Receipt, error)
@@ -650,6 +651,13 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 
 		return err
 	}
+}
+
+// Oneshot invokes the named function, ** DOEST NOT ** wait for it to complete, and returns immediately.
+func (c *xClient) Oneshot(ctx context.Context, serviceMethod string, args interface{}) error {
+	_, err := c.Go(ctx, serviceMethod, args, nil, nil)
+
+	return err
 }
 
 func uncoverError(err error) bool {

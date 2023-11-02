@@ -262,17 +262,20 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 
 	call.Args = args
 	call.Reply = reply
-	if done == nil {
-		done = make(chan *Call, 10) // buffered.
-	} else {
-		// If caller passes done != nil, it must arrange that
-		// done has enough buffer for the number of simultaneous
-		// RPCs that will be using that channel. If the channel
-		// is totally unbuffered, it's best not to run at all.
-		if cap(done) == 0 {
-			log.Panic("rpc: done channel is unbuffered")
-		}
-	}
+
+	// // we allow done is nil
+	// if done == nil {
+	// 	done = make(chan *Call, 10) // buffered.
+	// } else {
+	// 	// If caller passes done != nil, it must arrange that
+	// 	// done has enough buffer for the number of simultaneous
+	// 	// RPCs that will be using that channel. If the channel
+	// 	// is totally unbuffered, it's best not to run at all.
+	// 	if cap(done) == 0 {
+	// 		log.Panic("rpc: done channel is unbuffered")
+	// 	}
+	// }
+
 	call.Done = done
 
 	if share.Trace {
@@ -305,7 +308,7 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 		}()
 	}
 
-	Done := client.Go(ctx, servicePath, serviceMethod, args, reply, make(chan *Call, 1)).Done
+	Done := client.Go(ctx, servicePath, serviceMethod, args, reply, make(chan *Call, 10)).Done
 
 	var err error
 	select {
