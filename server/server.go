@@ -722,7 +722,10 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		err = service.call(ctx, mtype, reflect.ValueOf(argv), reflect.ValueOf(replyv))
 	}
 
-	replyv, err = s.Plugins.DoPostCall(ctx, serviceName, methodName, argv, replyv, err)
+	replyv, err1 := s.Plugins.DoPostCall(ctx, serviceName, methodName, argv, replyv, err)
+	if err == nil {
+		err = err1
+	}
 
 	// return argc to object pool
 	reflectTypePools.Put(mtype.ArgType, argv)
@@ -809,7 +812,6 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 	replyv, err = s.Plugins.DoPostCall(ctx, serviceName, methodName, argv, replyv, err)
 
 	reflectTypePools.Put(mtype.ArgType, argv)
-
 	if err != nil {
 		reflectTypePools.Put(mtype.ReplyType, replyv)
 		return s.handleError(res, err)
