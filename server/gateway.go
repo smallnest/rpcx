@@ -42,12 +42,14 @@ func (s *Server) startGateway(network string, ln net.Listener) net.Listener {
 	if s.EnableProfile {
 		// debugLn := m.Match(http1Path("/debug/"))
 		debugLn := m.Match(cmux.HTTP1Fast())
-		vm := NewViewManager(debugLn)
+		vm := NewViewManager(debugLn, s)
 		go func() {
 			if err := vm.Start(); err != nil {
 				log.Errorf("start view manager failed: %v", err)
 			}
 		}()
+
+		s.ViewManager = vm
 	}
 
 	if !s.DisableHTTPGateway {

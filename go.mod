@@ -31,7 +31,7 @@ require (
 	github.com/rs/cors v1.8.3
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
 	github.com/smallnest/quick v0.1.0
-	github.com/smallnest/statsview v0.0.0-20231119053547-3d59443f9ae3
+	github.com/smallnest/statsview v0.0.0-20231119085602-10700f9abec4
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stretchr/testify v1.7.2
 	github.com/tinylib/msgp v1.1.8
@@ -57,6 +57,7 @@ require (
 	github.com/google/pprof v0.0.0-20230228050547-1710fef4ab10 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/jamiealquiza/tachymeter v2.0.0+incompatible // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect
 	github.com/klauspost/reedsolomon v1.11.7 // indirect
 	github.com/kr/text v0.1.0 // indirect

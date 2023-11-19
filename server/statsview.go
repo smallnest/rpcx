@@ -62,7 +62,7 @@ func init() {
 }
 
 // NewViewManager creates a new ViewManager instance
-func NewViewManager(ln net.Listener) *ViewManager {
+func NewViewManager(ln net.Listener, s *Server) *ViewManager {
 	viewer.SetConfiguration(viewer.WithAddr(ln.Addr().String()), viewer.WithLinkAddr(ln.Addr().String()))
 
 	page := components.NewPage()
@@ -89,6 +89,9 @@ func NewViewManager(ln net.Listener) *ViewManager {
 		viewer.NewGCNumViewer(),
 		viewer.NewGCSizeViewer(),
 		viewer.NewGCCPUFractionViewer(),
+		NewHandlerViewer(s),
+		NewProcessTimeViewer(s),
+		NewRequestRateViewer(s),
 	)
 	smgr := viewer.NewStatsMgr(mgr.Ctx)
 	for _, v := range mgr.Views {
