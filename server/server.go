@@ -84,6 +84,7 @@ type Server struct {
 	jsonrpcHTTPServer  *http.Server
 	DisableHTTPGateway bool // disable http invoke or not.
 	DisableJSONRPC     bool // disable json rpc or not.
+	EnableProfile      bool // enable profile and statsview or not
 	AsyncWrite         bool // set true if your server only serves few clients
 	pool               WorkerPool
 

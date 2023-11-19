@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"io"
@@ -38,14 +39,86 @@ func (s *Server) startGateway(network string, ln net.Listener) net.Listener {
 		go s.startJSONRPC2(jsonrpc2Ln)
 	}
 
+	if s.EnableProfile {
+		// debugLn := m.Match(http1Path("/debug/"))
+		debugLn := m.Match(cmux.HTTP1Fast())
+		vm := NewViewManager(debugLn)
+		go func() {
+			if err := vm.Start(); err != nil {
+				log.Errorf("start view manager failed: %v", err)
+			}
+		}()
+	}
+
 	if !s.DisableHTTPGateway {
-		httpLn := m.Match(cmux.HTTP1Fast())
+		httpLn := m.Match(cmux.HTTP1Fast()) // X-RPCX-MessageID
 		go s.startHTTP1APIGateway(httpLn)
 	}
 
 	go m.Serve()
 
 	return rpcxLn
+}
+
+func http1Path(prefix string) cmux.Matcher {
+	return func(r io.Reader) bool {
+		return matchHTTP1Field(r, prefix, func(gotValue string) bool {
+			br := bufio.NewReader(&io.LimitedReader{R: r, N: 1024})
+			l, part, err := br.ReadLine()
+			if err != nil || part {
+				return false
+			}
+
+			_, uri, _, ok := parseRequestLine(string(l))
+			if !ok {
+				return false
+			}
+
+			if strings.HasPrefix(uri, prefix) {
+				return true
+			}
+
+			u, err := url.Parse(uri)
+			if err != nil {
+				return false
+			}
+
+			return strings.HasPrefix(u.Path, prefix)
+		})
+	}
+}
+
+// grabbed from net/http.
+func parseRequestLine(line string) (method, uri, proto string, ok bool) {
+	s1 := strings.Index(line, " ")
+	s2 := strings.Index(line[s1+1:], " ")
+	if s1 < 0 || s2 < 0 {
+		return
+	}
+	s2 += s1 + 1
+	return line[:s1], line[s1+1 : s2], line[s2+1:], true
+}
+
+func http1HeaderExist(name string) cmux.Matcher {
+	return func(r io.Reader) bool {
+		return matchHTTP1Field(r, name, func(gotValue string) bool {
+			req, err := http.ReadRequest(bufio.NewReader(r))
+			if err != nil {
+				return false
+			}
+
+			return req.Header.Get(name) != ""
+		})
+	}
+}
+
+func matchHTTP1Field(r io.Reader, name string, matches func(string) bool) (matched bool) {
+	req, err := http.ReadRequest(bufio.NewReader(r))
+	if err != nil {
+		return false
+	}
+
+	return matches(req.Header.Get(name))
 }
 
 func rpcxPrefixByteMatcher() cmux.Matcher {

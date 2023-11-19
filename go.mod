@@ -9,6 +9,7 @@ require (
 	github.com/apache/thrift v0.18.1
 	github.com/edwingeng/doublejump v1.0.1
 	github.com/fatih/color v1.14.1
+	github.com/go-echarts/go-echarts/v2 v2.3.2
 	github.com/go-ping/ping v1.1.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redis_rate/v9 v9.1.2
@@ -30,6 +31,7 @@ require (
 	github.com/rs/cors v1.8.3
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
 	github.com/smallnest/quick v0.1.0
+	github.com/smallnest/statsview v0.0.0-20231119053547-3d59443f9ae3
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stretchr/testify v1.7.2
 	github.com/tinylib/msgp v1.1.8
