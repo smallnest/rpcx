@@ -315,7 +315,7 @@ func (p *pluginContainer) DoPreCall(ctx context.Context, serviceName, methodName
 
 // DoPostCall invokes PostCallPlugin plugin.
 func (p *pluginContainer) DoPostCall(ctx context.Context, serviceName, methodName string, args, reply interface{}, err error) (interface{}, error) {
-	var e error
+	e := err
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PostCallPlugin); ok {
 			reply, e = plugin.PostCall(ctx, serviceName, methodName, args, reply, err)
