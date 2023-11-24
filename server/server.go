@@ -825,7 +825,10 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 		err = service.callForFunction(ctx, mtype, reflect.ValueOf(argv), reflect.ValueOf(replyv))
 	}
 
-	replyv, err = s.Plugins.DoPostCall(ctx, serviceName, methodName, argv, replyv, err)
+	replyv, err1 := s.Plugins.DoPostCall(ctx, serviceName, methodName, argv, replyv, err)
+	if err == nil {
+		err = err1
+	}
 
 	reflectTypePools.Put(mtype.ArgType, argv)
 	if err != nil {
