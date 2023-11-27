@@ -544,7 +544,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 				if contextCanceled(err) {
 					return err
 				}
-				if _, ok := err.(ServiceError); ok {
+				if e, ok := err.(ServiceError); ok && e.IsServiceError() {
 					return err
 				}
 			}
@@ -571,7 +571,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 				if contextCanceled(err) {
 					return err
 				}
-				if _, ok := err.(ServiceError); ok {
+				if e, ok := err.(ServiceError); ok && e.IsServiceError() {
 					return err
 				}
 			}
@@ -661,7 +661,7 @@ func (c *xClient) Oneshot(ctx context.Context, serviceMethod string, args interf
 }
 
 func uncoverError(err error) bool {
-	if _, ok := err.(ServiceError); ok {
+	if e, ok := err.(ServiceError); ok && e.IsServiceError() {
 		return false
 	}
 
@@ -718,7 +718,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 		if contextCanceled(err) {
 			return nil, nil, err
 		}
-		if _, ok := err.(ServiceError); ok {
+		if e, ok := err.(ServiceError); ok && e.IsServiceError() {
 			return nil, nil, err
 		}
 	}
@@ -768,7 +768,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 				if contextCanceled(err) {
 					return nil, nil, err
 				}
-				if _, ok := err.(ServiceError); ok {
+				if e, ok := err.(ServiceError); ok && e.IsServiceError() {
 					return nil, nil, err
 				}
 			}
