@@ -1196,6 +1196,8 @@ loop:
 	for {
 		select {
 		case <-ctx.Done():
+			err = ctx.Err()
+			break loop
 		default:
 			if tb != nil {
 				tb.Wait(FileTransferBufferSize)
@@ -1257,6 +1259,8 @@ loop:
 	for {
 		select {
 		case <-ctx.Done():
+			err = ctx.Err()
+			break loop
 		default:
 			n, er := r.Read(buf)
 			if n > 0 {
