@@ -488,6 +488,11 @@ func (c *xClient) Go(ctx context.Context, serviceMethod string, args interface{}
 	if share.Trace {
 		log.Debugf("selected a client %s for %s.%s, args: %+v in case of xclient Go", client.RemoteAddr(), c.servicePath, serviceMethod, args)
 	}
+
+	if done == nil {
+		done = make(chan *Call, 10)
+	}
+
 	return client.Go(ctx, c.servicePath, serviceMethod, args, reply, done), nil
 }
 
@@ -655,9 +660,36 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 
 // Oneshot invokes the named function, ** DOEST NOT ** wait for it to complete, and returns immediately.
 func (c *xClient) Oneshot(ctx context.Context, serviceMethod string, args interface{}) error {
-	_, err := c.Go(ctx, serviceMethod, args, nil, nil)
+	if c.isShutdown {
+		return ErrXClientShutdown
+	}
 
-	return err
+	if c.auth != "" {
+		metadata := ctx.Value(share.ReqMetaDataKey)
+		if metadata == nil {
+			metadata = map[string]string{}
+			ctx = context.WithValue(ctx, share.ReqMetaDataKey, metadata)
+		}
+		m := metadata.(map[string]string)
+		m[share.AuthKey] = c.auth
+	}
+
+	ctx = setServerTimeout(ctx)
+
+	if share.Trace {
+		log.Debugf("select a client for %s.%s, args: %+v in case of xclient Go", c.servicePath, serviceMethod, args)
+	}
+	_, client, err := c.selectClient(ctx, c.servicePath, serviceMethod, args)
+	if err != nil {
+		return err
+	}
+	if share.Trace {
+		log.Debugf("selected a client %s for %s.%s, args: %+v in case of xclient Go", client.RemoteAddr(), c.servicePath, serviceMethod, args)
+	}
+
+	client.Go(ctx, c.servicePath, serviceMethod, args, nil, nil)
+
+	return nil
 }
 
 func uncoverError(err error) bool {
