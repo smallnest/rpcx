@@ -242,24 +242,14 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 	}
 }
 
+// selects a client from candidates base on c.selectMode
 func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, RPCClient, error) {
+	c.mu.Lock()
 	if c.option.Sticky && c.stickyRPCClient != nil {
+		c.mu.Unlock()
 		return c.stickyK, c.stickyRPCClient, nil
 	}
 
-	k, client, err := c.selectOneClient(ctx, servicePath, serviceMethod, args)
-
-	if c.option.Sticky {
-		c.stickyK = k
-		c.stickyRPCClient = client
-	}
-
-	return k, client, err
-}
-
-// selects a client from candidates base on c.selectMode
-func (c *xClient) selectOneClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, RPCClient, error) {
-	c.mu.Lock()
 	fn := c.selector.Select
 	if c.Plugins != nil {
 		fn = c.Plugins.DoWrapSelect(fn)
@@ -273,11 +263,10 @@ func (c *xClient) selectOneClient(ctx context.Context, servicePath, serviceMetho
 
 	client, err := c.getCachedClient(k, servicePath, serviceMethod, args)
 
-	// if err != nil {
-	// 	c.mu.Lock()
-	// 	c.unstableServers[k] = time.Now() // 此服务器有问题，暂时屏蔽
-	// 	c.mu.Unlock()
-	// }
+	if c.option.Sticky && client != nil {
+		c.stickyK = k
+		c.stickyRPCClient = client
+	}
 
 	return k, client, err
 }
@@ -378,6 +367,11 @@ func (c *xClient) deleteCachedClient(client RPCClient, k, servicePath, serviceMe
 
 func (c *xClient) removeClient(k, servicePath, serviceMethod string, client RPCClient) {
 	c.mu.Lock()
+	if c.option.Sticky {
+		c.stickyK = ""
+		c.stickyRPCClient = nil
+	}
+
 	cl := c.findCachedClient(k, servicePath, serviceMethod)
 	if cl == client {
 		c.deleteCachedClient(client, k, servicePath, serviceMethod)
