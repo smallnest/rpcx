@@ -93,6 +93,8 @@ type xClient struct {
 	unstableServers map[string]time.Time // 一些服务器重启，如果和它们建立链接，可能会耗费非常长的时间，这里记录袭来需要临时屏蔽
 	discovery       ServiceDiscovery
 	selector        Selector
+	stickyRPCClient RPCClient
+	stickyK         string
 
 	slGroup singleflight.Group
 
@@ -240,8 +242,23 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 	}
 }
 
-// selects a client from candidates base on c.selectMode
 func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, RPCClient, error) {
+	if c.option.Sticky && c.stickyRPCClient != nil {
+		return c.stickyK, c.stickyRPCClient, nil
+	}
+
+	k, client, err := c.selectOneClient(ctx, servicePath, serviceMethod, args)
+
+	if c.option.Sticky {
+		c.stickyK = k
+		c.stickyRPCClient = client
+	}
+
+	return k, client, err
+}
+
+// selects a client from candidates base on c.selectMode
+func (c *xClient) selectOneClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, RPCClient, error) {
 	c.mu.Lock()
 	fn := c.selector.Select
 	if c.Plugins != nil {

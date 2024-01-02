@@ -194,6 +194,9 @@ type Option struct {
 	TCPKeepAlivePeriod time.Duration
 	// bidirectional mode, if true serverMessageChan will block to wait message for consume. default false.
 	BidirectionalBlock bool
+
+	// alaways use the selected server until it is bad
+	Sticky bool
 }
 
 // Call represents an active RPC.
