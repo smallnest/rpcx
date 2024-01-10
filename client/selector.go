@@ -1,6 +1,7 @@
 package client
 
 import (
+	"container/ring"
 	"context"
 	"math"
 	"math/rand"
@@ -111,12 +112,16 @@ func (s *roundRobinSelector) UpdateServer(servers map[string]string) {
 
 // weightedRoundRobinSelector selects servers with weighted.
 type weightedRoundRobinSelector struct {
-	servers []*Weighted
+	servers     []*Weighted
+	totalWeight int
+	rr          *ring.Ring
 }
 
 func newWeightedRoundRobinSelector(servers map[string]string) Selector {
 	ss := createWeighted(servers)
-	return &weightedRoundRobinSelector{servers: ss}
+	s := &weightedRoundRobinSelector{servers: ss}
+	s.buildRing()
+	return s
 }
 
 func (s *weightedRoundRobinSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
@@ -124,29 +129,61 @@ func (s *weightedRoundRobinSelector) Select(ctx context.Context, servicePath, se
 	if len(ss) == 0 {
 		return ""
 	}
-	w := nextWeighted(ss)
-	if w == nil {
-		return ""
-	}
-	return w.Server
+	val := s.rr.Value
+	s.rr = s.rr.Next()
+	return val.(*Weighted).Server
+
 }
 
 func (s *weightedRoundRobinSelector) UpdateServer(servers map[string]string) {
 	ss := createWeighted(servers)
 	s.servers = ss
 }
-
+func (s *weightedRoundRobinSelector) buildRing() {
+	s.totalWeight = 0
+	for _, w := range s.servers {
+		s.totalWeight += w.Weight
+	}
+	s.rr = ring.New(s.totalWeight)
+	for i := 0; i < s.totalWeight; i++ {
+		n := s.next()
+		s.rr.Value = n
+		s.rr = s.rr.Next()
+	}
+}
+func (s *weightedRoundRobinSelector) next() *Weighted {
+	if len(s.servers) == 0 {
+		return nil
+	}
+	n := len(s.servers)
+	if n == 0 {
+		return nil
+	}
+	if n == 1 {
+		return s.servers[0]
+	}
+	flag := 0
+	m := 0
+	for i := 0; i < n; i++ {
+		s.servers[i].CurrentWeight += s.servers[i].Weight
+		if s.servers[i].CurrentWeight > m {
+			m = s.servers[i].CurrentWeight
+			flag = i
+		}
+	}
+	s.servers[flag].CurrentWeight -= s.totalWeight
+	return s.servers[flag]
+}
 func createWeighted(servers map[string]string) []*Weighted {
 	ss := make([]*Weighted, 0, len(servers))
 	for k, metadata := range servers {
-		w := &Weighted{Server: k, Weight: 1, EffectiveWeight: 1}
+		w := &Weighted{Server: k, Weight: 1}
 
 		if v, err := url.ParseQuery(metadata); err == nil {
 			ww := v.Get("weight")
 			if ww != "" {
 				if weight, err := strconv.Atoi(ww); err == nil {
 					w.Weight = weight
-					w.EffectiveWeight = weight
 				}
 			}
 		}
