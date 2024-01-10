@@ -221,13 +221,13 @@ func (s geoSelector) Select(ctx context.Context, servicePath, serviceMethod stri
 	}
 
 	var server []string
-	min := math.MaxFloat64
+	minNum := math.MaxFloat64
 	for _, gs := range s.servers {
 		d := getDistanceFrom(s.Latitude, s.Longitude, gs.Latitude, gs.Longitude)
-		if d < min {
+		if d < minNum {
 			server = []string{gs.Server}
-			min = d
-		} else if d == min {
+			minNum = d
+		} else if d == minNum {
 			server = append(server, gs.Server)
 		}
 	}
