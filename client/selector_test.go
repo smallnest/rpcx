@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"testing"
 )
 
@@ -34,5 +35,37 @@ func Test_consistentHashSelector_UpdateServer(t *testing.T) {
 	s.UpdateServer(servers)
 	if len(s.h.All()) != len(servers) {
 		t.Errorf("UpdateServer: expected %d server but got %d", len(servers), len(s.h.All()))
+	}
+}
+
+func TestWeightedRoundRobinSelector_Select(t *testing.T) {
+	// a b a c a b a a b a c a b a
+	sers := []string{"ServerA", "ServerB", "ServerA", "ServerC", "ServerA", "ServerB", "ServerA",
+		"ServerA", "ServerB", "ServerA", "ServerC", "ServerA", "ServerB", "ServerA"}
+	servers := make(map[string]string)
+	servers["ServerA"] = "weight=4"
+	servers["ServerB"] = "weight=2"
+	servers["ServerC"] = "weight=1"
+	ctx := context.Background()
+	weightSelector := newWeightedRoundRobinSelector(servers).(*weightedRoundRobinSelector)
+
+	for i := 0; i < 14; i++ {
+		s := weightSelector.Select(ctx, "", "", nil)
+		if s != sers[i] {
+			t.Errorf("expected %s but got %s", sers[i], s)
+		}
+	}
+}
+
+func BenchmarkWeightedRoundRobinSelector_Select(b *testing.B) {
+	servers := make(map[string]string)
+	servers["ServerA"] = "weight=4"
+	servers["ServerB"] = "weight=2"
+	servers["ServerC"] = "weight=1"
+	ctx := context.Background()
+	weightSelector := newWeightedRoundRobinSelector(servers).(*weightedRoundRobinSelector)
+
+	for i := 0; i < b.N; i++ {
+		weightSelector.Select(ctx, "", "", nil)
 	}
 }
