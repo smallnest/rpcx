@@ -56,3 +56,16 @@ func TestWeightedRoundRobinSelector_Select(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkWeightedRoundRobinSelector_Select(b *testing.B) {
+	servers := make(map[string]string)
+	servers["ServerA"] = "weight=4"
+	servers["ServerB"] = "weight=2"
+	servers["ServerC"] = "weight=1"
+	ctx := context.Background()
+	weightSelector := newWeightedRoundRobinSelector(servers).(*weightedRoundRobinSelector)
+
+	for i := 0; i < b.N; i++ {
+		weightSelector.Select(ctx, "", "", nil)
+	}
+}
