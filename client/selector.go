@@ -56,7 +56,7 @@ func newRandomSelector(servers map[string]string) Selector {
 	return &randomSelector{servers: ss}
 }
 
-func (s randomSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
+func (s *randomSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
 	ss := s.servers
 	if len(ss) == 0 {
 		return ""
@@ -215,7 +215,7 @@ func newGeoSelector(servers map[string]string, latitude, longitude float64) Sele
 	return &geoSelector{servers: ss, Latitude: latitude, Longitude: longitude, r: r}
 }
 
-func (s geoSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
+func (s *geoSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
 	if len(s.servers) == 0 {
 		return ""
 	}
@@ -291,7 +291,7 @@ func newConsistentHashSelector(servers map[string]string) Selector {
 	return &consistentHashSelector{servers: ss, h: h}
 }
 
-func (s consistentHashSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
+func (s *consistentHashSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
 	ss := s.servers
 	if len(ss) == 0 {
 		return ""
