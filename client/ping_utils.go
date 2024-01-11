@@ -12,12 +12,15 @@ import (
 // weightedICMPSelector selects servers with ping result.
 type weightedICMPSelector struct {
 	servers []*Weighted
-	wrs     weightedRoundRobinSelector
+	wrs     *weightedRoundRobinSelector
 }
 
 func newWeightedICMPSelector(servers map[string]string) Selector {
 	ss := createICMPWeighted(servers)
-	wicmps := weightedICMPSelector{servers: ss}
+	wicmps := weightedICMPSelector{
+		servers: ss,
+		wrs:     &weightedRoundRobinSelector{servers: ss},
+	}
 	wicmps.wrs.servers = ss
 	wicmps.wrs.buildRing()
 	return &wicmps
