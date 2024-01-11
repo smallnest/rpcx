@@ -105,3 +105,47 @@ func BenchmarkWeightedRoundRobinSelector_Select(b *testing.B) {
 		weightSelector.Select(ctx, "", "", nil)
 	}
 }
+
+//
+//func TestWeightedICMPSelector(t *testing.T) {
+//	calc := make(map[string]int)
+//	servers := make(map[string]string)
+//	servers["@localhost:3333"] = ""
+//	servers["@www.baidu.com:3334"] = ""
+//	servers["@xxxx.xxxx:333"] = ""
+//	s := newWeightedICMPSelector(servers)
+//	ctx := context.Background()
+//	for i := 0; i < 10; i++ {
+//		host := s.Select(ctx, "", "", nil)
+//		if _, ok := calc[host]; ok {
+//			calc[host]++
+//		} else {
+//			calc[host] = 0
+//		}
+//	}
+//	if len(calc) != 2 {
+//		t.Errorf("expected %d but got %d", 2, len(servers))
+//	}
+//}
+//func TestWeightedICMPSelector_UpdateServer(t *testing.T) {
+//	calc := make(map[string]int)
+//	servers := make(map[string]string)
+//	servers["@localhost:3333"] = ""
+//	servers["@www.baidu.com:3334"] = ""
+//	servers["@xxxx.xxxx:333"] = ""
+//	s := newWeightedICMPSelector(servers)
+//	ctx := context.Background()
+//	servers["@www.sina.com:3333"] = ""
+//	s.UpdateServer(servers)
+//	for i := 0; i < 10; i++ {
+//		host := s.Select(ctx, "", "", nil)
+//		if _, ok := calc[host]; ok {
+//			calc[host]++
+//		} else {
+//			calc[host] = 0
+//		}
+//	}
+//	if len(calc) != 3 {
+//		t.Errorf("expected %d but got %d", 3, len(servers))
+//	}
+//}

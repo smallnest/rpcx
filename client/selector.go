@@ -318,8 +318,3 @@ func (s *consistentHashSelector) UpdateServer(servers map[string]string) {
 	}
 	s.servers = ss
 }
-
-// weightedICMPSelector selects servers with ping result.
-type weightedICMPSelector struct {
-	servers []*Weighted
-}

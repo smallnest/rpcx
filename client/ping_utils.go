@@ -9,26 +9,32 @@ import (
 	ping "github.com/go-ping/ping"
 )
 
-func newWeightedICMPSelector(servers map[string]string) Selector {
-	ss := createICMPWeighted(servers)
-	return &weightedICMPSelector{servers: ss}
+// weightedICMPSelector selects servers with ping result.
+type weightedICMPSelector struct {
+	servers []*Weighted
+	wrs     *weightedRoundRobinSelector
 }
 
-func (s weightedICMPSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
-	ss := s.servers
-	if len(ss) == 0 {
-		return ""
+func newWeightedICMPSelector(servers map[string]string) Selector {
+	ss := createICMPWeighted(servers)
+	wicmps := weightedICMPSelector{
+		servers: ss,
+		wrs:     &weightedRoundRobinSelector{servers: ss},
 	}
-	w := nextWeighted(ss)
-	if w == nil {
-		return ""
-	}
-	return w.Server
+	wicmps.wrs.servers = ss
+	wicmps.wrs.buildRing()
+	return &wicmps
+}
+
+func (s *weightedICMPSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
+	return s.wrs.Select(ctx, servicePath, serviceMethod, args)
 }
 
 func (s *weightedICMPSelector) UpdateServer(servers map[string]string) {
 	ss := createICMPWeighted(servers)
+	s.wrs.servers = ss
 	s.servers = ss
+	s.wrs.buildRing()
 }
 
 func createICMPWeighted(servers map[string]string) []*Weighted {
