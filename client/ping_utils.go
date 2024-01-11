@@ -11,24 +11,21 @@ import (
 
 func newWeightedICMPSelector(servers map[string]string) Selector {
 	ss := createICMPWeighted(servers)
-	return &weightedICMPSelector{servers: ss}
+	wicmps := &weightedICMPSelector{servers: ss}
+	wicmps.wrs.servers = ss
+	wicmps.wrs.buildRing()
+	return wicmps
 }
 
-func (s weightedICMPSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
-	ss := s.servers
-	if len(ss) == 0 {
-		return ""
-	}
-	w := nextWeighted(ss)
-	if w == nil {
-		return ""
-	}
-	return w.Server
+func (s *weightedICMPSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
+	return s.wrs.Select(ctx, servicePath, serviceMethod, args)
 }
 
 func (s *weightedICMPSelector) UpdateServer(servers map[string]string) {
 	ss := createICMPWeighted(servers)
+	s.wrs.servers = ss
 	s.servers = ss
+	s.wrs.buildRing()
 }
 
 func createICMPWeighted(servers map[string]string) []*Weighted {
