@@ -39,21 +39,57 @@ func Test_consistentHashSelector_UpdateServer(t *testing.T) {
 }
 
 func TestWeightedRoundRobinSelector_Select(t *testing.T) {
-	// a b a c a b a a b a c a b a
-	sers := []string{"ServerA", "ServerB", "ServerA", "ServerC", "ServerA", "ServerB", "ServerA",
-		"ServerA", "ServerB", "ServerA", "ServerC", "ServerA", "ServerB", "ServerA"}
+	calc := make(map[string]int)
 	servers := make(map[string]string)
 	servers["ServerA"] = "weight=4"
 	servers["ServerB"] = "weight=2"
 	servers["ServerC"] = "weight=1"
-	ctx := context.Background()
 	weightSelector := newWeightedRoundRobinSelector(servers).(*weightedRoundRobinSelector)
-
-	for i := 0; i < 14; i++ {
+	ctx := context.Background()
+	for i := 0; i < 7; i++ {
 		s := weightSelector.Select(ctx, "", "", nil)
-		if s != sers[i] {
-			t.Errorf("expected %s but got %s", sers[i], s)
+		if _, ok := calc[s]; ok {
+			calc[s]++
+		} else {
+			calc[s] = 1
 		}
+	}
+	if calc["ServerA"] != 4 {
+		t.Errorf("expected %d but got %d", 4, calc["ServerA"])
+	}
+	if calc["ServerB"] != 2 {
+		t.Errorf("expected %d but got %d", 2, calc["ServerB"])
+	}
+	if calc["ServerC"] != 1 {
+		t.Errorf("expected %d but got %d", 1, calc["ServerC"])
+	}
+}
+func TestWeightedRoundRobinSelector_UpdateServer(t *testing.T) {
+	calc := make(map[string]int)
+	servers := make(map[string]string)
+	servers["ServerA"] = "weight=4"
+	servers["ServerB"] = "weight=2"
+	servers["ServerC"] = "weight=1"
+	weightSelector := newWeightedRoundRobinSelector(servers).(*weightedRoundRobinSelector)
+	ctx := context.Background()
+	servers["ServerA"] = "weight=5"
+	weightSelector.UpdateServer(servers)
+	for i := 0; i < 8; i++ {
+		s := weightSelector.Select(ctx, "", "", nil)
+		if _, ok := calc[s]; ok {
+			calc[s]++
+		} else {
+			calc[s] = 1
+		}
+	}
+	if calc["ServerA"] != 5 {
+		t.Errorf("expected %d but got %d", 4, calc["ServerA"])
+	}
+	if calc["ServerB"] != 2 {
+		t.Errorf("expected %d but got %d", 2, calc["ServerB"])
+	}
+	if calc["ServerC"] != 1 {
+		t.Errorf("expected %d but got %d", 1, calc["ServerC"])
 	}
 }
 
