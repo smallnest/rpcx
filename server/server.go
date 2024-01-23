@@ -680,6 +680,10 @@ func (s *Server) auth(ctx context.Context, req *protocol.Message) error {
 	return nil
 }
 
+func (md MethodDesc) NewRequest() any {
+	return reflect.New(md.RequestType).Interface()
+}
+
 func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res *protocol.Message, err error) {
 	serviceName := req.ServicePath
 	methodName := req.ServiceMethod
@@ -721,7 +725,12 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	if err != nil {
 		return s.handleError(res, err)
 	}
-
+	dec := func(request interface{}) error {
+		if err := codec.Decode(req.Payload, request); err != nil {
+			return err
+		}
+		return nil
+	}
 	// and get a reply object from object pool
 	replyv := reflectTypePools.Get(mtype.ReplyType)
 
@@ -731,11 +740,19 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		reflectTypePools.Put(mtype.ReplyType, replyv)
 		return s.handleError(res, err)
 	}
-
-	if mtype.ArgType.Kind() != reflect.Ptr {
-		err = service.call(ctx, mtype, reflect.ValueOf(argv).Elem(), reflect.ValueOf(replyv))
+	// use genCode handler
+	if handler, ok := service.handlers[methodName]; ok {
+		if handler == nil {
+			err = fmt.Errorf("can not find handler for %s", methodName)
+			return s.handleError(res, err)
+		}
+		err = handler(service.svr, ctx, dec, res)
 	} else {
-		err = service.call(ctx, mtype, reflect.ValueOf(argv), reflect.ValueOf(replyv))
+		if mtype.ArgType.Kind() != reflect.Ptr {
+			err = service.call(ctx, mtype, reflect.ValueOf(argv).Elem(), reflect.ValueOf(replyv))
+		} else {
+			err = service.call(ctx, mtype, reflect.ValueOf(argv), reflect.ValueOf(replyv))
+		}
 	}
 
 	replyv, err1 := s.Plugins.DoPostCall(ctx, serviceName, methodName, argv, replyv, err)

@@ -43,6 +43,8 @@ type service struct {
 	typ      reflect.Type             // type of the receiver
 	method   map[string]*methodType   // registered methods
 	function map[string]*functionType // registered functions
+	handlers map[string]Handxler      // rpcx handxler
+	svr      interface{}              // rpcx service impl
 }
 
 func isExported(name string) bool {
@@ -57,6 +59,26 @@ func isExportedOrBuiltinType(t reflect.Type) bool {
 	// PkgPath will be non-empty even for an exported type,
 	// so we need to check the type name as well.
 	return isExported(t.Name()) || t.PkgPath() == ""
+}
+
+func (s *Server) RegisterService(sd *ServiceDesc, svr interface{}) {
+	if sd == nil || svr == nil {
+		return
+	}
+	ht := reflect.TypeOf(sd.HandlerType).Elem()
+	st := reflect.TypeOf(svr)
+	if !st.Implements(ht) {
+		log.Fatalf("handlerType %v not match service : %v ", ht, st)
+	}
+	ser := &service{
+		svr:      svr,
+		name:     sd.ServiceName,
+		handlers: make(map[string]Handxler),
+	}
+	for _, method := range sd.Methods {
+		ser.handlers[method.MethodName] = method.Handler
+	}
+	s.serviceMap[sd.ServiceName] = ser
 }
 
 // Register publishes in the server the set of methods of the
