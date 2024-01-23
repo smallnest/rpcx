@@ -61,9 +61,13 @@ func isExportedOrBuiltinType(t reflect.Type) bool {
 	return isExported(t.Name()) || t.PkgPath() == ""
 }
 
-func (s *Server) RegisterService(sd *ServiceDesc, svr interface{}) {
+func (s *Server) RegisterService(sd *ServiceDesc, svr interface{}) error {
 	if sd == nil || svr == nil {
-		return
+		return errors.New("sd or svr nil")
+	}
+	err := s.RegisterName(sd.ServiceName, svr, sd.Metadata)
+	if err != nil {
+		return err
 	}
 	ht := reflect.TypeOf(sd.HandlerType).Elem()
 	st := reflect.TypeOf(svr)
@@ -78,7 +82,13 @@ func (s *Server) RegisterService(sd *ServiceDesc, svr interface{}) {
 	for _, method := range sd.Methods {
 		ser.handlers[method.MethodName] = method.Handler
 	}
-	s.serviceMap[sd.ServiceName] = ser
+	if _, ok := s.serviceMap[sd.ServiceName]; !ok {
+		return err
+	}
+	s.serviceMap[sd.ServiceName].svr = svr
+	s.serviceMap[sd.ServiceName].name = sd.ServiceName
+	s.serviceMap[sd.ServiceName].handlers = ser.handlers
+	return nil
 }
 
 // Register publishes in the server the set of methods of the

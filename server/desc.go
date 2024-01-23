@@ -12,6 +12,7 @@ type ServiceDesc struct {
 	ServiceName string
 	Methods     []MethodDesc
 	HandlerType interface{}
+	Metadata    string // 元数据
 }
 
 // MethodDesc 方法描述
