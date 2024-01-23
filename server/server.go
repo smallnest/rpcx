@@ -746,7 +746,7 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 			err = fmt.Errorf("can not find handler for %s", methodName)
 			return s.handleError(res, err)
 		}
-		err = handler(service.svr, ctx, dec, res)
+		err = handler(service.svr, ctx, dec, replyv)
 	} else {
 		if mtype.ArgType.Kind() != reflect.Ptr {
 			err = service.call(ctx, mtype, reflect.ValueOf(argv).Elem(), reflect.ValueOf(replyv))
