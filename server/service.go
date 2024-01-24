@@ -61,11 +61,11 @@ func isExportedOrBuiltinType(t reflect.Type) bool {
 	return isExported(t.Name()) || t.PkgPath() == ""
 }
 
-func (s *Server) RegisterService(sd *ServiceDesc, svr interface{}) error {
+func (s *Server) RegisterService(sd *ServiceDesc, svr interface{}, metadata string) error {
 	if sd == nil || svr == nil {
 		return errors.New("RegisterService sd or svr nil")
 	}
-	err := s.RegisterName(sd.ServiceName, svr, sd.Metadata)
+	err := s.RegisterName(sd.ServiceName, svr, metadata)
 	if err != nil {
 		return err
 	}

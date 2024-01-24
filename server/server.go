@@ -725,12 +725,6 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	if err != nil {
 		return s.handleError(res, err)
 	}
-	//dec := func(request interface{}) error {
-	//	if err := codec.Decode(req.Payload, request); err != nil {
-	//		return err
-	//	}
-	//	return nil
-	//}
 	// and get a reply object from object pool
 	replyv := reflectTypePools.Get(mtype.ReplyType)
 
@@ -741,11 +735,7 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 		return s.handleError(res, err)
 	}
 	// use genCode handler
-	if handler, ok := service.handlers[methodName]; ok {
-		if handler == nil {
-			err = fmt.Errorf("can not find handler for %s", methodName)
-			return s.handleError(res, err)
-		}
+	if handler, ok := service.handlers[methodName]; ok && handler != nil {
 		err = handler(service.svr, ctx, argv, replyv)
 	} else {
 		if mtype.ArgType.Kind() != reflect.Ptr {
