@@ -725,12 +725,12 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 	if err != nil {
 		return s.handleError(res, err)
 	}
-	dec := func(request interface{}) error {
-		if err := codec.Decode(req.Payload, request); err != nil {
-			return err
-		}
-		return nil
-	}
+	//dec := func(request interface{}) error {
+	//	if err := codec.Decode(req.Payload, request); err != nil {
+	//		return err
+	//	}
+	//	return nil
+	//}
 	// and get a reply object from object pool
 	replyv := reflectTypePools.Get(mtype.ReplyType)
 
@@ -746,7 +746,7 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 			err = fmt.Errorf("can not find handler for %s", methodName)
 			return s.handleError(res, err)
 		}
-		err = handler(service.svr, ctx, dec, replyv)
+		err = handler(service.svr, ctx, argv, replyv)
 	} else {
 		if mtype.ArgType.Kind() != reflect.Ptr {
 			err = service.call(ctx, mtype, reflect.ValueOf(argv).Elem(), reflect.ValueOf(replyv))

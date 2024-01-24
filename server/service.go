@@ -63,7 +63,7 @@ func isExportedOrBuiltinType(t reflect.Type) bool {
 
 func (s *Server) RegisterService(sd *ServiceDesc, svr interface{}) error {
 	if sd == nil || svr == nil {
-		return errors.New("sd or svr nil")
+		return errors.New("RegisterService sd or svr nil")
 	}
 	err := s.RegisterName(sd.ServiceName, svr, sd.Metadata)
 	if err != nil {
@@ -74,20 +74,15 @@ func (s *Server) RegisterService(sd *ServiceDesc, svr interface{}) error {
 	if !st.Implements(ht) {
 		log.Fatalf("handlerType %v not match service : %v ", ht, st)
 	}
-	ser := &service{
-		svr:      svr,
-		name:     sd.ServiceName,
-		handlers: make(map[string]Handxler),
-	}
+	handlers := make(map[string]Handxler, len(sd.Methods))
 	for _, method := range sd.Methods {
-		ser.handlers[method.MethodName] = method.Handler
+		handlers[method.MethodName] = method.Handler
 	}
 	if _, ok := s.serviceMap[sd.ServiceName]; !ok {
-		return err
+		log.Fatalf("serviceName %v not found in serviceMap", sd.ServiceName)
 	}
 	s.serviceMap[sd.ServiceName].svr = svr
-	s.serviceMap[sd.ServiceName].name = sd.ServiceName
-	s.serviceMap[sd.ServiceName].handlers = ser.handlers
+	s.serviceMap[sd.ServiceName].handlers = handlers
 	return nil
 }
 

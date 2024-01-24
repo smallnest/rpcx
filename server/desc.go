@@ -5,7 +5,7 @@ import (
 	"reflect"
 )
 
-type Handxler func(svc interface{}, ctx context.Context, cb func(interface{}) error, reply interface{}) error
+type Handxler func(svc interface{}, ctx context.Context, req interface{}, reply interface{}) error
 
 // ServiceDesc is a detailed description of a service
 type ServiceDesc struct {
