@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+
+option go_package = "./;pb";
+
+service HelloTest {
+  rpc SayHello(HelloRequest) returns (HelloResponse) {}
+}
+
+service GvgTest {
+  rpc GetMapInfo(HelloRequest) returns (HelloResponse) {}
+}
+
+message HelloRequest {
+  map<string,string> params= 1;
+  string URL = 2;
+  string userToken = 3;
+  string userID = 4;
+  string appID = 5;
+  string appKey = 6;
+  string ip = 7;
+  string clientID = 8;
+  string CsrfToken = 9;
+  string traceID = 10;
+  bytes body = 11;
+  bytes header = 12;
+  bytes userAgent = 13;
+  bytes referer = 14;
+  bytes queries = 15;
+  bool encryptAES = 16;
+}
+
+message HelloResponse {
+  string result = 1 ;
+  map<string,string> header= 2;
+  map<string,int64> pageInfo= 3;
+  string TType = 4;
+  string status = 5;
+  int64 code = 6;
+}
