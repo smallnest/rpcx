@@ -246,10 +246,8 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, RPCClient, error) {
 	c.mu.Lock()
 	if c.option.Sticky && c.stickyRPCClient != nil {
-		stickyK := c.stickyK
-		stickyRPCClient := c.stickyRPCClient
 		c.mu.Unlock()
-		return stickyK, stickyRPCClient, nil
+		return c.stickyK, c.stickyRPCClient, nil
 	}
 
 	fn := c.selector.Select
@@ -257,21 +255,22 @@ func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod s
 		fn = c.Plugins.DoWrapSelect(fn)
 	}
 	k := fn(ctx, servicePath, serviceMethod, args)
+	c.mu.Unlock()
 
 	if k == "" {
-		c.mu.Unlock()
 		return "", nil, ErrXClientNoServer
 	}
 
 	client, err := c.getCachedClient(k, servicePath, serviceMethod, args)
 
-	c.mu.Lock()
 	if c.option.Sticky && client != nil {
+		c.mu.Lock()
 		safeCloseClient(c.stickyRPCClient)
+
 		c.stickyK = k
 		c.stickyRPCClient = client
+		c.mu.Unlock()
 	}
-	c.mu.Unlock()
 
 	return k, client, err
 }
