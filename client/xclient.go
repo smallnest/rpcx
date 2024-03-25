@@ -267,12 +267,25 @@ func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod s
 
 	c.mu.Lock()
 	if c.option.Sticky && client != nil {
+		safeCloseClient(c.stickyRPCClient)
 		c.stickyK = k
 		c.stickyRPCClient = client
 	}
 	c.mu.Unlock()
 
 	return k, client, err
+}
+
+func safeCloseClient(client RPCClient) {
+	if client == nil {
+		return
+	}
+
+	defer func() {
+		_ = recover()
+	}()
+
+	client.Close()
 }
 
 func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, args interface{}) (RPCClient, error) {
