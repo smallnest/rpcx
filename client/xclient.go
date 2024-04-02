@@ -245,6 +245,10 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 // selects a client from candidates base on c.selectMode
 func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, RPCClient, error) {
 	c.mu.Lock()
+	if c.option.Sticky && c.stickyRPCClient.IsClosing() || c.stickyRPCClient.IsShutdown() {
+		c.stickyRPCClient = nil
+	}
+
 	if c.option.Sticky && c.stickyRPCClient != nil {
 		c.mu.Unlock()
 		return c.stickyK, c.stickyRPCClient, nil
