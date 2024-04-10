@@ -30,7 +30,7 @@ you can use other programming languages besides Go to access rpcx services.
 
 - **rpcx-gateway**: You can write clients in any programming languages to call rpcx services via [rpcx-gateway](https://github.com/rpcxio/rpcx-gateway)
 - **http invoke**: you can use the same http requests to access rpcx gateway
-- **Java Services/Clients**: You can use [rpcx-java](https://github.com/smallnest/rpcx-java) to implement/access rpcx servies via raw protocol.
+- **Java Services/Clients**: You can use [rpcx-java](https://github.com/smallnest/rpcx-java) to implement/access rpcx services via raw protocol.
 - **rust rpcx**: You can write rpcx services in rust by [rpcx-rs](https://github.com/smallnest/rpcx-rs)
 
 > If you can write Go methods, you can also write rpc services. It is so easy to write rpc applications with rpcx.
@@ -67,8 +67,8 @@ go get -v -tags "quic kcp" github.com/smallnest/rpcx/...
 rpcx is a RPC framework like [Alibaba Dubbo](http://dubbo.io/) and [Weibo Motan](https://github.com/weibocom/motan).
 
 **rpcx** is created for targets:
-1. **Simple**: easy to learn, easy to develop, easy to intergate and easy to deploy
-2. **Performance**: high perforamnce (>= grpc-go)
+1. **Simple**: easy to learn, easy to develop, easy to integrate and easy to deploy
+2. **Performance**: high performance (>= grpc-go)
 3. **Cross-platform**: support _raw slice of bytes_, _JSON_, _Protobuf_ and _MessagePack_. Theoretically it can be used with java, php, python, c/c++, node.js, c# and other platforms
 4. **Service discovery and service governance**: support zookeeper, etcd and consul.
 
