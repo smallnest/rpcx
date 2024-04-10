@@ -213,6 +213,10 @@ type Call struct {
 }
 
 func (call *Call) done() {
+	if call.Done == nil { // Oneshot
+		return
+	}
+
 	select {
 	case call.Done <- call:
 		// ok
