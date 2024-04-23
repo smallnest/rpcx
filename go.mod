@@ -23,7 +23,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jamiealquiza/tachymeter v2.0.0+incompatible
-	github.com/json-iterator/go v1.1.12
 	github.com/juju/ratelimit v1.0.2
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kavu/go_reuseport v1.5.0
@@ -66,8 +65,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/miekg/dns v1.1.51 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/onsi/ginkgo/v2 v2.9.5 // indirect
 	github.com/peterbourgon/g2s v0.0.0-20140925154142-ec76db4c1ac1 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect

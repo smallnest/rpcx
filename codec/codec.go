@@ -6,12 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	pb "google.golang.org/protobuf/proto"
 	"reflect"
+
+	pb "google.golang.org/protobuf/proto"
 
 	"github.com/apache/thrift/lib/go/thrift"
 	"github.com/gogo/protobuf/proto"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/tinylib/msgp/msgp"
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -141,21 +141,4 @@ func (c ThriftCodec) Decode(data []byte, i interface{}) error {
 	}
 	d.Transport.Close()
 	return d.Read(context.Background(), i.(thrift.TStruct), data)
-}
-
-type JSONIterCodec struct{}
-
-func (c JSONIterCodec) Encode(i interface{}) ([]byte, error) {
-	var buf bytes.Buffer
-	enc := jsoniter.NewEncoder(&buf)
-	enc.SetEscapeHTML(false)
-	err := enc.Encode(i)
-	return buf.Bytes(), err
-}
-
-// Decode decodes an object from slice of bytes.
-func (c JSONIterCodec) Decode(data []byte, i interface{}) error {
-	d := jsoniter.NewDecoder(bytes.NewBuffer(data))
-	d.UseNumber()
-	return d.Decode(i)
 }

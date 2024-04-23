@@ -3,6 +3,7 @@ package reflection
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"reflect"
@@ -12,7 +13,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/ChimeraCoder/gojson"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/smallnest/rpcx/log"
 )
 
@@ -20,10 +20,6 @@ var (
 	typeOfError   = reflect.TypeOf((*error)(nil)).Elem()
 	typeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
 )
-
-var json = jsoniter.Config{
-	TagKey: "-",
-}.Froze()
 
 // ServiceInfo service info.
 type ServiceInfo struct {
