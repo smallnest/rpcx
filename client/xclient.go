@@ -235,8 +235,18 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 			if state := values.Get("state"); state == "inactive" {
 				delete(servers, k)
 			}
-			if group != "" && group != values.Get("group") {
-				delete(servers, k)
+			groups := values["group"] // Directly access the map to get all values associated with "group" as a slice
+			if group != "" {
+				found := false
+				for _, g := range groups {
+					if group == g {
+						found = true
+						break // A matching group is found, stop the search
+					}
+				}
+				if !found {
+					delete(servers, k) // If no matching group is found, delete the corresponding server from the map
+				}
 			}
 		}
 	}
