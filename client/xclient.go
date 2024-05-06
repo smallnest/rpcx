@@ -137,6 +137,11 @@ func NewXClient(servicePath string, failMode FailMode, selectMode SelectMode, di
 		client.selector = newSelector(selectMode, servers)
 	}
 
+	if option.Selector != nil {
+		client.selector = option.Selector
+		client.selector.UpdateServer(servers)
+	}
+
 	client.Plugins = &pluginContainer{}
 
 	ch := client.discovery.WatchService()
@@ -173,6 +178,11 @@ func NewBidirectionalXClient(servicePath string, failMode FailMode, selectMode S
 	client.servers = servers
 	if selectMode != Closest && selectMode != SelectByUser {
 		client.selector = newSelector(selectMode, servers)
+	}
+
+	if option.Selector != nil {
+		client.selector = option.Selector
+		client.selector.UpdateServer(servers)
 	}
 
 	client.Plugins = &pluginContainer{}

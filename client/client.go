@@ -197,6 +197,9 @@ type Option struct {
 
 	// alaways use the selected server until it is bad
 	Sticky bool
+
+	// custom selector
+	Selector Selector
 }
 
 // Call represents an active RPC.
@@ -289,7 +292,7 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 		log.Debugf("client.Go send request for %s.%s, args: %+v in case of client call", servicePath, serviceMethod, args)
 	}
 
-	go client.send(ctx, call)
+	client.send(ctx, call)
 
 	return call
 }
