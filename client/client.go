@@ -292,7 +292,7 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 		log.Debugf("client.Go send request for %s.%s, args: %+v in case of client call", servicePath, serviceMethod, args)
 	}
 
-	client.send(ctx, call)
+	go client.send(ctx, call)
 
 	return call
 }
