@@ -76,6 +76,13 @@ type WorkerPool interface {
 	StopAndWait()
 }
 
+type ReqWorkerPool interface {
+	Submit(req *protocol.Message, task func())
+	StopAndWaitFor(deadline time.Duration)
+	Stop()
+	StopAndWait()
+}
+
 // Server is rpcx server that use TCP or UDP.
 type Server struct {
 	ln                net.Listener
@@ -90,6 +97,7 @@ type Server struct {
 	EnableProfile         bool // enable profile and statsview or not
 	AsyncWrite            bool // set true if your server only serves few clients
 	pool                  WorkerPool
+	reqPool               ReqWorkerPool
 
 	serviceMapMu sync.RWMutex
 	serviceMap   map[string]*service
@@ -365,7 +373,15 @@ func (s *Server) sendResponse(ctx *share.Context, conn net.Conn, err error, req,
 
 	data := res.EncodeSlicePointer()
 	if s.AsyncWrite {
-		if s.pool != nil {
+		if s.reqPool != nil {
+			s.reqPool.Submit(req, func() {
+				if s.writeTimeout != 0 {
+					conn.SetWriteDeadline(time.Now().Add(s.writeTimeout))
+				}
+				conn.Write(*data)
+				protocol.PutData(data)
+			})
+		} else if s.pool != nil {
 			s.pool.Submit(func() {
 				if s.writeTimeout != 0 {
 					conn.SetWriteDeadline(time.Now().Add(s.writeTimeout))
@@ -514,7 +530,11 @@ func (s *Server) serveConn(conn net.Conn) {
 			continue
 		}
 
-		if s.pool != nil {
+		if s.reqPool != nil {
+			s.reqPool.Submit(req, func() {
+				s.processOneRequest(ctx, req, conn)
+			})
+		} else if s.pool != nil {
 			s.pool.Submit(func() {
 				s.processOneRequest(ctx, req, conn)
 			})
@@ -919,6 +939,10 @@ func (s *Server) Close() error {
 
 	if s.pool != nil {
 		s.pool.StopAndWaitFor(10 * time.Second)
+	}
+
+	if s.reqPool != nil {
+		s.reqPool.StopAndWaitFor(10 * time.Second)
 	}
 
 	return err
