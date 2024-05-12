@@ -85,17 +85,19 @@ type ReqWorkerPool interface {
 
 // Server is rpcx server that use TCP or UDP.
 type Server struct {
-	ln                 net.Listener
-	readTimeout        time.Duration
-	writeTimeout       time.Duration
-	gatewayHTTPServer  *http.Server
-	jsonrpcHTTPServer  *http.Server
-	DisableHTTPGateway bool // disable http invoke or not.
-	DisableJSONRPC     bool // disable json rpc or not.
-	EnableProfile      bool // enable profile and statsview or not
-	AsyncWrite         bool // set true if your server only serves few clients
-	pool               WorkerPool
-	reqPool            ReqWorkerPool
+	ln                net.Listener
+	readTimeout       time.Duration
+	writeTimeout      time.Duration
+	gatewayHTTPServer *http.Server
+
+	jsonrpcHTTPServerLock sync.Mutex
+	jsonrpcHTTPServer     *http.Server
+	DisableHTTPGateway    bool // disable http invoke or not.
+	DisableJSONRPC        bool // disable json rpc or not.
+	EnableProfile         bool // enable profile and statsview or not
+	AsyncWrite            bool // set true if your server only serves few clients
+	pool                  WorkerPool
+	reqPool               ReqWorkerPool
 
 	serviceMapMu sync.RWMutex
 	serviceMap   map[string]*service
@@ -1009,6 +1011,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 			}
 		}
 
+		s.jsonrpcHTTPServerLock.Lock()
 		if s.gatewayHTTPServer != nil {
 			if err := s.closeHTTP1APIGateway(ctx); err != nil {
 				log.Warnf("failed to close gateway: %v", err)
@@ -1016,6 +1019,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 				log.Info("closed gateway")
 			}
 		}
+		s.jsonrpcHTTPServerLock.Unlock()
 
 		if s.jsonrpcHTTPServer != nil {
 			if err := s.closeJSONRPC2(ctx); err != nil {

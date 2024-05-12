@@ -92,8 +92,6 @@ const (
 	// Thrift
 	// Thrift for payload
 	Thrift
-	// JSONIterCodec for payload
-	JSONIterCodec
 )
 
 // Message is the generic type of Request and Response.

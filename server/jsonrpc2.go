@@ -196,7 +196,10 @@ func (s *Server) startJSONRPC2(ln net.Listener) {
 		srv.Handler = newServer
 	}
 
+	s.jsonrpcHTTPServerLock.Lock()
 	s.jsonrpcHTTPServer = &srv
+	s.jsonrpcHTTPServerLock.Unlock()
+
 	if err := s.jsonrpcHTTPServer.Serve(ln); !errors.Is(err, cmux.ErrServerClosed) {
 		log.Errorf("error in JSONRPC server: %T %s", err, err)
 	}
