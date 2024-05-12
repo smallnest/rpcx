@@ -54,6 +54,13 @@ func WithCustomPool(pool WorkerPool) OptionFn {
 	}
 }
 
+// WithReqPool uses a custom goroutine pool with req.
+func WithReqPool(reqPool ReqWorkerPool) OptionFn {
+	return func(s *Server) {
+		s.reqPool = reqPool
+	}
+}
+
 // WithAsyncWrite sets AsyncWrite to true.
 func WithAsyncWrite() OptionFn {
 	return func(s *Server) {
