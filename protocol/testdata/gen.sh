@@ -2,4 +2,4 @@
 
 # generate .go files from IDL
 
-protoc -I.  --go_out=. --go_opt=module="github.com/smallnest/rpcx/protocol/testdata"   ./benchmark.proto
+protoc -I.  --go_out=. --go_opt=module="testdata"   ./benchmark.proto

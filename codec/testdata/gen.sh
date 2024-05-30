@@ -1,5 +1,5 @@
 # generate .go files from IDL
-protoc --go_out=./ ./protobuf.proto
+protoc -I.  --go_out=. --go_opt=module="testdata" ./protobuf.proto
 
 thrift -r -out ../ --gen go ./thrift_colorgroup.thrift
 
