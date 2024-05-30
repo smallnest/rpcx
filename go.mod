@@ -17,7 +17,6 @@ require (
 	github.com/go-redis/redis_rate/v9 v9.1.2
 	github.com/godzie44/go-uring v0.0.0-20220926161041-69611e8b13d5
 	github.com/gogo/protobuf v1.3.2
-	github.com/golang/protobuf v1.5.3
 	github.com/golang/snappy v0.0.4
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/hashicorp/go-multierror v1.1.1
