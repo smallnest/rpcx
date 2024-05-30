@@ -3,6 +3,7 @@ syntax = "proto3";
 package testdata;
 
 option optimize_for = SPEED;
+option go_package = "github.com/smallnest/rpcx/protocol/testdata";
 
 
 message BenchmarkMessage {
