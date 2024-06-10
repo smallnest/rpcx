@@ -29,17 +29,18 @@ func TestReflection_Register(t *testing.T) {
 }
 
 type Args struct {
-	A int
-	B int
+	Aa int
+	B  string
+	C  bool
 }
 
 func Test_generateJSON(t *testing.T) {
 	argsType := reflect.TypeOf(&Args{}).Elem()
 	jsonData := generateJSON(argsType)
-	assert.Equal(t, `{"A":0,"B":0}`, jsonData)
+	assert.Equal(t, `{"Aa":0,"B":"","C":false}`, jsonData)
 
 	def := generateTypeDefination("Args", "test", jsonData)
 
-	result := "type Args struct {\n\tA int64 \n\tB int64 \n}\n"
+	result := "type Args struct {\n\tAa int64  \n\tB  string \n\tC  bool   \n}\n"
 	assert.Equal(t, result, def)
 }
