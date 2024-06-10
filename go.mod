@@ -5,7 +5,6 @@ go 1.21
 toolchain go1.22.1
 
 require (
-	github.com/ChimeraCoder/gojson v1.1.0
 	github.com/akutz/memconn v0.1.0
 	github.com/alitto/pond v1.8.3
 	github.com/apache/thrift v0.20.0
@@ -36,6 +35,7 @@ require (
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stretchr/testify v1.8.4
 	github.com/tinylib/msgp v1.1.9
+	github.com/twpayne/go-jsonstruct/v3 v3.0.0
 	github.com/valyala/fastrand v1.1.0
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 	github.com/xtaci/kcp-go v5.4.20+incompatible
@@ -53,6 +53,8 @@ require (
 	github.com/dgryski/go-jump v0.0.0-20211018200510-ba001c3ffce0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
+	github.com/fatih/camelcase v1.0.0 // indirect
+	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
@@ -84,6 +86,5 @@ require (
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/tools v0.21.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
