@@ -12,8 +12,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/ChimeraCoder/gojson"
 	"github.com/smallnest/rpcx/log"
+	"github.com/twpayne/go-jsonstruct/v3"
 )
 
 var (
@@ -186,7 +186,17 @@ func generateTypeDefination(name, pkg string, jsonValue string) string {
 		return ""
 	}
 	r := strings.NewReader(jsonValue)
-	output, err := gojson.Generate(r, gojson.ParseJson, name, pkg, nil, false, true)
+	generator := jsonstruct.NewGenerator(
+		jsonstruct.WithPackageName(pkg),
+		jsonstruct.WithTypeName(name),
+		jsonstruct.WithStructTagNames(nil),
+		jsonstruct.WithIntType("int64"),
+	)
+	if err := generator.ObserveJSONReader(r); err != nil {
+		log.Errorf("failed to observe json: %v", err)
+		return ""
+	}
+	output, err := generator.Generate()
 	if err != nil {
 		log.Errorf("failed to generate json: %v", err)
 		return ""
