@@ -59,6 +59,16 @@ func isExportedOrBuiltinType(t reflect.Type) bool {
 	return isExported(t.Name()) || t.PkgPath() == ""
 }
 
+func (s *Server) ListServices() []string {
+	s.serviceMapMu.RLock()
+	defer s.serviceMapMu.RUnlock()
+	var arr []string
+	for name := range s.serviceMap {
+		arr = append(arr, name)
+	}
+	return arr
+}
+
 // Register publishes in the server the set of methods of the
 // receiver value that satisfy the following conditions:
 //   - exported method of exported type
