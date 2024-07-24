@@ -2,7 +2,9 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
+	"net"
 	"sync"
 	"testing"
 	"time"
@@ -37,6 +39,17 @@ func (t *PBArith) Mul(ctx context.Context, args *testutils.ProtoArgs, reply *tes
 
 func (t *Arith) ThriftMul(ctx context.Context, args *testutils.ThriftArgs_, reply *testutils.ThriftReply) error {
 	reply.C = args.A * args.B
+	return nil
+}
+
+type Bidirectional struct {
+	*server.Server
+}
+
+func (t *Bidirectional) Mul(ctx context.Context, args *Args, reply *Reply) error {
+	conn := ctx.Value(server.RemoteConnContextKey).(net.Conn)
+	reply.C = args.A * args.B
+	t.SendMessage(conn, "test_service_path", "test_service_method", nil, []byte("abcde"))
 	return nil
 }
 
@@ -185,4 +198,51 @@ func TestClient_Res_Reset(t *testing.T) {
 	if len(data) == 0 {
 		t.Fatalf("data has been set to empty after response has been reset: %v", data)
 	}
+}
+
+func TestClient_Bidirectional(t *testing.T) {
+	s := server.NewServer()
+	_ = s.RegisterName("Bidirectional", &Bidirectional{Server: s}, "")
+	go func() {
+		_ = s.Serve("tcp", "127.0.0.1:0")
+	}()
+	defer s.Close()
+	time.Sleep(500 * time.Millisecond)
+
+	addr := s.Address().String()
+
+	opt := DefaultOption
+
+	var receive string
+
+	opt.NilCallServerMessageHandler = func(msg *protocol.Message) {
+		fmt.Printf("receive msg from server: %s\n", msg.Payload)
+		receive = string(msg.Payload)
+	}
+	client := &Client{
+		option: opt,
+	}
+
+	err := client.Connect("tcp", addr)
+	if err != nil {
+		t.Fatalf("failed to connect: %v", err)
+	}
+	defer client.Close()
+
+	args := &Args{
+		A: 10,
+		B: 20,
+	}
+	reply := &Reply{}
+	err = client.Call(context.Background(), "Bidirectional", "Mul", args, reply)
+	if err != nil {
+		t.Fatalf("failed to call: %v", err)
+	}
+	if receive != "abcde" {
+		t.Fatalf("expect abcde but got %s", receive)
+	}
+	if reply.C != 200 {
+		t.Fatalf("expect 200 but got %d", reply.C)
+	}
+
 }

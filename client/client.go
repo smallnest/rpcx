@@ -197,6 +197,9 @@ type Option struct {
 
 	// alaways use the selected server until it is bad
 	Sticky bool
+
+	// not call server message handler
+	NilCallServerMessageHandler func(msg *protocol.Message)
 }
 
 // Call represents an active RPC.
@@ -663,6 +666,8 @@ func (client *Client) input() {
 			if isServerMessage {
 				if client.ServerMessageChan != nil {
 					client.handleServerRequest(res)
+				} else if client.option.NilCallServerMessageHandler != nil {
+					client.option.NilCallServerMessageHandler(res)
 				}
 				continue
 			}
