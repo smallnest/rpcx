@@ -129,6 +129,9 @@ type Server struct {
 	ServerErrorFunc func(res *protocol.Message, err error) string
 
 	ViewManager *ViewManager
+
+	// The server is started.
+	Started chan struct{}
 }
 
 // NewServer returns a server.
@@ -141,6 +144,7 @@ func NewServer(options ...OptionFn) *Server {
 		serviceMap: make(map[string]*service),
 		router:     make(map[string]Handler),
 		AsyncWrite: false, // 除非你想做进一步的优化测试，否则建议你设置为false
+		Started:    make(chan struct{}),
 	}
 
 	for _, op := range options {
@@ -268,6 +272,7 @@ func (s *Server) serveListener(ln net.Listener) error {
 
 	s.mu.Lock()
 	s.ln = ln
+	close(s.Started)
 	s.mu.Unlock()
 
 	for {
