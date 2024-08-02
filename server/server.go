@@ -72,7 +72,7 @@ type Handler func(ctx *Context) error
 type WorkerPool interface {
 	Submit(task func())
 	StopAndWaitFor(deadline time.Duration)
-	Stop()
+	Stop() context.Context
 	StopAndWait()
 }
 
@@ -387,7 +387,6 @@ func (s *Server) sendResponse(ctx *share.Context, conn net.Conn, err error, req,
 				protocol.PutData(data)
 			}()
 		}
-
 	} else {
 		if s.writeTimeout != 0 {
 			conn.SetWriteDeadline(time.Now().Add(s.writeTimeout))
