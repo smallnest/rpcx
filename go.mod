@@ -10,7 +10,7 @@ require (
 	github.com/apache/thrift v0.20.0
 	github.com/edwingeng/doublejump v1.0.1
 	github.com/fatih/color v1.17.0
-	github.com/go-echarts/go-echarts/v2 v2.4.1
+	github.com/go-echarts/go-echarts/v2 v2.3.3
 	github.com/go-ping/ping v1.1.0
 	github.com/go-redis/redis_rate/v10 v10.0.1
 	github.com/godzie44/go-uring v0.0.0-20220926161041-69611e8b13d5
