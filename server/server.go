@@ -126,7 +126,8 @@ type Server struct {
 	ServerErrorFunc func(res *protocol.Message, err error) string
 
 	// The server is started.
-	Started chan struct{}
+	Started           chan struct{}
+	unregisterAllOnce sync.Once
 }
 
 // NewServer returns a server.
@@ -955,11 +956,8 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		s.mu.Lock()
 
 		// 主动注销注册的服务
-		if s.Plugins != nil {
-			for name := range s.serviceMap {
-				s.Plugins.DoUnregister(name)
-			}
-		}
+		s.UnregisterAll()
+
 		if s.ln != nil {
 			s.ln.Close()
 		}

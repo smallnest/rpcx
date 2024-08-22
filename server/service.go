@@ -325,7 +325,12 @@ func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 // UnregisterAll unregisters all services.
 // You can call this method when you want to shutdown/upgrade this node.
 func (s *Server) UnregisterAll() error {
-	return s.unregisterAll()
+	var err error
+	s.unregisterAllOnce.Do(func() {
+		err = s.unregisterAll()
+	})
+
+	return err
 }
 
 func (s *Server) unregisterAll() error {
