@@ -1,3 +1,6 @@
+//go:build !nostatsview
+// +build !nostatsview
+
 package server
 
 import (
