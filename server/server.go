@@ -20,7 +20,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/jamiealquiza/tachymeter"
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
@@ -87,7 +86,6 @@ type Server struct {
 	jsonrpcHTTPServer     *http.Server
 	DisableHTTPGateway    bool // disable http invoke or not.
 	DisableJSONRPC        bool // disable json rpc or not.
-	EnableProfile         bool // enable profile and statsview or not
 	AsyncWrite            bool // set true if your server only serves few clients
 	pool                  WorkerPool
 
@@ -119,7 +117,6 @@ type Server struct {
 
 	handlerMsgNum int32
 	requestCount  atomic.Uint64
-	tachymeter    *tachymeter.Tachymeter
 
 	// HandleServiceError is used to get all service errors. You can use it write logs or others.
 	HandleServiceError func(error)
@@ -127,8 +124,6 @@ type Server struct {
 	// ServerErrorFunc is a customized error handlers and you can use it to return customized error strings to clients.
 	// If not set, it use err.Error()
 	ServerErrorFunc func(res *protocol.Message, err error) string
-
-	ViewManager *ViewManager
 
 	// The server is started.
 	Started chan struct{}
@@ -154,8 +149,6 @@ func NewServer(options ...OptionFn) *Server {
 	if s.options["TCPKeepAlivePeriod"] == nil {
 		s.options["TCPKeepAlivePeriod"] = 3 * time.Minute
 	}
-
-	s.tachymeter = tachymeter.New(&tachymeter.Config{Size: 1000})
 
 	return s
 }
@@ -545,14 +538,6 @@ func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, co
 
 	atomic.AddInt32(&s.handlerMsgNum, 1)
 	defer atomic.AddInt32(&s.handlerMsgNum, -1)
-
-	if s.EnableProfile && s.tachymeter != nil {
-		s.requestCount.Add(1)
-		start := time.Now()
-		defer func() {
-			s.tachymeter.AddTime(time.Since(start))
-		}()
-	}
 
 	// 心跳请求，直接处理返回
 	if req.IsHeartbeat() {

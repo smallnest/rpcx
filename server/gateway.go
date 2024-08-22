@@ -39,19 +39,6 @@ func (s *Server) startGateway(network string, ln net.Listener) net.Listener {
 		go s.startJSONRPC2(jsonrpc2Ln)
 	}
 
-	if s.EnableProfile {
-		// debugLn := m.Match(http1Path("/debug/"))
-		debugLn := m.Match(cmux.HTTP1Fast())
-		vm := NewViewManager(debugLn, s)
-		go func() {
-			if err := vm.Start(); err != nil {
-				log.Errorf("start view manager failed: %v", err)
-			}
-		}()
-
-		s.ViewManager = vm
-	}
-
 	if !s.DisableHTTPGateway {
 		httpLn := m.Match(cmux.HTTP1Fast()) // X-RPCX-MessageID
 		go s.startHTTP1APIGateway(httpLn)
