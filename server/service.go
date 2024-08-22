@@ -15,6 +15,24 @@ import (
 	"github.com/smallnest/rpcx/log"
 )
 
+// RpcServiceError represents an error that is case by service implementation.
+type RpcServiceInternalError struct {
+	Err    string
+	Method string
+	Argv   interface{}
+	stack  string
+}
+
+// Error returns the error message.
+func (e RpcServiceInternalError) Error() string {
+	return fmt.Sprintf("[service internal error]: %v, method: %s, argv: %+v, stack: %s", e.Err, e.Method, e.Argv, e.stack)
+}
+
+// String returns the error message.
+func (e RpcServiceInternalError) String() string {
+	return e.Error()
+}
+
 // Precompute the reflect type for error. Can't use error directly
 // because Typeof takes an empty interface value. This is annoying.
 var typeOfError = reflect.TypeOf((*error)(nil)).Elem()
@@ -357,8 +375,12 @@ func (s *service) call(ctx context.Context, mtype *methodType, argv, replyv refl
 			n := runtime.Stack(buf, false)
 			buf = buf[:n]
 
-			err = fmt.Errorf("[service internal error]: %v, method: %s, argv: %+v, stack: %s",
-				r, mtype.method.Name, argv.Interface(), buf)
+			err = &RpcServiceInternalError{
+				Err:    fmt.Sprintf("%v", r),
+				Method: mtype.method.Name,
+				Argv:   argv.Interface(),
+				stack:  string(buf),
+			}
 			log.Error(err)
 		}
 	}()
@@ -382,9 +404,12 @@ func (s *service) callForFunction(ctx context.Context, ft *functionType, argv, r
 			n := runtime.Stack(buf, false)
 			buf = buf[:n]
 
-			// log.Errorf("failed to invoke service: %v, stacks: %s", r, string(debug.Stack()))
-			err = fmt.Errorf("[service internal error]: %v, function: %s, argv: %+v, stack: %s",
-				r, runtime.FuncForPC(ft.fn.Pointer()), argv.Interface(), buf)
+			err = &RpcServiceInternalError{
+				Err:    fmt.Sprintf("%v", r),
+				Method: fmt.Sprintf("%s", runtime.FuncForPC(ft.fn.Pointer())),
+				Argv:   argv.Interface(),
+				stack:  string(buf),
+			}
 			log.Error(err)
 		}
 	}()
