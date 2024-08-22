@@ -534,8 +534,13 @@ func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, co
 		if r := recover(); r != nil {
 			buf := make([]byte, 1024)
 			buf = buf[:runtime.Stack(buf, true)]
-
-			log.Errorf("failed to handle the request: %v， stacks: %s", r, buf)
+			if s.HandleServiceError != nil {
+				s.HandleServiceError(fmt.Errorf("%v", r))
+			} else {
+				log.Errorf("[handler internal error]: servicepath: %s, servicemethod, err: %v，stacks: %s", req.ServicePath, req.ServiceMethod, r, buf)
+			}
+			sctx := NewContext(ctx, conn, req, s.AsyncWrite)
+			sctx.WriteError(fmt.Errorf("%v", r))
 		}
 	}()
 
