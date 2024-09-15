@@ -60,3 +60,10 @@ func WithAsyncWrite() OptionFn {
 		s.AsyncWrite = true
 	}
 }
+
+// AsyncOutgoing sets AsyncWrite outgoing queue
+func AsyncOutgoing(limit int) OptionFn {
+	return func(s *Server) {
+		s.AsyncOutgoing = limit
+	}
+}
