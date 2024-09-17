@@ -530,7 +530,7 @@ func (s *Server) processOneRequest(ctx *share.Context, req *protocol.Message, co
 			if s.HandleServiceError != nil {
 				s.HandleServiceError(fmt.Errorf("%v", r))
 			} else {
-				log.Errorf("[handler internal error]: servicepath: %s, servicemethod, err: %v，stacks: %s", req.ServicePath, req.ServiceMethod, r, buf)
+				log.Errorf("[handler internal error]: servicepath: %s, servicemethod, err: %v，stacks: %s", req.ServicePath, req.ServiceMethod, r, string(buf))
 			}
 			sctx := NewContext(ctx, conn, req, s.AsyncWrite)
 			sctx.WriteError(fmt.Errorf("%v", r))
