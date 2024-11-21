@@ -161,6 +161,8 @@ type Option struct {
 
 	// Retries retries to send
 	Retries int
+	// RetryInterval is the interval between retries
+	RetryInterval time.Duration
 	// Time to disallow the bad server not to be selected
 	TimeToDisallow time.Duration
 

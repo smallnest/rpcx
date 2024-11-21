@@ -582,6 +582,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 	switch c.failMode {
 	case Failtry:
 		retries := c.option.Retries
+		retryInterval := c.option.RetryInterval
 		for retries >= 0 {
 			retries--
 
@@ -602,6 +603,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 				c.removeClient(k, c.servicePath, serviceMethod, client)
 			}
 			client, e = c.getCachedClient(k, c.servicePath, serviceMethod, args)
+			time.Sleep(retryInterval)
 		}
 		if err == nil {
 			err = e
@@ -609,6 +611,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 		return err
 	case Failover:
 		retries := c.option.Retries
+		retryInterval := c.option.RetryInterval
 		for retries >= 0 {
 			retries--
 
@@ -628,6 +631,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 			if uncoverError(err) {
 				c.removeClient(k, c.servicePath, serviceMethod, client)
 			}
+			time.Sleep(retryInterval)
 			// select another server
 			k, client, e = c.selectClient(ctx, c.servicePath, serviceMethod, args)
 		}
