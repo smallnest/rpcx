@@ -18,6 +18,7 @@ import (
 
 func init() {
 	makeListeners["iouring"] = iouringMakeListener
+	makeListeners["rdma"] = rdmaMakeListener
 }
 
 // iouringMakeListener creates a new listener using io_uring.
