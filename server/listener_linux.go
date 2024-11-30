@@ -6,12 +6,14 @@ package server
 import (
 	"net"
 	"runtime"
+	"strconv"
 	"time"
 
 	uringnet "github.com/godzie44/go-uring/net"
 	"github.com/godzie44/go-uring/reactor"
 	"github.com/godzie44/go-uring/uring"
 	"github.com/smallnest/rpcx/log"
+	"github.com/smallnest/rsocket"
 )
 
 func init() {
@@ -63,4 +65,17 @@ type uringLogger struct {
 
 func (l *uringLogger) Log(keyvals ...interface{}) {
 	l.Logger.Info(keyvals...)
+}
+
+func rdmaMakeListener(s *Server, address string) (ln net.Listener, err error) {
+	host, port, err := net.SplitHostPort(address)
+	if err != nil {
+		return nil, err
+	}
+	p, err := strconv.Atoi(port)
+	if err != nil {
+		return nil, err
+	}
+
+	return rsocket.NewTCPListener(host, p)
 }

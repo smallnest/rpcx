@@ -6,7 +6,7 @@
 - support io_uring
 - add CacheDiscovery
 - add Oneshot method for XClient
-- add statsview: http://xxx.xxx.xxx.xxx:xxxx/debug/statsview
+- support RDMA
 
 
 ## 1.8.0

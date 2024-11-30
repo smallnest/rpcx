@@ -17,13 +17,15 @@ import (
 
 type ConnFactoryFn func(c *Client, network, address string) (net.Conn, error)
 
-var ConnFactories = map[string]ConnFactoryFn{
-	"http":    newDirectHTTPConn,
-	"kcp":     newDirectKCPConn,
-	"quic":    newDirectQuicConn,
-	"unix":    newDirectConn,
-	"memu":    newMemuConn,
-	"iouring": newIOUringConn,
+var ConnFactories = make(map[string]ConnFactoryFn)
+
+func init() {
+	ConnFactories["http"] = newDirectHTTPConn
+	ConnFactories["kcp"] = newDirectKCPConn
+	ConnFactories["quic"] = newDirectQuicConn
+	ConnFactories["unix"] = newDirectConn
+	ConnFactories["memu"] = newMemuConn
+	ConnFactories["iouring"] = newIOUringConn
 }
 
 // Connect connects the server via specified network.
