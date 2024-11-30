@@ -27,7 +27,7 @@ require (
 	github.com/rs/cors v1.11.1
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
 	github.com/smallnest/quick v0.2.0
-	github.com/smallnest/rsocket v0.0.0-20241130014235-4fb25e79490f
+	github.com/smallnest/rsocket v0.0.0-20241130025819-fb14bead82dd
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stretchr/testify v1.9.0
 	github.com/tinylib/msgp v1.2.4

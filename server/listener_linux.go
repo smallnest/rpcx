@@ -5,6 +5,7 @@ package server
 
 import (
 	"net"
+	"os"
 	"runtime"
 	"strconv"
 	"time"
@@ -77,6 +78,13 @@ func rdmaMakeListener(s *Server, address string) (ln net.Listener, err error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return rsocket.NewTCPListener(host, p)
+	backlog := os.Getenv("RDMA_BACKLOG")
+	if backlog == "" {
+		backlog = "128"
+	}
+	blog, _ := strconv.Atoi(backlog)
+	if blog == 0 {
+		blog = 128
+	}
+	return rsocket.NewTCPListener(host, p, blog)
 }

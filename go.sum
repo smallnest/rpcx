@@ -271,6 +271,10 @@ github.com/smallnest/quick v0.2.0 h1:AEvm7ZovZ6Utv+asFDBh866G4ufMNhRNMKbZHVMFYPE
 github.com/smallnest/quick v0.2.0/go.mod h1:ODNivpfZTaMgYrNb/fhDtqoEe2TTPxSRo8JaIT/QThI=
 github.com/smallnest/rsocket v0.0.0-20241130014235-4fb25e79490f h1:hazNcUBVc1e3FvEC1lvuKSeCdj/xqpKU6VLcGqbW7Dk=
 github.com/smallnest/rsocket v0.0.0-20241130014235-4fb25e79490f/go.mod h1:VJeIKKrDEzT4ZNVe87JN9uRLw1XLp/ZnnE9PfsyJ1jY=
+github.com/smallnest/rsocket v0.0.0-20241130024725-6610e0bfbf73 h1:x08hpHpWfiLoa7usMDEFG+6qoGlpdg1njIha+ULVAgw=
+github.com/smallnest/rsocket v0.0.0-20241130024725-6610e0bfbf73/go.mod h1:VJeIKKrDEzT4ZNVe87JN9uRLw1XLp/ZnnE9PfsyJ1jY=
+github.com/smallnest/rsocket v0.0.0-20241130025819-fb14bead82dd h1:/uoOiwJ9g2MRmyZGdv+Yxvp/JY75YGRtoyUI78P7Jb8=
+github.com/smallnest/rsocket v0.0.0-20241130025819-fb14bead82dd/go.mod h1:VJeIKKrDEzT4ZNVe87JN9uRLw1XLp/ZnnE9PfsyJ1jY=
 github.com/soheilhy/cmux v0.1.5 h1:jjzc5WVemNEDTLwv9tlmemhC73tI08BNOIGwBOo10Js=
 github.com/soheilhy/cmux v0.1.5/go.mod h1:T7TcVDs9LWfQgPlPsdngu6I6QIoyIFZDDC6sNE1GqG0=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
