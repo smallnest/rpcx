@@ -5,21 +5,17 @@ package server
 
 import (
 	"net"
-	"os"
 	"runtime"
-	"strconv"
 	"time"
 
 	uringnet "github.com/godzie44/go-uring/net"
 	"github.com/godzie44/go-uring/reactor"
 	"github.com/godzie44/go-uring/uring"
 	"github.com/smallnest/rpcx/log"
-	"github.com/smallnest/rsocket"
 )
 
 func init() {
 	makeListeners["iouring"] = iouringMakeListener
-	makeListeners["rdma"] = rdmaMakeListener
 }
 
 // iouringMakeListener creates a new listener using io_uring.
@@ -67,24 +63,4 @@ type uringLogger struct {
 
 func (l *uringLogger) Log(keyvals ...interface{}) {
 	l.Logger.Info(keyvals...)
-}
-
-func rdmaMakeListener(s *Server, address string) (ln net.Listener, err error) {
-	host, port, err := net.SplitHostPort(address)
-	if err != nil {
-		return nil, err
-	}
-	p, err := strconv.Atoi(port)
-	if err != nil {
-		return nil, err
-	}
-	backlog := os.Getenv("RDMA_BACKLOG")
-	if backlog == "" {
-		backlog = "128"
-	}
-	blog, _ := strconv.Atoi(backlog)
-	if blog == 0 {
-		blog = 128
-	}
-	return rsocket.NewTCPListener(host, p, blog)
 }

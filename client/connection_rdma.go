@@ -1,5 +1,5 @@
-//go:build linux
-// +build linux
+//go:build rdma
+// +build rdma
 
 package client
 
