@@ -125,10 +125,7 @@ func (ctx *Context) Write(v interface{}) error {
 
 	var err error
 	if ctx.async {
-		go func() {
-			_, err = ctx.conn.Write(*respData)
-			protocol.PutData(respData)
-		}()
+		return wirteResp(ctx.ctx, res)
 	} else {
 		_, err = ctx.conn.Write(*respData)
 		protocol.PutData(respData)
