@@ -16,11 +16,12 @@ import (
 	"time"
 
 	"github.com/juju/ratelimit"
+	"golang.org/x/sync/singleflight"
+
 	ex "github.com/smallnest/rpcx/errors"
 	"github.com/smallnest/rpcx/log"
 	"github.com/smallnest/rpcx/protocol"
 	"github.com/smallnest/rpcx/share"
-	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -982,7 +983,9 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 			}
 
 			e := c.wrapCall(ctx, client, serviceMethod, args, clonedReply)
-			done <- (e == nil)
+			defer func() {
+				done <- (e == nil)
+			}()
 			if e != nil {
 				if uncoverError(e) {
 					c.removeClient(k, c.servicePath, serviceMethod, client)
@@ -998,7 +1001,6 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 		}()
 	}
 
-	timeout := time.NewTimer(time.Minute)
 check:
 	for {
 		select {
@@ -1007,12 +1009,8 @@ check:
 			if l == 0 || !result { // all returns or some one returns an error
 				break check
 			}
-		case <-timeout.C:
-			err.Append(errors.New(("timeout")))
-			break check
 		}
 	}
-	timeout.Stop()
 
 	return err.ErrorOrNil()
 }
@@ -1080,7 +1078,9 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 					reflect.ValueOf(reply).Elem().Set(reflect.ValueOf(clonedReply).Elem())
 				})
 			}
-			done <- (e == nil)
+			defer func() {
+				done <- (e == nil)
+			}()
 			if e != nil {
 				if uncoverError(e) {
 					c.removeClient(k, c.servicePath, serviceMethod, client)
@@ -1090,7 +1090,6 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 		}()
 	}
 
-	timeout := time.NewTimer(time.Minute)
 check:
 	for {
 		select {
@@ -1102,13 +1101,8 @@ check:
 			if l == 0 { // all returns or some one returns an error
 				break check
 			}
-
-		case <-timeout.C:
-			err.Append(errors.New(("timeout")))
-			break check
 		}
 	}
-	timeout.Stop()
 
 	return err.ErrorOrNil()
 }
@@ -1175,7 +1169,9 @@ func (c *xClient) Inform(ctx context.Context, serviceMethod string, args interfa
 			}
 
 			e := c.wrapCall(ctx, client, serviceMethod, args, clonedReply)
-			done <- (e == nil)
+			defer func() {
+				done <- (e == nil)
+			}()
 			if e != nil {
 				if uncoverError(e) {
 					c.removeClient(k, c.servicePath, serviceMethod, client)
@@ -1204,7 +1200,6 @@ func (c *xClient) Inform(ctx context.Context, serviceMethod string, args interfa
 		}()
 	}
 
-	timeout := time.NewTimer(time.Minute)
 check:
 	for {
 		select {
@@ -1213,12 +1208,8 @@ check:
 			if l == 0 { // all returns or some one returns an error
 				break check
 			}
-		case <-timeout.C:
-			err.Append(errors.New(("timeout")))
-			break check
 		}
 	}
-	timeout.Stop()
 
 	return receipts, err.ErrorOrNil()
 }
