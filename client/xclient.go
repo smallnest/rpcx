@@ -945,6 +945,9 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 	var replyOnce sync.Once
 
 	ctx = setServerTimeout(ctx)
+	// add timeout after set server timeout, only prevent client hanging
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
 	callPlugins := make([]RPCClient, 0, len(c.servers))
 	clients := make(map[string]RPCClient)
 	c.mu.Lock()
@@ -1033,6 +1036,9 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 	}
 
 	ctx = setServerTimeout(ctx)
+	// add timeout after set server timeout, only prevent client hanging
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
 	callPlugins := make([]RPCClient, 0, len(c.servers))
 	clients := make(map[string]RPCClient)
 	c.mu.Lock()
@@ -1126,6 +1132,10 @@ func (c *xClient) Inform(ctx context.Context, serviceMethod string, args interfa
 	}
 
 	ctx = setServerTimeout(ctx)
+
+	// add timeout after set server timeout, only prevent client hanging
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
 	callPlugins := make([]RPCClient, 0, len(c.servers))
 	clients := make(map[string]RPCClient)
 	c.mu.Lock()
