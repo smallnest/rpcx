@@ -1015,6 +1015,12 @@ check:
 		}
 	}
 
+	select {
+	case <-ctx.Done():
+		err.Append(errors.New(("timeout")))
+	default:
+	}
+
 	return err.ErrorOrNil()
 }
 
@@ -1036,6 +1042,7 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 	}
 
 	ctx = setServerTimeout(ctx)
+
 	// add timeout after set server timeout, only prevent client hanging
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
@@ -1108,6 +1115,12 @@ check:
 				break check
 			}
 		}
+	}
+
+	select {
+	case <-ctx.Done():
+		err.Append(errors.New(("timeout")))
+	default:
 	}
 
 	return err.ErrorOrNil()
@@ -1219,6 +1232,12 @@ check:
 				break check
 			}
 		}
+	}
+
+	select {
+	case <-ctx.Done():
+		err.Append(errors.New(("timeout")))
+	default:
 	}
 
 	return receipts, err.ErrorOrNil()
