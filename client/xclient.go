@@ -305,7 +305,6 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, a
 	client = c.findCachedClient(k, servicePath, serviceMethod)
 	if client != nil {
 		if !client.IsClosing() && !client.IsShutdown() {
-			c.mu.Unlock()
 			return client, nil
 		}
 		c.deleteCachedClient(client, k, servicePath, serviceMethod)
