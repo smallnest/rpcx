@@ -326,17 +326,17 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, a
 	}
 
 	c.mu.Lock()
+	defer c.mu.Unlock()
+	
 	client = c.findCachedClient(k, servicePath, serviceMethod)
 	if client != nil {
 		if !client.IsClosing() && !client.IsShutdown() {
-			c.mu.Unlock()
 			return client, nil
 		}
 		c.deleteCachedClient(client, k, servicePath, serviceMethod)
 	}
-
+	
 	client = c.findCachedClient(k, servicePath, serviceMethod)
-	c.mu.Unlock()
 
 	if client == nil || client.IsShutdown() {
 		generatedClient, err, _ := c.slGroup.Do(k, func() (interface{}, error) {
@@ -355,9 +355,7 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, a
 
 		client.RegisterServerMessageChan(c.serverMessageChan)
 
-		c.mu.Lock()
 		c.setCachedClient(client, k, servicePath, serviceMethod)
-		c.mu.Unlock()
 
 		// forget k only when client is cached
 		c.slGroup.Forget(k)
