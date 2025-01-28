@@ -891,8 +891,11 @@ func (c *xClient) wrapCall(ctx context.Context, client RPCClient, serviceMethod 
 		ctx = share.NewContext(ctx)
 	}
 
-	c.Plugins.DoPreCall(ctx, c.servicePath, serviceMethod, args)
-	err := client.Call(ctx, c.servicePath, serviceMethod, args, reply)
+	err := c.Plugins.DoPreCall(ctx, c.servicePath, serviceMethod, args)
+	if err != nil {
+		return err
+	}
+	err = client.Call(ctx, c.servicePath, serviceMethod, args, reply)
 	c.Plugins.DoPostCall(ctx, c.servicePath, serviceMethod, args, reply, err)
 
 	if share.Trace {
@@ -913,7 +916,11 @@ func (c *xClient) wrapSendRaw(ctx context.Context, client RPCClient, r *protocol
 	}
 
 	ctx = share.NewContext(ctx)
-	c.Plugins.DoPreCall(ctx, c.servicePath, r.ServiceMethod, r.Payload)
+	err := c.Plugins.DoPreCall(ctx, c.servicePath, r.ServiceMethod, r.Payload)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	m, payload, err := client.SendRaw(ctx, r)
 	c.Plugins.DoPostCall(ctx, c.servicePath, r.ServiceMethod, r.Payload, nil, err)
 
