@@ -17,6 +17,7 @@ const (
 	XOneway            = "X-RPCX-Oneway"
 	XMessageStatusType = "X-RPCX-MessageStatusType"
 	XSerializeType     = "X-RPCX-SerializeType"
+	XCompressType      = "X-RPCX-CompressType"
 	XMessageID         = "X-RPCX-MessageID"
 	XServicePath       = "X-RPCX-ServicePath"
 	XServiceMethod     = "X-RPCX-ServiceMethod"
@@ -56,6 +57,16 @@ func HTTPRequest2RpcxRequest(r *http.Request) (*protocol.Message, error) {
 			return nil, err
 		}
 		req.SetSerializeType(protocol.SerializeType(rst))
+	}
+
+	compressType := h.Get(XCompressType)
+	if compressType != "" {
+		ct, err := strconv.Atoi(compressType)
+		if err != nil {
+			return nil, err
+		}
+
+		req.SetCompressType(protocol.CompressType(ct))
 	}
 
 	meta := h.Get(XMeta)

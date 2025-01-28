@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -273,6 +274,11 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 		meta.Add(k, v)
 	}
 	wh.Set(XMeta, meta.Encode())
+
+	if res.CompressType() != protocol.None {
+		wh.Set(XCompressType, fmt.Sprintf("%d", res.CompressType()))
+	}
+
 	w.Write(res.Payload)
 	s.Plugins.DoPostWriteResponse(newCtx, req, res, err)
 }
