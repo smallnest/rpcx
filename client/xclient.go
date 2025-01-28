@@ -305,13 +305,11 @@ func safeCloseClient(client RPCClient) {
 	client.Close()
 }
 
-func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, args interface{}) (RPCClient, error) {
-	// TODO: improve the lock
-	var client RPCClient
+func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, _ interface{}) (client RPCClient, err error) {
 	var needCallPlugin bool
 	defer func() {
 		if needCallPlugin {
-			c.Plugins.DoClientConnected(client.GetConn())
+			_, err = c.Plugins.DoClientConnected(client.GetConn())
 		}
 	}()
 
@@ -327,7 +325,7 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, a
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	client = c.findCachedClient(k, servicePath, serviceMethod)
 	if client != nil {
 		if !client.IsClosing() && !client.IsShutdown() {
@@ -335,7 +333,7 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, a
 		}
 		c.deleteCachedClient(client, k, servicePath, serviceMethod)
 	}
-	
+
 	client = c.findCachedClient(k, servicePath, serviceMethod)
 
 	if client == nil || client.IsShutdown() {
