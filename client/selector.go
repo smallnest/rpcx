@@ -136,10 +136,10 @@ func (s *weightedRoundRobinSelector) Select(ctx context.Context, servicePath, se
 }
 
 func (s *weightedRoundRobinSelector) UpdateServer(servers map[string]string) {
-	ss := createWeighted(servers)
-	s.buildRing()
-	s.servers = ss
+	newServer := newWeightedRoundRobinSelector(servers).(*weightedRoundRobinSelector)
+	*s = *newServer
 }
+
 func (s *weightedRoundRobinSelector) buildRing() {
 	s.totalWeight = 0
 	for _, w := range s.servers {
