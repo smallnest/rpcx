@@ -52,6 +52,7 @@ func NewStreamService(addr string, streamHandler StreamHandler, acceptor StreamA
 		Addr:         addr,
 		handler:      streamHandler,
 		cachedTokens: cachedTokens,
+		acceptor:     acceptor,
 	}
 
 	return fi
