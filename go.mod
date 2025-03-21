@@ -22,7 +22,7 @@ require (
 	github.com/kr/pretty v0.2.0
 	github.com/quic-go/quic-go v0.49.0
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
-	github.com/redis/go-redis/v9 v9.7.0
+	github.com/redis/go-redis/v9 v9.7.3
 	github.com/rpcxio/libkv v0.5.1
 	github.com/rs/cors v1.11.1
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
