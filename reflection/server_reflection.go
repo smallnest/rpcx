@@ -1,7 +1,6 @@
 package reflection
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -52,7 +51,7 @@ type (s *{{$name}}) {{.Name}}(ctx context.Context, arg *{{.ReqName}}, reply *{{.
 
 func (si ServiceInfo) String() string {
 	tpl := template.Must(template.New("service").Parse(siTemplate))
-	var buf bytes.Buffer
+	var buf strings.Builder
 	_ = tpl.Execute(&buf, si)
 	return buf.String()
 }
@@ -160,7 +159,7 @@ func (r *Reflection) GetService(ctx context.Context, s string, reply *string) er
 }
 
 func (r *Reflection) GetServices(ctx context.Context, s string, reply *string) error {
-	var buf bytes.Buffer
+	var buf strings.Builder
 
 	pkg := `package `
 
