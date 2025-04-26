@@ -2,7 +2,6 @@ package client
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
@@ -11,6 +10,7 @@ import (
 	"net"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -495,15 +495,18 @@ func urlencode(data map[string]string) string {
 	if len(data) == 0 {
 		return ""
 	}
-	var buf bytes.Buffer
+	var buf strings.Builder
+	first := true
 	for k, v := range data {
+		if !first {
+			buf.WriteByte('&')
+		}
 		buf.WriteString(url.QueryEscape(k))
 		buf.WriteByte('=')
 		buf.WriteString(url.QueryEscape(v))
-		buf.WriteByte('&')
+		first = false
 	}
-	s := buf.String()
-	return s[0 : len(s)-1]
+	return buf.String()
 }
 
 func (client *Client) send(ctx context.Context, call *Call) {
