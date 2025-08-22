@@ -35,10 +35,10 @@ func (e RpcServiceInternalError) String() string {
 
 // Precompute the reflect type for error. Can't use error directly
 // because Typeof takes an empty interface value. This is annoying.
-var typeOfError = reflect.TypeOf((*error)(nil)).Elem()
+var typeOfError = reflect.TypeFor[error]()
 
 // Precompute the reflect type for context.
-var typeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
+var typeOfContext = reflect.TypeFor[context.Context]()
 
 type methodType struct {
 	sync.Mutex // protects counters
