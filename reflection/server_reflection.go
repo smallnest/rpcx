@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	typeOfError   = reflect.TypeOf((*error)(nil)).Elem()
-	typeOfContext = reflect.TypeOf((*context.Context)(nil)).Elem()
+	typeOfError   = reflect.TypeFor[error]()
+	typeOfContext = reflect.TypeFor[context.Context]()
 )
 
 // ServiceInfo service info.
