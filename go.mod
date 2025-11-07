@@ -20,7 +20,7 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kavu/go_reuseport v1.5.0
 	github.com/kr/pretty v0.2.0
-	github.com/quic-go/quic-go v0.49.0
+	github.com/quic-go/quic-go v0.49.1
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/rpcxio/libkv v0.5.1
