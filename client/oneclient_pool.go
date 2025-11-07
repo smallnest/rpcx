@@ -14,6 +14,7 @@ type OneClientPool struct {
 	index      uint64
 	oneclients []*OneClient
 	auth       string
+	Plugins    PluginContainer
 
 	failMode          FailMode
 	selectMode        SelectMode
@@ -66,6 +67,20 @@ func (p *OneClientPool) Auth(auth string) {
 	for _, v := range p.oneclients {
 		v.Auth(auth)
 	}
+}
+
+// SetPlugins sets client's plugins.
+func (p *OneClientPool) SetPlugins(plugins PluginContainer) {
+	p.Plugins = plugins
+
+	for _, v := range p.oneclients {
+		v.SetPlugins(plugins)
+	}
+}
+
+// GetPlugins returns client's plugins.
+func (p *OneClientPool) GetPlugins() PluginContainer {
+	return p.Plugins
 }
 
 // Get returns a OneClient.

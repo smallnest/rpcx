@@ -22,6 +22,7 @@ type XClientPool struct {
 	discovery   ServiceDiscovery
 	option      Option
 	auth        string
+	Plugins     PluginContainer
 
 	serverMessageChan chan<- *protocol.Message
 }
@@ -73,6 +74,21 @@ func (c *XClientPool) Auth(auth string) {
 		v.Auth(auth)
 	}
 	c.mu.RUnlock()
+}
+
+// SetPlugins sets client's plugins.
+func (p *XClientPool) SetPlugins(plugins PluginContainer) {
+	p.Plugins = plugins
+	p.mu.RLock()
+	for _, v := range p.xclients {
+		v.SetPlugins(plugins)
+	}
+	p.mu.RUnlock()
+}
+
+// GetPlugins returns client's plugins.
+func (p *XClientPool) GetPlugins() PluginContainer {
+	return p.Plugins
 }
 
 // Get returns a xclient.
