@@ -265,7 +265,12 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 	call.ServiceMethod = serviceMethod
 	meta := ctx.Value(share.ReqMetaDataKey)
 	if meta != nil { // copy meta in context to meta in requests
-		call.Metadata = meta.(map[string]string)
+		src := meta.(map[string]string)
+		dst := make(map[string]string, len(src))
+		for k, v := range src {
+			dst[k] = v
+		}
+		call.Metadata = dst
 	}
 
 	if !share.IsShareContext(ctx) {
