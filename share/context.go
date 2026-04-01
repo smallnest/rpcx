@@ -93,11 +93,12 @@ func WithLocalValue(ctx *Context, key, val interface{}) *Context {
 		panic("key is not comparable")
 	}
 
+	ctx.tagsLock.Lock()
 	if ctx.tags == nil {
 		ctx.tags = make(map[interface{}]interface{})
 	}
-
 	ctx.tags[key] = val
+	ctx.tagsLock.Unlock()
 	return ctx
 }
 

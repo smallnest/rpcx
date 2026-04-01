@@ -267,8 +267,19 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 	if meta != nil { // copy meta in context to meta in requests
 		src := meta.(map[string]string)
 		dst := make(map[string]string, len(src))
-		for k, v := range src {
-			dst[k] = v
+		// Lock the share.Context if available to prevent concurrent read/write
+		// on the metadata map when multiple goroutines share the same context
+		// (e.g. Inform, Broadcast, Fork modes with PreCall plugins).
+		if sharedCtx, ok := ctx.(*share.Context); ok {
+			sharedCtx.Lock()
+			for k, v := range src {
+				dst[k] = v
+			}
+			sharedCtx.Unlock()
+		} else {
+			for k, v := range src {
+				dst[k] = v
+			}
 		}
 		call.Metadata = dst
 	}
@@ -345,16 +356,13 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 		meta := ctx.Value(share.ResMetaDataKey)
 		if meta != nil && len(call.ResMetadata) > 0 {
 			resMeta := meta.(map[string]string)
-			locker, ok := ctx.Value(share.ContextTagsLock).(*sync.Mutex)
-			if ok {
-
-				locker.Lock()
+			if sharedCtx, ok := ctx.(*share.Context); ok {
+				sharedCtx.Lock()
 				for k, v := range call.ResMetadata {
 					resMeta[k] = v
 				}
 				resMeta[share.ServerAddress] = client.Conn.RemoteAddr().String()
-				locker.Unlock()
-
+				sharedCtx.Unlock()
 			} else {
 				for k, v := range call.ResMetadata {
 					resMeta[k] = v
@@ -385,8 +393,17 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 
 	// copy meta to rmeta
 	if meta != nil {
-		for k, v := range meta.(map[string]string) {
-			rmeta[k] = v
+		src := meta.(map[string]string)
+		if sharedCtx, ok := ctx.(*share.Context); ok {
+			sharedCtx.Lock()
+			for k, v := range src {
+				rmeta[k] = v
+			}
+			sharedCtx.Unlock()
+		} else {
+			for k, v := range src {
+				rmeta[k] = v
+			}
 		}
 	}
 	// copy r.Metadata to rmeta
