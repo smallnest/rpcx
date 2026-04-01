@@ -68,11 +68,10 @@ type XClient interface {
 
 // SetSelector sets customized selector by users.
 func (c *xClient) SetSelector(s Selector) {
-	c.mu.RLock()
+	c.mu.Lock()
 	s.UpdateServer(c.servers)
-	c.mu.RUnlock()
-
 	c.selector = s
+	c.mu.Unlock()
 }
 
 // KVPair contains a key and a string.
