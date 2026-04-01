@@ -332,9 +332,9 @@ func (p *pluginContainer) DoPostCall(ctx context.Context, serviceName, methodNam
 func (p *pluginContainer) DoPreWriteResponse(ctx context.Context, req *protocol.Message, res *protocol.Message, err error) error {
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PreWriteResponsePlugin); ok {
-			err := plugin.PreWriteResponse(ctx, req, res, err)
-			if err != nil {
-				return err
+			e := plugin.PreWriteResponse(ctx, req, res, err)
+			if e != nil {
+				return e
 			}
 		}
 	}
