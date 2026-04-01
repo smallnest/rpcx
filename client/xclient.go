@@ -869,7 +869,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 			}
 		}
 
-		return m, payload, nil
+		return m, payload, err
 	}
 }
 
