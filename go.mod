@@ -1,11 +1,11 @@
 module github.com/smallnest/rpcx
 
-go 1.24.0
+go 1.25
 
 require (
 	github.com/akutz/memconn v0.1.0
 	github.com/alitto/pond v1.9.2
-	github.com/apache/thrift v0.21.0
+	github.com/apache/thrift v0.23.0
 	github.com/edwingeng/doublejump v1.0.1
 	github.com/fatih/color v1.18.0
 	github.com/go-ping/ping v1.2.0
