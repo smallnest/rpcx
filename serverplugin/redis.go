@@ -140,7 +140,7 @@ func (p *RedisRegisterPlugin) Stop() error {
 		}
 		if exist {
 			p.kv.Delete(nodePath)
-			log.Infof("delete path %s", nodePath, err)
+			log.Infof("delete path %s", nodePath)
 		}
 	}
 
