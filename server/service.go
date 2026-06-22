@@ -124,6 +124,9 @@ func (s *Server) RegisterName(name string, rcvr interface{}, metadata string) er
 // exposed as RPC. It returns an error if methods is empty, or if any named
 // method does not exist on the receiver or is not a suitable RPC method.
 func (s *Server) RegisterWithMethods(rcvr interface{}, methods []string, metadata string) error {
+	if len(methods) == 0 {
+		return errors.New("rpcx.Register: empty methods whitelist; use Register to register all methods")
+	}
 	sname, err := s.register(rcvr, "", false, methods)
 	if err != nil {
 		return err
@@ -134,6 +137,9 @@ func (s *Server) RegisterWithMethods(rcvr interface{}, methods []string, metadat
 // RegisterNameWithMethods is like RegisterWithMethods but uses the provided
 // name for the type instead of the receiver's concrete type.
 func (s *Server) RegisterNameWithMethods(name string, rcvr interface{}, methods []string, metadata string) error {
+	if len(methods) == 0 {
+		return errors.New("rpcx.Register: empty methods whitelist; use RegisterName to register all methods")
+	}
 	_, err := s.register(rcvr, name, true, methods)
 	if err != nil {
 		return err

@@ -92,3 +92,27 @@ func TestRegisterNameWithMethods_subset(t *testing.T) {
 	assert.NotNil(t, svc)
 	assert.Equal(t, 2, len(svc.method))
 }
+
+func TestRegisterWithMethods_emptyWhitelist(t *testing.T) {
+	// nil slice: empty whitelist → error, nothing registered.
+	s := NewServer()
+	err := s.RegisterWithMethods(new(WhitelistArith), nil, "")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "empty methods whitelist")
+	assert.Nil(t, s.serviceMap["WhitelistArith"])
+
+	// zero-length slice: same.
+	s2 := NewServer()
+	err = s2.RegisterWithMethods(new(WhitelistArith), []string{}, "")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "empty methods whitelist")
+	assert.Nil(t, s2.serviceMap["WhitelistArith"])
+}
+
+func TestRegisterNameWithMethods_emptyWhitelist(t *testing.T) {
+	s := NewServer()
+	err := s.RegisterNameWithMethods("Calc", new(WhitelistArith), nil, "")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "empty methods whitelist")
+	assert.Nil(t, s.serviceMap["Calc"])
+}
