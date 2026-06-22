@@ -20,6 +20,8 @@ since rpcx 1.7.6, some plugins have been moved to the independent project:
 
 ## Announce
 
+**Stable branch: v1.9.4**
+
 A tcpdump-like tool added: [rpcxdump](https://github.com/smallnest/rpcxdump)。 You can use it to debug communications between rpcx services and clients.
 
 ![](https://github.com/smallnest/rpcxdump/blob/master/snapshoot.png)
