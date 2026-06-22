@@ -1,6 +1,6 @@
 module github.com/smallnest/rpcx
 
-go 1.25
+go 1.26.0
 
 require (
 	github.com/akutz/memconn v0.1.0
@@ -26,8 +26,8 @@ require (
 	github.com/rpcxio/libkv v0.5.1
 	github.com/rs/cors v1.11.1
 	github.com/rubyist/circuitbreaker v2.2.1+incompatible
+	github.com/smallnest/gordma v0.3.0
 	github.com/smallnest/quick v0.2.0
-	github.com/smallnest/rsocket v0.0.0-20241130031020-4a72eb6ff62a
 	github.com/soheilhy/cmux v0.1.5
 	github.com/stretchr/testify v1.11.1
 	github.com/tinylib/msgp v1.2.5
@@ -67,7 +67,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
-	github.com/smallnest/gordma v0.3.0 // indirect
 	github.com/templexxx/cpufeat v0.0.0-20180724012125-cef66df7f161 // indirect
 	github.com/templexxx/xor v0.0.0-20191217153810-f85b25db303b // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect

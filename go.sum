@@ -269,8 +269,6 @@ github.com/smallnest/gordma v0.3.0 h1:9C0QrMK5noKzY58TaaHKcjTD1mVASlwuchDutWJK5P
 github.com/smallnest/gordma v0.3.0/go.mod h1:fmwIk6y0xfrFNepUmyH89jIka0/sI3NrMq2vh8838cA=
 github.com/smallnest/quick v0.2.0 h1:AEvm7ZovZ6Utv+asFDBh866G4ufMNhRNMKbZHVMFYPE=
 github.com/smallnest/quick v0.2.0/go.mod h1:ODNivpfZTaMgYrNb/fhDtqoEe2TTPxSRo8JaIT/QThI=
-github.com/smallnest/rsocket v0.0.0-20241130031020-4a72eb6ff62a h1:GI6kCNC5AVFbKA6ZKbVd4r+fk+Z7XZCRQm9LURZY4t4=
-github.com/smallnest/rsocket v0.0.0-20241130031020-4a72eb6ff62a/go.mod h1:VJeIKKrDEzT4ZNVe87JN9uRLw1XLp/ZnnE9PfsyJ1jY=
 github.com/soheilhy/cmux v0.1.5 h1:jjzc5WVemNEDTLwv9tlmemhC73tI08BNOIGwBOo10Js=
 github.com/soheilhy/cmux v0.1.5/go.mod h1:T7TcVDs9LWfQgPlPsdngu6I6QIoyIFZDDC6sNE1GqG0=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
