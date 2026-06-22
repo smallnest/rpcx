@@ -51,6 +51,7 @@ go get -v -tags "quic kcp" github.com/smallnest/rpcx/...
 **_tags_**:
 - **quic**: support quic transport
 - **kcp**: support kcp transport
+- **rdma**: support the experimental RDMA transport (built on gordma's rdmanet.Conn; requires libibverbs on Linux)
 
 ## Which companies are using rpcx?
 

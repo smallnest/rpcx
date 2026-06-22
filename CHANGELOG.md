@@ -1,5 +1,12 @@
 # [rpcx](http://rpcx.io)
 
+## 1.9.4
+- switch the experimental `rdma` transport from rsocket to gordma's rdmanet.Conn (build tag `rdma`)
+- add RegisterWithMethods/RegisterNameWithMethods to register only a whitelist of a struct's methods (#581)
+- document server plugin extension points (execution order, parameters, return values) in godoc (#645)
+- fix printf argument mismatches surfaced by `go vet`
+
+
 ## 1.9.0
 - unregister all services on close automatically
 - add PostHTTPRequestPlugin 
