@@ -265,6 +265,8 @@ github.com/samuel/go-zookeeper v0.0.0-20201211165307-7117e9ea2414/go.mod h1:gi+0
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
+github.com/smallnest/gordma v0.3.0 h1:9C0QrMK5noKzY58TaaHKcjTD1mVASlwuchDutWJK5PE=
+github.com/smallnest/gordma v0.3.0/go.mod h1:fmwIk6y0xfrFNepUmyH89jIka0/sI3NrMq2vh8838cA=
 github.com/smallnest/quick v0.2.0 h1:AEvm7ZovZ6Utv+asFDBh866G4ufMNhRNMKbZHVMFYPE=
 github.com/smallnest/quick v0.2.0/go.mod h1:ODNivpfZTaMgYrNb/fhDtqoEe2TTPxSRo8JaIT/QThI=
 github.com/smallnest/rsocket v0.0.0-20241130031020-4a72eb6ff62a h1:GI6kCNC5AVFbKA6ZKbVd4r+fk+Z7XZCRQm9LURZY4t4=
