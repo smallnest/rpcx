@@ -1,7 +1,11 @@
 Title: 用 rdmanet.Conn 接 rpcx 的 RDMA 传输——薄薄一层适配器替掉 rsocket
+
 Author(s): chaoyuepan
+
 Last updated: 2026-06-22
+
 Discussion at: tasks/prd-rdma-conn-transport.md
+
 Status: Draft
 
 ## Abstract / 摘要
