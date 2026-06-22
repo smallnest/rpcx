@@ -5,10 +5,9 @@ package server
 
 import (
 	"net"
-	"os"
-	"strconv"
 
-	"github.com/smallnest/rsocket"
+	"github.com/smallnest/gordma/rdmanet"
+	"github.com/smallnest/rpcx/share"
 )
 
 func init() {
@@ -16,21 +15,16 @@ func init() {
 }
 
 func rdmaMakeListener(s *Server, address string) (ln net.Listener, err error) {
+	// Validate and normalize the host:port form rdmanet uses for its TCP
+	// out-of-band handshake address. rdmanet.Listen exposes no backlog knob,
+	// so the former RDMA_BACKLOG env var no longer applies.
 	host, port, err := net.SplitHostPort(address)
 	if err != nil {
 		return nil, err
 	}
-	p, err := strconv.Atoi(port)
+	l, err := rdmanet.Listen(net.JoinHostPort(host, port))
 	if err != nil {
 		return nil, err
 	}
-	backlog := os.Getenv("RDMA_BACKLOG")
-	if backlog == "" {
-		backlog = "128"
-	}
-	blog, _ := strconv.Atoi(backlog)
-	if blog == 0 {
-		blog = 128
-	}
-	return rsocket.NewTCPListener(host, p, blog)
+	return share.NewRDMAListener(l), nil
 }
