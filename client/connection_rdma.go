@@ -7,7 +7,8 @@ import (
 	"errors"
 	"net"
 
-	"github.com/smallnest/rsocket"
+	"github.com/smallnest/gordma/rdmanet"
+	"github.com/smallnest/rpcx/share"
 )
 
 func init() {
@@ -19,5 +20,9 @@ func newRDMAConn(c *Client, network, address string) (net.Conn, error) {
 		return nil, errors.New("network is not rdma")
 	}
 
-	return rsocket.DialTCP(address)
+	conn, err := rdmanet.DialTimeout(address, c.option.ConnectTimeout)
+	if err != nil {
+		return nil, err
+	}
+	return share.NewRDMAConn(conn), nil
 }
