@@ -155,6 +155,32 @@ The below is a simple example.
 
 ```
 
+#### Registering only selected methods
+
+`Register`/`RegisterName` expose every suitable exported method of a struct as
+RPC. To expose only some of them, use `RegisterWithMethods` /
+`RegisterNameWithMethods` with a whitelist of method names:
+
+```go
+    // Arith has exported methods Mul, Add and Sub, but only Mul/Add
+    // should be callable remotely.
+    s := server.NewServer()
+	err := s.RegisterWithMethods(new(example.Arith), []string{"Mul", "Add"}, "")
+	// err := s.RegisterNameWithMethods("Arith", new(example.Arith), []string{"Mul", "Add"}, "")
+	s.Serve("tcp", addr)
+```
+
+Rules of the whitelist:
+
+- **Whitelist only**: methods not listed are not registered, so a newly added
+  method stays private unless you opt it in.
+- **Errors on bad names**: a name that does not exist on the receiver, or that
+  exists but is not a suitable RPC method, makes registration fail (the two
+  cases give different error messages). Nothing is partially registered.
+- **Empty whitelist errors**: pass a non-empty list, or use `Register` /
+  `RegisterName` to register all methods.
+
+
 
 **Client**
 
