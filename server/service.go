@@ -99,7 +99,7 @@ func (s *Server) ListServices() []string {
 // The client accesses each method using a string of the form "Type.Method",
 // where Type is the receiver's concrete type.
 func (s *Server) Register(rcvr interface{}, metadata string) error {
-	sname, err := s.register(rcvr, "", false)
+	sname, err := s.register(rcvr, "", false, nil)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,32 @@ func (s *Server) Register(rcvr interface{}, metadata string) error {
 // RegisterName is like Register but uses the provided name for the type
 // instead of the receiver's concrete type.
 func (s *Server) RegisterName(name string, rcvr interface{}, metadata string) error {
-	_, err := s.register(rcvr, name, true)
+	_, err := s.register(rcvr, name, true, nil)
+	if err != nil {
+		return err
+	}
+	if s.Plugins == nil {
+		s.Plugins = &pluginContainer{}
+	}
+	return s.Plugins.DoRegister(name, rcvr, metadata)
+}
+
+// RegisterWithMethods is like Register but only registers the methods named in
+// the methods whitelist; all other exported methods of the receiver are not
+// exposed as RPC. It returns an error if methods is empty, or if any named
+// method does not exist on the receiver or is not a suitable RPC method.
+func (s *Server) RegisterWithMethods(rcvr interface{}, methods []string, metadata string) error {
+	sname, err := s.register(rcvr, "", false, methods)
+	if err != nil {
+		return err
+	}
+	return s.Plugins.DoRegister(sname, rcvr, metadata)
+}
+
+// RegisterNameWithMethods is like RegisterWithMethods but uses the provided
+// name for the type instead of the receiver's concrete type.
+func (s *Server) RegisterNameWithMethods(name string, rcvr interface{}, methods []string, metadata string) error {
+	_, err := s.register(rcvr, name, true, methods)
 	if err != nil {
 		return err
 	}
@@ -145,7 +170,7 @@ func (s *Server) RegisterFunctionName(servicePath string, name string, fn interf
 	return s.Plugins.DoRegisterFunction(servicePath, name, fn, metadata)
 }
 
-func (s *Server) register(rcvr interface{}, name string, useName bool) (string, error) {
+func (s *Server) register(rcvr interface{}, name string, useName bool, methods []string) (string, error) {
 	s.serviceMapMu.Lock()
 	defer s.serviceMapMu.Unlock()
 
@@ -169,7 +194,37 @@ func (s *Server) register(rcvr interface{}, name string, useName bool) (string, 
 	service.name = sname
 
 	// Install the methods
-	service.method = suitableMethods(service.typ, true)
+	all := suitableMethods(service.typ, true)
+
+	if methods == nil {
+		// No whitelist: register all suitable methods (original behavior).
+		service.method = all
+	} else {
+		// Whitelist: register only the named methods.
+		if len(methods) == 0 {
+			errorStr := "rpcx.Register: empty methods whitelist for " + sname + "; use Register/RegisterName to register all methods"
+			log.Error(errorStr)
+			return sname, errors.New(errorStr)
+		}
+		picked := make(map[string]*methodType)
+		for _, m := range methods {
+			if mt, ok := all[m]; ok {
+				picked[m] = mt
+				continue
+			}
+			// Not suitable: distinguish "no such exported method" from
+			// "exists but its signature is not a suitable RPC method".
+			if _, exists := service.typ.MethodByName(m); exists {
+				errorStr := fmt.Sprintf("rpcx.Register: method %q of %s is not a suitable RPC method", m, sname)
+				log.Error(errorStr)
+				return sname, errors.New(errorStr)
+			}
+			errorStr := fmt.Sprintf("rpcx.Register: method %q not found on %s", m, sname)
+			log.Error(errorStr)
+			return sname, errors.New(errorStr)
+		}
+		service.method = picked
+	}
 
 	if len(service.method) == 0 {
 		var errorStr string
