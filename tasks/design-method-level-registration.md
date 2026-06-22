@@ -148,6 +148,6 @@ func (s *Server) register(rcvr interface{}, name string, useName bool, methods [
 
 ## Open Questions
 
-- 方法名匹配是否需要大小写不敏感？（当前定：精确匹配——Go 方法名本就大小写敏感，跟随语言语义。）
+- 方法名匹配是否需要大小写不敏感？（当前定：精确匹配——Go 方法名本就大小写敏感，跟随语言语义。） 
 - 是否提供一个辅助函数列出"某 struct 上所有可注册方法名"，方便用户构造白名单？（倾向后续增强，不进本版。）
 - `RegisterFunction` 系列要不要类似能力？（当前定：不在范围——函数级注册本就是单个，没有子集问题。）
