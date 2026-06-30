@@ -606,7 +606,9 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	req.Payload = data
 
 	if client.Plugins != nil {
-		_ = client.Plugins.DoClientBeforeEncode(req)
+		if err := client.Plugins.DoClientBeforeEncode(req); err != nil {
+			log.Errorf("rpcx: DoClientBeforeEncode plugin hook failed (%s.%s): %v", call.ServicePath, call.ServiceMethod, err)
+		}
 	}
 
 	if share.Trace {
@@ -653,7 +655,9 @@ func (client *Client) send(ctx context.Context, call *Call) {
 	}
 
 	if client.option.IdleTimeout != 0 {
-		_ = client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
+		if err := client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout)); err != nil {
+			log.Warnf("rpcx: failed to set idle deadline after send: %v", err)
+		}
 	}
 }
 
@@ -663,7 +667,9 @@ func (client *Client) input() {
 	for err == nil {
 		res := protocol.NewMessage()
 		if client.option.IdleTimeout != 0 {
-			_ = client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
+			if err := client.Conn.SetDeadline(time.Now().Add(client.option.IdleTimeout)); err != nil {
+				log.Warnf("rpcx: failed to set idle deadline before read: %v", err)
+			}
 		}
 
 		err = res.Decode(client.r)
@@ -671,7 +677,9 @@ func (client *Client) input() {
 			break
 		}
 		if client.Plugins != nil {
-			_ = client.Plugins.DoClientAfterDecode(res)
+			if err := client.Plugins.DoClientAfterDecode(res); err != nil {
+				log.Errorf("rpcx: DoClientAfterDecode plugin hook failed: %v", err)
+			}
 		}
 
 		seq := res.Seq()
@@ -713,20 +721,30 @@ func (client *Client) input() {
 			}
 
 			if call.Raw {
-				call.Metadata, call.Reply, _ = convertRes2Raw(res)
+				var derr error
+				call.Metadata, call.Reply, derr = convertRes2Raw(res)
+				if derr != nil {
+					log.Warnf("rpcx: convertRes2Raw failed for error response (%s.%s): %v", call.ServicePath, call.ServiceMethod, derr)
+				}
 				call.Metadata[XErrorMessage] = call.Error.Error()
 				call.ResMetadata = res.Metadata
 			} else if len(res.Payload) > 0 {
 				data := res.Payload
 				codec := share.Codecs[res.SerializeType()]
 				if codec != nil {
-					_ = codec.Decode(data, call.Reply)
+					if derr := codec.Decode(data, call.Reply); derr != nil {
+						log.Warnf("rpcx: decode error response payload failed (%s.%s): %v", call.ServicePath, call.ServiceMethod, derr)
+					}
 				}
 			}
 			call.done()
 		default:
 			if call.Raw {
-				call.Metadata, call.Reply, _ = convertRes2Raw(res)
+				var derr error
+				call.Metadata, call.Reply, derr = convertRes2Raw(res)
+				if derr != nil {
+					log.Warnf("rpcx: convertRes2Raw failed for response (%s.%s): %v", call.ServicePath, call.ServiceMethod, derr)
+				}
 				call.ResMetadata = res.Metadata
 			} else {
 				data := res.Payload

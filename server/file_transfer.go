@@ -73,8 +73,12 @@ func (s *Server) EnableFileTransfer(serviceName string, fileTransfer *FileTransf
 	if serviceName == "" {
 		serviceName = share.SendFileServiceName
 	}
-	_ = fileTransfer.Start()
-	_ = s.RegisterName(serviceName, fileTransfer.service, "")
+	if err := fileTransfer.Start(); err != nil {
+		log.Errorf("rpcx: failed to start file transfer service: %v", err)
+	}
+	if err := s.RegisterName(serviceName, fileTransfer.service, ""); err != nil {
+		log.Errorf("rpcx: failed to register file transfer service %q: %v", serviceName, err)
+	}
 }
 
 func (s *FileTransferService) TransferFile(ctx context.Context, args *share.FileTransferArgs, reply *share.FileTransferReply) error {

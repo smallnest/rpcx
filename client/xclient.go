@@ -210,9 +210,6 @@ func (c *xClient) Auth(auth string) {
 // watch changes of service and update cached clients.
 func (c *xClient) watch(ch chan []*KVPair) {
 	for pairs := range ch {
-		sort.Slice(pairs, func(i, j int) bool {
-			return strings.Compare(pairs[i].Key, pairs[j].Key) <= 0
-		})
 		servers := make(map[string]string, len(pairs))
 		for _, p := range pairs {
 			servers[p.Key] = p.Value
@@ -235,17 +232,21 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 			if state := values.Get("state"); state == "inactive" {
 				delete(servers, k)
 			}
-			groups := values["group"] // Directly access the map to get all values associated with "group" as a slice
+			// Membership test: does this server's (typically tiny) groups slice
+			// contain the single target group? A linear scan is intentional here
+			// — building a Set per server would add map-allocation overhead for a
+			// single lookup against a 1-3 element slice.
+			groups := values["group"]
 			if group != "" {
 				found := false
 				for _, g := range groups {
 					if group == g {
 						found = true
-						break // A matching group is found, stop the search
+						break
 					}
 				}
 				if !found {
-					delete(servers, k) // If no matching group is found, delete the corresponding server from the map
+					delete(servers, k)
 				}
 			}
 		}

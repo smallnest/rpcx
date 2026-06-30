@@ -72,6 +72,14 @@ func (c *Context) String() string {
 	return fmt.Sprintf("%v.WithValue(%v)", c.Context, c.tags)
 }
 
+// WithValue returns a new share Context derived from parent that carries the
+// key/val pair in its tags.
+//
+// It panics on a nil or non-comparable key. This is intentional and mirrors
+// the standard library's context.WithValue contract: a nil or non-comparable
+// key is a programmer error that should fail fast rather than be silently
+// dropped, since a no-op would lose the value and mask the bug. Always pass a
+// comparable, non-nil key.
 func WithValue(parent context.Context, key, val interface{}) *Context {
 	if key == nil {
 		panic("nil key")
@@ -85,6 +93,10 @@ func WithValue(parent context.Context, key, val interface{}) *Context {
 	return &Context{Context: parent, tags: tags, tagsLock: &sync.Mutex{}}
 }
 
+// WithLocalValue sets key/val on the existing ctx's tags and returns ctx.
+//
+// Like WithValue, it panics on a nil or non-comparable key to mirror the
+// standard library's context.WithValue contract (see WithValue for rationale).
 func WithLocalValue(ctx *Context, key, val interface{}) *Context {
 	if key == nil {
 		panic("nil key")

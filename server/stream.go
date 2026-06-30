@@ -63,8 +63,12 @@ func (s *Server) EnableStreamService(serviceName string, streamService *StreamSe
 	if serviceName == "" {
 		serviceName = share.StreamServiceName
 	}
-	_ = streamService.Start()
-	_ = s.RegisterName(serviceName, streamService, "")
+	if err := streamService.Start(); err != nil {
+		log.Errorf("rpcx: failed to start stream service: %v", err)
+	}
+	if err := s.RegisterName(serviceName, streamService, ""); err != nil {
+		log.Errorf("rpcx: failed to register stream service %q: %v", serviceName, err)
+	}
 }
 
 func (s *StreamService) Stream(ctx context.Context, args *share.StreamServiceArgs, reply *share.StreamServiceReply) error {
