@@ -54,7 +54,9 @@ func (client *Client) Connect(network, address string) error {
 		}
 
 		if client.option.IdleTimeout != 0 {
-			_ = conn.SetDeadline(time.Now().Add(client.option.IdleTimeout))
+			if err := conn.SetDeadline(time.Now().Add(client.option.IdleTimeout)); err != nil {
+				log.Warnf("rpcx: failed to set idle deadline on connection: %v", err)
+			}
 		}
 
 		if client.Plugins != nil {
