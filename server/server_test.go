@@ -36,10 +36,21 @@ func (t *Arith) ThriftMul(ctx context.Context, args *testutils.ThriftArgs_, repl
 	return nil
 }
 
-func (t *Arith) ConsumingOperation(ctx context.Context, args *testutils.ThriftArgs_, reply *testutils.ThriftReply) error {
-	reply.C = args.A * args.B
-	time.Sleep(10 * time.Second)
-	return nil
+// waitServerReady polls the server until its listener is bound or timeout
+// elapses. It replaces blind time.Sleep waits for `go s.Serve(...)` to start
+// and does not call t.Fatalf, so it is safe to invoke from goroutines that
+// a test spawns. Returns false if the server did not become ready in time.
+func waitServerReady(s *Server, timeout time.Duration) bool {
+	deadline := time.Now().Add(timeout)
+	for {
+		if s.Address() != nil {
+			return true
+		}
+		if time.Now().After(deadline) {
+			return s.Address() != nil
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 func TestShutdownHook(t *testing.T) {
@@ -54,7 +65,9 @@ func TestShutdownHook(t *testing.T) {
 	s.Register(new(Arith), "")
 	go s.Serve("tcp", ":0")
 
-	time.Sleep(time.Second)
+	if !waitServerReady(s, 2*time.Second) {
+		t.Fatal("server did not become ready in time")
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	s.Shutdown(ctx)
 	cancel()

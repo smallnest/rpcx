@@ -39,9 +39,11 @@ func TestPluginHeartbeat(t *testing.T) {
 		}
 	}()
 	go func() {
-		// wait for server start complete
-		time.Sleep(time.Second)
 		defer wg.Done()
+		// wait for server start complete
+		if !waitServerReady(s, 5*time.Second) {
+			return
+		}
 		// client
 		opts := client.DefaultOption
 		opts.Heartbeat = true
