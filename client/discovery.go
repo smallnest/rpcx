@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/smallnest/rpcx/log"
 )
 
 // ServiceDiscoveryFilter can be used to filter services with customized logics.
@@ -45,7 +47,11 @@ func CacheDiscovery(threshold int, cachedFile string, discovery ServiceDiscovery
 	if _, err := os.Stat(cachedFileDir); os.IsNotExist(err) {
 		// 目录不存在，创建目录
 		if err := os.MkdirAll(cachedFileDir, os.ModePerm); err != nil {
-			panic(err)
+			// Degrade gracefully instead of crashing: the wrapped ServiceDiscovery
+			// still works, only on-disk caching is unavailable. storeCached and
+			// loadCached already tolerate write/read failures, so a missing dir
+			// is non-fatal.
+			log.Errorf("rpcx: failed to create discovery cache dir %q: %v", cachedFileDir, err)
 		}
 	}
 
