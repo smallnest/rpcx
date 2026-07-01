@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"sync"
 	"unicode"
 	"unicode/utf8"
 
@@ -41,18 +40,15 @@ var typeOfError = reflect.TypeFor[error]()
 var typeOfContext = reflect.TypeFor[context.Context]()
 
 type methodType struct {
-	sync.Mutex // protects counters
-	method     reflect.Method
-	ArgType    reflect.Type
-	ReplyType  reflect.Type
-	// numCalls   uint
+	method    reflect.Method
+	ArgType   reflect.Type
+	ReplyType reflect.Type
 }
 
 type functionType struct {
-	sync.Mutex // protects counters
-	fn         reflect.Value
-	ArgType    reflect.Type
-	ReplyType  reflect.Type
+	fn        reflect.Value
+	ArgType   reflect.Type
+	ReplyType reflect.Type
 }
 
 type service struct {

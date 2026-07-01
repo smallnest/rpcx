@@ -47,12 +47,14 @@ func (s *Server) handleRequest(ctx context.Context, req *protocol.Message) (res 
 
 	codec := share.Codecs[req.SerializeType()]
 	if codec == nil {
+		reflectTypePools.Put(mtype.ArgType, argv)
 		err = fmt.Errorf("can not find codec for %d", req.SerializeType())
 		return s.handleError(res, err)
 	}
 
 	err = codec.Decode(req.Payload, argv)
 	if err != nil {
+		reflectTypePools.Put(mtype.ArgType, argv)
 		return s.handleError(res, err)
 	}
 
@@ -136,12 +138,14 @@ func (s *Server) handleRequestForFunction(ctx context.Context, req *protocol.Mes
 
 	codec := share.Codecs[req.SerializeType()]
 	if codec == nil {
+		reflectTypePools.Put(mtype.ArgType, argv)
 		err = fmt.Errorf("can not find codec for %d", req.SerializeType())
 		return s.handleError(res, err)
 	}
 
 	err = codec.Decode(req.Payload, argv)
 	if err != nil {
+		reflectTypePools.Put(mtype.ArgType, argv)
 		return s.handleError(res, err)
 	}
 
