@@ -14,13 +14,6 @@ import (
 // Shutdown, restart, and lifecycle hooks for Server.
 // Extracted from server.go.
 
-func (s *Server) getDoneChan() <-chan struct{} {
-	return s.doneChan
-}
-
-// Serve starts and listens RPC requests.
-// It is blocked until receiving connections from clients.
-
 // Close immediately closes all active net.Listeners.
 func (s *Server) Close() error {
 	s.mu.Lock()

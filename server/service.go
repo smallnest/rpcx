@@ -131,6 +131,9 @@ func (s *Server) RegisterWithMethods(rcvr interface{}, methods []string, metadat
 	if err != nil {
 		return err
 	}
+	if s.Plugins == nil {
+		s.Plugins = &pluginContainer{}
+	}
 	return s.Plugins.DoRegister(sname, rcvr, metadata)
 }
 
@@ -206,12 +209,10 @@ func (s *Server) register(rcvr interface{}, name string, useName bool, methods [
 		// No whitelist: register all suitable methods (original behavior).
 		service.method = all
 	} else {
-		// Whitelist: register only the named methods.
-		if len(methods) == 0 {
-			errorStr := "rpcx.Register: empty methods whitelist for " + sname + "; use Register/RegisterName to register all methods"
-			log.Error(errorStr)
-			return sname, errors.New(errorStr)
-		}
+		// Whitelist: register only the named methods. Callers
+		// (RegisterWithMethods/RegisterNameWithMethods) guarantee methods is
+		// non-empty; an empty slice would fall through and be reported by the
+		// "no exported methods of suitable type" check below.
 		picked := make(map[string]*methodType)
 		for _, m := range methods {
 			if mt, ok := all[m]; ok {
@@ -236,7 +237,7 @@ func (s *Server) register(rcvr interface{}, name string, useName bool, methods [
 		var errorStr string
 
 		// To help the user, see if a pointer receiver would work.
-		method := suitableMethods(reflect.PtrTo(service.typ), false)
+		method := suitableMethods(reflect.PointerTo(service.typ), false)
 		if len(method) != 0 {
 			errorStr = "rpcx.Register: type " + sname + " has no exported methods of suitable type (hint: pass a pointer to value of that type)"
 		} else {

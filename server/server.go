@@ -171,6 +171,8 @@ func (s *Server) ActiveClientConn() []net.Conn {
 	return result
 }
 
+// Serve starts and listens RPC requests.
+// It is blocked until receiving connections from clients.
 func (s *Server) Serve(network, address string) (err error) {
 	var ln net.Listener
 	ln, err = s.makeListener(network, address)

@@ -53,7 +53,8 @@ func TestPluginHeartbeat(t *testing.T) {
 		// PeerDiscovery
 		d, err := client.NewPeer2PeerDiscovery("tcp@127.0.0.1:9001", "")
 		if err != nil {
-			t.Fatalf("failed to NewPeer2PeerDiscovery: %v", err)
+			t.Errorf("failed to NewPeer2PeerDiscovery: %v", err)
+			return
 		}
 
 		c := client.NewXClient("Arith", client.Failtry, client.RoundRobin, d, opts)
