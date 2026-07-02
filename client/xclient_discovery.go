@@ -126,40 +126,59 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, _
 		return nil, ErrBreakerOpen
 	}
 
+	// Fast path: only the cache map lookup is guarded by c.mu.
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	client = c.findCachedClient(k, servicePath, serviceMethod)
 	if client != nil {
 		if !client.IsClosing() && !client.IsShutdown() {
+			c.mu.Unlock()
 			return client, nil
 		}
 		c.deleteCachedClient(client, k, servicePath, serviceMethod)
+		client = nil
+	}
+	c.mu.Unlock()
+
+	// Slow path: dial outside c.mu so a slow or hanging Connect cannot block
+	// other callers of this xClient. singleflight dedups concurrent dials to
+	// the same key; created is set only by the goroutine that actually dials,
+	// so the DoClientConnected plugin fires exactly once per new connection.
+	var created bool
+	generatedClient, err, _ := c.slGroup.Do(k, func() (interface{}, error) {
+		// Re-check the cache: another goroutine may have cached a client for k
+		// between our fast-path unlock and entering singleflight.
+		c.mu.Lock()
+		if cached := c.findCachedClient(k, servicePath, serviceMethod); cached != nil &&
+			!cached.IsClosing() && !cached.IsShutdown() {
+			c.mu.Unlock()
+			return cached, nil
+		}
+		c.mu.Unlock()
+
+		newClient, gerr := c.generateClient(k, servicePath, serviceMethod)
+		if gerr != nil {
+			return nil, gerr
+		}
+		newClient.RegisterServerMessageChan(c.serverMessageChan)
+
+		c.mu.Lock()
+		c.setCachedClient(newClient, k, servicePath, serviceMethod)
+		c.mu.Unlock()
+
+		created = true
+		return newClient, nil
+	})
+
+	// forget k so a later dial for the same key is not deduped against this one
+	c.slGroup.Forget(k)
+
+	if err != nil {
+		return nil, err
 	}
 
-	client = c.findCachedClient(k, servicePath, serviceMethod)
-
-	if client == nil || client.IsShutdown() {
-		generatedClient, err, _ := c.slGroup.Do(k, func() (interface{}, error) {
-			return c.generateClient(k, servicePath, serviceMethod)
-		})
-
-		if err != nil {
-			c.slGroup.Forget(k)
-			return nil, err
-		}
-
-		client = generatedClient.(RPCClient)
-		if c.Plugins != nil {
-			needCallPlugin = true
-		}
-
-		client.RegisterServerMessageChan(c.serverMessageChan)
-
-		c.setCachedClient(client, k, servicePath, serviceMethod)
-
-		// forget k only when client is cached
-		c.slGroup.Forget(k)
+	client = generatedClient.(RPCClient)
+	if created && c.Plugins != nil {
+		needCallPlugin = true
 	}
 
 	return client, nil
