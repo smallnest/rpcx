@@ -18,8 +18,8 @@ type PluginContainer interface {
 	Remove(plugin Plugin)
 	All() []Plugin
 
-	DoRegister(name string, rcvr interface{}, metadata string) error
-	DoRegisterFunction(serviceName, fname string, fn interface{}, metadata string) error
+	DoRegister(name string, rcvr any, metadata string) error
+	DoRegisterFunction(serviceName, fname string, fn any, metadata string) error
 	DoUnregister(name string) error
 
 	DoPostConnAccept(net.Conn) (net.Conn, bool)
@@ -30,8 +30,8 @@ type PluginContainer interface {
 	DoPostHTTPRequest(ctx context.Context, r *http.Request, params httprouter.Params) error
 
 	DoPreHandleRequest(ctx context.Context, req *protocol.Message) error
-	DoPreCall(ctx context.Context, serviceName, methodName string, args interface{}) (interface{}, error)
-	DoPostCall(ctx context.Context, serviceName, methodName string, args, reply interface{}, err error) (interface{}, error)
+	DoPreCall(ctx context.Context, serviceName, methodName string, args any) (any, error)
+	DoPostCall(ctx context.Context, serviceName, methodName string, args, reply any, err error) (any, error)
 
 	DoPreWriteResponse(context.Context, *protocol.Message, *protocol.Message, error) error
 	DoPostWriteResponse(context.Context, *protocol.Message, *protocol.Message, error) error
@@ -88,7 +88,7 @@ type PluginContainer interface {
 // handle path when an incoming message is a heartbeat. PostHTTPRequestPlugin
 // applies to the HTTP gateway, and CMuxPlugin.MuxMatch is consulted once at
 // startup when a cmux is used to multiplex protocols on one port.
-type Plugin interface{}
+type Plugin any
 
 type (
 	// RegisterPlugin is invoked when a service is registered or unregistered
@@ -100,7 +100,7 @@ type (
 	// service name and removes it. Returning an error is collected into a
 	// MultiError alongside other plugins' errors rather than aborting the rest.
 	RegisterPlugin interface {
-		Register(name string, rcvr interface{}, metadata string) error
+		Register(name string, rcvr any, metadata string) error
 		Unregister(name string) error
 	}
 
@@ -111,7 +111,7 @@ type (
 	// RegisterFunction receives the service (path) name, the function name, the
 	// function value, and its metadata. Errors are collected into a MultiError.
 	RegisterFunctionPlugin interface {
-		RegisterFunction(serviceName, fname string, fn interface{}, metadata string) error
+		RegisterFunction(serviceName, fname string, fn any, metadata string) error
 	}
 
 	// PostConnAcceptPlugin is invoked right after a new connection is accepted,
@@ -180,7 +180,7 @@ type (
 	// value to leave them unchanged) and an error; a non-nil error skips the
 	// call and propagates the error.
 	PreCallPlugin interface {
-		PreCall(ctx context.Context, serviceName, methodName string, args interface{}) (interface{}, error)
+		PreCall(ctx context.Context, serviceName, methodName string, args any) (any, error)
 	}
 
 	// PostCallPlugin is invoked immediately after the service method returns.
@@ -191,7 +191,7 @@ type (
 	// to actually send back (return the same value to leave it unchanged) and
 	// an error; a non-nil error replaces the outcome for this call.
 	PostCallPlugin interface {
-		PostCall(ctx context.Context, serviceName, methodName string, args, reply interface{}, err error) (interface{}, error)
+		PostCall(ctx context.Context, serviceName, methodName string, args, reply any, err error) (any, error)
 	}
 
 	// PreWriteResponsePlugin is invoked just before the response is written to
@@ -280,7 +280,7 @@ func (p *pluginContainer) All() []Plugin {
 }
 
 // DoRegister invokes DoRegister plugin.
-func (p *pluginContainer) DoRegister(name string, rcvr interface{}, metadata string) error {
+func (p *pluginContainer) DoRegister(name string, rcvr any, metadata string) error {
 	var es []error
 	for _, rp := range p.plugins {
 		if plugin, ok := rp.(RegisterPlugin); ok {
@@ -298,7 +298,7 @@ func (p *pluginContainer) DoRegister(name string, rcvr interface{}, metadata str
 }
 
 // DoRegisterFunction invokes DoRegisterFunction plugin.
-func (p *pluginContainer) DoRegisterFunction(serviceName, fname string, fn interface{}, metadata string) error {
+func (p *pluginContainer) DoRegisterFunction(serviceName, fname string, fn any, metadata string) error {
 	var es []error
 	for _, rp := range p.plugins {
 		if plugin, ok := rp.(RegisterFunctionPlugin); ok {
@@ -419,7 +419,7 @@ func (p *pluginContainer) DoPreHandleRequest(ctx context.Context, r *protocol.Me
 }
 
 // DoPreCall invokes PreCallPlugin plugin.
-func (p *pluginContainer) DoPreCall(ctx context.Context, serviceName, methodName string, args interface{}) (interface{}, error) {
+func (p *pluginContainer) DoPreCall(ctx context.Context, serviceName, methodName string, args any) (any, error) {
 	var err error
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PreCallPlugin); ok {
@@ -434,7 +434,7 @@ func (p *pluginContainer) DoPreCall(ctx context.Context, serviceName, methodName
 }
 
 // DoPostCall invokes PostCallPlugin plugin.
-func (p *pluginContainer) DoPostCall(ctx context.Context, serviceName, methodName string, args, reply interface{}, err error) (interface{}, error) {
+func (p *pluginContainer) DoPostCall(ctx context.Context, serviceName, methodName string, args, reply any, err error) (any, error) {
 	var e error
 	for i := range p.plugins {
 		if plugin, ok := p.plugins[i].(PostCallPlugin); ok {

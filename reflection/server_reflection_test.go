@@ -35,7 +35,7 @@ type Args struct {
 }
 
 func Test_generateJSON(t *testing.T) {
-	argsType := reflect.TypeOf(&Args{}).Elem()
+	argsType := reflect.TypeFor[Args]()
 	jsonData := generateJSON(argsType)
 	assert.Equal(t, `{"Aa":0,"B":"","C":false}`, jsonData)
 

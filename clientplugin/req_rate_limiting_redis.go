@@ -40,7 +40,7 @@ func NewRedisRateLimitingPlugin(addrs []string, rate int, burst int, period time
 }
 
 // PreCall can limit request processing.
-func (plugin *RedisRateLimitingPlugin) PreCall(ctx context.Context, servicePath, serviceMethod string, args interface{}) error {
+func (plugin *RedisRateLimitingPlugin) PreCall(ctx context.Context, servicePath, serviceMethod string, args any) error {
 	res, err := plugin.limiter.Allow(ctx, servicePath+"/"+serviceMethod, plugin.limit)
 	if err != nil {
 		return err

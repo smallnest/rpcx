@@ -1,6 +1,8 @@
 package share
 
 import (
+	"maps"
+
 	"github.com/smallnest/rpcx/codec"
 	"github.com/smallnest/rpcx/protocol"
 )
@@ -68,9 +70,7 @@ type FileTransferArgs struct {
 // Clone clones this DownloadFileArgs.
 func (args FileTransferArgs) Clone() *FileTransferArgs {
 	meta := make(map[string]string)
-	for k, v := range args.Meta {
-		meta[k] = v
-	}
+	maps.Copy(meta, args.Meta)
 
 	return &FileTransferArgs{
 		FileName: args.FileName,
@@ -94,9 +94,7 @@ type DownloadFileArgs struct {
 // Clone clones this DownloadFileArgs.
 func (args DownloadFileArgs) Clone() *DownloadFileArgs {
 	meta := make(map[string]string)
-	for k, v := range args.Meta {
-		meta[k] = v
-	}
+	maps.Copy(meta, args.Meta)
 
 	return &DownloadFileArgs{
 		FileName: args.FileName,

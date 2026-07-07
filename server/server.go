@@ -98,7 +98,7 @@ type Server struct {
 	// TLSConfig for creating tls tcp connection.
 	tlsConfig *tls.Config
 	// BlockCrypt for kcp.BlockCrypt
-	options map[string]interface{}
+	options map[string]any
 	// CORS options
 	corsOptions *CORSOptions
 
@@ -126,7 +126,7 @@ type Server struct {
 func NewServer(options ...OptionFn) *Server {
 	s := &Server{
 		Plugins:    &pluginContainer{},
-		options:    make(map[string]interface{}),
+		options:    make(map[string]any),
 		activeConn: make(map[net.Conn]struct{}),
 		doneChan:   make(chan struct{}),
 		serviceMap: make(map[string]*service),

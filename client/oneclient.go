@@ -108,7 +108,7 @@ func (c *OneClient) Auth(auth string) {
 
 // Go invokes the function asynchronously. It returns the Call structure representing the invocation. The done channel will signal when the call is complete by returning the same Call object. If done is nil, Go will allocate a new channel. If non-nil, done must be buffered or Go will deliberately crash.
 // It does not use FailMode.
-func (c *OneClient) Go(ctx context.Context, servicePath string, serviceMethod string, args interface{}, reply interface{}, done chan *Call) (*Call, error) {
+func (c *OneClient) Go(ctx context.Context, servicePath string, serviceMethod string, args any, reply any, done chan *Call) (*Call, error) {
 	c.mu.RLock()
 	xclient := c.xclients[servicePath]
 	c.mu.RUnlock()
@@ -173,7 +173,7 @@ func (c *OneClient) newXClient(servicePath string) (xclient XClient, err error) 
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
 // It handles errors base on FailMode.
-func (c *OneClient) Call(ctx context.Context, servicePath string, serviceMethod string, args interface{}, reply interface{}) error {
+func (c *OneClient) Call(ctx context.Context, servicePath string, serviceMethod string, args any, reply any) error {
 	c.mu.RLock()
 	xclient := c.xclients[servicePath]
 	c.mu.RUnlock()
@@ -223,7 +223,7 @@ func (c *OneClient) SendRaw(ctx context.Context, r *protocol.Message) (map[strin
 // Broadcast sends requests to all servers and Success only when all servers return OK.
 // FailMode and SelectMode are meanless for this method.
 // Please set timeout to avoid hanging.
-func (c *OneClient) Broadcast(ctx context.Context, servicePath string, serviceMethod string, args interface{}, reply interface{}) error {
+func (c *OneClient) Broadcast(ctx context.Context, servicePath string, serviceMethod string, args any, reply any) error {
 	c.mu.RLock()
 	xclient := c.xclients[servicePath]
 	c.mu.RUnlock()
@@ -247,7 +247,7 @@ func (c *OneClient) Broadcast(ctx context.Context, servicePath string, serviceMe
 
 // Fork sends requests to all servers and Success once one server returns OK.
 // FailMode and SelectMode are meanless for this method.
-func (c *OneClient) Fork(ctx context.Context, servicePath string, serviceMethod string, args interface{}, reply interface{}) error {
+func (c *OneClient) Fork(ctx context.Context, servicePath string, serviceMethod string, args any, reply any) error {
 	c.mu.RLock()
 	xclient := c.xclients[servicePath]
 	c.mu.RUnlock()

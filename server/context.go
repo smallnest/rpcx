@@ -23,12 +23,12 @@ func NewContext(ctx *share.Context, conn net.Conn, req *protocol.Message, async 
 }
 
 // Get returns value for key.
-func (ctx *Context) Get(key interface{}) interface{} {
+func (ctx *Context) Get(key any) any {
 	return ctx.ctx.Value(key)
 }
 
 // SetValue sets the kv pair.
-func (ctx *Context) SetValue(key, val interface{}) {
+func (ctx *Context) SetValue(key, val any) {
 	if key == nil || val == nil {
 		return
 	}
@@ -36,7 +36,7 @@ func (ctx *Context) SetValue(key, val interface{}) {
 }
 
 // DeleteKey delete the kv pair by key.
-func (ctx *Context) DeleteKey(key interface{}) {
+func (ctx *Context) DeleteKey(key any) {
 	if ctx.ctx == nil || key == nil {
 		return
 	}
@@ -64,7 +64,7 @@ func (ctx *Context) ServiceMethod() string {
 }
 
 // Bind parses the body data and stores the result to v.
-func (ctx *Context) Bind(v interface{}) error {
+func (ctx *Context) Bind(v any) error {
 	req := ctx.req
 	if v != nil {
 		codec := share.Codecs[req.SerializeType()]
@@ -80,7 +80,7 @@ func (ctx *Context) Bind(v interface{}) error {
 	return nil
 }
 
-func (ctx *Context) Write(v interface{}) error {
+func (ctx *Context) Write(v any) error {
 	req := ctx.req
 
 	if req.IsOneway() { // no need to send response

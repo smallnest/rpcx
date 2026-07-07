@@ -66,7 +66,7 @@ func New() *Reflection {
 	}
 }
 
-func (r *Reflection) Register(name string, rcvr interface{}, metadata string) error {
+func (r *Reflection) Register(name string, rcvr any, metadata string) error {
 	si := &ServiceInfo{}
 
 	val := reflect.ValueOf(rcvr)

@@ -12,23 +12,23 @@ const (
 var l Logger = NewDefaultLogger(os.Stdout, "", log.LstdFlags|log.Lshortfile, LvError)
 
 type Logger interface {
-	Debug(v ...interface{})
-	Debugf(format string, v ...interface{})
+	Debug(v ...any)
+	Debugf(format string, v ...any)
 
-	Info(v ...interface{})
-	Infof(format string, v ...interface{})
+	Info(v ...any)
+	Infof(format string, v ...any)
 
-	Warn(v ...interface{})
-	Warnf(format string, v ...interface{})
+	Warn(v ...any)
+	Warnf(format string, v ...any)
 
-	Error(v ...interface{})
-	Errorf(format string, v ...interface{})
+	Error(v ...any)
+	Errorf(format string, v ...any)
 
-	Fatal(v ...interface{})
-	Fatalf(format string, v ...interface{})
+	Fatal(v ...any)
+	Fatalf(format string, v ...any)
 
-	Panic(v ...interface{})
-	Panicf(format string, v ...interface{})
+	Panic(v ...any)
+	Panicf(format string, v ...any)
 }
 
 func SetLogger(logger Logger) {
@@ -43,44 +43,44 @@ func SetDummyLogger() {
 	l = &dummyLogger{}
 }
 
-func Debug(v ...interface{}) {
+func Debug(v ...any) {
 	l.Debug(v...)
 }
-func Debugf(format string, v ...interface{}) {
+func Debugf(format string, v ...any) {
 	l.Debugf(format, v...)
 }
 
-func Info(v ...interface{}) {
+func Info(v ...any) {
 	l.Info(v...)
 }
-func Infof(format string, v ...interface{}) {
+func Infof(format string, v ...any) {
 	l.Infof(format, v...)
 }
 
-func Warn(v ...interface{}) {
+func Warn(v ...any) {
 	l.Warn(v...)
 }
-func Warnf(format string, v ...interface{}) {
+func Warnf(format string, v ...any) {
 	l.Warnf(format, v...)
 }
 
-func Error(v ...interface{}) {
+func Error(v ...any) {
 	l.Error(v...)
 }
-func Errorf(format string, v ...interface{}) {
+func Errorf(format string, v ...any) {
 	l.Errorf(format, v...)
 }
 
-func Fatal(v ...interface{}) {
+func Fatal(v ...any) {
 	l.Fatal(v...)
 }
-func Fatalf(format string, v ...interface{}) {
+func Fatalf(format string, v ...any) {
 	l.Fatalf(format, v...)
 }
 
-func Panic(v ...interface{}) {
+func Panic(v ...any) {
 	l.Panic(v...)
 }
-func Panicf(format string, v ...interface{}) {
+func Panicf(format string, v ...any) {
 	l.Panicf(format, v...)
 }

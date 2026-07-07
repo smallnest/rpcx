@@ -36,7 +36,7 @@ func TestOneClientPool_SetPlugins(t *testing.T) {
 	}
 
 	// Verify plugins are set on all oneclients
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		oneclient := pool.Get()
 		if oneclient.GetPlugins() == nil {
 			t.Errorf("oneclient %d plugins should not be nil", i)
@@ -109,7 +109,7 @@ func TestOneClientPool_SetPlugins_Concurrent(t *testing.T) {
 
 	// Test concurrent SetPlugins calls
 	done := make(chan bool, 10)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		go func(id int) {
 			plugins := NewPluginContainer()
 			tp := &testPlugin{name: "test-plugin"}
@@ -120,7 +120,7 @@ func TestOneClientPool_SetPlugins_Concurrent(t *testing.T) {
 	}
 
 	// Wait for all goroutines to complete
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-done
 	}
 
@@ -129,4 +129,3 @@ func TestOneClientPool_SetPlugins_Concurrent(t *testing.T) {
 		t.Error("plugins should not be nil after concurrent SetPlugins")
 	}
 }
-

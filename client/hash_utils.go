@@ -30,13 +30,13 @@ func HashString(s string) uint64 {
 }
 
 // HashServiceAndArgs define a hash function
-type HashServiceAndArgs func(len int, options ...interface{}) int
+type HashServiceAndArgs func(len int, options ...any) int
 
 // ConsistentFunction define a hash function
 // Return service address, like "tcp@127.0.0.1:8970"
-type ConsistentAddrStrFunction func(options ...interface{}) string
+type ConsistentAddrStrFunction func(options ...any) string
 
-func genKey(options ...interface{}) uint64 {
+func genKey(options ...any) uint64 {
 	keyString := ""
 	for _, opt := range options {
 		keyString = keyString + "/" + toString(opt)
@@ -46,10 +46,10 @@ func genKey(options ...interface{}) uint64 {
 }
 
 // JumpConsistentHash selects a server by serviceMethod and args
-func JumpConsistentHash(len int, options ...interface{}) int {
+func JumpConsistentHash(len int, options ...any) int {
 	return int(Hash(genKey(options...), int32(len)))
 }
 
-func toString(obj interface{}) string {
+func toString(obj any) string {
 	return fmt.Sprintf("%v", obj)
 }

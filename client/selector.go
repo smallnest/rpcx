@@ -6,7 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"net/url"
-	"sort"
+	"slices"
 	"strconv"
 	"time"
 
@@ -15,11 +15,11 @@ import (
 	"github.com/valyala/fastrand"
 )
 
-type SelectFunc func(ctx context.Context, servicePath, serviceMethod string, args interface{}) string
+type SelectFunc func(ctx context.Context, servicePath, serviceMethod string, args any) string
 
 // Selector defines selector that selects one service from candidates.
 type Selector interface {
-	Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string // SelectFunc
+	Select(ctx context.Context, servicePath, serviceMethod string, args any) string // SelectFunc
 	UpdateServer(servers map[string]string)
 }
 
@@ -56,7 +56,7 @@ func newRandomSelector(servers map[string]string) Selector {
 	return &randomSelector{servers: ss}
 }
 
-func (s *randomSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
+func (s *randomSelector) Select(ctx context.Context, servicePath, serviceMethod string, args any) string {
 	ss := s.servers
 	if len(ss) == 0 {
 		return ""
@@ -89,7 +89,7 @@ func newRoundRobinSelector(servers map[string]string) Selector {
 	return &roundRobinSelector{servers: ss}
 }
 
-func (s *roundRobinSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
+func (s *roundRobinSelector) Select(ctx context.Context, servicePath, serviceMethod string, args any) string {
 	ss := s.servers
 	if len(ss) == 0 {
 		return ""
@@ -124,7 +124,7 @@ func newWeightedRoundRobinSelector(servers map[string]string) Selector {
 	return s
 }
 
-func (s *weightedRoundRobinSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
+func (s *weightedRoundRobinSelector) Select(ctx context.Context, servicePath, serviceMethod string, args any) string {
 	ss := s.servers
 	if len(ss) == 0 {
 		return ""
@@ -165,7 +165,7 @@ func (s *weightedRoundRobinSelector) next() *Weighted {
 	}
 	flag := 0
 	m := 0
-	for i := 0; i < n; i++ {
+	for i := range n {
 		s.servers[i].CurrentWeight += s.servers[i].Weight
 		if s.servers[i].CurrentWeight > m {
 			m = s.servers[i].CurrentWeight
@@ -215,7 +215,7 @@ func newGeoSelector(servers map[string]string, latitude, longitude float64) Sele
 	return &geoSelector{servers: ss, Latitude: latitude, Longitude: longitude, r: r}
 }
 
-func (s *geoSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
+func (s *geoSelector) Select(ctx context.Context, servicePath, serviceMethod string, args any) string {
 	if len(s.servers) == 0 {
 		return ""
 	}
@@ -287,11 +287,11 @@ func newConsistentHashSelector(servers map[string]string) Selector {
 		h.Add(k)
 	}
 
-	sort.Slice(ss, func(i, j int) bool { return ss[i] < ss[j] })
+	slices.Sort(ss)
 	return &consistentHashSelector{servers: ss, h: h}
 }
 
-func (s *consistentHashSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
+func (s *consistentHashSelector) Select(ctx context.Context, servicePath, serviceMethod string, args any) string {
 	ss := s.servers
 	if len(ss) == 0 {
 		return ""
@@ -309,7 +309,7 @@ func (s *consistentHashSelector) UpdateServer(servers map[string]string) {
 		ss = append(ss, k)
 	}
 
-	sort.Slice(ss, func(i, j int) bool { return ss[i] < ss[j] })
+	slices.Sort(ss)
 
 	for _, k := range s.servers {
 		if _, exist := servers[k]; !exist { // remove

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"net/url"
 	"strconv"
@@ -101,8 +102,8 @@ type seqKey struct{}
 // RPCClient is interface that defines one client to call one server.
 type RPCClient interface {
 	Connect(network, address string) error
-	Go(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, done chan *Call) *Call
-	Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error
+	Go(ctx context.Context, servicePath, serviceMethod string, args any, reply any, done chan *Call) *Call
+	Call(ctx context.Context, servicePath, serviceMethod string, args any, reply any) error
 	SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error)
 	Close() error
 	RemoteAddr() string
@@ -169,7 +170,7 @@ type Option struct {
 	// TLSConfig for tcp and quic
 	TLSConfig *tls.Config
 	// kcp.BlockCrypt
-	Block interface{}
+	Block any
 	// RPCPath for http connection
 	RPCPath string
 	// ConnectTimeout sets timeout for dialing
@@ -210,11 +211,11 @@ type Call struct {
 	ServiceMethod string            // The name of the service and method to call.
 	Metadata      map[string]string // metadata
 	ResMetadata   map[string]string
-	Args          interface{} // The argument to the function (*struct).
-	Reply         interface{} // The reply from the function (*struct).
-	Error         error       // After completion, the error status.
-	Done          chan *Call  // Strobes when call is complete.
-	Raw           bool        // raw message or not
+	Args          any        // The argument to the function (*struct).
+	Reply         any        // The reply from the function (*struct).
+	Error         error      // After completion, the error status.
+	Done          chan *Call // Strobes when call is complete.
+	Raw           bool       // raw message or not
 }
 
 func (call *Call) done() {
@@ -259,7 +260,7 @@ func (client *Client) IsShutdown() bool {
 // the invocation. The done channel will signal when the call is complete by returning
 // the same Call object. If done is nil, Go will allocate a new channel.
 // If non-nil, done must be buffered or Go will deliberately crash.
-func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}, done chan *Call) *Call {
+func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string, args any, reply any, done chan *Call) *Call {
 	call := new(Call)
 	call.ServicePath = servicePath
 	call.ServiceMethod = serviceMethod
@@ -272,14 +273,10 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 		// (e.g. Inform, Broadcast, Fork modes with PreCall plugins).
 		if sharedCtx, ok := ctx.(*share.Context); ok {
 			sharedCtx.Lock()
-			for k, v := range src {
-				dst[k] = v
-			}
+			maps.Copy(dst, src)
 			sharedCtx.Unlock()
 		} else {
-			for k, v := range src {
-				dst[k] = v
-			}
+			maps.Copy(dst, src)
 		}
 		call.Metadata = dst
 	}
@@ -316,11 +313,11 @@ func (client *Client) Go(ctx context.Context, servicePath, serviceMethod string,
 }
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
-func (client *Client) Call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error {
+func (client *Client) Call(ctx context.Context, servicePath, serviceMethod string, args any, reply any) error {
 	return client.call(ctx, servicePath, serviceMethod, args, reply)
 }
 
-func (client *Client) call(ctx context.Context, servicePath, serviceMethod string, args interface{}, reply interface{}) error {
+func (client *Client) call(ctx context.Context, servicePath, serviceMethod string, args any, reply any) error {
 	seq := new(uint64)
 
 	if sharedCtx, ok := ctx.(*share.Context); ok {
@@ -358,15 +355,11 @@ func (client *Client) call(ctx context.Context, servicePath, serviceMethod strin
 			resMeta := meta.(map[string]string)
 			if sharedCtx, ok := ctx.(*share.Context); ok {
 				sharedCtx.Lock()
-				for k, v := range call.ResMetadata {
-					resMeta[k] = v
-				}
+				maps.Copy(resMeta, call.ResMetadata)
 				resMeta[share.ServerAddress] = client.Conn.RemoteAddr().String()
 				sharedCtx.Unlock()
 			} else {
-				for k, v := range call.ResMetadata {
-					resMeta[k] = v
-				}
+				maps.Copy(resMeta, call.ResMetadata)
 				resMeta[share.ServerAddress] = client.Conn.RemoteAddr().String()
 			}
 		}
@@ -396,21 +389,15 @@ func (client *Client) SendRaw(ctx context.Context, r *protocol.Message) (map[str
 		src := meta.(map[string]string)
 		if sharedCtx, ok := ctx.(*share.Context); ok {
 			sharedCtx.Lock()
-			for k, v := range src {
-				rmeta[k] = v
-			}
+			maps.Copy(rmeta, src)
 			sharedCtx.Unlock()
 		} else {
-			for k, v := range src {
-				rmeta[k] = v
-			}
+			maps.Copy(rmeta, src)
 		}
 	}
 	// copy r.Metadata to rmeta
 	if r.Metadata != nil {
-		for k, v := range r.Metadata {
-			rmeta[k] = v
-		}
+		maps.Copy(rmeta, r.Metadata)
 	}
 
 	if meta != nil { // copy meta in context to meta in requests

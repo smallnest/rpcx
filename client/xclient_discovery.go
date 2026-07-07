@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"slices"
 	"strings"
 )
 
@@ -41,13 +42,7 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 			// single lookup against a 1-3 element slice.
 			groups := values["group"]
 			if group != "" {
-				found := false
-				for _, g := range groups {
-					if group == g {
-						found = true
-						break
-					}
-				}
+				found := slices.Contains(groups, group)
 				if !found {
 					delete(servers, k)
 				}
@@ -57,7 +52,7 @@ func filterByStateAndGroup(group string, servers map[string]string) {
 }
 
 // selects a client from candidates base on c.selectMode
-func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args interface{}) (string, RPCClient, error) {
+func (c *xClient) selectClient(ctx context.Context, servicePath, serviceMethod string, args any) (string, RPCClient, error) {
 	c.mu.Lock()
 
 	if c.option.Sticky && c.stickyRPCClient != nil {
@@ -108,7 +103,7 @@ func safeCloseClient(client RPCClient) {
 	client.Close()
 }
 
-func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, _ interface{}) (client RPCClient, err error) {
+func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, _ any) (client RPCClient, err error) {
 	var needCallPlugin bool
 	defer func() {
 		if needCallPlugin {
@@ -144,7 +139,7 @@ func (c *xClient) getCachedClient(k string, servicePath, serviceMethod string, _
 	// the same key; created is set only by the goroutine that actually dials,
 	// so the DoClientConnected plugin fires exactly once per new connection.
 	var created bool
-	generatedClient, err, _ := c.slGroup.Do(k, func() (interface{}, error) {
+	generatedClient, err, _ := c.slGroup.Do(k, func() (any, error) {
 		// Re-check the cache: another goroutine may have cached a client for k
 		// between our fast-path unlock and entering singleflight.
 		c.mu.Lock()
@@ -247,7 +242,7 @@ func (c *xClient) generateClient(k, servicePath, serviceMethod string) (client R
 		Plugins: c.Plugins,
 	}
 
-	var breaker interface{}
+	var breaker any
 	if c.option.GenBreaker != nil {
 		breaker, _ = c.breakers.LoadOrStore(k, c.option.GenBreaker())
 	}
@@ -276,7 +271,7 @@ func (c *xClient) getCachedClientWithoutLock(k, servicePath, serviceMethod strin
 	}
 
 	if client == nil || client.IsShutdown() {
-		generatedClient, err, _ := c.slGroup.Do(k, func() (interface{}, error) {
+		generatedClient, err, _ := c.slGroup.Do(k, func() (any, error) {
 			return c.generateClient(k, servicePath, serviceMethod)
 		})
 

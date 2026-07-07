@@ -12,7 +12,7 @@ import (
 // Context is a rpcx customized Context that can contains multiple values.
 type Context struct {
 	tagsLock *sync.Mutex
-	tags     map[interface{}]interface{}
+	tags     map[any]any
 	context.Context
 }
 
@@ -22,7 +22,7 @@ func NewContext(ctx context.Context) *Context {
 	return &Context{
 		tagsLock: tagsLock,
 		Context:  ctx,
-		tags:     map[interface{}]interface{}{isShareContext: true},
+		tags:     map[any]any{isShareContext: true},
 	}
 }
 
@@ -34,11 +34,11 @@ func (c *Context) Unlock() {
 	c.tagsLock.Unlock()
 }
 
-func (c *Context) Value(key interface{}) interface{} {
+func (c *Context) Value(key any) any {
 	c.tagsLock.Lock()
 	defer c.tagsLock.Unlock()
 	if c.tags == nil {
-		c.tags = make(map[interface{}]interface{})
+		c.tags = make(map[any]any)
 	}
 
 	if v, ok := c.tags[key]; ok {
@@ -47,18 +47,18 @@ func (c *Context) Value(key interface{}) interface{} {
 	return c.Context.Value(key)
 }
 
-func (c *Context) SetValue(key, val interface{}) {
+func (c *Context) SetValue(key, val any) {
 	c.tagsLock.Lock()
 	defer c.tagsLock.Unlock()
 
 	if c.tags == nil {
-		c.tags = make(map[interface{}]interface{})
+		c.tags = make(map[any]any)
 	}
 	c.tags[key] = val
 }
 
 // DeleteKey delete the kv pair by key.
-func (c *Context) DeleteKey(key interface{}) {
+func (c *Context) DeleteKey(key any) {
 	c.tagsLock.Lock()
 	defer c.tagsLock.Unlock()
 
@@ -80,7 +80,7 @@ func (c *Context) String() string {
 // key is a programmer error that should fail fast rather than be silently
 // dropped, since a no-op would lose the value and mask the bug. Always pass a
 // comparable, non-nil key.
-func WithValue(parent context.Context, key, val interface{}) *Context {
+func WithValue(parent context.Context, key, val any) *Context {
 	if key == nil {
 		panic("nil key")
 	}
@@ -88,7 +88,7 @@ func WithValue(parent context.Context, key, val interface{}) *Context {
 		panic("key is not comparable")
 	}
 
-	tags := make(map[interface{}]interface{})
+	tags := make(map[any]any)
 	tags[key] = val
 	return &Context{Context: parent, tags: tags, tagsLock: &sync.Mutex{}}
 }
@@ -97,7 +97,7 @@ func WithValue(parent context.Context, key, val interface{}) *Context {
 //
 // Like WithValue, it panics on a nil or non-comparable key to mirror the
 // standard library's context.WithValue contract (see WithValue for rationale).
-func WithLocalValue(ctx *Context, key, val interface{}) *Context {
+func WithLocalValue(ctx *Context, key, val any) *Context {
 	if key == nil {
 		panic("nil key")
 	}
@@ -107,7 +107,7 @@ func WithLocalValue(ctx *Context, key, val interface{}) *Context {
 
 	ctx.tagsLock.Lock()
 	if ctx.tags == nil {
-		ctx.tags = make(map[interface{}]interface{})
+		ctx.tags = make(map[any]any)
 	}
 	ctx.tags[key] = val
 	ctx.tagsLock.Unlock()

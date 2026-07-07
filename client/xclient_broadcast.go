@@ -18,7 +18,7 @@ import (
 // Broadcast sends requests to all servers and Success only when all servers return OK.
 // FailMode and SelectMode are meanless for this method.
 // Please set timeout to avoid hanging.
-func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
+func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args any, reply any) error {
 	if c.isShutdown {
 		return ErrXClientShutdown
 	}
@@ -68,10 +68,8 @@ func (c *xClient) Broadcast(ctx context.Context, serviceMethod string, args inte
 	l := len(clients)
 	done := make(chan bool, l)
 	for k, client := range clients {
-		k := k
-		client := client
 		go func() {
-			var clonedReply interface{}
+			var clonedReply any
 			if reply != nil {
 				clonedReply = reflect.New(reflect.ValueOf(reply).Elem().Type()).Interface()
 			}
@@ -117,7 +115,7 @@ check:
 
 // Fork sends requests to all servers and Success once one server returns OK.
 // FailMode and SelectMode are meanless for this method.
-func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
+func (c *xClient) Fork(ctx context.Context, serviceMethod string, args any, reply any) error {
 	if c.isShutdown {
 		return ErrXClientShutdown
 	}
@@ -168,10 +166,8 @@ func (c *xClient) Fork(ctx context.Context, serviceMethod string, args interface
 	l := len(clients)
 	done := make(chan bool, l)
 	for k, client := range clients {
-		k := k
-		client := client
 		go func() {
-			var clonedReply interface{}
+			var clonedReply any
 			if reply != nil {
 				clonedReply = reflect.New(reflect.ValueOf(reply).Elem().Type()).Interface()
 			}
@@ -220,7 +216,7 @@ check:
 // Inform sends requests to all servers and returns all results from services.
 // FailMode and SelectMode are meanless for this method.
 // Please set timeout to avoid hanging.
-func (c *xClient) Inform(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) ([]Receipt, error) {
+func (c *xClient) Inform(ctx context.Context, serviceMethod string, args any, reply any) ([]Receipt, error) {
 	if c.isShutdown {
 		return nil, ErrXClientShutdown
 	}
@@ -274,10 +270,8 @@ func (c *xClient) Inform(ctx context.Context, serviceMethod string, args interfa
 	l := len(clients)
 	done := make(chan bool, l)
 	for k, client := range clients {
-		k := k
-		client := client
 		go func() {
-			var clonedReply interface{}
+			var clonedReply any
 			if reply != nil {
 				clonedReply = reflect.New(reflect.ValueOf(reply).Elem().Type()).Interface()
 			}

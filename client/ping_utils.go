@@ -26,7 +26,7 @@ func newWeightedICMPSelector(servers map[string]string) Selector {
 	return &wicmps
 }
 
-func (s *weightedICMPSelector) Select(ctx context.Context, servicePath, serviceMethod string, args interface{}) string {
+func (s *weightedICMPSelector) Select(ctx context.Context, servicePath, serviceMethod string, args any) string {
 	return s.wrs.Select(ctx, servicePath, serviceMethod, args)
 }
 

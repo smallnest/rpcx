@@ -31,7 +31,7 @@ func (p *MetricsPlugin) withPrefix(m string) string {
 }
 
 // Register handles registering event.
-func (p *MetricsPlugin) Register(name string, rcvr interface{}, metadata string) error {
+func (p *MetricsPlugin) Register(name string, rcvr any, metadata string) error {
 	serviceCounter := metrics.GetOrRegisterCounter(p.withPrefix("serviceCounter"), p.Registry)
 	serviceCounter.Inc(1)
 	return nil

@@ -20,7 +20,7 @@ func TestConsecCircuitBreaker(t *testing.T) {
 
 	cb := NewConsecCircuitBreaker(5, 100*time.Millisecond)
 
-	for i := 0; i < 25; i++ {
+	for i := range 25 {
 		err := cb.Call(fn, 200*time.Millisecond)
 		switch {
 		case i < 5:
@@ -65,9 +65,9 @@ func TestCircuitBreakerRace(t *testing.T) {
 		return errors.New("test error")
 	}
 
-	for r := 0; r < routines; r++ {
+	for range routines {
 		go func() {
-			for i := 0; i < loop; i++ {
+			for range loop {
 				cb.Call(fn, 100*time.Millisecond)
 			}
 		}()

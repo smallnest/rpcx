@@ -34,7 +34,7 @@ func NewOneClientPool(count int, failMode FailMode, selectMode SelectMode, disco
 		option:     option,
 	}
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		oneclient := NewOneClient(failMode, selectMode, discovery, option)
 		pool.oneclients[i] = oneclient
 	}
@@ -53,7 +53,7 @@ func NewBidirectionalOneClientPool(count int, failMode FailMode, selectMode Sele
 		serverMessageChan: serverMessageChan,
 	}
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		oneclient := NewBidirectionalOneClient(failMode, selectMode, discovery, option, serverMessageChan)
 		pool.oneclients[i] = oneclient
 	}

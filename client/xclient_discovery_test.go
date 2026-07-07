@@ -13,22 +13,22 @@ import (
 type stubClient struct{}
 
 func (m *stubClient) Connect(network, address string) error { return nil }
-func (m *stubClient) Go(ctx context.Context, sp, sm string, args, reply interface{}, done chan *Call) *Call {
+func (m *stubClient) Go(ctx context.Context, sp, sm string, args, reply any, done chan *Call) *Call {
 	return nil
 }
-func (m *stubClient) Call(ctx context.Context, sp, sm string, args, reply interface{}) error {
+func (m *stubClient) Call(ctx context.Context, sp, sm string, args, reply any) error {
 	return nil
 }
 func (m *stubClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error) {
 	return nil, nil, nil
 }
-func (m *stubClient) Close() error                                         { return nil }
-func (m *stubClient) RemoteAddr() string                                   { return "" }
+func (m *stubClient) Close() error                                          { return nil }
+func (m *stubClient) RemoteAddr() string                                    { return "" }
 func (m *stubClient) RegisterServerMessageChan(ch chan<- *protocol.Message) {}
-func (m *stubClient) UnregisterServerMessageChan()                         {}
-func (m *stubClient) IsClosing() bool                                      { return false }
-func (m *stubClient) IsShutdown() bool                                     { return false }
-func (m *stubClient) GetConn() net.Conn                                    { return nil }
+func (m *stubClient) UnregisterServerMessageChan()                          {}
+func (m *stubClient) IsClosing() bool                                       { return false }
+func (m *stubClient) IsShutdown() bool                                      { return false }
+func (m *stubClient) GetConn() net.Conn                                     { return nil }
 
 // TestGetCachedClientDialDoesNotBlockOtherKeys asserts that while a dial for
 // key A is in flight (blocked in Connect), a getCachedClient for an

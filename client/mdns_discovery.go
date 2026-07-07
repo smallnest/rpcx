@@ -117,7 +117,6 @@ func (d *MDNSDiscovery) watch() {
 
 				d.mu.Lock()
 				for _, ch := range d.chans {
-					ch := ch
 					go func() {
 						defer func() {
 							recover()

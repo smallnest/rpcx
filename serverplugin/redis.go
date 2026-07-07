@@ -159,7 +159,7 @@ func (p *RedisRegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
 }
 
 // PreCall handles rpc call from clients
-func (p *RedisRegisterPlugin) PreCall(_ context.Context, _, _ string, args interface{}) (interface{}, error) {
+func (p *RedisRegisterPlugin) PreCall(_ context.Context, _, _ string, args any) (any, error) {
 	if p.Metrics != nil {
 		metrics.GetOrRegisterMeter("calls", p.Metrics).Mark(1)
 	}
@@ -168,7 +168,7 @@ func (p *RedisRegisterPlugin) PreCall(_ context.Context, _, _ string, args inter
 
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
-func (p *RedisRegisterPlugin) Register(name string, rcvr interface{}, metadata string) (err error) {
+func (p *RedisRegisterPlugin) Register(name string, rcvr any, metadata string) (err error) {
 	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return

@@ -30,7 +30,7 @@ func setServerTimeout(ctx context.Context) context.Context {
 
 // Go invokes the function asynchronously. It returns the Call structure representing the invocation. The done channel will signal when the call is complete by returning the same Call object. If done is nil, Go will allocate a new channel. If non-nil, done must be buffered or Go will deliberately crash.
 // It does not use FailMode.
-func (c *xClient) Go(ctx context.Context, serviceMethod string, args interface{}, reply interface{}, done chan *Call) (*Call, error) {
+func (c *xClient) Go(ctx context.Context, serviceMethod string, args any, reply any, done chan *Call) (*Call, error) {
 	if c.isShutdown {
 		return nil, ErrXClientShutdown
 	}
@@ -67,7 +67,7 @@ func (c *xClient) Go(ctx context.Context, serviceMethod string, args interface{}
 
 // Call invokes the named function, waits for it to complete, and returns its error status.
 // It handles errors base on FailMode.
-func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error {
+func (c *xClient) Call(ctx context.Context, serviceMethod string, args any, reply any) error {
 	if c.isShutdown {
 		return ErrXClientShutdown
 	}
@@ -171,7 +171,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 		call1 := make(chan *Call, 10)
 		call2 := make(chan *Call, 10)
 
-		var reply1, reply2 interface{}
+		var reply1, reply2 any
 
 		if reply != nil {
 			reply1 = reflect.New(reflect.ValueOf(reply).Elem().Type()).Interface()
@@ -232,7 +232,7 @@ func (c *xClient) Call(ctx context.Context, serviceMethod string, args interface
 }
 
 // Oneshot invokes the named function, ** DOEST NOT ** wait for it to complete, and returns immediately.
-func (c *xClient) Oneshot(ctx context.Context, serviceMethod string, args interface{}) error {
+func (c *xClient) Oneshot(ctx context.Context, serviceMethod string, args any) error {
 	if c.isShutdown {
 		return ErrXClientShutdown
 	}
@@ -402,7 +402,7 @@ func (c *xClient) SendRaw(ctx context.Context, r *protocol.Message) (map[string]
 	}
 }
 
-func (c *xClient) wrapCall(ctx context.Context, client RPCClient, serviceMethod string, args interface{}, reply interface{}) error {
+func (c *xClient) wrapCall(ctx context.Context, client RPCClient, serviceMethod string, args any, reply any) error {
 	if client == nil {
 		return ErrServerUnavailable
 	}

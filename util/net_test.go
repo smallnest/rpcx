@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetFreePort(t *testing.T) {
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		port, err := GetFreePort()
 		if err != nil {
 			t.Error(err)

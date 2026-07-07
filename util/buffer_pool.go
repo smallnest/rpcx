@@ -14,7 +14,7 @@ func newLevelPool(size int) *levelPool {
 	return &levelPool{
 		size: size,
 		pool: sync.Pool{
-			New: func() interface{} {
+			New: func() any {
 				data := make([]byte, size)
 				return &data
 			},
@@ -51,10 +51,7 @@ func (p *LimitedPool) findPool(size int) *levelPool {
 	if size > p.maxSize {
 		return nil
 	}
-	idx := int(math.Ceil(math.Log2(float64(size) / float64(p.minSize))))
-	if idx < 0 {
-		idx = 0
-	}
+	idx := max(int(math.Ceil(math.Log2(float64(size)/float64(p.minSize)))), 0)
 	if idx > len(p.pools)-1 {
 		return nil
 	}
@@ -69,10 +66,7 @@ func (p *LimitedPool) findPutPool(size int) *levelPool {
 		return nil
 	}
 
-	idx := int(math.Floor(math.Log2(float64(size) / float64(p.minSize))))
-	if idx < 0 {
-		idx = 0
-	}
+	idx := max(int(math.Floor(math.Log2(float64(size)/float64(p.minSize)))), 0)
 	if idx > len(p.pools)-1 {
 		return nil
 	}

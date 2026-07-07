@@ -109,7 +109,6 @@ func (d *DNSDiscovery) lookup() {
 
 	d.mu.Lock()
 	for _, ch := range d.chans {
-		ch := ch
 		go func() {
 			defer func() {
 				recover()

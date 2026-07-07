@@ -32,7 +32,7 @@ var (
 // Receipt represents the result of the service returned.
 type Receipt struct {
 	Address string
-	Reply   interface{}
+	Reply   any
 	Error   error
 }
 
@@ -45,12 +45,12 @@ type XClient interface {
 	ConfigGeoSelector(latitude, longitude float64)
 	Auth(auth string)
 
-	Go(ctx context.Context, serviceMethod string, args interface{}, reply interface{}, done chan *Call) (*Call, error)
-	Call(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
-	Oneshot(ctx context.Context, serviceMethod string, args interface{}) error
-	Broadcast(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
-	Fork(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) error
-	Inform(ctx context.Context, serviceMethod string, args interface{}, reply interface{}) ([]Receipt, error)
+	Go(ctx context.Context, serviceMethod string, args any, reply any, done chan *Call) (*Call, error)
+	Call(ctx context.Context, serviceMethod string, args any, reply any) error
+	Oneshot(ctx context.Context, serviceMethod string, args any) error
+	Broadcast(ctx context.Context, serviceMethod string, args any, reply any) error
+	Fork(ctx context.Context, serviceMethod string, args any, reply any) error
+	Inform(ctx context.Context, serviceMethod string, args any, reply any) ([]Receipt, error)
 	SendRaw(ctx context.Context, r *protocol.Message) (map[string]string, []byte, error)
 	SendFile(ctx context.Context, fileName string, rateInBytesPerSecond int64, meta map[string]string) error
 	DownloadFile(ctx context.Context, requestFileName string, saveTo io.Writer, meta map[string]string) error

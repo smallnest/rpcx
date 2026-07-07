@@ -39,7 +39,7 @@ func NewXClientPool(count int, servicePath string, failMode FailMode, selectMode
 		option:      option,
 	}
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		xclient := NewXClient(servicePath, failMode, selectMode, discovery, option)
 		pool.xclients[i] = xclient
 	}
@@ -59,7 +59,7 @@ func NewBidirectionalXClientPool(count int, servicePath string, failMode FailMod
 		serverMessageChan: serverMessageChan,
 	}
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		xclient := NewBidirectionalXClient(servicePath, failMode, selectMode, discovery, option, serverMessageChan)
 		pool.xclients[i] = xclient
 	}

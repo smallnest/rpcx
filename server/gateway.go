@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"net/http"
 	"net/url"
@@ -263,9 +264,7 @@ func (s *Server) handleGatewayRequest(w http.ResponseWriter, r *http.Request, pa
 		if meta == nil {
 			res.Metadata = resMetadata
 		} else {
-			for k, v := range resMetadata {
-				meta[k] = v
-			}
+			maps.Copy(meta, resMetadata)
 		}
 	}
 

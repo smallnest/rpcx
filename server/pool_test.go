@@ -18,7 +18,7 @@ func (e Elem) Reset() {
 
 func TestPool(t *testing.T) {
 	elem := Elem{42}
-	elemType := reflect.TypeOf(elem)
+	elemType := reflect.TypeFor[Elem]()
 	// init Elem pool
 	reflectTypePools.Init(elemType)
 	reflectTypePools.Put(elemType, elem)

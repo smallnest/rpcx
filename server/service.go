@@ -18,7 +18,7 @@ import (
 type RpcServiceInternalError struct {
 	Err    string
 	Method string
-	Argv   interface{}
+	Argv   any
 	stack  string
 }
 
@@ -94,7 +94,7 @@ func (s *Server) ListServices() []string {
 // no suitable methods. It also logs the error.
 // The client accesses each method using a string of the form "Type.Method",
 // where Type is the receiver's concrete type.
-func (s *Server) Register(rcvr interface{}, metadata string) error {
+func (s *Server) Register(rcvr any, metadata string) error {
 	sname, err := s.register(rcvr, "", false, nil)
 	if err != nil {
 		return err
@@ -104,7 +104,7 @@ func (s *Server) Register(rcvr interface{}, metadata string) error {
 
 // RegisterName is like Register but uses the provided name for the type
 // instead of the receiver's concrete type.
-func (s *Server) RegisterName(name string, rcvr interface{}, metadata string) error {
+func (s *Server) RegisterName(name string, rcvr any, metadata string) error {
 	_, err := s.register(rcvr, name, true, nil)
 	if err != nil {
 		return err
@@ -119,7 +119,7 @@ func (s *Server) RegisterName(name string, rcvr interface{}, metadata string) er
 // the methods whitelist; all other exported methods of the receiver are not
 // exposed as RPC. It returns an error if methods is empty, or if any named
 // method does not exist on the receiver or is not a suitable RPC method.
-func (s *Server) RegisterWithMethods(rcvr interface{}, methods []string, metadata string) error {
+func (s *Server) RegisterWithMethods(rcvr any, methods []string, metadata string) error {
 	if len(methods) == 0 {
 		return errors.New("rpcx.Register: empty methods whitelist; use Register to register all methods")
 	}
@@ -135,7 +135,7 @@ func (s *Server) RegisterWithMethods(rcvr interface{}, methods []string, metadat
 
 // RegisterNameWithMethods is like RegisterWithMethods but uses the provided
 // name for the type instead of the receiver's concrete type.
-func (s *Server) RegisterNameWithMethods(name string, rcvr interface{}, methods []string, metadata string) error {
+func (s *Server) RegisterNameWithMethods(name string, rcvr any, methods []string, metadata string) error {
 	if len(methods) == 0 {
 		return errors.New("rpcx.Register: empty methods whitelist; use RegisterName to register all methods")
 	}
@@ -155,7 +155,7 @@ func (s *Server) RegisterNameWithMethods(name string, rcvr interface{}, methods 
 //   - one return value, of type error
 //
 // The client accesses function using a string of the form "servicePath.Method".
-func (s *Server) RegisterFunction(servicePath string, fn interface{}, metadata string) error {
+func (s *Server) RegisterFunction(servicePath string, fn any, metadata string) error {
 	fname, err := s.registerFunction(servicePath, fn, "", false)
 	if err != nil {
 		return err
@@ -166,7 +166,7 @@ func (s *Server) RegisterFunction(servicePath string, fn interface{}, metadata s
 
 // RegisterFunctionName is like RegisterFunction but uses the provided name for the function
 // instead of the function's concrete type.
-func (s *Server) RegisterFunctionName(servicePath string, name string, fn interface{}, metadata string) error {
+func (s *Server) RegisterFunctionName(servicePath string, name string, fn any, metadata string) error {
 	_, err := s.registerFunction(servicePath, fn, name, true)
 	if err != nil {
 		return err
@@ -175,7 +175,7 @@ func (s *Server) RegisterFunctionName(servicePath string, name string, fn interf
 	return s.Plugins.DoRegisterFunction(servicePath, name, fn, metadata)
 }
 
-func (s *Server) register(rcvr interface{}, name string, useName bool, methods []string) (string, error) {
+func (s *Server) register(rcvr any, name string, useName bool, methods []string) (string, error) {
 	s.serviceMapMu.Lock()
 	defer s.serviceMapMu.Unlock()
 
@@ -246,7 +246,7 @@ func (s *Server) register(rcvr interface{}, name string, useName bool, methods [
 	return sname, nil
 }
 
-func (s *Server) registerFunction(servicePath string, fn interface{}, name string, useName bool) (string, error) {
+func (s *Server) registerFunction(servicePath string, fn any, name string, useName bool) (string, error) {
 	s.serviceMapMu.Lock()
 	defer s.serviceMapMu.Unlock()
 
@@ -328,8 +328,8 @@ func (s *Server) registerFunction(servicePath string, fn interface{}, name strin
 // error using log if reportErr is true.
 func suitableMethods(typ reflect.Type, reportErr bool) map[string]*methodType {
 	methods := make(map[string]*methodType)
-	for m := 0; m < typ.NumMethod(); m++ {
-		method := typ.Method(m)
+	for method := range typ.Methods() {
+		method := method
 		mtype := method.Type
 		mname := method.Name
 		// Method must be exported.

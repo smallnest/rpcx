@@ -150,7 +150,7 @@ func (p *MDNSRegisterPlugin) HandleConnAccept(conn net.Conn) (net.Conn, bool) {
 }
 
 // PreCall handles rpc call from clients
-func (p *MDNSRegisterPlugin) PreCall(_ context.Context, _, _ string, args interface{}) (interface{}, error) {
+func (p *MDNSRegisterPlugin) PreCall(_ context.Context, _, _ string, args any) (any, error) {
 	if p.Metrics != nil {
 		metrics.GetOrRegisterMeter("calls", p.Metrics).Mark(1)
 	}
@@ -159,7 +159,7 @@ func (p *MDNSRegisterPlugin) PreCall(_ context.Context, _, _ string, args interf
 
 // Register handles registering event.
 // this service is registered at BASE/serviceName/thisIpAddress node
-func (p *MDNSRegisterPlugin) Register(name string, rcvr interface{}, metadata string) (err error) {
+func (p *MDNSRegisterPlugin) Register(name string, rcvr any, metadata string) (err error) {
 	if strings.TrimSpace(name) == "" {
 		err = errors.New("Register service `name` can't be empty")
 		return
@@ -184,7 +184,7 @@ func (p *MDNSRegisterPlugin) Register(name string, rcvr interface{}, metadata st
 	return
 }
 
-func (p *MDNSRegisterPlugin) RegisterFunction(serviceName, fname string, fn interface{}, metadata string) error {
+func (p *MDNSRegisterPlugin) RegisterFunction(serviceName, fname string, fn any, metadata string) error {
 	return p.Register(serviceName, fn, metadata)
 }
 

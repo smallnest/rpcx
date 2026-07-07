@@ -12,7 +12,7 @@ type Reset interface {
 
 var reflectTypePools = &typePools{
 	pools: make(map[reflect.Type]*sync.Pool),
-	New: func(t reflect.Type) interface{} {
+	New: func(t reflect.Type) any {
 		var argv reflect.Value
 
 		if t.Kind() == reflect.Ptr { // reply must be ptr
@@ -28,12 +28,12 @@ var reflectTypePools = &typePools{
 type typePools struct {
 	mu    sync.RWMutex
 	pools map[reflect.Type]*sync.Pool
-	New   func(t reflect.Type) interface{}
+	New   func(t reflect.Type) any
 }
 
 func (p *typePools) Init(t reflect.Type) {
 	tp := &sync.Pool{}
-	tp.New = func() interface{} {
+	tp.New = func() any {
 		return p.New(t)
 	}
 	p.mu.Lock()
@@ -41,7 +41,7 @@ func (p *typePools) Init(t reflect.Type) {
 	p.pools[t] = tp
 }
 
-func (p *typePools) Put(t reflect.Type, x interface{}) {
+func (p *typePools) Put(t reflect.Type, x any) {
 	if o, ok := x.(Reset); ok {
 		o.Reset()
 		p.mu.RLock()
@@ -52,7 +52,7 @@ func (p *typePools) Put(t reflect.Type, x interface{}) {
 
 }
 
-func (p *typePools) Get(t reflect.Type) interface{} {
+func (p *typePools) Get(t reflect.Type) any {
 	p.mu.RLock()
 	pool := p.pools[t]
 	p.mu.RUnlock()

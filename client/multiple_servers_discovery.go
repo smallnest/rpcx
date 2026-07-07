@@ -73,7 +73,6 @@ func (d *MultipleServersDiscovery) Update(pairs []*KVPair) {
 	defer d.mu.Unlock()
 
 	for _, ch := range d.chans {
-		ch := ch
 		go func() {
 			defer func() {
 				recover()

@@ -1,6 +1,7 @@
 package util
 
 import (
+	"maps"
 	"unsafe"
 )
 
@@ -18,7 +19,5 @@ func CopyMeta(src, dst map[string]string) {
 	if dst == nil {
 		return
 	}
-	for k, v := range src {
-		dst[k] = v
-	}
+	maps.Copy(dst, src)
 }
