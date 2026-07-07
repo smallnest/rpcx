@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/alitto/pond"
+	"github.com/smallnest/rpcx/protocol"
 )
 
 // OptionFn configures options of server.
@@ -58,5 +59,23 @@ func WithCustomPool(pool WorkerPool) OptionFn {
 func WithAsyncWrite() OptionFn {
 	return func(s *Server) {
 		s.AsyncWrite = true
+	}
+}
+
+// WithMaxMessageLength caps the wire (compressed) length of an incoming
+// message. It sets protocol.MaxMessageLength. A value <= 0 means no limit.
+func WithMaxMessageLength(maxLen int) OptionFn {
+	return func(s *Server) {
+		protocol.MaxMessageLength = maxLen
+	}
+}
+
+// WithMaxDecompressedLength caps the size (in bytes) of a message payload
+// after decompression. It sets protocol.MaxDecompressedLength, guarding
+// against decompression-bomb attacks where a small compressed payload expands
+// to gigabytes of memory during decode. A value <= 0 means no limit.
+func WithMaxDecompressedLength(maxLen int64) OptionFn {
+	return func(s *Server) {
+		protocol.MaxDecompressedLength = maxLen
 	}
 }

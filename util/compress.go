@@ -3,9 +3,14 @@ package util
 import (
 	"bytes"
 	"compress/gzip"
+	"errors"
 	"io"
 	"sync"
 )
+
+// ErrDecompressedSizeTooLarge is returned when the decompressed data exceeds
+// the configured maximum size. It guards against decompression-bomb attacks.
+var ErrDecompressedSizeTooLarge = errors.New("decompressed size exceeds the maximum allowed size")
 
 var (
 	spWriter sync.Pool
@@ -14,19 +19,35 @@ var (
 )
 
 func init() {
-	spWriter = sync.Pool{New: func() interface{} {
+	spWriter = sync.Pool{New: func() any {
 		return gzip.NewWriter(nil)
 	}}
-	spReader = sync.Pool{New: func() interface{} {
+	spReader = sync.Pool{New: func() any {
 		return new(gzip.Reader)
 	}}
-	spBuffer = sync.Pool{New: func() interface{} {
+	spBuffer = sync.Pool{New: func() any {
 		return bytes.NewBuffer(nil)
 	}}
 }
 
-// Unzip unzips data.
+// Unzip unzips data. If MaxDecompressedSize (see below) is set to a positive
+// value, the decompressed size is capped to guard against decompression bombs.
 func Unzip(data []byte) ([]byte, error) {
+	return UnzipLimited(data, MaxDecompressedSize)
+}
+
+// MaxDecompressedSize is the default maximum allowed size (in bytes) of
+// decompressed data used by Unzip. A value <= 0 means no limit.
+//
+// It protects against decompression-bomb attacks where a small compressed
+// payload expands to a huge amount of memory. Callers that read from
+// untrusted peers should set this to a sane value.
+var MaxDecompressedSize int64 = 0
+
+// UnzipLimited unzips data, capping the decompressed size to maxSize bytes.
+// A maxSize <= 0 means no limit. It returns ErrDecompressedSizeTooLarge if the
+// decompressed data would exceed maxSize.
+func UnzipLimited(data []byte, maxSize int64) ([]byte, error) {
 	buf := bytes.NewBuffer(data)
 
 	gr := spReader.Get().(*gzip.Reader)
@@ -39,11 +60,21 @@ func Unzip(data []byte) ([]byte, error) {
 	}
 	defer gr.Close()
 
-	data, err = io.ReadAll(gr)
+	if maxSize <= 0 {
+		return io.ReadAll(gr)
+	}
+
+	// Read at most maxSize+1 bytes so we can detect an overflow without
+	// allocating the entire oversized payload.
+	limited := io.LimitReader(gr, maxSize+1)
+	out, err := io.ReadAll(limited)
 	if err != nil {
 		return nil, err
 	}
-	return data, err
+	if int64(len(out)) > maxSize {
+		return nil, ErrDecompressedSizeTooLarge
+	}
+	return out, nil
 }
 
 // Zip zips data.

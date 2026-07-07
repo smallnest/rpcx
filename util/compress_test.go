@@ -3,6 +3,7 @@ package util
 import (
 	"bytes"
 	"compress/gzip"
+	"errors"
 	"io"
 	"testing"
 )
@@ -54,6 +55,42 @@ func BenchmarkUnzip(b *testing.B) {
 			_ = s2
 		}
 	})
+}
+
+func TestUnzipLimited(t *testing.T) {
+	// Build a highly compressible payload that expands well beyond the cap.
+	orig := bytes.Repeat([]byte("A"), 1<<20) // 1 MiB of 'A'
+	zipped, err := Zip(orig)
+	if err != nil {
+		t.Fatalf("failed to zip: %v", err)
+	}
+	if len(zipped) >= len(orig) {
+		t.Fatalf("expected zipped data to be much smaller, got %d >= %d", len(zipped), len(orig))
+	}
+
+	// No limit: full payload is returned.
+	out, err := UnzipLimited(zipped, 0)
+	if err != nil {
+		t.Fatalf("unexpected error with no limit: %v", err)
+	}
+	if len(out) != len(orig) {
+		t.Fatalf("expected %d bytes, got %d", len(orig), len(out))
+	}
+
+	// At the cap: allowed.
+	out, err = UnzipLimited(zipped, int64(len(orig)))
+	if err != nil {
+		t.Fatalf("unexpected error at exact limit: %v", err)
+	}
+	if len(out) != len(orig) {
+		t.Fatalf("expected %d bytes, got %d", len(orig), len(out))
+	}
+
+	// Over the cap: rejected.
+	_, err = UnzipLimited(zipped, int64(len(orig))-1)
+	if !errors.Is(err, ErrDecompressedSizeTooLarge) {
+		t.Fatalf("expected ErrDecompressedSizeTooLarge, got %v", err)
+	}
 }
 
 func oldUnzip(data []byte) ([]byte, error) {

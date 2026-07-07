@@ -25,6 +25,15 @@ var Compressors = map[CompressType]Compressor{
 // It is used to validate when read messages from io.Reader.
 var MaxMessageLength = 0
 
+// MaxDecompressedLength is the max length (in bytes) of the decompressed
+// payload of a message. Default is 0 that means no limit.
+//
+// It guards against decompression-bomb attacks: a small compressed payload
+// (bounded by MaxMessageLength) can otherwise expand to gigabytes of memory
+// during Decode, before authentication runs. Servers that accept traffic from
+// untrusted peers should set this to a sane value.
+var MaxDecompressedLength int64 = 0
+
 const (
 	magicNumber byte = 0x08
 )
@@ -500,7 +509,15 @@ func (m *Message) Decode(r io.Reader) error {
 		if compressor == nil {
 			return ErrUnsupportedCompressor
 		}
-		m.Payload, err = compressor.Unzip(m.Payload)
+		if MaxDecompressedLength > 0 {
+			if lu, ok := compressor.(LimitedUnzipper); ok {
+				m.Payload, err = lu.UnzipLimited(m.Payload, MaxDecompressedLength)
+			} else {
+				m.Payload, err = compressor.Unzip(m.Payload)
+			}
+		} else {
+			m.Payload, err = compressor.Unzip(m.Payload)
+		}
 		if err != nil {
 			return err
 		}
