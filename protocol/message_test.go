@@ -58,3 +58,44 @@ func TestMessage(t *testing.T) {
 		t.Errorf("got wrong payload: %v", string(res.Payload))
 	}
 }
+
+// TestDecodeDecompressBomb verifies that Decode caps the decompressed payload
+// size when MaxDecompressedLength is set, guarding against decompression-bomb
+// attacks (see issue #942).
+func TestDecodeDecompressBomb(t *testing.T) {
+	req := NewMessage()
+	req.SetVersion(0)
+	req.SetMessageType(Request)
+	req.SetCompressType(Gzip)
+	req.SetSerializeType(SerializeNone)
+	req.ServicePath = "Arith"
+	req.ServiceMethod = "Add"
+
+	// A small compressed payload that expands to 1 MiB.
+	req.Payload = bytes.Repeat([]byte("A"), 1<<20)
+
+	var buf bytes.Buffer
+	if _, err := req.WriteTo(&buf); err != nil {
+		t.Fatal(err)
+	}
+	wire := buf.Bytes()
+
+	// With the cap set below the decompressed size, Decode must reject it.
+	old := MaxDecompressedLength
+	MaxDecompressedLength = 1024
+	defer func() { MaxDecompressedLength = old }()
+
+	if _, err := Read(bytes.NewReader(wire)); err == nil {
+		t.Fatal("expected Decode to reject the decompression bomb, got nil error")
+	}
+
+	// With no cap, the same message decodes fine.
+	MaxDecompressedLength = 0
+	res, err := Read(bytes.NewReader(wire))
+	if err != nil {
+		t.Fatalf("unexpected error without cap: %v", err)
+	}
+	if len(res.Payload) != 1<<20 {
+		t.Fatalf("expected 1 MiB payload, got %d bytes", len(res.Payload))
+	}
+}
